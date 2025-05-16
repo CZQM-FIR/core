@@ -1,0 +1,2 @@
+ALTER TABLE `users` RENAME COLUMN "rating" TO "ratingID";--> statement-breakpoint
+ALTER TABLE `users` ALTER COLUMN "ratingID" TO "ratingID" integer NOT NULL REFERENCES ratings(id) ON DELETE no action ON UPDATE no action;
