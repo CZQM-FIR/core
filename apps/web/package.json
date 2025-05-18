@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
+    "dev": "vite dev",
+    "build": "vite build",
     "dev:wrangler": "wrangler pages dev .svelte-kit/cloudflare --live-reload",
     "preview": "pnpm run build && wrangler pages dev",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
