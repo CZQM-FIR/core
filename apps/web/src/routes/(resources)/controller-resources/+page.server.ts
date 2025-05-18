@@ -31,7 +31,7 @@ export const load = (async ({ locals }) => {
     where: (resources, { eq, and, or }) =>
       and(
         or(eq(resources.type, 'controller'), eq(resources.type, 'both')),
-        eq(resources.public, 1)
+        eq(resources.public, true)
       ),
     columns: {
       public: false,
