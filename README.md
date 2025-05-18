@@ -1,32 +1,10 @@
-# Turborepo Svelte starter
+# CZQM / Core
 
-This Turborepo starter is maintained by the Turborepo core team.
+Welcome to the CZQM Core! This is a collection of all the code that makes up the CZQM FIR's systems.
 
-## Using this example
+## Apps
 
-Run the following command:
+The following apps can be found in the `/apps` directory.
 
-```sh
-npx create-turbo@latest -e with-svelte
-```
-
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [svelte-kit](https://kit.svelte.dev/) app
-- `web`: another [svelte-kit](https://kit.svelte.dev/) app
-- `ui`: a stub Svelte component library shared by both `web` and `docs` applications
-- `eslint-config-custom`: `eslint` configurations (includes `eslint-plugin-svelte` and `eslint-config-prettier`)
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+- **Web** - The CZQM main website ([https://czqm.ca](https://czqm.ca))
+- **Overseer** - The FIR administration page ([https://overseer.czqm.ca](https://overseer.czqm.ca))
