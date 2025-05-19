@@ -6,5 +6,10 @@ export default defineConfig({
 	plugins: [sveltekit(), tailwindcss()],
 	server: {
 		port: 5101
+	},
+	build: {
+		rollupOptions: {
+			external: ['@czqm/db/schema']
+		}
 	}
 });

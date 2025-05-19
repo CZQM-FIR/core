@@ -61,9 +61,7 @@ export const load = (async ({ locals }) => {
 					)
 				)
 				.reduce((count, session) => count + session.duration, 0);
-			const externalThis = sessionsThisQuarter
-				.filter((s) => s.positionId === 0)
-				.reduce((count, session) => count + session.duration, 0);
+			const externalThis = sessionsThisQuarter.filter((s) => s.positionId === 0).reduce((count, session) => count + session.duration, 0);
 			const internalLast = sessionsLastQuarter
 				.filter((s) => s.positionId !== 0)
 				.filter((s) =>
@@ -72,21 +70,19 @@ export const load = (async ({ locals }) => {
 					)
 				)
 				.reduce((count, session) => count + session.duration, 0);
-			const externalLast = sessionsLastQuarter
-				.filter((s) => s.positionId === 0)
-				.reduce((count, session) => count + session.duration, 0);
+			const externalLast = sessionsLastQuarter.filter((s) => s.positionId === 0).reduce((count, session) => count + session.duration, 0);
 
 			return {
 				...user,
 				role: getUserRole(user.flags),
 				hours: {
 					this: {
-						internal: internalThis,
-						external: externalThis
+						internal: Number((internalThis / 3600).toFixed(2)),
+						external: Number((externalThis / 3600).toFixed(2))
 					},
 					last: {
-						internal: internalLast,
-						external: externalLast
+						internal: Number((internalLast / 3600).toFixed(2)),
+						external: Number((externalLast / 3600).toFixed(2))
 					}
 				}
 			};

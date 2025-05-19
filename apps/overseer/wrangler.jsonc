@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "overcast",
+	"name": "czqm-overseer",
 	"compatibility_date": "2025-03-03",
 	"pages_build_output_dir": ".svelte-kit/cloudflare",
 	"observability": {

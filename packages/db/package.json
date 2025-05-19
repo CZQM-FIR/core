@@ -2,7 +2,7 @@
   "name": "@czqm/db",
   "type": "module",
   "exports": {
-    "./schema": "./dist/index.js"
+    "./schema": "./dist/src/schema/index.js"
   },
   "scripts": {
     "build": "tsc",
