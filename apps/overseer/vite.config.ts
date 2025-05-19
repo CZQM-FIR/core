@@ -9,7 +9,7 @@ export default defineConfig({
 	},
 	build: {
 		rollupOptions: {
-			external: ["@czqm/db/schema"]
+			external: ['@czqm/db/schema']
 		}
 	}
 });
