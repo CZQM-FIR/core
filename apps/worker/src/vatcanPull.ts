@@ -1,10 +1,10 @@
 import { Client } from '@libsql/client/.';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
-import * as schema from '@czqm/db/schema';
+import * as schema from '@czqm/db/src/schema';
 import { eq, or } from 'drizzle-orm';
 
 export const vatcanPull = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
+  db: LibSQLDatabase<typeof import('@czqm/db/src/schema')> & { $client: Client },
   env: Env
 ) => {
   console.log('Pulling from vatcan...');

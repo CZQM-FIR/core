@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm';
-import { positions, sessions } from '@czqm/db/schema';
+import { positions, sessions } from '@czqm/db/src/schema';
 import { Client } from '@libsql/client';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 
@@ -34,7 +34,7 @@ type VatsimController = {
 };
 
 export const handleRecordSessions = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client }
+  db: LibSQLDatabase<typeof import('@czqm/db/src/schema')> & { $client: Client }
 ) => {
   const controllers = (
     (await (await fetch('https://data.vatsim.net/v3/vatsim-data.json')).json()) as any
@@ -80,7 +80,9 @@ export const handleRecordSessions = async (
       await db
         .update(sessions)
         .set({
-          duration: new Date().getTime() - new Date(controller.logon_time).getTime()
+          duration:
+            Math.floor(Date.now() / 1000) -
+            Math.floor(new Date(controller.logon_time).getTime() / 1000)
         })
         .where(eq(sessions.id, currentSession.id));
     } else {
@@ -98,7 +100,9 @@ export const handleRecordSessions = async (
             userId: controller.cid,
             positionId: 0,
             logonTime: new Date(controller.logon_time),
-            duration: new Date().getTime() - new Date(controller.logon_time).getTime()
+            duration:
+              Math.floor(Date.now() / 1000) -
+              Math.floor(new Date(controller.logon_time).getTime() / 1000)
           });
         } else {
           // a position we do not yet track but should
@@ -117,7 +121,9 @@ export const handleRecordSessions = async (
             userId: controller.cid,
             positionId: newPosition.id,
             logonTime: new Date(controller.logon_time),
-            duration: new Date().getTime() - new Date(controller.logon_time).getTime()
+            duration:
+              Math.floor(Date.now() / 1000) -
+              Math.floor(new Date(controller.logon_time).getTime() / 1000)
           });
         }
       } else {
@@ -127,7 +133,9 @@ export const handleRecordSessions = async (
           userId: controller.cid,
           positionId: position.id,
           logonTime: new Date(controller.logon_time),
-          duration: new Date().getTime() - new Date(controller.logon_time).getTime()
+          duration:
+            Math.floor(Date.now() / 1000) -
+            Math.floor(new Date(controller.logon_time).getTime() / 1000)
         });
       }
     }
