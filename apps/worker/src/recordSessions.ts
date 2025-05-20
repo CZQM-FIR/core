@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm';
-import { positions, sessions } from '@czqm/db/src/schema';
+import { positions, sessions } from '@czqm/db/schema';
 import { Client } from '@libsql/client';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 
@@ -34,7 +34,7 @@ type VatsimController = {
 };
 
 export const handleRecordSessions = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/src/schema')> & { $client: Client }
+  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client }
 ) => {
   const controllers = (
     (await (await fetch('https://data.vatsim.net/v3/vatsim-data.json')).json()) as any
