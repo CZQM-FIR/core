@@ -1,9 +1,8 @@
 import type { PageServerLoad } from './$types';
-import * as schema from '@czqm/db/schema';
 import { db } from '$lib/db';
 import { getUserRole } from '$lib/utilities/getUserRole';
 
-export const load = (async ({ locals }) => {
+export const load = (async () => {
 	const users = await db.query.users.findMany({
 		columns: {
 			cid: true,

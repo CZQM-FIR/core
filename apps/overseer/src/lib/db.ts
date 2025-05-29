@@ -1,4 +1,3 @@
-import { dev } from '$app/environment';
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
 import { TURSO_URL, TURSO_TOKEN } from '$env/static/private';

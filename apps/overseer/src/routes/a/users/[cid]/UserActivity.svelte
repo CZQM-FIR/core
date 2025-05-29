@@ -156,7 +156,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each last20Sessions as session, i}
+				{#each last20Sessions as session, i (session.id)}
 					<tr>
 						<td>{i + 1}</td>
 						<td>{session.position.callsign}</td>

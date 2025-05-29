@@ -8,7 +8,7 @@
   {#each data.user!.tickets as ticket}
     <a
       href={`/my/tickets/${ticket.createdAt}`}
-      class="flex flex-row items-baseline gap-3 rounded-lg bg-base-300 p-3 px-5"
+      class="bg-base-300 flex flex-row items-baseline gap-3 rounded-lg p-3 px-5"
     >
       <div class="text-lg font-bold">{ticket.subject}</div>
       <p class="text-md font-light">

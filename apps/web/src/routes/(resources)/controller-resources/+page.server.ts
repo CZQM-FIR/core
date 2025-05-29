@@ -1,4 +1,3 @@
-import { resources } from '@czqm/db/schema';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
 import { error, redirect } from '@sveltejs/kit';

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { redirect } from '@sveltejs/kit';
-	import type { PageData, PageProps } from './$types';
+	import type { PageProps } from './$types';
 
-	let { data, form }: PageProps = $props();
+	let { form }: PageProps = $props();
 
 	if (form && form.status === 200) {
 		redirect(303, '/events');

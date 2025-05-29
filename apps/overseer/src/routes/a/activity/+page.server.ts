@@ -1,10 +1,9 @@
 import type { PageServerLoad } from './$types';
-import * as schema from '@czqm/db/schema';
 import { db } from '$lib/db';
 import { getUserRole } from '$lib/utilities/getUserRole';
 
-export const load = (async ({ locals }) => {
-	let users = await db.query.users.findMany({
+export const load = (async () => {
+	const users = await db.query.users.findMany({
 		columns: {
 			cid: true,
 			name_full: true
@@ -28,7 +27,7 @@ export const load = (async ({ locals }) => {
 		}
 	});
 
-	let modifiedUsers = await Promise.all(
+	const modifiedUsers = await Promise.all(
 		users.map(async (user) => {
 			const now = new Date();
 			const currentQuarter = Math.floor(now.getMonth() / 3);
@@ -61,7 +60,9 @@ export const load = (async ({ locals }) => {
 					)
 				)
 				.reduce((count, session) => count + session.duration, 0);
-			const externalThis = sessionsThisQuarter.filter((s) => s.positionId === 0).reduce((count, session) => count + session.duration, 0);
+			const externalThis = sessionsThisQuarter
+				.filter((s) => s.positionId === 0)
+				.reduce((count, session) => count + session.duration, 0);
 			const internalLast = sessionsLastQuarter
 				.filter((s) => s.positionId !== 0)
 				.filter((s) =>
@@ -70,7 +71,9 @@ export const load = (async ({ locals }) => {
 					)
 				)
 				.reduce((count, session) => count + session.duration, 0);
-			const externalLast = sessionsLastQuarter.filter((s) => s.positionId === 0).reduce((count, session) => count + session.duration, 0);
+			const externalLast = sessionsLastQuarter
+				.filter((s) => s.positionId === 0)
+				.reduce((count, session) => count + session.duration, 0);
 
 			return {
 				...user,

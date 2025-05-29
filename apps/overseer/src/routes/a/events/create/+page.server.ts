@@ -23,7 +23,6 @@ export const actions = {
 		const end = data.get('end') as string;
 		const description = data.get('description') as string;
 		const image = data.get('image') as File;
-		const timezone = data.get('timezone') as number;
 
 		if (!locals.user) return fail(401);
 

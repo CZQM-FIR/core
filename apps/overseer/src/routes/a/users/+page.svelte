@@ -1,12 +1,12 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
-	import type { PageData, PageProps } from './$types';
+	import { Search, SquarePen } from '@lucide/svelte';
+	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	let search = $state('');
 
-	let filtered = $state(data.users);
+	let filtered = $derived(data.users);
 
 	$effect(() => {
 		filtered =
@@ -27,7 +27,7 @@
 		<div class="divider"></div>
 
 		<label class="input">
-			<Icon icon="mdi:search" class="opacity-50" />
+			<Search class="opacity-50" size="15" />
 			<input type="search" class="grow" placeholder="Search" bind:value={search} />
 		</label>
 
@@ -42,15 +42,15 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each filtered as user}
+				{#each filtered as user (user.cid)}
 					<tr>
 						<td>{user.name_full}</td>
 						<td>{user.cid}</td>
-						<td>{user.rating.short}</td>
+						<td>{user.rating.long}</td>
 						<td>{user.role}</td>
 						<td>
 							<a href={`/a/users/${user.cid}`}>
-								<Icon icon="mdi:edit-box-outline" class="text-xl" />
+								<SquarePen class="text-xl" size="15" />
 							</a>
 						</td>
 					</tr>

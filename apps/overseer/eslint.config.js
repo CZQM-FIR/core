@@ -35,5 +35,11 @@ export default ts.config(
 				svelteConfig
 			}
 		}
+	},
+	{
+		rules: {
+			'@typescript-eslint/no-explicit-any': 'off',
+			'no-empty-pattern': 'off'
+		}
 	}
 );

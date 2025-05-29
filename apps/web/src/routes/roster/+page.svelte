@@ -1,13 +1,11 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import RosterStatusIndicator from './RosterStatusIndicator.svelte';
-  import type { RosterPosition, RosterStatus, SoloEndorsement } from '@czqm/db/schema';
   import { getRosterStatus } from '$lib/utilities/getRosterStatus';
 
   let { data }: { data: PageData } = $props();
 
-  let controllers: any[] = $state([]);
-  let visitors: any[] = $state([]);
+  let controllers: typeof data.controllers = $state([]);
 
   $effect(() => {
     controllers = data.controllers.filter((controller) => {

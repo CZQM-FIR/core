@@ -37,7 +37,7 @@ export const load = (async () => {
 
   const staff = users.filter((user) => user.flags.some((flag) => flag.flag.name === 'staff'));
 
-  let sorting = {
+  const sorting = {
     chief: 5,
     deputy: 4,
     'chief-instructor': 3,
@@ -64,7 +64,7 @@ export const load = (async () => {
   });
 
   staff.map((staff) => {
-    let roles = [];
+    const roles = [];
 
     if (staff.flags.some((flag) => flag.flag.name === 'chief')) roles.push('FIR Chief');
     if (staff.flags.some((flag) => flag.flag.name === 'deputy')) roles.push('Deputy FIR Chief');

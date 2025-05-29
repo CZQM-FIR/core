@@ -19,7 +19,6 @@ export const actions = {
 		const link = formData.get('link') as string;
 		const publicResource = Boolean(formData.get('public') as string);
 		const category = formData.get('category') as string;
-		const type = formData.get('type') as string;
 
 		if (!name || !link || !category) {
 			return fail(400, {
@@ -69,14 +68,6 @@ export const actions = {
 				category
 			});
 		}
-
-		const resource = await db.insert(schema.resources).values({
-			name,
-			category,
-			public: publicResource,
-			url: link,
-			type: type ?? 'controller'
-		});
 	},
 	editResource: async ({ request, locals }) => {
 		const formData = await request.formData();
@@ -84,7 +75,6 @@ export const actions = {
 		const link = formData.get('link') as string;
 		const publicResource = Boolean(formData.get('public') as string);
 		const category = formData.get('category') as string;
-		const type = formData.get('type') as string;
 		const id = Number(formData.get('id'));
 
 		if (!name || !link || !category) {

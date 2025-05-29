@@ -1,4 +1,4 @@
-import { deleteSessionTokenCookie, invalidateSession } from '$lib/auth';
+import { invalidateSession } from '$lib/auth';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async (event) => {

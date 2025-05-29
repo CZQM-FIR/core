@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Icon from '@iconify/svelte';
-	import type { PageData, PageProps } from './$types';
+	import { SquarePen, Trash2 } from '@lucide/svelte';
+	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
 
@@ -77,7 +77,7 @@
 			</div>
 		</form>
 		<div class="mt-3 flex flex-col gap-3">
-			{#each data.resources as resource}
+			{#each data.resources as resource (resource.id)}
 				<div class="card bg-base-300 shadow-xl {deleted.includes(resource.id) ? 'hidden' : ''}">
 					<div class="card-body">
 						<div class="flex flex-row items-end gap-3">
@@ -103,7 +103,7 @@
 									: 'ms-auto'}"
 							>
 								<button onclick={() => (edit = edit === resource.id ? null : resource.id)}>
-									<Icon icon="mdi:edit-box-outline" class="cursor-pointer text-2xl" />
+									<SquarePen class="cursor-pointer text-2xl" size="15" />
 								</button>
 								<form
 									action="?/deleteResource"
@@ -121,10 +121,7 @@
 											}, 1000);
 										}}
 									>
-										<Icon
-											icon="mdi:trash-outline"
-											class="hover:text-error cursor-pointer text-2xl transition"
-										/>
+										<Trash2 class="hover:text-error cursor-pointer text-2xl transition" size="15" />
 									</button>
 								</form>
 							</div>

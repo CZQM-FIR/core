@@ -1,9 +1,6 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 
-import { db } from '$lib/db';
-import * as schema from '@czqm/db/schema';
-
 declare global {
   namespace App {
     interface Platform {

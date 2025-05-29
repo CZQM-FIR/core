@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { LayoutData } from './$types';
-  import Icon from '@iconify/svelte';
+  import { User, Mail, Users, LogOut } from '@lucide/svelte';
   import NavLink from './NavLink.svelte';
   import { PUBLIC_OVERSEER_URL } from '$env/static/public';
 
@@ -29,12 +29,12 @@
         <h3 class="m-0 p-0 text-center text-lg font-semibold">MyCZQM</h3>
         <div class="divider m-0 p-0"></div>
         <ul class="mt-1 ps-2">
-          <NavLink name="My Profile" icon="mdi:user" href="/my" />
-          <NavLink name="Tickets" icon="mdi:envelope-outline" href="/my/tickets" />
+          <NavLink name="My Profile" icon={User} href="/my" />
+          <NavLink name="Tickets" icon={Mail} href="/my/tickets" />
           {#if data.user.flags.filter((f) => ['staff', 'admin'].includes(f.flag.name)).length === 1}
-            <NavLink name="Overseer" icon="mdi:users" href={PUBLIC_OVERSEER_URL} external />
+            <NavLink name="Overseer" icon={Users} href={PUBLIC_OVERSEER_URL} external />
           {/if}
-          <NavLink name="Logout" icon="mdi:logout" href="/auth/logout" />
+          <NavLink name="Logout" icon={LogOut} href="/auth/logout" />
         </ul>
       </div>
       <!-- content -->

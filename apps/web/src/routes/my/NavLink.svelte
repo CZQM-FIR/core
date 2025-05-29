@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Icon from '@iconify/svelte';
+  import { ExternalLink } from '@lucide/svelte';
   import { page } from '$app/stores';
 
-  let { name, icon, href, external = false } = $props();
+  let { name, href, icon, external = false } = $props();
 </script>
 
 <li class="">
@@ -13,10 +13,12 @@
       ? 'link text-blue-400'
       : ''} hover:link flex flex-row items-center"
   >
-    <Icon {icon} />
+    {#if icon}
+      <icon size="15"></icon>
+    {/if}
     <span class="ps-2 pe-1">{name}</span>
     {#if external}
-      <span class="m-0 p-0 text-xs"><Icon icon="mdi:external-link" /></span>
+      <span class="m-0 p-0 text-xs"><ExternalLink size="15" /></span>
     {/if}
   </a>
 </li>

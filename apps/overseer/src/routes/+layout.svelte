@@ -2,9 +2,7 @@
 	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
-	import Icon from '@iconify/svelte';
-	import { page } from '$app/stores';
-	import { PUBLIC_WEB_URL } from '$env/static/public';
+	import { User } from '@lucide/svelte';
 
 	import CZQMLogo from '$lib/assets/images/CZQM-White.svg';
 
@@ -43,35 +41,6 @@
 						<li><a href="/a/news">News</a></li>
 						<li><a href="/a/resources">Resources</a></li>
 					{/if}
-					<!-- <li>
-						<a href="/about">About Us</a>
-					</li>
-					<li>
-						<details>
-							<summary>Controllers</summary>
-							<ul class="p-2">
-								<li><a href="/staff"><Icon icon="mdi:administrator" /> Staff</a></li>
-								<li>
-									<a href="/roster"><Icon icon="mdi:account-group" /> Roster</a>
-								</li>
-								<li><a href="/join"><Icon icon="mdi:account-add" /> Join Us</a></li>
-							</ul>
-						</details>
-					</li>
-					<li>
-						<details>
-							<summary>Pilots</summary>
-							<ul class="p-2">
-								<li>
-									<a href="/pilot-resources"><Icon icon="mdi:clipboard-text" /> Resources</a>
-								</li>
-								<li><a href="/charts"><Icon icon="mdi:map" /> Charts</a></li>
-							</ul>
-						</details>
-					</li>
-					<li><a href="/events">Events</a></li>
-					<li><a href="/news">News</a></li>
-					<li><a href="/contact">Contact Us</a></li> -->
 				</ul>
 			</div>
 			<a href="/" class="btn btn-ghost text-xl">CZQM / QX</a>
@@ -95,7 +64,7 @@
 			{#if data.user}
 				<div class="dropdown dropdown-end">
 					<div tabindex="0" role="button" class="btn btn-ghost bg-base-300 cursor-default">
-						<Icon icon="mdi:account" />
+						<User />
 						{data.user.name_full}
 					</div>
 				</div>

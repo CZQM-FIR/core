@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { ActionData, PageData } from './$types';
 
-  let { data, form }: { data: PageData; form: ActionData } = $props();
+  let { form }: { data: PageData; form: ActionData } = $props();
 
   let categories = ['Other', 'Controller Feedback', 'Website Feedback'];
 

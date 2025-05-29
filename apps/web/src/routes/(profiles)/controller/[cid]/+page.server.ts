@@ -1,10 +1,9 @@
 import { db } from '$lib/db';
-import { users } from '@czqm/db/schema';
 import { getUserRole } from '$lib/utilities/getUserRole';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ params }) => {
   const { cid } = params;
 
   const userData = await db.query.users.findFirst({

@@ -1,4 +1,4 @@
-import type { RosterPosition, RosterStatus, SoloEndorsement } from '@czqm/db/schema';
+import type { RosterPosition, RosterStatus } from '@czqm/db/schema';
 
 export const getRosterStatus = (userData: any, position: RosterPosition) => {
 	if (userData.roster.filter((r: RosterStatus) => r.position === position).length === 0) {

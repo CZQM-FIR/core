@@ -1,5 +1,4 @@
 import { auth } from '$lib/auth';
-import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { tickets } from '@czqm/db/schema';
 import { db } from '$lib/db';
@@ -10,7 +9,7 @@ export const load = (async () => {
 
 export const actions = {
   default: async (event) => {
-    const { session, user } = await auth(event);
+    const { user } = await auth(event);
 
     if (!user) {
       return {
@@ -19,7 +18,7 @@ export const actions = {
       };
     }
 
-    let data = await event.request.formData();
+    const data = await event.request.formData();
 
     const categories = ['Other', 'Controller Feedback', 'Website Feedback'];
 
@@ -34,7 +33,7 @@ export const actions = {
       };
     }
 
-    let category = Number(data.get('category'));
+    const category = Number(data.get('category'));
 
     if (!data.get('subject')) {
       return {
@@ -50,7 +49,7 @@ export const actions = {
       };
     }
 
-    let subject = data.get('subject')!.toString();
+    const subject = data.get('subject')!.toString();
     let message = data.get('message')!.toString();
 
     if ((!data.get('controller') && category === 1) || (!data.get('page') && category === 2)) {

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import Icon from '@iconify/svelte';
+  import { User } from '@lucide/svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -45,7 +45,7 @@
               </div>
               <p>{truncate(article.text, 100)}</p>
               <div class="badge badge-neutral flex flex-row gap-1">
-                <Icon icon="mdi:account" />
+                <User size="15" />
                 <p>{article.author?.name_full}</p>
               </div>
             </div>

@@ -11,6 +11,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "format": "prettier --write .",
     "lint": "prettier --check . && eslint .",
+    "lint:fix": "prettier --write . && eslint . --fix",
     "deploy": "pnpm run build && wrangler pages deploy",
     "cf-typegen": "wrangler types && move worker-configuration.d.ts src/",
     "db:studio": "drizzle-kit studio",
@@ -19,7 +20,6 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241112.0",
-    "@iconify/svelte": "^4.1.0",
     "@sveltejs/adapter-auto": "^4.0.0",
     "@sveltejs/adapter-cloudflare": "^5.0.0",
     "@sveltejs/kit": "^2.0.0",
@@ -47,12 +47,13 @@
     "wrangler": "^3.99.0"
   },
   "dependencies": {
+    "@czqm/db": "workspace:*",
     "@libsql/client": "^0.15.0",
+    "@lucide/svelte": "^0.511.0",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
     "@tailwindcss/postcss": "^4.0.13",
     "dotenv": "^16.4.5",
-    "drizzle-orm": "^0.43.0",
-    "@czqm/db": "workspace:*"
+    "drizzle-orm": "^0.43.0"
   }
 }

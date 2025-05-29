@@ -1,15 +1,12 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
 	import type { PageData } from './$types';
-
+	import { Search } from '@lucide/svelte';
 	let { data }: { data: PageData } = $props();
 
 	let search = $state('');
-
-	let filtered = $state(data.users);
+	let filtered = $derived(data.users);
 
 	let lastQuarter = $state(false);
-
 	let onlyIssue = $state(false);
 
 	$effect(() => {
@@ -66,7 +63,7 @@
 
 		<div class="flex flex-col gap-3">
 			<label class="input">
-				<Icon icon="mdi:search" class="opacity-50" />
+				<Search class="opacity-50" />
 				<input type="search" class="grow" placeholder="Search" bind:value={search} />
 			</label>
 			<div class="flex items-center gap-3">
@@ -91,7 +88,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each filtered as user}
+				{#each filtered as user (user.cid)}
 					<tr>
 						<td>{user.name_full}</td>
 						<td>{user.cid}</td>

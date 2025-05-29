@@ -1,4 +1,3 @@
-import type { RequestEvent } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { VATSIM_CLIENT_ID, VATSIM_CLIENT_SECRET, VATSIM_URL } from '$env/static/private';
 import { users } from '@czqm/db/schema';
@@ -71,11 +70,7 @@ export const GET: RequestHandler = async (event): Promise<Response> => {
     })
   });
 
-  const {
-    access_token: accessToken,
-    refresh_token: refreshToken,
-    expires_in: expiresIn
-  } = (await tokenResponse.json()) as any;
+  const { access_token: accessToken } = (await tokenResponse.json()) as any;
 
   const userResponse = await fetch(`${VATSIM_URL}/api/user`, {
     headers: {

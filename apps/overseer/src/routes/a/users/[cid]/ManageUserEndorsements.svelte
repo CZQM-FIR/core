@@ -1,13 +1,10 @@
 <script lang="ts">
-	import type { PageData, PageProps } from './$types';
-	import type { RosterPosition, RosterUserData } from '@czqm/db/schema';
+	import type { PageProps } from './$types';
+	import type { RosterUserData } from '@czqm/db/schema';
 
 	let { data, localUserData, form }: PageProps & { localUserData: RosterUserData } = $props();
 
 	let activeEndorsements = localUserData.soloEndorsements.filter((e) => e.expiresAt > new Date());
-	let inactiveEndorsements = localUserData.soloEndorsements.filter(
-		(e) => e.expiresAt <= new Date()
-	);
 </script>
 
 <div class="flex flex-col self-start rounded border border-gray-600 p-4">
@@ -25,7 +22,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each activeEndorsements as endorsement}
+						{#each activeEndorsements as endorsement (endorsement.id)}
 							<tr>
 								<td>{endorsement.position.callsign}</td>
 								<td

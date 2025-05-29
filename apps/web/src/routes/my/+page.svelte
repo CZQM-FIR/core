@@ -1,6 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
-  import Icon from '@iconify/svelte';
+  import { Info } from '@lucide/svelte';
 
   let { data = $bindable(), form } = $props();
 
@@ -136,8 +136,7 @@
             <tr>
               <td
                 onclick={() => activityModal?.showModal()}
-                class="hover:link flex items-baseline gap-2"
-                >Activity Hours <Icon icon="mdi:information-outline" /></td
+                class="hover:link flex items-baseline gap-2">Activity Hours <Info size="15" /></td
               >
               <td class={activityHours < 3 ? 'text-warning' : ''}>{activityHours.toFixed(2)} / 3</td
               >
@@ -145,8 +144,7 @@
             <tr>
               <td
                 onclick={() => externalModal?.showModal()}
-                class="hover:link flex items-baseline gap-2"
-                >External Hours <Icon icon="mdi:information-outline" /></td
+                class="hover:link flex items-baseline gap-2">External Hours <Info size="15" /></td
               >
               <td
                 class={user.flags.some((f) => f.flag.id === 5) && externalHours >= activityHours

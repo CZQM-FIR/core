@@ -1,6 +1,6 @@
 <script lang="ts">
   interface Props {
-    roster: Number;
+    roster: number;
     position?: string;
     div?: boolean;
   }

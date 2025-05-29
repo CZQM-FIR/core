@@ -2,7 +2,17 @@
   import '../app.css';
   import type { Snippet } from 'svelte';
   import type { LayoutData } from './$types';
-  import Icon from '@iconify/svelte';
+  import {
+    Shield,
+    Users,
+    UserPlus,
+    ClipboardList,
+    Map,
+    User,
+    PanelsTopLeft,
+    LogOut,
+    LogIn
+  } from '@lucide/svelte';
   import { page } from '$app/stores';
 
   import CZQMLogo from '$lib/assets/images/CZQM-White.svg';
@@ -38,11 +48,9 @@
             <details>
               <summary>Controllers</summary>
               <ul class="p-2">
-                <li><a href="/staff"><Icon icon="mdi:administrator" /> Staff</a></li>
-                <li>
-                  <a href="/roster"><Icon icon="mdi:account-group" /> Roster</a>
-                </li>
-                <li><a href="/join"><Icon icon="mdi:account-add" /> Join Us</a></li>
+                <li><a href="/staff"><Shield class="mr-1" size="15" /> Staff</a></li>
+                <li><a href="/roster"><Users class="mr-1" size="15" /> Roster</a></li>
+                <li><a href="/join"><UserPlus class="mr-1" size="15" /> Join Us</a></li>
               </ul>
             </details>
           </li>
@@ -51,9 +59,9 @@
               <summary>Pilots</summary>
               <ul class="p-2">
                 <li>
-                  <a href="/pilot-resources"><Icon icon="mdi:clipboard-text" /> Resources</a>
+                  <a href="/pilot-resources"><ClipboardList class="mr-1" size="15" /> Resources</a>
                 </li>
-                <li><a href="/charts"><Icon icon="mdi:map" /> Charts</a></li>
+                <li><a href="/charts"><Map class="mr-1" size="15" /> Charts</a></li>
               </ul>
             </details>
           </li>
@@ -73,11 +81,9 @@
           <div class="dropdown dropdown-bottom">
             <div tabindex="0" role="button">Controllers</div>
             <ul class="menu dropdown-content rounded-box bg-base-300 z-1 w-52 p-2 shadow-sm">
-              <li><a href="/staff"><Icon icon="mdi:administrator" /> Staff</a></li>
-              <li>
-                <a href="/roster"><Icon icon="mdi:account-group" /> Roster</a>
-              </li>
-              <li><a href="/join"><Icon icon="mdi:account-add" /> Join Us</a></li>
+              <li><a href="/staff"><Shield class="mr-1" size="15" /> Staff</a></li>
+              <li><a href="/roster"><Users class="mr-1" size="15" /> Roster</a></li>
+              <li><a href="/join"><UserPlus class="mr-1" size="15" /> Join Us</a></li>
             </ul>
           </div>
         </li>
@@ -86,9 +92,9 @@
             <div tabindex="0" role="button">Pilots</div>
             <ul class="menu dropdown-content rounded-box bg-base-300 z-1 w-52 p-2 shadow-sm">
               <li>
-                <a href="/pilot-resources"><Icon icon="mdi:clipboard-text" /> Resources</a>
+                <a href="/pilot-resources"><ClipboardList class="mr-1" size="15" /> Resources</a>
               </li>
-              <li><a href="/charts"><Icon icon="mdi:map" /> Charts</a></li>
+              <li><a href="/charts"><Map class="mr-1" size="15" /> Charts</a></li>
             </ul>
           </div>
         </li>
@@ -101,26 +107,26 @@
       {#if data.user}
         <div class="dropdown dropdown-end">
           <div tabindex="0" role="button" class="btn btn-ghost bg-base-300">
-            <Icon icon="mdi:account" />
+            <User class="mr-1" size="15" />
             {data.user.name_full}
           </div>
           <ul class="menu dropdown-content rounded-box bg-base-300 z-1 p-2 shadow-sm">
             <li>
               <a href="/my" class="flex flex-row gap-3 align-middle">
-                <Icon icon="mdi:computer" /> myCZQM
+                <PanelsTopLeft class="mr-1" size="15" /> myCZQM
               </a>
             </li>
             <li>
               <a href={`/auth/logout`} class="flex flex-row gap-3 align-middle">
-                <Icon icon="mdi:logout" /> Logout
+                <LogOut class="mr-1" size="15" /> Logout
               </a>
             </li>
           </ul>
         </div>
       {:else}
-        <a href={`/auth?redirect=${$page.url.pathname}`} class="btn bg-base-300"
-          ><Icon icon="mdi:login-variant" /> Login</a
-        >
+        <a href={`/auth?redirect=${$page.url.pathname}`} class="btn bg-base-300">
+          <LogIn class="mr-1" size="15" /> Login
+        </a>
       {/if}
     </div>
   </div>
@@ -180,18 +186,14 @@
   </nav>
   <nav>
     <h6 class="footer-title">Connect With Us</h6>
-    <a href="https://twitter.com/czqm_fir" class="link-hover link flex items-center"
-      ><Icon icon="mdi:twitter" class="mr-1" /> Twitter</a
-    >
+    <a href="https://twitter.com/czqm_fir" class="link-hover link flex items-center">Twitter</a>
     <a href="https://www.facebook.com/CZQMFIR/" class="link-hover link flex items-center"
-      ><Icon icon="mdi:facebook" class="mr-1" /> FaceBook</a
+      >FaceBook</a
     >
     <a
       href="https://www.youtube.com/channel/UCS5H_U3h6edXWashMjQpuAg"
-      class="link-hover link flex items-center"><Icon icon="mdi:youtube" class="mr-1" /> Youtube</a
+      class="link-hover link flex items-center">Youtube</a
     >
-    <a href="/portal/discord" class="link-hover link flex items-center"
-      ><Icon icon="ic:baseline-discord" class="mr-1" /> Discord</a
-    >
+    <a href="/portal/discord" class="link-hover link flex items-center">Discord</a>
   </nav>
 </footer>

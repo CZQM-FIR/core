@@ -1,13 +1,12 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { page } from '$app/stores';
 
-  let { data }: { data: PageData } = $props();
+  let {}: { data: PageData } = $props();
 </script>
 
 <section id="hero" class="hero min-h-screen">
   <div class="hero-overlay bg-opacity-60"></div>
-  <div class="hero-content text-center text-neutral-content">
+  <div class="hero-content text-neutral-content text-center">
     <div class="max-w-md">
       <h1 class="mb-5 text-5xl font-bold">Canada's Gateway to the East Coast</h1>
       <p class="mb-5">

@@ -7,7 +7,7 @@ export const resources = sqliteTable('resources', {
   description: text('description'),
   url: text('url').notNull(),
   category: text('category').notNull(),
-  public: integer('public', {mode: 'boolean'}).notNull().default(true),
+  public: integer('public', { mode: 'boolean' }).notNull().default(true),
   type: text('type').notNull() // 'controller', 'pilot', 'both'
 });
 

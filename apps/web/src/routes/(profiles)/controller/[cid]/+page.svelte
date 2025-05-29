@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import { getRosterStatus } from '$lib/utilities/getRosterStatus';
   import RosterStatusIndicator from '../../../roster/RosterStatusIndicator.svelte';
   import type { PageData } from './$types';

@@ -91,12 +91,8 @@
           "name": "user_flags_flag_id_flags_id_fk",
           "tableFrom": "user_flags",
           "tableTo": "flags",
-          "columnsFrom": [
-            "flag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["flag_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -104,22 +100,15 @@
           "name": "user_flags_user_id_users_cid_fk",
           "tableFrom": "user_flags",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "cid"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["cid"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "user_flags_user_id_flag_id_pk": {
-          "columns": [
-            "user_id",
-            "flag_id"
-          ],
+          "columns": ["user_id", "flag_id"],
           "name": "user_flags_user_id_flag_id_pk"
         }
       },
@@ -210,9 +199,7 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },
@@ -221,12 +208,8 @@
           "name": "users_ratingID_ratings_id_fk",
           "tableFrom": "users",
           "tableTo": "ratings",
-          "columnsFrom": [
-            "ratingID"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ratingID"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -339,12 +322,8 @@
           "name": "news_author_id_users_cid_fk",
           "tableFrom": "news",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "cid"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["cid"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -388,9 +367,7 @@
       "indexes": {
         "positions_callsign_unique": {
           "name": "positions_callsign_unique",
-          "columns": [
-            "callsign"
-          ],
+          "columns": ["callsign"],
           "isUnique": true
         }
       },
@@ -445,12 +422,8 @@
           "name": "sessions_userId_users_cid_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "cid"
-          ],
+          "columnsFrom": ["userId"],
+          "columnsTo": ["cid"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -458,12 +431,8 @@
           "name": "sessions_positionId_positions_id_fk",
           "tableFrom": "sessions",
           "tableTo": "positions",
-          "columnsFrom": [
-            "positionId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["positionId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -503,12 +472,8 @@
           "name": "auth_sessions_user_id_users_cid_fk",
           "tableFrom": "auth_sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "cid"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["cid"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -563,12 +528,8 @@
           "name": "ticket_messages_ticket_id_tickets_id_fk",
           "tableFrom": "ticket_messages",
           "tableTo": "tickets",
-          "columnsFrom": [
-            "ticket_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ticket_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -576,12 +537,8 @@
           "name": "ticket_messages_author_id_users_cid_fk",
           "tableFrom": "ticket_messages",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "cid"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["cid"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -675,12 +632,8 @@
           "name": "tickets_author_id_users_cid_fk",
           "tableFrom": "tickets",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "cid"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["cid"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -688,12 +641,8 @@
           "name": "tickets_type_id_ticket_types_id_fk",
           "tableFrom": "tickets",
           "tableTo": "ticket_types",
-          "columnsFrom": [
-            "type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["type_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -801,12 +750,8 @@
           "name": "solo_endorsements_controller_id_users_cid_fk",
           "tableFrom": "solo_endorsements",
           "tableTo": "users",
-          "columnsFrom": [
-            "controller_id"
-          ],
-          "columnsTo": [
-            "cid"
-          ],
+          "columnsFrom": ["controller_id"],
+          "columnsTo": ["cid"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -814,12 +759,8 @@
           "name": "solo_endorsements_position_id_positions_id_fk",
           "tableFrom": "solo_endorsements",
           "tableTo": "positions",
-          "columnsFrom": [
-            "position_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["position_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -866,12 +807,8 @@
           "name": "roster_controller_id_users_cid_fk",
           "tableFrom": "roster",
           "tableTo": "users",
-          "columnsFrom": [
-            "controller_id"
-          ],
-          "columnsTo": [
-            "cid"
-          ],
+          "columnsFrom": ["controller_id"],
+          "columnsTo": ["cid"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

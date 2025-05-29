@@ -1,12 +1,12 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import { Plus, Search, SquarePen } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	let search = $state('');
 
-	let filtered = $state(data.events);
+	let filtered = $derived(data.events);
 
 	$effect(() => {
 		filtered =
@@ -28,11 +28,11 @@
 
 		<div class="flex min-w-full flex-row">
 			<label class="input mr-auto">
-				<Icon icon="mdi:search" class="opacity-50" />
+				<Search class="opacity-50" />
 				<input type="search" class="grow" placeholder="Search" bind:value={search} />
 			</label>
 			<a href="/a/events/create" class="btn btn-primary">
-				<Icon icon="mdi:plus" class="text-xl" />
+				<Plus class="text-xl" />
 			</a>
 		</div>
 
@@ -46,7 +46,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each filtered as event}
+				{#each filtered as event (event.id)}
 					<tr>
 						<td>{event.name}</td>
 						<td
@@ -59,7 +59,7 @@
 						>
 						<td>
 							<a href={`/a/events/${event.id}`}>
-								<Icon icon="mdi:edit-box-outline" class="text-xl" />
+								<SquarePen class="text-xl" />
 							</a>
 						</td>
 					</tr>

@@ -1,10 +1,10 @@
 import { db } from '$lib/db';
 import { and, eq } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
-import { flags, positions, roster, soloEndorsements, users, usersToFlags } from '@czqm/db/schema';
+import { flags, positions, soloEndorsements, users, usersToFlags } from '@czqm/db/schema';
 import { fail } from '@sveltejs/kit';
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ params }) => {
 	const user = await db.query.users.findFirst({
 		where: eq(users.cid, Number(params.cid)),
 		with: {

@@ -14,7 +14,7 @@
     <div class="divider"></div>
   </div>
   <div class="flex flex-col justify-center gap-10 max-md:items-center md:flex-row">
-    <div class="card w-96 bg-base-200 shadow-xl">
+    <div class="card bg-base-200 w-96 shadow-xl">
       <div class="card-body">
         <h2 class="card-title">New Controllers</h2>
         <p>
@@ -23,9 +23,9 @@
           Canada's best Instructors and Mentors as well as an amazing community.
         </p>
         <p>
-          In the Moncton/Gander FIR, we strive to provide you with the best training as a virtual air
-          traffic controller in order for virtual pilots that fly in airspace, to receive the high
-          level of ATC they have come to expect. Sign up with CZQM/QX FIR today and start your
+          In the Moncton/Gander FIR, we strive to provide you with the best training as a virtual
+          air traffic controller in order for virtual pilots that fly in airspace, to receive the
+          high level of ATC they have come to expect. Sign up with CZQM/QX FIR today and start your
           virtual air traffic control career.
         </p>
         <div class="card-actions justify-end">
@@ -36,7 +36,7 @@
       </div>
     </div>
 
-    <div class="card w-96 bg-base-200 shadow-xl">
+    <div class="card bg-base-200 w-96 shadow-xl">
       <div class="card-body">
         <h2 class="card-title">Request a Transfer</h2>
         <p>
@@ -52,7 +52,7 @@
       </div>
     </div>
 
-    <div class="card w-96 bg-base-200 shadow-xl">
+    <div class="card bg-base-200 w-96 shadow-xl">
       <div class="card-body">
         <h2 class="card-title">Visiting</h2>
         <p>
