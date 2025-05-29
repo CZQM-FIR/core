@@ -8,3 +8,4 @@ The following apps can be found in the `/apps` directory.
 
 - **Web** - The CZQM main website ([https://czqm.ca](https://czqm.ca))
 - **Overseer** - The FIR administration page ([https://overseer.czqm.ca](https://overseer.czqm.ca))
+- **Worker** - A Cloudflare Worker tasked with chron jobs
