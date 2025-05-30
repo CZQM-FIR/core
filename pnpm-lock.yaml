@@ -32,6 +32,9 @@ importers:
       '@libsql/client':
         specifier: ^0.15.0
         version: 0.15.5
+      '@lucide/svelte':
+        specifier: ^0.511.0
+        version: 0.511.0(svelte@5.28.2)
       '@oslojs/crypto':
         specifier: ^1.0.1
         version: 1.0.1
