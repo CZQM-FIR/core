@@ -28,11 +28,11 @@
 
 		<div class="flex min-w-full flex-row">
 			<label class="input mr-auto">
-				<Search class="opacity-50" />
+				<Search class="opacity-50" size="15" />
 				<input type="search" class="grow" placeholder="Search" bind:value={search} />
 			</label>
 			<a href="/a/events/create" class="btn btn-primary">
-				<Plus class="text-xl" />
+				<Plus class="text-xl" size="15" />
 			</a>
 		</div>
 
@@ -59,7 +59,7 @@
 						>
 						<td>
 							<a href={`/a/events/${event.id}`}>
-								<SquarePen class="text-xl" />
+								<SquarePen class="text-xl" size="15" />
 							</a>
 						</td>
 					</tr>
