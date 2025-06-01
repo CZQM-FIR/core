@@ -64,7 +64,6 @@
 			{#if data.user}
 				<div class="dropdown dropdown-end">
 					<div tabindex="0" role="button" class="btn btn-ghost bg-base-300 cursor-default">
-						<User />
 						{data.user.name_full}
 					</div>
 				</div>
