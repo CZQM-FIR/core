@@ -2,7 +2,6 @@
 	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
-	import { User } from '@lucide/svelte';
 
 	import CZQMLogo from '$lib/assets/images/CZQM-White.svg';
 

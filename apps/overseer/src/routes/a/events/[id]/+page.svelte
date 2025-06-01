@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { redirect } from '@sveltejs/kit';
 	import type { PageProps } from './$types';
 	import { onMount } from 'svelte';
 
