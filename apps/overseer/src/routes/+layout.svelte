@@ -2,7 +2,6 @@
 	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
-	import { User } from '@lucide/svelte';
 
 	import CZQMLogo from '$lib/assets/images/CZQM-White.svg';
 
@@ -64,7 +63,6 @@
 			{#if data.user}
 				<div class="dropdown dropdown-end">
 					<div tabindex="0" role="button" class="btn btn-ghost bg-base-300 cursor-default">
-						<User />
 						{data.user.name_full}
 					</div>
 				</div>

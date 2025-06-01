@@ -63,7 +63,7 @@
 
 		<div class="flex flex-col gap-3">
 			<label class="input">
-				<Search class="opacity-50" />
+				<Search class="opacity-50" size="15" />
 				<input type="search" class="grow" placeholder="Search" bind:value={search} />
 			</label>
 			<div class="flex items-center gap-3">
