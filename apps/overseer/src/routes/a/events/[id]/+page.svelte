@@ -51,8 +51,9 @@
 
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend">Event Description</legend>
-				<textarea name="description" class="textarea h-36 w-120" required value={event.description}
-				></textarea>
+				<textarea name="description" class="textarea h-36 w-120" required>
+					{event.description}
+				</textarea>
 			</fieldset>
 
 			<fieldset class="fieldset">
