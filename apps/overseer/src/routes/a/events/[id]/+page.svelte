@@ -33,7 +33,7 @@
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend">Start</legend>
 				<input type="datetime-local" class="input" name="start-input" bind:value={start} required />
-				<input type="hidden" name="start" value={new Date(start).toUTCString()} />
+				<input type="hidden" name="start" value={new Date(start + ':00Z').toUTCString()} />
 			</fieldset>
 
 			<fieldset class="fieldset">
@@ -46,14 +46,13 @@
 					bind:value={end}
 					required
 				/>
-				<input type="hidden" name="end" value={end ? new Date(end).toUTCString() : ''} />
+				<input type="hidden" name="end" value={end ? new Date(end + ':00Z').toUTCString() : ''} />
 			</fieldset>
 
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend">Event Description</legend>
-				<textarea name="description" class="textarea h-36 w-120" required>
-					{event.description}
-				</textarea>
+				<textarea name="description" class="textarea h-36 w-120" required value={event.description}
+				></textarea>
 			</fieldset>
 
 			<fieldset class="fieldset">
