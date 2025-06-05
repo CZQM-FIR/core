@@ -23,7 +23,7 @@
       </div>
     </div>
     <div class="divider"></div>
-    <div class="grid grid-cols-2 grid-rows-1 gap-3">
+    <div class={article.image ? 'this article has no image' : ''}>
       {#if article.image}
         <a href="https://files.czqm.ca/{article.image}" class="cursor-zoom-in" target="_blank">
           <img

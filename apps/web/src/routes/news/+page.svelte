@@ -43,10 +43,18 @@
                   })}
                 </div>
               </div>
-              <p>{truncate(article.text, 100)}</p>
+              <p>
+                {truncate(
+                  article.text
+                    .split('')
+                    .filter((i) => !['*', '#', '~'].includes(i))
+                    .join(''),
+                  100
+                )}
+              </p>
               <div class="badge badge-neutral flex flex-row gap-1">
                 <User size="15" />
-                <p>{article.author?.name_full}</p>
+                <p>{article.author ? article.author.name_full : 'CZQM Staff'}</p>
               </div>
             </div>
           </div>
