@@ -1,12 +1,16 @@
 <script lang="ts">
 	import { redirect } from '@sveltejs/kit';
 	import type { PageProps } from './$types';
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 
 	let { form }: PageProps = $props();
 
-	if (form && form.status === 200) {
-		redirect(303, '/events');
-	}
+	onMount(() => {
+		if (form && form.status === 200) {
+			goto('/a/events');
+		}
+	});
 
 	let start: number = $state(Date.now());
 	let end: number | undefined = $state();
