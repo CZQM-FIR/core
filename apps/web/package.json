@@ -56,7 +56,7 @@
     "@oslojs/encoding": "^1.1.0",
     "@tailwindcss/postcss": "^4.0.13",
     "dotenv": "^16.4.5",
-    "drizzle-orm": "^0.43.0",
+    "drizzle-orm": "^0.44.0",
     "marked": "^15.0.12",
     "sanitize-html": "^2.17.0"
   }
