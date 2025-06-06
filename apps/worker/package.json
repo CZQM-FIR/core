@@ -25,7 +25,7 @@
   "dependencies": {
     "@libsql/client": "^0.15.1",
     "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.41.0",
+    "drizzle-orm": "^0.44.0",
     "@czqm/db": "workspace:*"
   }
 }
