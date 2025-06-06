@@ -21,7 +21,11 @@
 			<fieldset class="fieldset">
 				<div class="flex flex-row justify-baseline gap-2">
 					<legend class="fieldset-legend">Article Text</legend>
-					<p class="label ms-75">Supports Markdown</p>
+					<a
+						href="https://www.markdownguide.org/"
+						class="label ms-75 hover:underline"
+						target="_blank">Supports Markdown</a
+					>
 				</div>
 				<textarea name="text" class="textarea h-36 w-120" required value={article.text}></textarea>
 			</fieldset>

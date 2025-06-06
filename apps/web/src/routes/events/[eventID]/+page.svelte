@@ -1,5 +1,7 @@
 <script lang="ts">
+  import sanitize from 'sanitize-html';
   import type { PageData } from './$types';
+  import { marked } from 'marked';
 
   let { data }: { data: PageData } = $props();
 
@@ -36,7 +38,7 @@
           class="rounded-md"
         />
       </a>
-      <p class="flex-1">{event.description}</p>
+      <div class="prose flex-1">{sanitize(marked.parse(event.description, { async: false }))}</div>
     </div>
   </div>
 </section>
