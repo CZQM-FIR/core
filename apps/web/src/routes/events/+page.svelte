@@ -48,7 +48,15 @@
                   })}z
                 </div>
               </div>
-              <p>{truncate(event.description, 100)}</p>
+              <p>
+                {truncate(
+                  event.description
+                    .split('')
+                    .filter((i) => !['*', '#', '~'].includes(i))
+                    .join(''),
+                  100
+                )}
+              </p>
             </div>
           </div>
         </a>

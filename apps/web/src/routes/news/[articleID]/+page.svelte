@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { marked } from 'marked';
+  import sanitizeHtml from 'sanitize-html';
   import type { PageData } from './$types';
   import { User } from '@lucide/svelte';
 
@@ -33,7 +35,14 @@
           />
         </a>
       {/if}
-      <p class="flex-1">{article.text}</p>
+      <div class="prose my-5 flex-1">
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+        {@html sanitizeHtml(
+          marked.parse(article.text, {
+            async: false
+          })
+        )}
+      </div>
     </div>
   </div>
 </section>
