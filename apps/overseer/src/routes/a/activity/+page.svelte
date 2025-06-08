@@ -96,12 +96,12 @@
 						<td>{user.role}</td>
 						{#if lastQuarter}
 							<td class={user.hours.last.internal < 3 ? 'text-warning' : ''}
-								>{user.hours.last.internal}/3</td
+								>{user.hours.last.internal}</td
 							>
 							<td>{user.hours.last.external}</td>
 						{:else}
 							<td class={user.hours.this.internal < 3 ? 'text-warning' : ''}
-								>{user.hours.this.internal}/3</td
+								>{user.hours.this.internal}</td
 							>
 							<td>{user.hours.this.external}</td>
 						{/if}
