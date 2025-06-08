@@ -39,6 +39,7 @@
 						{/if}
 						<li><a href="/a/news">News</a></li>
 						<li><a href="/a/resources">Resources</a></li>
+						<li><a href="/a/files">File Upload</a></li>
 					{/if}
 				</ul>
 			</div>
@@ -56,6 +57,7 @@
 					{/if}
 					<li><a href="/a/news">News</a></li>
 					<li><a href="/a/resources">Resources</a></li>
+					<li><a href="/a/files">File Upload</a></li>
 				{/if}
 			</ul>
 		</div>
