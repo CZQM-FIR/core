@@ -9,10 +9,7 @@
 				.user!.sessions.filter(
 					(s) => s.logonTime.getMonth() === new Date().getMonth() && s.positionId !== 0
 				)
-				.reduce((a, b) => a + b.duration, 0) /
-			1000 /
-			60 /
-			60
+				.reduce((a, b) => a + b.duration, 0) / 3600
 		).toFixed(2)
 	);
 	const activity = $state(
@@ -26,10 +23,7 @@
 						s.position.callsign.split('_').pop() ?? ''
 					)
 				)
-				.reduce((a, b) => a + b.duration, 0) /
-			1000 /
-			60 /
-			60
+				.reduce((a, b) => a + b.duration, 0) / 3600
 		).toFixed(2)
 	);
 	const lastActivity = $state(
@@ -46,10 +40,7 @@
 						s.position.callsign.split('_').pop() ?? ''
 					)
 				)
-				.reduce((a, b) => a + b.duration, 0) /
-			1000 /
-			60 /
-			60
+				.reduce((a, b) => a + b.duration, 0) / 3600
 		).toFixed(2)
 	);
 	const year = $state(
@@ -58,10 +49,7 @@
 				.user!.sessions.filter(
 					(s) => s.logonTime.getFullYear() === new Date().getFullYear() && s.positionId !== 0
 				)
-				.reduce((a, b) => a + b.duration, 0) /
-			1000 /
-			60 /
-			60
+				.reduce((a, b) => a + b.duration, 0) / 3600
 		).toFixed(2)
 	);
 	const externalQuarter = $state(
@@ -73,10 +61,7 @@
 						s.logonTime.getFullYear() === new Date().getFullYear() &&
 						s.positionId === 0
 				)
-				.reduce((a, b) => a + b.duration, 0) /
-			1000 /
-			60 /
-			60
+				.reduce((a, b) => a + b.duration, 0) / 3600
 		).toFixed(2)
 	);
 	const externalLastQuarter = $state(
@@ -88,10 +73,7 @@
 						s.logonTime.getMonth() < new Date().getMonth() - 3 &&
 						s.positionId === 0
 				)
-				.reduce((a, b) => a + b.duration, 0) /
-			1000 /
-			60 /
-			60
+				.reduce((a, b) => a + b.duration, 0) / 3600
 		).toFixed(2)
 	);
 
@@ -161,7 +143,7 @@
 						<td>{i + 1}</td>
 						<td>{session.position.callsign}</td>
 						<td>{session.logonTime.toLocaleString()}</td>
-						<td>{(session.duration / 1000 / 60 / 60).toFixed(2)}h</td>
+						<td>{(session.duration / 3600).toFixed(2)}h</td>
 					</tr>
 				{/each}
 				{#if last20Sessions.length === 0}
