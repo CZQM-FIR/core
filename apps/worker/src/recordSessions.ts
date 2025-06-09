@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm';
-import { positions, sessions } from '@czqm/db/schema';
+import { Position, positions, sessions, users } from '@czqm/db/schema';
 import { Client } from '@libsql/client';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 
@@ -33,8 +33,55 @@ type VatsimController = {
   logon_time: string;
 };
 
+type Session = {
+  cid: number;
+  position: Position;
+  logonTime: Date;
+};
+
+const notifySession = async (
+  session: Session,
+  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
+  env: Env
+) => {
+  const userData = await db.select().from(users).where(eq(users.cid, session.cid)).limit(1);
+
+  if (userData.length === 0) {
+    return;
+  }
+
+  const user = userData[0];
+
+  const positionData = await db
+    .select()
+    .from(positions)
+    .where(eq(positions.id, session.position.id))
+    .limit(1);
+  if (positionData.length === 0) {
+    return;
+  }
+
+  const position = positionData[0];
+
+  const message = `📡 ${user.name_full} (${user.cid}) has connected to ${position.name} (${position.callsign}) at ${session.logonTime.toLocaleTimeString()} (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>).`;
+
+  console.log(env.DISCORD_WEBHOOK_URL.split('/'));
+
+  await fetch(env.DISCORD_WEBHOOK_URL!, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      content: message,
+      token: env.DISCORD_WEBHOOK_URL.split('/').pop()
+    })
+  });
+
+  console.log('Session notification sent:', message);
+};
+
 export const handleRecordSessions = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client }
+  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
+  env: Env
 ) => {
   const controllers = (
     (await (await fetch('https://data.vatsim.net/v3/vatsim-data.json')).json()) as any
@@ -137,6 +184,16 @@ export const handleRecordSessions = async (
             Math.floor(Date.now() / 1000) -
             Math.floor(new Date(controller.logon_time).getTime() / 1000)
         });
+
+        await notifySession(
+          {
+            cid: controller.cid,
+            position: position,
+            logonTime: new Date(controller.logon_time)
+          },
+          db,
+          env
+        );
       }
     }
   }

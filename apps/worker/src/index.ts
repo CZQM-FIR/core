@@ -8,7 +8,7 @@ export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     const { db, client } = createDB(env);
 
-    await handleRecordSessions(db);
+    await handleRecordSessions(db, env);
 
     if (controller.cron === '*/15 * * * *') {
       await vatcanPull(db, env);

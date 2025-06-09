@@ -4,4 +4,5 @@ interface Env {
   TURSO_URL: string;
   TURSO_TOKEN: string;
   VATCAN_API_TOKEN: string;
+  DISCORD_WEBHOOK_URL: string;
 }
