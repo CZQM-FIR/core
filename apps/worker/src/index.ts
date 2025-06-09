@@ -1,5 +1,6 @@
 import { createDB } from './db';
 import { handleRecordSessions } from './recordSessions';
+import { recurringEvents } from './recurringEvents';
 import { vatcanPull } from './vatcanPull';
 
 export default {
@@ -11,6 +12,10 @@ export default {
 
     if (controller.cron === '*/15 * * * *') {
       await vatcanPull(db, env);
+    }
+
+    if (controller.cron === '0 0 * * *') {
+      await recurringEvents(db);
     }
 
     client.close();

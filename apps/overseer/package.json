@@ -30,7 +30,6 @@
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@tailwindcss/vite": "^4.0.0",
 		"daisyui": "^5.0.3",
-		"drizzle-kit": "^0.30.2",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^3.0.0",
@@ -55,7 +54,6 @@
 		"@oslojs/crypto": "^1.0.1",
 		"@oslojs/encoding": "^1.1.0",
 		"@tailwindcss/postcss": "^4.0.13",
-		"dotenv": "^16.4.7",
-		"drizzle-orm": "^0.43.0"
+		"dotenv": "^16.4.7"
 	}
 }

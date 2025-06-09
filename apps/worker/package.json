@@ -10,7 +10,6 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250321.0",
-    "drizzle-kit": "^0.30.5",
     "prettier": "^3.5.3",
     "tsx": "^4.19.3",
     "typescript": "^5.5.2",
@@ -25,7 +24,6 @@
   "dependencies": {
     "@libsql/client": "^0.15.1",
     "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.41.0",
     "@czqm/db": "workspace:*"
   }
 }

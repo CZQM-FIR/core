@@ -2,7 +2,12 @@
   "name": "@czqm/db",
   "type": "module",
   "exports": {
-    "./schema": "./dist/src/schema/index.js"
+    "./schema": {
+      "import": "./dist/src/schema/index.js",
+      "require": "./dist/src/schema/index.js",
+      "development": "./src/schema/index.ts"
+    },
+    "./schema/source": "./src/schema/index.ts"
   },
   "scripts": {
     "build": "tsc",
@@ -13,10 +18,8 @@
   "devDependencies": {
     "@czqm/typescript-config": "workspace:*",
     "dotenv": "^16.5.0",
-    "drizzle-kit": "^0.31.1",
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "drizzle-orm": "^0.43.0"
   }
 }
