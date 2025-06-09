@@ -34,17 +34,20 @@
                 <div class="badge badge-neutral">
                   {new Date(event.start).toLocaleString('en-US', {
                     month: 'short',
-                    day: '2-digit'
+                    day: '2-digit',
+                    timeZone: 'UTC'
                   })}
                   {new Date(event.start).toLocaleTimeString('en-US', {
                     hour: '2-digit',
                     minute: '2-digit',
-                    hour12: false
+                    hour12: false,
+                    timeZone: 'UTC'
                   })}z -
                   {new Date(event.end).toLocaleTimeString('en-US', {
                     hour: '2-digit',
                     minute: '2-digit',
-                    hour12: false
+                    hour12: false,
+                    timeZone: 'UTC'
                   })}z
                 </div>
               </div>

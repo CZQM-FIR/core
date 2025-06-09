@@ -15,17 +15,20 @@
       <div class="badge badge-neutral">
         {new Date(event.start).toLocaleString('en-US', {
           month: 'short',
-          day: '2-digit'
+          day: '2-digit',
+          timeZone: 'UTC'
         })}
         {new Date(event.start).toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit',
-          hour12: false
+          hour12: false,
+          timeZone: 'UTC'
         })}z -
         {new Date(event.end).toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit',
-          hour12: false
+          hour12: false,
+          timeZone: 'UTC'
         })}z
       </div>
     </div>
@@ -38,7 +41,10 @@
           class="rounded-md"
         />
       </a>
-      <div class="prose flex-1">{sanitize(marked.parse(event.description, { async: false }))}</div>
+      <div class="prose flex-1">
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+        {@html sanitize(marked.parse(event.description, { async: false }))}
+      </div>
     </div>
   </div>
 </section>
