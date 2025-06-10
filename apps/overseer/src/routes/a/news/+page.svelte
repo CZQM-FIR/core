@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, Search, SquarePen } from '@lucide/svelte';
+	import { Plus, Search, SquarePen, Trash2 } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -54,10 +54,16 @@
 							{article.date.getUTCHours()}:{article.date.getUTCMinutes()}z</td
 						>
 						<td>{article.author ? article.author.name_full : 'CZQM Staff'}</td>
-						<td>
+						<td class="flex flex-row items-center justify-end gap-3">
 							<a href={`/a/news/${article.id}`}>
 								<SquarePen class="text-xl" size="15" />
 							</a>
+							<form method="post">
+								<input type="hidden" name="id" value={article.id} />
+								<button type="submit">
+									<Trash2 size="15" class="text-error cursor-pointer" />
+								</button>
+							</form>
 						</td>
 					</tr>
 				{/each}

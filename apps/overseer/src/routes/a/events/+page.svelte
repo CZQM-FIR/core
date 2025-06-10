@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, Search, SquarePen } from '@lucide/svelte';
+	import { Plus, Search, SquarePen, Trash2 } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -57,10 +57,16 @@
 							>{event.end.toLocaleString('en-GB', { timeZone: 'UTC' })}
 							{event.end.getUTCHours()}:{event.end.getUTCMinutes()}z</td
 						>
-						<td>
+						<td class="flex flex-row items-center justify-end gap-3">
 							<a href={`/a/events/${event.id}`}>
 								<SquarePen class="text-xl" size="15" />
 							</a>
+							<form method="post">
+								<input type="hidden" name="id" value={event.id} />
+								<button type="submit">
+									<Trash2 size="15" class="text-error cursor-pointer" />
+								</button>
+							</form>
 						</td>
 					</tr>
 				{/each}
