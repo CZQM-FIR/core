@@ -41,12 +41,13 @@
       <div class="max-w-xl">
         <h1 class="text-left text-5xl font-bold md:text-center">Still Have Questions?</h1>
         <p class="py-6">
-          Checkout our FAQs! Our volunteer staff team is also availible to answer any questions you
-          may have. Checkout our contact page to reach out. Please keep in mind that we are all
-          volunteers and it may take 24-48 hours before you recieve a response.
+          <!-- Checkout our FAQs!  -->
+          Our volunteer staff team is also availible to answer any questions you may have. Checkout our
+          contact page to reach out. Please keep in mind that we are all volunteers and it may take 24-48
+          hours before you recieve a response.
         </p>
         <div class="join">
-          <a href="https://wiki.czqm.ca/en/faqs" class="btn btn-primary join-item">FAQs</a>
+          <!-- <a href="https://wiki.czqm.ca/en/faqs" class="btn btn-primary join-item">FAQs</a> -->
           <a href="/contact" class="btn btn-primary join-item">Contact Us</a>
         </div>
       </div>

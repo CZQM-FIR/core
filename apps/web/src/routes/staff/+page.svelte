@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import {Mail} from '@lucide/svelte'
+  import { Mail } from '@lucide/svelte';
 
   let { data }: { data: PageData } = $props();
 </script>
@@ -13,14 +13,18 @@
     {#each data.staff as staff}
       <div class="card bg-base-200 shadow-xl">
         <div class="card-body">
-          <div class="flex flex-row items-end gap-3 w-full">
+          <div class="flex w-full flex-row items-end gap-3">
             <h2 class="card-title">
               <a href="/controller/{staff.cid}" class="hover:link">{staff.name_full}</a>
             </h2>
             <p class="italic">{staff.role}</p>
-            <a href="mailto:{staff.email}" target="_blank" class="ms-auto flex flex-row items-center justify-end gap-2 hover:link">
+            <a
+              href="mailto:{staff.email}"
+              target="_blank"
+              class="hover:link ms-auto flex flex-row items-center justify-end gap-2"
+            >
               <p class="">Contact</p>
-              <Mail size=15/>
+              <Mail size="15" />
             </a>
           </div>
           {#if staff.bio}
