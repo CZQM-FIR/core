@@ -5,7 +5,6 @@
 	let { data }: PageProps = $props();
 
 	let search = $state('');
-
 	let filtered = $derived(data.users);
 
 	$effect(() => {
