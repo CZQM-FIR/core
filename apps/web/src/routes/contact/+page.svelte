@@ -21,7 +21,11 @@
       fast as we can. Please be patient as we work to get back to you.
     </p>
 
-    <form class="mt-3 flex flex-col gap-4" method="POST">
+    <p class="text-center">
+      Please contact us via email at <a href="mailto:staff@czqm.ca">staff@czqm.ca</a>
+    </p>
+
+    <!-- <form class="mt-3 flex flex-col gap-4" method="POST">
       <fieldset class="fieldset w-full max-w-sm">
         <div class="label">
           <span class="label-text">Feedback Category</span>
@@ -104,6 +108,6 @@
           <p class="text-md italic">{form.message}</p>
         {/if}
       </div>
-    </form>
+    </form> -->
   </div>
 </section>
