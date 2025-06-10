@@ -1,7 +1,25 @@
 import { Client } from '@libsql/client/.';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 import * as schema from '@czqm/db/schema';
-import { eq, or } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
+
+type VatcanApiUser = {
+  cid: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  rating: number;
+};
+
+type VatcanApiStaffMember = VatcanApiUser & {};
+
+type VatcanApiResponse = {
+  data: {
+    controllers: VatcanApiUser[];
+    visitors: VatcanApiUser[];
+    staff: Record<string, VatcanApiStaffMember>;
+  };
+};
 
 export const vatcanPull = async (
   db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
@@ -22,7 +40,7 @@ export const vatcanPull = async (
 
   console.log('Data fetched successfully from vatcan');
 
-  const { controllers, visitors, staff } = ((await data.json()) as any).data;
+  const { controllers, visitors, staff } = ((await data.json()) as VatcanApiResponse).data;
 
   const users = await db.query.users.findMany({
     with: {
@@ -36,7 +54,7 @@ export const vatcanPull = async (
 
   for (const controller of controllers
     .filter(
-      (c: any) =>
+      (c: VatcanApiUser) =>
         !users.some((u) => u.cid === c.cid) ||
         !users.find((u) => u.cid === c.cid)?.flags.some((f) => f.flag.name === 'controller')
     )
@@ -78,7 +96,7 @@ export const vatcanPull = async (
 
   for (const controller of visitors
     .filter(
-      (c: any) =>
+      (c: VatcanApiUser) =>
         !users.some((u) => u.cid === c.cid) ||
         !users.find((u) => u.cid === c.cid)?.flags.some((f) => f.flag.name === 'visitor')
     )
@@ -135,38 +153,51 @@ export const vatcanPull = async (
     fe: 18
   };
 
-  for (const pos of Object.keys(staff) as (keyof typeof staffPositions)[]) {
+  for await (const pos of Object.keys(staff) as (keyof typeof staffPositions)[]) {
     const posUsers = users.filter((u) => u.flags.some((f) => f.flag.name === staffPositions[pos]));
-    for (const user of posUsers) {
-      if (user) {
+    if (posUsers.length === 0) {
+      await db
+        .insert(schema.usersToFlags)
+        .values([
+          {
+            userId: staff[pos].cid,
+            flagId: flagIDs[pos]
+          },
+          {
+            userId: staff[pos].cid,
+            flagId: 27 // staff
+          }
+        ])
+        .onConflictDoNothing();
+
+      console.log(
+        `Inserted new staff: ${staff[pos].first_name} ${staff[pos].last_name} (${staff[pos].cid})`
+      );
+    } else {
+      for await (const user of posUsers) {
         if (user.cid !== staff[pos].cid) {
           await db
             .delete(schema.usersToFlags)
             .where(
-              or(
+              and(
                 eq(schema.usersToFlags.userId, user.cid),
                 eq(schema.usersToFlags.flagId, flagIDs[pos])
               )
             );
-        }
-      } else {
-        await db
-          .insert(schema.usersToFlags)
-          .values([
-            {
-              userId: staff[pos].cid,
-              flagId: flagIDs[pos]
-            },
-            {
-              userId: staff[pos].cid,
-              flagId: 27 // staff
-            }
-          ])
-          .onConflictDoNothing();
+          user.flags = user.flags.filter((f) => f.flag.name !== staffPositions[pos]);
 
-        console.log(
-          `Inserted new staff: ${staff[pos].first_name} ${staff[pos].last_name} (${staff[pos].cid})`
-        );
+          if (!user.flags.some((f) => Object.values(staffPositions).includes(f.flag.name))) {
+            await db.delete(schema.usersToFlags).where(
+              and(
+                eq(schema.usersToFlags.userId, user.cid),
+                eq(schema.usersToFlags.flagId, 27) // staff
+              )
+            );
+          }
+          console.log(
+            `Removed ${staffPositions[pos]} flag from user: ${user.name_full} (${user.cid})`
+          );
+        }
       }
     }
   }
