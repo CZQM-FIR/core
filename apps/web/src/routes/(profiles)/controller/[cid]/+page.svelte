@@ -12,7 +12,7 @@
     .sort((a, b) => {
       return new Date(b.logonTime).getTime() - new Date(a.logonTime).getTime();
     })
-    .slice(0, 20);
+    .slice(0, 10);
 
   let thisMonth = user?.sessions
     ?.filter((s) => s.positionId !== -1)
@@ -95,6 +95,16 @@
             <span class="font-bold">Controller Rating: </span>
             {user?.rating.long} ({user?.rating.short})
           </li>
+          {#if favPosition}
+            <li>
+              <span class="font-semibold">Favourite Position:</span>
+              {favPosition.position.callsign} ({Math.floor(
+                favPosition.duration / 3600
+              )}:{Math.floor((favPosition.duration % 3600) / 60)
+                .toString()
+                .padStart(2, '0')})
+            </li>
+          {/if}
         </ul>
         <div class="flex flex-row items-center justify-center gap-4">
           {#if getRosterStatus(user, 'gnd') !== -1}
@@ -140,18 +150,8 @@
         </div>
       </div>
       <div>
-        {#if favPosition}
-          <div>
-            <span class="font-semibold">Favourite Position:</span>
-            {favPosition.position.callsign} ({Math.floor(favPosition.duration / 3600)}:{Math.floor(
-              (favPosition.duration % 3600) / 60
-            )
-              .toString()
-              .padStart(2, '0')})
-          </div>
-        {/if}
         <div class="bg-base-300 rounded-lg p-5">
-          <h2 class="text-xl font-semibold">Most Recent 20 Connections</h2>
+          <h2 class="text-xl font-semibold">Most Recent 10 Connections</h2>
           <div class="overflow-x-auto">
             <table class="table-zebra table">
               <thead>
