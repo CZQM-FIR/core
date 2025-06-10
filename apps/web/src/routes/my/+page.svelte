@@ -39,6 +39,14 @@
   let activityHours =
     user.sessions
       .filter((session) => {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const sessionMonth = new Date(session.logonTime).getMonth();
+        const quarterStartMonth = currentMonth - (currentMonth % 3);
+
+        return sessionMonth >= quarterStartMonth && sessionMonth <= quarterStartMonth + 2;
+      })
+      .filter((session) => {
         if ([-1, 0].includes(session.positionId)) return false;
         if (user.ratingID >= 5)
           return ['APP', 'CTR'].includes(session.position.callsign.split('_').pop() || '');
@@ -138,7 +146,8 @@
                 onclick={() => activityModal?.showModal()}
                 class="hover:link flex items-baseline gap-2">Activity Hours <Info size="15" /></td
               >
-              <td class={activityHours < 3 ? 'text-warning' : ''}>{activityHours.toFixed(2)} / 3</td
+              <td class={activityHours < 3 ? 'text-warning' : ''}
+                >{activityHours.toFixed(2)} {activityHours <= 3 ? '/ 3' : ''}</td
               >
             </tr>
             <tr>
