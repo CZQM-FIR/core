@@ -18,7 +18,9 @@
     ?.filter((s) => s.positionId !== -1)
     .filter((s) => {
       let date = new Date(s.logonTime);
-      return date.getMonth() === new Date().getMonth();
+      return (
+        date.getMonth() === new Date().getMonth() && date.getFullYear() === new Date().getFullYear()
+      );
     })
     .reduce((acc, session) => {
       return acc + session.duration;

@@ -16,7 +16,10 @@
 		(
 			data
 				.user!.sessions.filter(
-					(s) => s.logonTime.getMonth() >= new Date().getMonth() - 3 && s.positionId !== 0
+					(s) =>
+						s.logonTime.getMonth() >= new Date().getMonth() - 3 &&
+						s.positionId !== 0 &&
+						s.logonTime.getFullYear() === new Date().getFullYear()
 				)
 				.filter((s) =>
 					(data.user!.ratingID >= 5 ? ['APP', 'CTR'] : ['GND', 'TWR', 'APP', 'CTR']).includes(
@@ -33,7 +36,8 @@
 					(s) =>
 						s.logonTime.getMonth() >= new Date().getMonth() - 6 &&
 						s.logonTime.getMonth() < new Date().getMonth() - 3 &&
-						s.positionId !== 0
+						s.positionId !== 0 &&
+						s.logonTime.getFullYear() === new Date().getFullYear()
 				)
 				.filter((s) =>
 					(data.user!.ratingID >= 5 ? ['APP', 'CTR'] : ['GND', 'TWR', 'APP', 'CTR']).includes(
