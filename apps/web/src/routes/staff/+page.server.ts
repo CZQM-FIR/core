@@ -14,6 +14,7 @@ export const load = (async () => {
       };
     }[];
     role?: string;
+    email?: string;
   };
 
   const users = (await db.query.users.findMany({
@@ -65,16 +66,35 @@ export const load = (async () => {
 
   staff.map((staff) => {
     const roles = [];
+    let email: string | undefined;
 
-    if (staff.flags.some((flag) => flag.flag.name === 'chief')) roles.push('FIR Chief');
-    if (staff.flags.some((flag) => flag.flag.name === 'deputy')) roles.push('Deputy FIR Chief');
-    if (staff.flags.some((flag) => flag.flag.name === 'chief-instructor'))
+    if (staff.flags.some((flag) => flag.flag.name === 'chief')) {
+      roles.push('FIR Chief');
+      email = email ?? 'chief@czqm.ca';
+    }
+    if (staff.flags.some((flag) => flag.flag.name === 'deputy')) {
+      roles.push('Deputy FIR Chief');
+      email = email ?? 'deputy@czqm.ca';
+    }
+    if (staff.flags.some((flag) => flag.flag.name === 'chief-instructor')) {
       roles.push('Chief Instructor');
-    if (staff.flags.some((flag) => flag.flag.name === 'web')) roles.push('Webmaster');
-    if (staff.flags.some((flag) => flag.flag.name === 'events')) roles.push('Events Coordinator');
-    if (staff.flags.some((flag) => flag.flag.name === 'sector')) roles.push('Facility Engineer');
+      email = email ?? 'instructor@czqm.ca';
+    }
+    if (staff.flags.some((flag) => flag.flag.name === 'web')) {
+      roles.push('Webmaster');
+      email = email ?? 'webmaster@czqm.ca';
+    }
+    if (staff.flags.some((flag) => flag.flag.name === 'events')) {
+      roles.push('Events Coordinator');
+      email = email ?? 'events@czqm.ca';
+    }
+    if (staff.flags.some((flag) => flag.flag.name === 'sector')) {
+      roles.push('Facility Engineer');
+      email = email ?? 'engineer@czqm.ca';
+    }
 
     staff.role = roles.join(' & ');
+    staff.email = email;
   });
 
   return {

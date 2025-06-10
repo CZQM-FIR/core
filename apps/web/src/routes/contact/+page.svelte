@@ -21,8 +21,8 @@
       fast as we can. Please be patient as we work to get back to you.
     </p>
 
-    <p class="text-center">
-      Please contact us via email at <a href="mailto:staff@czqm.ca">staff@czqm.ca</a>
+    <p class="text-center mt-3">
+      Please contact us via the contact buttons <a class="link" href="/staff">here</a> or email us at <a class="hover:link" href="mailto:staff@czqm.ca">staff@czqm.ca</a>
     </p>
 
     <!-- <form class="mt-3 flex flex-col gap-4" method="POST">
