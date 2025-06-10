@@ -3,5 +3,6 @@
   "compatibility_date": "2025-04-01",
   "assets": {
     "directory": ".svelte-kit/cloudflare"
-  }
+  },
+  "account_id": "cade74c6e5390b8462bb5fd578f0b904"
 }
