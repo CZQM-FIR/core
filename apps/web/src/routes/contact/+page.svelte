@@ -1,15 +1,15 @@
 <script lang="ts">
-  // import type { ActionData, PageData } from './$types';
+  import type { ActionData, PageData } from './$types';
 
-  // let { form }: { data: PageData; form: ActionData } = $props();
+  let { form }: { data: PageData; form: ActionData } = $props();
 
-  // let categories = ['Other', 'Controller Feedback', 'Website Feedback'];
+  let categories = ['Other', 'Controller Feedback', 'Website Feedback'];
 
-  // let feedbackCategory = $state('');
-  // let controllerCID = $state('');
-  // let feedbackPage = $state('');
-  // let subject = $state('');
-  // let feedbackText = $state('');
+  let feedbackCategory = $state('');
+  let controllerCID = $state('');
+  let feedbackPage = $state('');
+  let subject = $state('');
+  let feedbackText = $state('');
 </script>
 
 <section id="contact" class="min-h-screen">
@@ -26,7 +26,7 @@
       at <a class="hover:link" href="mailto:staff@czqm.ca">staff@czqm.ca</a>
     </p>
 
-    <!-- <form class="mt-3 flex flex-col gap-4" method="POST">
+    <form class="mt-3 flex flex-col gap-4" method="POST">
       <fieldset class="fieldset w-full max-w-sm">
         <div class="label">
           <span class="label-text">Feedback Category</span>
@@ -109,6 +109,6 @@
           <p class="text-md italic">{form.message}</p>
         {/if}
       </div>
-    </form> -->
+    </form>
   </div>
 </section>
