@@ -2,7 +2,9 @@ import { invalidateSession } from '$lib/auth';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async (event) => {
-  invalidateSession(event.locals.session!.id);
+  await invalidateSession(event.locals.session!.id);
+
+  event.cookies.delete('session', { path: '/' });
 
   return new Response(null, {
     status: 302,
