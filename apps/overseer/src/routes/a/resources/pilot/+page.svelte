@@ -58,11 +58,9 @@
 
 				<fieldset class="fieldset">
 					<legend class="fieldset-legend">Description</legend>
-					<textarea
-						class="textarea min-w-80"
-						name="description"
-						placeholder="Description"
-					>{form?.description}</textarea>
+					<textarea class="textarea min-w-80" name="description" placeholder="Description"
+						>{form?.description}</textarea
+					>
 				</fieldset>
 
 				<div class="flex flex-row items-center gap-3">
@@ -177,11 +175,9 @@
 
 									<fieldset class="fieldset">
 										<legend class="fieldset-legend">Description</legend>
-										<textarea
-											class="textarea min-w-80"
-											name="description"
-											placeholder="Description"
-										>{form?.description || resource.description}</textarea>
+										<textarea class="textarea min-w-80" name="description" placeholder="Description"
+											>{form?.description || resource.description}</textarea
+										>
 									</fieldset>
 
 									<div class="flex flex-row items-center gap-3">
