@@ -19,6 +19,7 @@ export const actions = {
 		const link = formData.get('link') as string;
 		const publicResource = Boolean(formData.get('public') as string);
 		const category = formData.get('category') as string;
+		const description = formData.get('description') as string;
 
 		if (!name || !link || !category) {
 			return fail(400, {
@@ -68,6 +69,21 @@ export const actions = {
 				category
 			});
 		}
+
+		await db.insert(schema.resources).values({
+			name,
+			url: link,
+			public: publicResource,
+			type: 'pilot',
+			category,
+			description
+		});
+
+		return {
+			ok: true,
+			status: 200,
+			message: 'Resource created successfully'
+		};
 	},
 	editResource: async ({ request, locals }) => {
 		const formData = await request.formData();
@@ -75,6 +91,7 @@ export const actions = {
 		const link = formData.get('link') as string;
 		const publicResource = Boolean(formData.get('public') as string);
 		const category = formData.get('category') as string;
+		const description = formData.get('description') as string;
 		const id = Number(formData.get('id'));
 
 		if (!name || !link || !category) {
@@ -86,7 +103,8 @@ export const actions = {
 				link,
 				publicResource,
 				category,
-				id
+				id,
+				description
 			});
 		}
 
@@ -101,7 +119,8 @@ export const actions = {
 				link,
 				publicResource,
 				category,
-				id
+				id,
+				description
 			});
 		}
 
@@ -125,7 +144,8 @@ export const actions = {
 				link,
 				publicResource,
 				category,
-				id
+				id,
+				description
 			});
 		}
 
@@ -142,7 +162,8 @@ export const actions = {
 				link,
 				publicResource,
 				category,
-				id
+				id,
+				description
 			});
 		}
 
@@ -153,7 +174,8 @@ export const actions = {
 				category,
 				public: publicResource,
 				url: link,
-				type: 'pilot'
+				type: 'pilot',
+				description
 			})
 			.where(eq(schema.resources.id, id))
 			.returning();

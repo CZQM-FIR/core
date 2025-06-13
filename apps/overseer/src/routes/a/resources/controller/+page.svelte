@@ -15,7 +15,7 @@
 		<form
 			action="?/createResource"
 			method="post"
-			class="bg-base-300 flex flex-col gap-3 rounded-2xl p-4 px-6"
+			class="bg-base-300 flex flex-col items-start gap-3 rounded-2xl p-4 px-6"
 			use:enhance
 		>
 			<h1 class="text-xl font-semibold">New Resource</h1>
@@ -54,6 +54,13 @@
 						value={form?.category}
 						placeholder="Category"
 					/>
+				</fieldset>
+
+				<fieldset class="fieldset">
+					<legend class="fieldset-legend">Description</legend>
+					<textarea class="textarea min-w-80" name="description" placeholder="Description"
+						>{form?.description}</textarea
+					>
 				</fieldset>
 
 				<div class="flex flex-row items-center gap-3">
@@ -164,6 +171,13 @@
 											value={form?.category || resource.category}
 											placeholder="Category"
 										/>
+									</fieldset>
+
+									<fieldset class="fieldset">
+										<legend class="fieldset-legend">Description</legend>
+										<textarea class="textarea min-w-80" name="description" placeholder="Description"
+											>{form?.description || resource.description}</textarea
+										>
 									</fieldset>
 
 									<div class="flex flex-row items-center gap-3">

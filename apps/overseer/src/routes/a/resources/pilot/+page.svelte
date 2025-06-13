@@ -56,6 +56,15 @@
 					/>
 				</fieldset>
 
+				<fieldset class="fieldset">
+					<legend class="fieldset-legend">Description</legend>
+					<textarea
+						class="textarea min-w-80"
+						name="description"
+						placeholder="Description"
+					>{form?.description}</textarea>
+				</fieldset>
+
 				<div class="flex flex-row items-center gap-3">
 					<span>Available to Pilots</span>
 					<input
@@ -164,6 +173,15 @@
 											value={form?.category || resource.category}
 											placeholder="Category"
 										/>
+									</fieldset>
+
+									<fieldset class="fieldset">
+										<legend class="fieldset-legend">Description</legend>
+										<textarea
+											class="textarea min-w-80"
+											name="description"
+											placeholder="Description"
+										>{form?.description || resource.description}</textarea>
 									</fieldset>
 
 									<div class="flex flex-row items-center gap-3">

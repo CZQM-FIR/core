@@ -51,6 +51,11 @@
                 <li><a href="/staff"><Shield class="mr-1" size="15" /> Staff</a></li>
                 <li><a href="/roster"><Users class="mr-1" size="15" /> Roster</a></li>
                 <li><a href="/join"><UserPlus class="mr-1" size="15" /> Join Us</a></li>
+                <li>
+                  <a href="/controller-resources"
+                    ><ClipboardList class="mr-1" size="15" /> Resources</a
+                  >
+                </li>
               </ul>
             </details>
           </li>
@@ -84,6 +89,11 @@
               <li><a href="/staff"><Shield class="mr-1" size="15" /> Staff</a></li>
               <li><a href="/roster"><Users class="mr-1" size="15" /> Roster</a></li>
               <li><a href="/join"><UserPlus class="mr-1" size="15" /> Join Us</a></li>
+              <li>
+                <a href="/controller-resources"
+                  ><ClipboardList class="mr-1" size="15" /> Resources</a
+                >
+              </li>
             </ul>
           </div>
         </li>
