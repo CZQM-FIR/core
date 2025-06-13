@@ -2,6 +2,10 @@
 	import type { PageProps } from './$types';
 
 	let { form }: PageProps = $props();
+
+	if (form && !form?.success) {
+		console.error(form.error);
+	}
 </script>
 
 <section class="container mx-auto">
@@ -20,6 +24,10 @@
 				target="_blank"
 				rel="noopener">https://files.czqm.ca/{form.key}</a
 			>
+		</p>
+	{:else if form?.error}
+		<p class="text-error">
+			Error uploading file: {form.error}
 		</p>
 	{/if}
 </section>

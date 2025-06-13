@@ -60,7 +60,7 @@ export const actions: Actions = {
 				);
 			} catch (error) {
 				console.error(error);
-				return fail(500);
+				return fail(500, { success: false, error: 'Failed to upload file to R2.' + error });
 			}
 		}
 
