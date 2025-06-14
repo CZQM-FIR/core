@@ -1,8 +1,0 @@
-{
-  "name": "@czqm/typescript-config",
-  "private": true,
-  "type": "module",
-  "publishConfig": {
-    "access": "public"
-  }
-}

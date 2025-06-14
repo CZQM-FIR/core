@@ -255,9 +255,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20250321.0
         version: 4.20250513.0
-      '@czqm/typescript-config':
-        specifier: workspace:*
-        version: link:../../packages/typescript-config
       '@eslint/js':
         specifier: ^9.18.0
         version: 9.26.0
@@ -288,9 +285,6 @@ importers:
 
   packages/db:
     devDependencies:
-      '@czqm/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0
@@ -300,8 +294,6 @@ importers:
       typescript:
         specifier: ^5.0.0
         version: 5.8.3
-
-  packages/typescript-config: {}
 
 packages:
 

@@ -2,21 +2,13 @@
   "name": "@czqm/db",
   "type": "module",
   "exports": {
-    "./schema": {
-      "import": "./dist/src/schema/index.js",
-      "require": "./dist/src/schema/index.js",
-      "development": "./src/schema/index.ts"
-    },
-    "./schema/source": "./src/schema/index.ts"
+    "./schema": "./src/schema/index.ts"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch --preserveWatchOutput",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },
   "devDependencies": {
-    "@czqm/typescript-config": "workspace:*",
     "dotenv": "^16.5.0",
     "typescript": "^5.0.0",
     "drizzle-kit": "^0.31.1"

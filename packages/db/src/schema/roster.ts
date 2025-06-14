@@ -1,26 +1,26 @@
-import { relations, type InferSelectModel } from 'drizzle-orm';
-import { int, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
-import { positions, users } from './index.js';
+import { relations, type InferSelectModel } from "drizzle-orm";
+import { int, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import { positions, users } from "./index";
 
-export const roster = sqliteTable('roster', {
+export const roster = sqliteTable("roster", {
   id: int().primaryKey({ autoIncrement: true }),
-  controllerId: int('controller_id')
+  controllerId: int("controller_id")
     .notNull()
-    .references(() => users.cid, { onDelete: 'cascade' }),
-  position: text('position').notNull(),
-  status: int('status').notNull()
+    .references(() => users.cid, { onDelete: "cascade" }),
+  position: text("position").notNull(),
+  status: int("status").notNull(),
 });
 
 export const rosterRelations = relations(roster, ({ one, many }) => ({
   controller: one(users, {
     fields: [roster.controllerId],
-    references: [users.cid]
-  })
+    references: [users.cid],
+  }),
 }));
 
 export type RosterStatus = InferSelectModel<typeof roster>;
 
-export type RosterPosition = 'gnd' | 'twr' | 'app' | 'ctr';
+export type RosterPosition = "gnd" | "twr" | "app" | "ctr";
 
 export type RosterUserData = {
   cid: number;

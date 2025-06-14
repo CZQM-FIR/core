@@ -1,15 +1,15 @@
-import { relations, type InferSelectModel } from 'drizzle-orm';
-import { int, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { usersToFlags } from './usersToFlags.js';
+import { relations, type InferSelectModel } from "drizzle-orm";
+import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { usersToFlags } from "./usersToFlags";
 
-export const flags = sqliteTable('flags', {
+export const flags = sqliteTable("flags", {
   id: int().primaryKey({ autoIncrement: true }),
   name: text().notNull(),
-  showInSelect: int({ mode: 'boolean' }).default(true)
+  showInSelect: int({ mode: "boolean" }).default(true),
 });
 
 export const flagsRelations = relations(flags, ({ many }) => ({
-  usersToFlags: many(usersToFlags)
+  usersToFlags: many(usersToFlags),
 }));
 
 export type Flag = InferSelectModel<typeof flags>;
