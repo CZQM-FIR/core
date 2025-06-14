@@ -7,8 +7,8 @@
 	let activeEndorsements = localUserData.soloEndorsements.filter((e) => e.expiresAt > new Date());
 </script>
 
-<div class="flex flex-col self-start rounded border border-gray-600 p-4">
-	<h1 class="min-w-96 text-lg font-semibold">Solo Endorsements</h1>
+<div class="flex min-w-96 flex-col rounded border border-gray-600 p-4">
+	<h1 class="text-lg font-semibold">Solo Endorsements</h1>
 	<div class="mb-3">
 		{#if activeEndorsements.length > 0}
 			<div class="rounded-box border-base-content/5 bg-base-100 mt-1 overflow-x-auto border">

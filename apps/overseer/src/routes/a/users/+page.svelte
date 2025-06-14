@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Search, SquarePen } from '@lucide/svelte';
+	import { CircleCheck, CircleMinus, CircleX, Search, SquarePen } from '@lucide/svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -38,6 +38,7 @@
 					<th>Rating</th>
 					<th>Role</th>
 					<th></th>
+					<th></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -47,6 +48,21 @@
 						<td>{user.cid}</td>
 						<td>{user.rating.long}</td>
 						<td>{user.role}</td>
+						<td class="flex justify-start">
+							{#if user.active === 1}
+								<div class="tooltip" data-tip="Active">
+									<CircleCheck size="18" class="text-success" />
+								</div>
+							{:else if user.active === 0}
+								<div class="tooltip" data-tip="Inactive">
+									<CircleX size="18" class="text-error" />
+								</div>
+							{:else if user.active === -1}
+								<div class="tooltip" data-tip="On Leave">
+									<CircleMinus size="18" class="text-warning" />
+								</div>
+							{/if}
+						</td>
 						<td>
 							<a href={`/a/users/${user.cid}`}>
 								<SquarePen class="text-xl" size="15" />

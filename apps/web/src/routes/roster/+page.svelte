@@ -2,6 +2,7 @@
   import type { PageData } from './$types';
   import RosterStatusIndicator from './RosterStatusIndicator.svelte';
   import { getRosterStatus } from '$lib/utilities/getRosterStatus';
+  import { CircleCheck, CircleMinus, CircleX } from '@lucide/svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -27,16 +28,17 @@
     <table class="table-zebra table">
       <thead>
         <tr>
-          <th></th>
           <!-- Name, Rating, Role -->
           <th></th>
           <!-- CID -->
           <th></th>
-          <!-- Status -->
-          <th>GND</th>
-          <th>TWR</th>
-          <th>APP</th>
-          <th>CTR</th>
+          <!-- Activity -->
+          <th></th>
+          <!-- Roster Status -->
+          <th class="text-center">GND</th>
+          <th class="text-center">TWR</th>
+          <th class="text-center">APP</th>
+          <th class="text-center">CTR</th>
         </tr>
       </thead>
       <tbody>
@@ -51,7 +53,21 @@
               <span class="font-normal">{controller.role}</span>
             </th>
             <td>{controller.cid}</td>
-            <td></td>
+            <td>
+              {#if controller.active === 1}
+                <div class="tooltip" data-tip="Active">
+                  <CircleCheck size="18" class="text-success" />
+                </div>
+              {:else if controller.active === 0}
+                <div class="tooltip" data-tip="Inactive">
+                  <CircleX size="18" class="text-error" />
+                </div>
+              {:else if controller.active === -1}
+                <div class="tooltip" data-tip="On Leave">
+                  <CircleMinus size="18" class="text-warning" />
+                </div>
+              {/if}
+            </td>
             <RosterStatusIndicator roster={getRosterStatus(controller, 'gnd')} />
             <RosterStatusIndicator roster={getRosterStatus(controller, 'twr')} />
             <RosterStatusIndicator roster={getRosterStatus(controller, 'app')} />

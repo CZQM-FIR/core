@@ -454,5 +454,64 @@ export const actions = {
 		} else {
 			return fail(500);
 		}
+	},
+	setActiveStatus: async ({ request, locals, params }) => {
+		const data = await request.formData();
+		const cid = Number(params.cid);
+		const status = Number(data.get('status'));
+
+		if (!cid || status === undefined || isNaN(status)) {
+			return fail(400);
+		}
+
+		if (!locals.user) return fail(401);
+
+		const actioner = await db.query.users.findFirst({
+			where: eq(users.cid, locals.user!.cid),
+			with: {
+				flags: {
+					with: {
+						flag: true
+					}
+				}
+			}
+		});
+
+		if (
+			!actioner ||
+			!actioner.flags.some((f) =>
+				['admin', 'chief', 'deputy', 'chief-instructor'].includes(f.flag.name)
+			)
+		) {
+			return fail(401, {
+				ok: false,
+				message: "You do not have permission to change this user's active status"
+			});
+		}
+
+		const user = await db.query.users.findFirst({
+			where: eq(users.cid, cid),
+			with: {
+				flags: {
+					with: {
+						flag: true
+					}
+				}
+			}
+		});
+		if (!user) return fail(404, { ok: false, message: 'User not found' });
+
+		try {
+			await db.update(users).set({ active: status }).where(eq(users.cid, cid));
+		} catch (error) {
+			console.error('Failed to update user active status:', error);
+			return fail(500, { message: 'Failed to update user active status', active: user.active });
+		}
+
+		return {
+			status: 200,
+			message: `User's active status set to ${status === 1 ? 'active' : status === -1 ? 'on leave' : 'inactive'}`,
+			active: status
+		};
 	}
 } satisfies Actions;

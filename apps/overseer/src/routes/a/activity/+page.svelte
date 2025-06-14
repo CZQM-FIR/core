@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { Search } from '@lucide/svelte';
+	import { CircleCheck, CircleMinus, CircleX, Search } from '@lucide/svelte';
 	let { data }: { data: PageData } = $props();
 
 	let search = $state('');
@@ -83,6 +83,8 @@
 					<th>CID</th>
 					<th>Rating</th>
 					<th>Role</th>
+					<th></th>
+					<!-- Status-->
 					<th>Hours</th>
 					<th>External Hours</th>
 				</tr>
@@ -94,6 +96,21 @@
 						<td>{user.cid}</td>
 						<td>{user.rating.short}</td>
 						<td>{user.role}</td>
+						<td class="flex justify-start">
+							{#if user.active === 1}
+								<div class="tooltip" data-tip="Active">
+									<CircleCheck size="18" class="text-success" />
+								</div>
+							{:else if user.active === 0}
+								<div class="tooltip" data-tip="Inactive">
+									<CircleX size="18" class="text-error" />
+								</div>
+							{:else if user.active === -1}
+								<div class="tooltip" data-tip="On Leave">
+									<CircleMinus size="18" class="text-warning" />
+								</div>
+							{/if}
+						</td>
 						{#if lastQuarter}
 							<td class={user.hours.last.internal < 3 ? 'text-warning' : ''}
 								>{user.hours.last.internal}</td

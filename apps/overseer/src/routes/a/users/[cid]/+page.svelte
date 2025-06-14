@@ -7,6 +7,7 @@
 	import type { RosterUserData } from '@czqm/db/schema';
 	import UserActivity from './UserActivity.svelte';
 	import ManageFlags from './ManageFlags.svelte';
+	import ManageUserActiveStatus from './ManageUserActiveStatus.svelte';
 
 	let { data, form }: PageProps = $props();
 
@@ -21,9 +22,10 @@
 		<div class="flex flex-col flex-wrap gap-5 lg:flex-row">
 			<ManageUserInfo {data} />
 			<ManageUserRoster {data} />
-			<UserActivity {data} showExternal={true} />
+			<ManageUserActiveStatus {data} {form} />
 			<ManageUserEndorsements {data} {localUserData} {form} />
 			<ManageFlags {data} {form} />
+			<UserActivity {data} showExternal={true} />
 		</div>
 	</div>
 </section>

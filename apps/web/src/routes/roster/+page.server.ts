@@ -7,7 +7,8 @@ export const load = (async () => {
     columns: {
       cid: true,
       name_full: true,
-      ratingID: true
+      ratingID: true,
+      active: true
     },
     with: {
       flags: {
@@ -33,6 +34,7 @@ export const load = (async () => {
     rating: { id: number; long: string; short: string };
     flags: { userId: number; flagId: number; flag: { name: string } }[];
     role?: string;
+    active: number;
   }>;
 
   const controllers = users.filter((controller) => {

@@ -9,12 +9,13 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "drizzle-kit": "^0.31.1",
     "prettier": "^3.5.0",
     "prettier-plugin-svelte": "^3.3.3",
-    "turbo": "^2.5.3",
-    "drizzle-kit": "^0.31.1"
+    "turbo": "^2.5.3"
   },
   "dependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.1.0",
     "drizzle-orm": "^0.43.0"
   },
   "packageManager": "pnpm@8.15.9+sha512.499434c9d8fdd1a2794ebf4552b3b25c0a633abcee5bb15e7b5de90f32f47b513aca98cd5cfd001c31f0db454bc3804edccd578501e4ca293a6816166bbd9f81",

@@ -88,7 +88,7 @@
 
 <div class="flex flex-col rounded border border-gray-600 p-4">
 	<div class="mb-3">
-		<h1 class="min-w-96 text-lg font-semibold">Control Authorization</h1>
+		<h1 class="text-lg font-semibold">Control Authorization</h1>
 		<p class="text-sm text-gray-500 italic">To manage a solo, please see "Solo Endorsements"</p>
 		<!-- To be manual overide only once training system is online -->
 		<!-- <p class="text-sm text-gray-500 italic">Manual Overide</p> -->

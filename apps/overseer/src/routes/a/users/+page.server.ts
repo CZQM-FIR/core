@@ -6,7 +6,8 @@ export const load = (async () => {
 	const users = await db.query.users.findMany({
 		columns: {
 			cid: true,
-			name_full: true
+			name_full: true,
+			active: true
 		},
 		with: {
 			flags: {

@@ -81,7 +81,7 @@
 		).toFixed(2)
 	);
 
-	const last20Sessions = $state(
+	const last10Sessions = $state(
 		data
 			.user!.sessions.filter((s) => {
 				if (showExternal) {
@@ -91,7 +91,7 @@
 				}
 			})
 			.sort((a, b) => b.logonTime.getTime() - a.logonTime.getTime())
-			.slice(0, 20)
+			.slice(0, 10)
 	);
 </script>
 
@@ -142,7 +142,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each last20Sessions as session, i (session.id)}
+				{#each last10Sessions as session, i (session.id)}
 					<tr>
 						<td>{i + 1}</td>
 						<td>{session.position.callsign}</td>
@@ -150,7 +150,7 @@
 						<td>{(session.duration / 3600).toFixed(2)}h</td>
 					</tr>
 				{/each}
-				{#if last20Sessions.length === 0}
+				{#if last10Sessions.length === 0}
 					<tr>
 						<td colspan="4" class="text-center"> No sessions found </td>
 					</tr>
