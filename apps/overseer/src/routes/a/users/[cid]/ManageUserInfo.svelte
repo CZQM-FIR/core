@@ -16,7 +16,7 @@
 			<input
 				type="text"
 				class="input w-full cursor-default"
-				disabled
+				readonly
 				value={data.user?.name_first}
 			/>
 		</fieldset>
@@ -25,26 +25,26 @@
 			<input
 				type="text"
 				class="input w-full cursor-default"
-				disabled
+				readonly
 				value={data.user?.name_last}
 			/>
 		</fieldset>
 	</div>
 	<fieldset class="fieldset">
 		<legend class="fieldset-legend">Email</legend>
-		<input type="text" class="input w-96 cursor-default" disabled value={data.user?.email} />
+		<input type="text" class="input w-96 cursor-default" readonly value={data.user?.email} />
 	</fieldset>
 	<div class="flex flex-row gap-3">
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">CID</legend>
-			<input type="text" class="input w-full cursor-default" disabled value={data.user?.cid} />
+			<input type="text" class="input w-full cursor-default" readonly value={data.user?.cid} />
 		</fieldset>
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Rating</legend>
 			<input
 				type="text"
 				class="input w-full cursor-default"
-				disabled
+				readonly
 				value={`${data.user?.rating.long} (${data.user?.rating.short})`}
 			/>
 		</fieldset>
