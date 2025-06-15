@@ -43,8 +43,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.9
       '@lucide/svelte':
-        specifier: ^0.511.0
-        version: 0.511.0(svelte@5.34.3)
+        specifier: ^0.515.0
+        version: 0.515.0(svelte@5.34.3)
       '@oslojs/crypto':
         specifier: ^1.0.1
         version: 1.0.1
@@ -140,8 +140,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.9
       '@lucide/svelte':
-        specifier: ^0.511.0
-        version: 0.511.0(svelte@5.34.3)
+        specifier: ^0.515.0
+        version: 0.515.0(svelte@5.34.3)
       '@oslojs/crypto':
         specifier: ^1.0.1
         version: 1.0.1
@@ -2806,8 +2806,8 @@ packages:
     dev: false
     optional: true
 
-  /@lucide/svelte@0.511.0(svelte@5.34.3):
-    resolution: {integrity: sha512-aLCSPMUJmHlCuLXzXENXa4Z1NV2mN1iAZAFKk4bEbey+/MdsNlu+/DqwVkgW3Yvj6p8y8Vn5xZ2v9CLmPlA6Vw==}
+  /@lucide/svelte@0.515.0(svelte@5.34.3):
+    resolution: {integrity: sha512-CEAyqcZmNBfYzVgaRmK2RFJP5tnbXxekRyDk0XX/eZQRfsJmkDvmQwXNX8C869BgNeryzmrRyjHhUL6g9ZOHNA==}
     peerDependencies:
       svelte: ^5
     dependencies:
@@ -4144,10 +4144,12 @@ packages:
 
   /color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+    requiresBuild: true
     dev: true
 
   /color-string@1.9.1:
     resolution: {integrity: sha512-shrVawQFojnZv6xM40anx4CkoDP+fZsw/ZerEMsW/pyzsRbElpsL/DBVW7q3ExxwusdNXI3lXpuhEZkzs8p5Eg==}
+    requiresBuild: true
     dependencies:
       color-name: 1.1.4
       simple-swizzle: 0.2.2
@@ -4156,6 +4158,7 @@ packages:
   /color@4.2.3:
     resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
     engines: {node: '>=12.5.0'}
+    requiresBuild: true
     dependencies:
       color-convert: 2.0.1
       color-string: 1.9.1
