@@ -97,7 +97,22 @@ export const load = (async () => {
     staff.email = email;
   });
 
+  const trainingTeam = users.filter((u) => {
+    return u.flags.some((f) => ['mentor', 'instructor', 'chief-instructor'].includes(f.flag.name));
+  });
+
   return {
-    staff
+    staff,
+    trainingTeam: [
+      trainingTeam.find((u) => u.flags.some((f) => f.flag.name === 'chief-instructor')),
+      ...trainingTeam
+        .filter((u) => !u.flags.some((f) => f.flag.name === 'chief-instructor'))
+        .sort((a, b) => {
+          const aScore = a.flags.some((f) => f.flag.name === 'instructor') ? 1 : 0;
+          const bScore = b.flags.some((f) => f.flag.name === 'instructor') ? 1 : 0;
+          if (bScore !== aScore) return bScore - aScore;
+          return a.name_full.localeCompare(b.name_full);
+        })
+    ] as StaffUser[]
   };
 }) satisfies PageServerLoad;

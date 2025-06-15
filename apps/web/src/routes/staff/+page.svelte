@@ -36,4 +36,22 @@
       </div>
     {/each}
   </div>
+
+  <h1 class="mt-6 text-2xl">Training Team</h1>
+  <div class="divider"></div>
+
+  <div class="mb-8 flex flex-row flex-wrap gap-15">
+    {#each data.trainingTeam as user}
+      <div>
+        <h2><a href="/controller/{user.cid}" class="hover:link text-lg">{user.name_full}</a></h2>
+        <p class="text-sm text-gray-400">
+          {user.flags.some((f) => f.flag.name === 'chief-instructor')
+            ? 'Chief Instructor'
+            : user.flags.some((f) => f.flag.name === 'instructor')
+              ? 'Instructor'
+              : 'Mentor'}
+        </p>
+      </div>
+    {/each}
+  </div>
 </section>
