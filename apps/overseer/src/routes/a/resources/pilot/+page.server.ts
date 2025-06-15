@@ -9,7 +9,7 @@ export const load = (async () => {
 		where: (resources, { eq }) => eq(resources.type, 'pilot')
 	});
 
-	return { resources };
+	return { resources: resources.sort((a, b) => a.name.localeCompare(b.name)) };
 }) satisfies PageServerLoad;
 
 export const actions = {

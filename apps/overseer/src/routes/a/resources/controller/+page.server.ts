@@ -9,7 +9,30 @@ export const load = (async () => {
 		where: (resources, { eq }) => eq(resources.type, 'controller')
 	});
 
-	return { resources };
+	return {
+		resources: resources.sort((a, b) => {
+			const categoryOrder = [
+				'Policy',
+				'Software',
+				'Guide',
+				'Reference',
+				'Letter of Agreement',
+				'Other'
+			];
+			const aIndex = categoryOrder.indexOf(a.category);
+			const bIndex = categoryOrder.indexOf(b.category);
+
+			if (aIndex !== -1 && bIndex !== -1) {
+				if (aIndex !== bIndex) return aIndex - bIndex;
+			} else if (aIndex !== -1) {
+				return -1;
+			} else if (bIndex !== -1) {
+				return 1;
+			}
+
+			return 1;
+		})
+	};
 }) satisfies PageServerLoad;
 
 export const actions = {

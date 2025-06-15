@@ -11,5 +11,9 @@ export const load = (async () => {
     }
   });
 
-  return { resources: pilotResources };
+  return {
+    resources: pilotResources.sort((a, b) => {
+      return a.name.localeCompare(b.name);
+    })
+  };
 }) satisfies PageServerLoad;
