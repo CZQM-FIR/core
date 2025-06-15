@@ -21,6 +21,36 @@
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 </script>
 
+<svelte:head>
+  <title>Moncton / Gander FIR</title>
+  {#if $page.route.id !== '/events/[eventID]' && $page.route.id !== '/news/[articleID]'}
+    <meta
+      name="description"
+      content="Canada's Gateway to the East Coast - Providing realistic ATC services across the maritime provinces on the VATSIM network."
+    />
+
+    <!-- Twitter meta tags -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Moncton / Gander FIR" />
+    <meta
+      name="twitter:description"
+      content="Canada's Gateway to the East Coast - Providing realistic ATC services across the maritime provinces on the VATSIM network."
+    />
+    <meta name="twitter:image" content="https://files.czqm.ca/upload/1750000219576-CZQM.png" />
+    <meta name="twitter:site" content="@CZQM_FIR" />
+
+    <!-- Open Graph meta tags -->
+    <meta property="og:title" content="Moncton / Gander FIR" />
+    <meta
+      property="og:description"
+      content="Canada's Gateway to the East Coast - Providing realistic ATC services across the maritime provinces on the VATSIM network."
+    />
+    <meta property="og:image" content="https://files.czqm.ca/upload/1750000219576-CZQM.png" />
+    <meta property="og:url" content="https://czqm.ca" />
+    <meta property="og:type" content="website" />
+  {/if}
+</svelte:head>
+
 <!-- nav bar -->
 <nav class="bg-base-300 w-screen">
   <div class="navbar top-0 container mx-auto">

@@ -8,6 +8,46 @@
   let event = $derived(data.event);
 </script>
 
+<svelte:head>
+  <meta
+    name="description"
+    content={event.description.length > 160
+      ? event.description.slice(0, 157) + '...'
+      : event.description}
+  />
+
+  <!-- Twitter meta tags -->
+  <meta name="twitter:card" content={event.image ? 'summary_large_image' : 'summary'} />
+  <meta name="twitter:title" content="{event.name} - Moncton / Gander FIR" />
+  <meta
+    name="twitter:description"
+    content={event.description.length > 160
+      ? event.description.slice(0, 157) + '...'
+      : event.description}
+  />
+  <meta
+    name="twitter:image"
+    content="https://files.czqm.ca/{event.image || 'upload/1750000219576-CZQM.png'}"
+  />
+  <meta name="twitter:site" content="@CZQM_FIR" />
+
+  <!-- Open Graph meta tags -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="{event.name} - Moncton / Gander FIR" />
+  <meta
+    property="og:description"
+    content={event.description.length > 160
+      ? event.description.slice(0, 157) + '...'
+      : event.description}
+  />
+  <meta
+    property="og:image"
+    content="https://files.czqm.ca/{event.image || 'upload/1750000219576-CZQM.png'}"
+  />
+  <meta property="og:url" content={'https://czqm.ca/events/' + event.id} />
+  <meta property="og:site_name" content="CZQM FIR" />
+</svelte:head>
+
 <section id="event" class="min-h-screen">
   <div class="container mx-auto">
     <div class="mt-6 flex flex-row items-center gap-3">

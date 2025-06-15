@@ -9,6 +9,40 @@
   let article = $derived(data.article);
 </script>
 
+<svelte:head>
+  <meta
+    name="description"
+    content={article.text.length > 160 ? article.text.slice(0, 157) + '...' : article.text}
+  />
+
+  <!-- Twitter meta tags -->
+  <meta name="twitter:card" content={article.image ? 'summary_large_image' : 'summary'} />
+  <meta name="twitter:title" content="{article.title} - Moncton / Gander FIR" />
+  <meta
+    name="twitter:description"
+    content={article.text.length > 160 ? article.text.slice(0, 157) + '...' : article.text}
+  />
+  <meta
+    name="twitter:image"
+    content="https://files.czqm.ca/{article.image || 'upload/1750000219576-CZQM.png'}"
+  />
+  <meta name="twitter:site" content="@CZQM_FIR" />
+
+  <!-- Open Graph meta tags -->
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="{article.title} - Moncton / Gander FIR" />
+  <meta
+    property="og:description"
+    content={article.text.length > 160 ? article.text.slice(0, 157) + '...' : article.text}
+  />
+  <meta
+    property="og:image"
+    content={'https://files.czqm.ca/' + (article.image || 'upload/1750000219576-CZQM.png')}
+  />
+  <meta property="og:url" content={'https://czqm.ca/news/' + article.id} />
+  <meta property="og:site_name" content="CZQM FIR" />
+</svelte:head>
+
 <section id="event" class="min-h-screen">
   <div class="container mx-auto">
     <div class="mt-6 flex flex-row items-center gap-3">
