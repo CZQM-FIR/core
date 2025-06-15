@@ -67,7 +67,7 @@ export const actions = {
 				new PutObjectCommand({
 					Bucket: R2_BUCKET_NAME,
 					Key: fileName,
-					Body: Buffer.from(await image.arrayBuffer()),
+					Body: new Uint8Array(await image.arrayBuffer()),
 					ContentType: image.type
 				})
 			);
