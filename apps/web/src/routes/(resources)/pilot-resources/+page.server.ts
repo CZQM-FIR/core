@@ -4,7 +4,7 @@ import { db } from '$lib/db';
 export const load = (async () => {
   const pilotResources = await db.query.resources.findMany({
     where: (resources, { eq, and, or }) =>
-      and(or(eq(resources.type, 'pilot'), eq(resources.type, 'both')), eq(resources.public, 1)),
+      and(or(eq(resources.type, 'pilot'), eq(resources.type, 'both')), eq(resources.public, true)),
     columns: {
       public: false,
       type: false
