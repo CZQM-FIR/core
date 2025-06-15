@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import type { PageData, PageProps } from './$types';
+	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
 
 	let localUserData = $state(data.user!);
-	type LocalUserData = typeof localUserData;
 
 	if (form && form.status !== 200 && form.active !== undefined) {
 		localUserData.active = form.active;
@@ -23,7 +22,9 @@
 				localUserData.active = 2;
 				return async ({ update, result }) => {
 					await update();
-					result.type === 'success' ? (localUserData.active = 1) : (localUserData.active = temp);
+					if (result.type === 'success') {
+						localUserData.active = 1;
+					} else localUserData.active = temp;
 				};
 			}}
 		>
@@ -43,7 +44,9 @@
 				localUserData.active = 2;
 				return async ({ update, result }) => {
 					await update();
-					result.type === 'success' ? (localUserData.active = -1) : (localUserData.active = temp);
+					if (result.type === 'success') {
+						localUserData.active = -1;
+					} else localUserData.active = temp;
 				};
 			}}
 		>
@@ -63,7 +66,9 @@
 				localUserData.active = 2;
 				return async ({ update, result }) => {
 					await update();
-					result.type === 'success' ? (localUserData.active = 0) : (localUserData.active = temp);
+					if (result.type === 'success') {
+						localUserData.active = 0;
+					} else localUserData.active = temp;
 				};
 			}}
 		>
