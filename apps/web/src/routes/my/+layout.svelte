@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { LayoutData } from './$types';
-  import { User, Mail, Users, LogOut } from '@lucide/svelte';
+  import { User, Users, LogOut } from '@lucide/svelte';
   import NavLink from './NavLink.svelte';
   import { PUBLIC_OVERSEER_URL } from '$env/static/public';
 
@@ -30,7 +30,7 @@
         <div class="divider m-0 p-0"></div>
         <ul class="mt-1 ps-2">
           <NavLink name="My Profile" icon={User} href="/my" />
-          <NavLink name="Tickets" icon={Mail} href="/my/tickets" />
+          <!-- <NavLink name="Tickets" icon={Mail} href="/my/tickets" /> -->
           {#if data.user.flags.some((f) => ['staff', 'admin'].includes(f.flag.name))}
             <NavLink name="Overseer" icon={Users} href={PUBLIC_OVERSEER_URL} external />
           {/if}
