@@ -67,6 +67,11 @@
 				<input type="file" class="file-input" name="image" accept="image/*" />
 			</fieldset>
 
+			<div class="mt-3 flex flex-row items-center gap-3">
+				<input type="checkbox" name="recurring" checked={event.recurring} class="checkbox" />
+				<p>Recurring Event</p>
+			</div>
+
 			<button type="submit" class="btn btn-primary mt-6">Edit Event</button>
 		</form>
 		<p>{form?.message}</p>

@@ -32,6 +32,7 @@ export const actions = {
 		const end = data.get('end') as string;
 		const description = data.get('description') as string;
 		const image = data.get('image') as File;
+		const recurring = data.get('recurring') === 'on';
 
 		if (!locals.user) return fail(401);
 
@@ -102,7 +103,8 @@ export const actions = {
 				start: new Date(start),
 				end: new Date(end),
 				description,
-				image: image ? fileName : event.image
+				image: image ? fileName : event.image,
+				recurring: recurring
 			})
 			.where(eq(events.id, Number(data.get('id'))));
 
