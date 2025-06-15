@@ -33,10 +33,10 @@
               >
               - {(controller.totalDuration / 3600).toFixed(2)}
               hours
+              {#if i < 4}
+                <div class="divider m-0"></div>
+              {/if}
             </li>
-            {#if i < 4}
-              <div class="divider m-0"></div>
-            {/if}
           {/each}
         </ul>
       </div>
