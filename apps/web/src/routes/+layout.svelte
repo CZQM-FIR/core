@@ -11,7 +11,8 @@
     User,
     PanelsTopLeft,
     LogOut,
-    LogIn
+    LogIn,
+    Timer
   } from '@lucide/svelte';
   import { page } from '$app/stores';
 
@@ -50,6 +51,9 @@
               <ul class="p-2">
                 <li><a href="/staff"><Shield class="mr-1" size="15" /> Staff</a></li>
                 <li><a href="/roster"><Users class="mr-1" size="15" /> Roster</a></li>
+                <li>
+                  <a href="/roster/solo"><Timer class="mr-1" size="15" /> Solo Certifications</a>
+                </li>
                 <li><a href="/join"><UserPlus class="mr-1" size="15" /> Join Us</a></li>
                 <li>
                   <a href="/controller-resources"
@@ -88,6 +92,9 @@
             <ul class="menu dropdown-content rounded-box bg-base-300 z-1 w-52 p-2 shadow-sm">
               <li><a href="/staff"><Shield class="mr-1" size="15" /> Staff</a></li>
               <li><a href="/roster"><Users class="mr-1" size="15" /> Roster</a></li>
+              <li>
+                <a href="/roster/solo"><Timer class="mr-1" size="15" /> Solo Certifications</a>
+              </li>
               <li><a href="/join"><UserPlus class="mr-1" size="15" /> Join Us</a></li>
               <li>
                 <a href="/controller-resources"
