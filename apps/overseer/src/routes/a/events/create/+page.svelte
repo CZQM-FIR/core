@@ -63,6 +63,10 @@
 			</fieldset>
 
 			<button type="submit" class="btn btn-primary mt-6">Create Event</button>
+
+			{#if form && form.status !== 200}
+				<p class="text-sm">{form.message}</p>
+			{/if}
 		</form>
 	</div>
 </section>

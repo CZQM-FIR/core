@@ -24,7 +24,7 @@ export const actions = {
 		const description = data.get('description') as string;
 		const image = data.get('image') as File;
 
-		if (!locals.user) return fail(401);
+		if (!locals.user) return fail(401, { status: 401, message: 'Unauthorized' });
 
 		const actioner = await db.query.users.findFirst({
 			where: eq(users.cid, locals.user.cid),
@@ -48,7 +48,7 @@ export const actions = {
 					f.flag.name === 'events'
 			)
 		) {
-			return fail(401);
+			return fail(401, { status: 401, message: 'Unauthorized' });
 		}
 
 		const fileName = `event/${Date.now()}-${image.name}`;
@@ -73,7 +73,7 @@ export const actions = {
 			);
 		} catch (error) {
 			console.error(error);
-			return fail(500);
+			return fail(500, { status: 500, message: 'Failed to upload image to R2' + error });
 		}
 
 		await db.insert(events).values({
