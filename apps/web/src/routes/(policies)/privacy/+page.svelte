@@ -92,8 +92,8 @@
     You have a right to rectify data you believe to be inaccurate. We encourage members to ensure
     details such as email address are kept up to date through their VATSIM account. If you believe
     other data held is incorrect you may contact the CZQM staff team to seek to have it corrected.
-    To request data rectification, email CZQM at<a href="mailto:webmaster@czqm.ca"
-      >webmaster@czqm.ca</a
+    To request data rectification, email CZQM at ‎<a href="mailto:webmaster@czqm.ca">
+      webmaster@czqm.ca</a
     >.
     <p>All changes will be completed at no charge to you.</p>
     <p>
