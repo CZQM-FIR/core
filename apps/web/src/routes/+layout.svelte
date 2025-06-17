@@ -225,19 +225,22 @@
     <h3 class="footer-title">Policies</h3>
     <a href="/privacy" class="link-hover link">Privacy Policy</a>
     <a href="/branding" class="link-hover link">Branding</a>
-    <a href="/sop" class="link-hover link">SOPs</a>
   </nav>
   <nav>
     <h3 class="footer-title">Quick Links</h3>
     <a href="/about" class="link-hover link">About Us</a>
-    <a href="https://wiki.czqm.ca/en/faqs" class="link-hover link">FAQs</a>
+    <!-- <a href="https://wiki.czqm.ca/en/faqs" class="link-hover link">FAQs</a> -->
+    <p class="text-gray-500">FAQs - <span class="italic">Coming Soon!</span></p>
     <a href="/join" class="link-hover link">Join Us</a>
     <a href="/contact" class="link-hover link">Contact Us</a>
-    <a href="https://wiki.czqm.ca" class="link-hover link">Wiki</a>
+    <!-- <a href="https://wiki.czqm.ca" class="link-hover link">Wiki</a> -->
+    <p class="text-gray-500">Wiki - <span class="italic">Coming Soon!</span></p>
   </nav>
   <nav>
     <h3 class="footer-title">Connect With Us</h3>
-    <a href="https://twitter.com/czqm_fir" class="link-hover link flex items-center">Twitter</a>
+    <a href="https://twitter.com/czqm_fir" class="link-hover link flex items-center"
+      >X (formerly Twitter)</a
+    >
     <a href="https://www.facebook.com/CZQMFIR/" class="link-hover link flex items-center"
       >FaceBook</a
     >
@@ -245,6 +248,5 @@
       href="https://www.youtube.com/channel/UCS5H_U3h6edXWashMjQpuAg"
       class="link-hover link flex items-center">Youtube</a
     >
-    <a href="/portal/discord" class="link-hover link flex items-center">Discord</a>
   </nav>
 </footer>
