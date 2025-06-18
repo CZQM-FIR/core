@@ -1,12 +1,6 @@
-import * as Sentry from '@sentry/sveltekit';
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { deleteSessionTokenCookie, setSessionTokenCookie, validateSessionToken } from '$lib/auth';
-
-Sentry.init({
-  dsn: 'https://b376dc242af4dd9e5e641df53e36d76f@o4509517547044864.ingest.us.sentry.io/4509517550387200',
-  tracesSampleRate: 1
-});
 
 const session: Handle = async ({ event, resolve }) => {
   const token = event.cookies.get('session') ?? null;
@@ -28,5 +22,4 @@ const session: Handle = async ({ event, resolve }) => {
   return await resolve(event);
 };
 
-export const handle = sequence(Sentry.sentryHandle(), session);
-export const handleError = Sentry.handleErrorWithSentry();
+export const handle = sequence(session);
