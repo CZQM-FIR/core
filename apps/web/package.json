@@ -53,6 +53,7 @@
     "@lucide/svelte": "^0.511.0",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
+    "@sentry/sveltekit": "9",
     "@tailwindcss/postcss": "^4.0.13",
     "dotenv": "^16.4.5",
     "marked": "^15.0.12",
