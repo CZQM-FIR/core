@@ -1,4 +1,5 @@
 import {
+  index,
   int,
   primaryKey,
   sqliteTable,
@@ -18,9 +19,11 @@ export const usersToFlags = sqliteTable(
       .notNull()
       .references(() => users.cid, { onDelete: "cascade" }),
   },
-  (t) => ({
-    pk: primaryKey({ columns: [t.userId, t.flagId] }),
-  })
+  (t) => [
+    primaryKey({ columns: [t.userId, t.flagId] }),
+    index("user_flags_flagId_idx").on(t.flagId),
+    index("user_flags_userId_idx").on(t.userId),
+  ]
 );
 
 export type UsersToFlags = InferSelectModel<typeof usersToFlags>;

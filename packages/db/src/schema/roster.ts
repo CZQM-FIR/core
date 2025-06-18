@@ -1,15 +1,23 @@
 import { relations, type InferSelectModel } from "drizzle-orm";
-import { int, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import { index, int, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 import { positions, users } from "./index";
 
-export const roster = sqliteTable("roster", {
-  id: int().primaryKey({ autoIncrement: true }),
-  controllerId: int("controller_id")
-    .notNull()
-    .references(() => users.cid, { onDelete: "cascade" }),
-  position: text("position").notNull(),
-  status: int("status").notNull(),
-});
+export const roster = sqliteTable(
+  "roster",
+  {
+    id: int().primaryKey({ autoIncrement: true }),
+    controllerId: int("controller_id")
+      .notNull()
+      .references(() => users.cid, { onDelete: "cascade" }),
+    position: text("position").notNull(),
+    status: int("status").notNull(),
+  },
+  (t) => [
+    index("roster_controllerId_idx").on(t.controllerId),
+    index("roster_position_idx").on(t.position),
+    index("roster_status_idx").on(t.status),
+  ]
+);
 
 export const rosterRelations = relations(roster, ({ one, many }) => ({
   controller: one(users, {
