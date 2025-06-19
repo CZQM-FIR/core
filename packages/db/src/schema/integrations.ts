@@ -13,6 +13,7 @@ export const integrations = sqliteTable(
       .references(() => users.cid, {
         onDelete: "cascade",
       }),
+    integrationUserName: text("integration_user_name"),
   },
   (t) => [
     unique().on(t.cid, t.type),
