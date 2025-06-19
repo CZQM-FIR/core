@@ -39,8 +39,12 @@ export const load = (async ({ params }) => {
 export const actions = {
 	addFlag: async ({ request, locals }) => {
 		const FormData = type({
-			cid: type('number.integer >= 0'),
-			flag: type('number.integer >= 0')
+			cid: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0'),
+			flag: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0')
 		});
 
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));
@@ -117,8 +121,12 @@ export const actions = {
 	},
 	removeFlag: async ({ request, locals }) => {
 		const FormData = type({
-			cid: type('number.integer >= 0'),
-			flag: type('number.integer >= 0')
+			cid: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0'),
+			flag: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0')
 		});
 
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));
@@ -194,8 +202,12 @@ export const actions = {
 	},
 	extendSoloEndorsement: async ({ request, locals }) => {
 		const FormData = type({
-			cid: type('number.integer >= 0'),
-			id: type('number.integer >= 0')
+			cid: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0'),
+			id: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0')
 		});
 
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));
@@ -272,8 +284,12 @@ export const actions = {
 	},
 	renewSoloEndorsement: async ({ request, locals }) => {
 		const FormData = type({
-			cid: type('number.integer >= 0'),
-			id: type('number.integer >= 0')
+			cid: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0'),
+			id: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0')
 		});
 
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));
@@ -339,8 +355,12 @@ export const actions = {
 	},
 	deleteSoloEndorsement: async ({ request, locals }) => {
 		const FormData = type({
-			cid: type('number.integer >= 0'),
-			id: type('number.integer >= 0')
+			cid: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0'),
+			id: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0')
 		});
 
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));
@@ -402,8 +422,12 @@ export const actions = {
 	createSoloEndorsement: async ({ request, locals }) => {
 		const FormData = type({
 			position: '1 <= string <= 10',
-			duration: 'number.integer >= 1',
-			cid: 'number.integer >= 0'
+			duration: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0'),
+			cid: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0')
 		});
 
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));
@@ -500,10 +524,14 @@ export const actions = {
 	},
 	setActiveStatus: async ({ request, locals, params }) => {
 		const FormData = type({
-			status: type('-1 | 0 | 1')
+			status: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('-1 | 0 | 1')
 		});
 		const ParamsData = type({
-			cid: 'number.integer >= 0'
+			cid: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0')
 		});
 
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));

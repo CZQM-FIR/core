@@ -104,7 +104,9 @@ export const actions = {
 			public: type("'true' | 'false'").pipe((v) => v === 'true'),
 			category: 'string',
 			description: 'string',
-			id: type('number.integer >= 0').pipe((v) => Number(v))
+			id: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0')
 		});
 
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));
@@ -213,7 +215,9 @@ export const actions = {
 	},
 	deleteResource: async ({ request, locals }) => {
 		const FormData = type({
-			id: type('number.integer >= 0').pipe((v) => Number(v))
+			id: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0')
 		});
 
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));

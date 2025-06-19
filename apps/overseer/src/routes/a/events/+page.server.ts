@@ -14,7 +14,9 @@ export const load = (async () => {
 export const actions = {
 	default: async ({ request, locals }) => {
 		const FormData = type({
-			id: 'number.integer >= 0'
+			id: type('string.integer')
+				.pipe((v) => Number(v))
+				.to('number.integer >= 0')
 		});
 
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));
