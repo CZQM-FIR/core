@@ -3,6 +3,7 @@ import * as schema from '@czqm/db/schema';
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
+import { type } from 'arktype';
 
 export const load = (async () => {
 	const resources = await db.query.resources.findMany({
@@ -37,12 +38,24 @@ export const load = (async () => {
 
 export const actions = {
 	createResource: async ({ request, locals }) => {
-		const formData = await request.formData();
-		const name = formData.get('name') as string;
-		const link = formData.get('link') as string;
-		const publicResource = Boolean(formData.get('public') as string);
-		const category = formData.get('category') as string;
-		const description = formData.get('description') as string;
+		const FormData = type({
+			name: 'string',
+			link: 'string',
+			public: type("'true' | 'false'").pipe((v) => v === 'true'),
+			category: 'string',
+			description: 'string'
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+		if (data instanceof type.errors) {
+			return fail(400, {
+				ok: false,
+				status: 400,
+				message: 'Invalid form data',
+				errors: data.summary
+			});
+		}
+		const { name, link, public: publicResource, category, description } = data;
 
 		if (!name || !link || !category) {
 			return fail(400, {
@@ -109,13 +122,25 @@ export const actions = {
 		};
 	},
 	editResource: async ({ request, locals }) => {
-		const formData = await request.formData();
-		const name = formData.get('name') as string;
-		const link = formData.get('link') as string;
-		const publicResource = Boolean(formData.get('public') as string);
-		const category = formData.get('category') as string;
-		const description = formData.get('description') as string;
-		const id = Number(formData.get('id'));
+		const FormData = type({
+			name: 'string',
+			link: 'string',
+			public: type("'true' | 'false'").pipe((v) => v === 'true'),
+			category: 'string',
+			description: 'string',
+			id: type('string.integer >= 0').pipe((v) => Number(v))
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+		if (data instanceof type.errors) {
+			return fail(400, {
+				ok: false,
+				status: 400,
+				message: 'Invalid form data',
+				errors: data.summary
+			});
+		}
+		const { name, link, public: publicResource, category, description, id } = data;
 
 		if (!name || !link || !category) {
 			return fail(400, {
@@ -211,8 +236,20 @@ export const actions = {
 		};
 	},
 	deleteResource: async ({ request, locals }) => {
-		const formData = await request.formData();
-		const id = Number(formData.get('id'));
+		const FormData = type({
+			id: type('string.integer >= 0').pipe((v) => Number(v))
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+		if (data instanceof type.errors) {
+			return fail(400, {
+				ok: false,
+				status: 400,
+				message: 'Invalid form data',
+				errors: data.summary
+			});
+		}
+		const { id } = data;
 
 		if (!id) {
 			return fail(400, {

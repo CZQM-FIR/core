@@ -1,40 +1,52 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
+import { type } from 'arktype';
+import { fail } from '@sveltejs/kit';
+
+const StaffUser = type({
+  cid: 'number',
+  name_full: 'string',
+  'bio?': 'string',
+  flags: [
+    {
+      userId: 'number',
+      flagId: 'number',
+      flag: {
+        name: 'string'
+      }
+    }
+  ],
+  'role?': 'string',
+  'email?': 'string.email'
+});
+
+const StaffUsers = type([StaffUser]);
 
 export const load = (async () => {
-  type StaffUser = {
-    cid: number;
-    name_full: string;
-    bio: string | null;
-    flags: {
-      userId: number;
-      flagId: number;
-      flag: {
-        name: string;
-      };
-    }[];
-    role?: string;
-    email?: string;
-  };
-
-  const users = (await db.query.users.findMany({
-    columns: {
-      cid: true,
-      name_full: true,
-      bio: true
-    },
-    with: {
-      flags: {
-        with: {
-          flag: {
-            columns: {
-              name: true
+  const users = StaffUsers(
+    await db.query.users.findMany({
+      columns: {
+        cid: true,
+        name_full: true,
+        bio: true
+      },
+      with: {
+        flags: {
+          with: {
+            flag: {
+              columns: {
+                name: true
+              }
             }
           }
         }
       }
-    }
-  })) as StaffUser[];
+    })
+  );
+
+  if (users instanceof type.errors) {
+    return fail(500);
+  }
 
   const staff = users.filter((user) => user.flags.some((flag) => flag.flag.name === 'staff'));
 
@@ -113,6 +125,6 @@ export const load = (async () => {
           if (bScore !== aScore) return bScore - aScore;
           return a.name_full.localeCompare(b.name_full);
         })
-    ] as StaffUser[]
+    ]
   };
 }) satisfies PageServerLoad;

@@ -1,7 +1,9 @@
 import { db } from '$lib/db';
+import { type } from 'arktype';
 import type { PageServerLoad } from './$types';
 import { events } from '@czqm/db/schema';
 import { eq } from 'drizzle-orm';
+import { fail } from '@sveltejs/kit';
 
 export const load = (async () => {
 	const events = await db.query.events.findMany();
@@ -11,13 +13,22 @@ export const load = (async () => {
 
 export const actions = {
 	default: async ({ request, locals }) => {
-		const data = await request.formData();
-		const id = Number(data.get('id') as string);
+		const FormData = type({
+			id: 'number.integer >= 0'
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+
+		if (data instanceof type.errors) {
+			return fail(400);
+		}
+
+		const { id } = data;
 
 		if (!locals.user) return { status: 401, body: { message: 'Unauthorized' } };
 
 		const actioner = await db.query.users.findFirst({
-			where: (users, { eq }) => eq(users.cid, locals.user.cid),
+			where: (users, { eq }) => eq(users.cid, locals.user?.cid || 0),
 			with: {
 				flags: {
 					with: {

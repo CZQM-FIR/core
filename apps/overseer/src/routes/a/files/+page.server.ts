@@ -10,17 +10,28 @@ import {
 	R2_ACCESS_KEY_ID,
 	R2_BUCKET_NAME
 } from '$env/static/private';
+import { type } from 'arktype';
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
-		const data = await request.formData();
-		const file = data.get('file') as File;
+		const FormData = type({
+			file: 'File'
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+
+		if (data instanceof type.errors) {
+			return fail(400, { success: false, error: 'Invalid form data.' });
+		}
+
+		const { file } = data;
+
 		if (!file) {
 			return fail(400, { success: false, error: 'No file uploaded.' });
 		}
 
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user.cid),
+			where: eq(users.cid, locals.user?.cid || 0),
 			with: {
 				flags: {
 					with: {
