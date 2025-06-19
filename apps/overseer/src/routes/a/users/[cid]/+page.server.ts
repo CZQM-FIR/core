@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 import { flags, positions, soloEndorsements, users, usersToFlags } from '@czqm/db/schema';
 import { fail } from '@sveltejs/kit';
+import { type } from 'arktype';
 
 export const load = (async ({ params }) => {
 	const user = await db.query.users.findFirst({
@@ -37,9 +38,16 @@ export const load = (async ({ params }) => {
 
 export const actions = {
 	addFlag: async ({ request, locals }) => {
-		const data = await request.formData();
-		const cid = Number(data.get('cid'));
-		const flagId = Number(data.get('flag'));
+		const FormData = type({
+			cid: type('number.integer >= 0'),
+			flag: type('number.integer >= 0')
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+		if (data instanceof type.errors) {
+			return fail(400, { message: 'Invalid form data' });
+		}
+		const { cid, flag: flagId } = data;
 
 		if (!cid || !flagId) {
 			return fail(400);
@@ -108,9 +116,16 @@ export const actions = {
 		};
 	},
 	removeFlag: async ({ request, locals }) => {
-		const data = await request.formData();
-		const cid = Number(data.get('cid'));
-		const flagId = Number(data.get('flag'));
+		const FormData = type({
+			cid: type('number.integer >= 0'),
+			flag: type('number.integer >= 0')
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+		if (data instanceof type.errors) {
+			return fail(400, { message: 'Invalid form data' });
+		}
+		const { cid, flag: flagId } = data;
 
 		if (!cid || !flagId) {
 			return fail(400);
@@ -178,9 +193,16 @@ export const actions = {
 		};
 	},
 	extendSoloEndorsement: async ({ request, locals }) => {
-		const data = await request.formData();
-		const cid = Number(data.get('cid'));
-		const endorsementId = Number(data.get('id'));
+		const FormData = type({
+			cid: type('number.integer >= 0'),
+			id: type('number.integer >= 0')
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+		if (data instanceof type.errors) {
+			return fail(400, { message: 'Invalid form data' });
+		}
+		const { cid, id: endorsementId } = data;
 
 		if (!cid || !endorsementId) {
 			return fail(400);
@@ -249,9 +271,16 @@ export const actions = {
 		return { status: 200, statusText: 'Endorsement extended by 30 days' };
 	},
 	renewSoloEndorsement: async ({ request, locals }) => {
-		const data = await request.formData();
-		const cid = Number(data.get('cid'));
-		const endorsementId = Number(data.get('id'));
+		const FormData = type({
+			cid: type('number.integer >= 0'),
+			id: type('number.integer >= 0')
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+		if (data instanceof type.errors) {
+			return fail(400, { message: 'Invalid form data' });
+		}
+		const { cid, id: endorsementId } = data;
 
 		if (!cid || !endorsementId) {
 			return fail(400);
@@ -309,9 +338,16 @@ export const actions = {
 		return { status: 200, statusText: 'Endorsement renewed' };
 	},
 	deleteSoloEndorsement: async ({ request, locals }) => {
-		const data = await request.formData();
-		const cid = Number(data.get('cid'));
-		const endorsementId = Number(data.get('id'));
+		const FormData = type({
+			cid: type('number.integer >= 0'),
+			id: type('number.integer >= 0')
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+		if (data instanceof type.errors) {
+			return fail(400, { message: 'Invalid form data' });
+		}
+		const { cid, id: endorsementId } = data;
 
 		if (!cid || !endorsementId) {
 			return fail(400);
@@ -364,10 +400,17 @@ export const actions = {
 		return { status: 200, statusText: 'Endorsement revoked' };
 	},
 	createSoloEndorsement: async ({ request, locals }) => {
-		const data = await request.formData();
-		const positionName = data.get('position')?.toString();
-		const duration = Number(data.get('duration'));
-		const cid = Number(data.get('cid'));
+		const FormData = type({
+			position: '1 <= string <= 10',
+			duration: 'number.integer >= 1',
+			cid: 'number.integer >= 0'
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+		if (data instanceof type.errors) {
+			return fail(400, { message: 'Invalid form data' });
+		}
+		const { position: positionName, duration, cid } = data;
 
 		if (!positionName || !duration || !cid) {
 			return fail(400);
@@ -456,9 +499,24 @@ export const actions = {
 		}
 	},
 	setActiveStatus: async ({ request, locals, params }) => {
-		const data = await request.formData();
-		const cid = Number(params.cid);
-		const status = Number(data.get('status'));
+		const FormData = type({
+			status: type('-1 | 0 | 1')
+		});
+		const ParamsData = type({
+			cid: 'number.integer >= 0'
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+		const dataparams = ParamsData(params);
+		if (data instanceof type.errors) {
+			return fail(400, { message: 'Invalid form data' });
+		}
+		if (dataparams instanceof type.errors) {
+			return fail(400, { message: 'Invalid parameters' });
+		}
+
+		const { cid } = dataparams;
+		const { status } = data;
 
 		if (!cid || status === undefined || isNaN(status)) {
 			return fail(400);

@@ -10,6 +10,7 @@ import {
 	R2_ACCESS_KEY_ID,
 	R2_BUCKET_NAME
 } from '$env/static/private';
+import { type } from 'arktype';
 
 export const load = (async () => {
 	return {};
@@ -17,12 +18,21 @@ export const load = (async () => {
 
 export const actions = {
 	default: async ({ request, locals }) => {
-		const data = await request.formData();
-		const name = data.get('name') as string;
-		const start = data.get('start') as string;
-		const end = data.get('end') as string;
-		const description = data.get('description') as string;
-		const image = data.get('image') as File;
+		const FormData = type({
+			name: 'string',
+			start: 'string.date',
+			end: 'string.date',
+			description: 'string',
+			image: 'File'
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+
+		if (data instanceof type.errors) {
+			return fail(400, { status: 400, message: 'Invalid form data' });
+		}
+
+		const { name, start, end, description, image } = data;
 
 		if (!locals.user) return fail(401, { status: 401, message: 'Unauthorized' });
 

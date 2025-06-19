@@ -11,6 +11,7 @@ import { R2_ACCESS_KEY } from '$env/static/private';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { R2_BUCKET_NAME } from '$env/static/private';
 import { events } from '@czqm/db/schema';
+import { type } from 'arktype';
 
 export const load = (async ({ params }) => {
 	const event = await db.query.events.findFirst({
@@ -26,13 +27,26 @@ export const load = (async ({ params }) => {
 
 export const actions = {
 	default: async ({ request, locals }) => {
-		const data = await request.formData();
-		const name = data.get('name') as string;
-		const start = data.get('start') as string;
-		const end = data.get('end') as string;
-		const description = data.get('description') as string;
-		const image = data.get('image') as File;
-		const recurring = data.get('recurring') === 'on';
+		const FormCheckbox = type("'on' | 'off'").pipe((v) => v === 'on');
+		const FormData = type({
+			name: 'string',
+			start: 'string.date',
+			end: 'string.date',
+			description: 'string',
+			image: 'File',
+			recurring: FormCheckbox,
+			id: type('string.integer').pipe((v) => Number(v))
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+
+		if (data instanceof type.errors) {
+			return fail(400, { message: 'Invalid form data' });
+		}
+
+		const { id, name, start, end, description, image, recurring } = data;
+
+		console.log(recurring);
 
 		if (!locals.user) return fail(401);
 
@@ -62,7 +76,7 @@ export const actions = {
 		}
 
 		const event = await db.query.events.findFirst({
-			where: eq(events.id, Number(data.get('id')))
+			where: eq(events.id, id)
 		});
 
 		if (!event) {
@@ -106,7 +120,7 @@ export const actions = {
 				image: image ? fileName : event.image,
 				recurring: recurring
 			})
-			.where(eq(events.id, Number(data.get('id'))));
+			.where(eq(events.id, id));
 
 		return { status: 200, message: 'Event updated successfully' };
 	}

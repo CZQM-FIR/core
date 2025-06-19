@@ -10,6 +10,7 @@ import { R2_ACCESS_KEY_ID } from '$env/static/private';
 import { R2_ACCESS_KEY } from '$env/static/private';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { R2_BUCKET_NAME } from '$env/static/private';
+import { type } from 'arktype';
 
 export const load = (async ({ params }) => {
 	const article = await db.query.news.findFirst({
@@ -25,10 +26,20 @@ export const load = (async ({ params }) => {
 
 export const actions = {
 	default: async ({ request, locals }) => {
-		const data = await request.formData();
-		const title = data.get('title') as string;
-		const text = data.get('text') as string;
-		const image = data.get('image') as File;
+		const FormData = type({
+			id: type('string.integer >= 0').pipe((v) => Number(v)),
+			title: 'string',
+			text: 'string',
+			image: 'File'
+		});
+
+		const data = FormData(Object.fromEntries((await request.formData()).entries()));
+
+		if (data instanceof type.errors) {
+			return fail(400, { message: 'Invalid form data' });
+		}
+
+		const { id, title, text, image } = data;
 
 		if (!locals.user) return fail(401);
 
@@ -51,7 +62,7 @@ export const actions = {
 		}
 
 		const article = await db.query.news.findFirst({
-			where: eq(news.id, Number(data.get('id')))
+			where: eq(news.id, id)
 		});
 
 		if (!article) {
@@ -92,7 +103,7 @@ export const actions = {
 				text,
 				image: image ? fileName : article.image
 			})
-			.where(eq(news.id, Number(data.get('id'))));
+			.where(eq(news.id, id));
 
 		return { status: 200, message: 'Article updated successfully' };
 	}
