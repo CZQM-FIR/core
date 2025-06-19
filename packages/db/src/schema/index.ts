@@ -11,3 +11,4 @@ export * from "./tickets";
 export * from "./resources";
 export * from "./soloEndorsements";
 export * from "./roster";
+export * from "./integrations";

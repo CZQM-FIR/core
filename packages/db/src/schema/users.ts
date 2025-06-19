@@ -3,6 +3,7 @@ import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { news, ratings, sessions, tickets, usersToFlags } from "./index";
 import { soloEndorsements } from "./soloEndorsements";
 import { roster } from "./roster";
+import { integrations } from "./integrations";
 
 export const users = sqliteTable(
   "users",
@@ -40,6 +41,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   tickets: many(tickets),
   soloEndorsements: many(soloEndorsements),
   roster: many(roster),
+  integrations: many(integrations),
 }));
 
 export type User = InferSelectModel<typeof users>;
