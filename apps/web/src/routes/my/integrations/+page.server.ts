@@ -3,7 +3,9 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { and, eq } from 'drizzle-orm';
 import * as schema from '@czqm/db/schema';
-import { DISCORD_CLIENT_ID, DISCORD_REDIRECT_URI } from '$env/static/private';
+import { env } from '$env/dynamic/private';
+
+const { DISCORD_CLIENT_ID, DISCORD_REDIRECT_URI } = env;
 
 export const load = (async ({ locals }) => {
   const integrations = await db.query.integrations.findMany({

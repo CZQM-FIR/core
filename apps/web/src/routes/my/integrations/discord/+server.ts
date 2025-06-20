@@ -1,15 +1,17 @@
 import { redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import {
+import { env } from '$env/dynamic/private';
+import { type } from 'arktype';
+import { db } from '$lib/db';
+import { integrations } from '@czqm/db/schema';
+
+const {
   DISCORD_BOT_TOKEN,
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
   DISCORD_GUILD_ID,
   DISCORD_REDIRECT_URI
-} from '$env/static/private';
-import { type } from 'arktype';
-import { db } from '$lib/db';
-import { integrations } from '@czqm/db/schema';
+} = env;
 
 export const GET: RequestHandler = async ({ url, locals }) => {
   const SearchParams = type({
