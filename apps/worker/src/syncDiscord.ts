@@ -16,6 +16,14 @@ export const syncDiscord = async (
     query?: Record<string, string>;
   }[] = [];
 
+  const priorityRequests: {
+    method: string;
+    endpoint: string;
+    body?: string;
+    headers?: Record<string, string>;
+    query?: Record<string, string>;
+  }[] = [];
+
   const rolesData = await fetch(`https://discord.com/api/guilds/${env.DISCORD_GUILD_ID}/roles`, {
     method: 'GET',
     headers: {
@@ -58,13 +66,14 @@ export const syncDiscord = async (
 
   const members = MembersData(await membersData.json());
 
+  console.log(`Fetched ${members.length} members from Discord.`);
+
   if (members instanceof type.errors) {
     console.error('Invalid members data:', members.summary);
     return;
   }
 
   const integrations = await db.query.integrations.findMany({
-    where: (integrations, { eq }) => eq(integrations.type, 0),
     with: {
       user: {
         with: {
@@ -79,18 +88,26 @@ export const syncDiscord = async (
     }
   });
 
-  for await (const member of members) {
-    // check cache
-    const cachedMember = await env.CZQM_CACHE.get(`discord:${member.user.id}`);
-    if (cachedMember) {
+  console.log(`Fetched ${integrations.length} integrations from the database.`);
+
+  const uncachedMembers = [];
+  for (const member of members) {
+    const cached = await env.CZQM_CACHE.get(`discord:${member.user.id}`);
+    if (cached) {
+      console.log(`Cached member: ${member.user.id} (${member.nick || member.user.id})`);
       continue;
     } else {
-      await env.CZQM_CACHE.put(`discord:${member.user.id}`, 'true', {
-        expirationTtl: 60 * 60 * 6 // 6 hours
-      });
+      uncachedMembers.push(member);
     }
+    if (uncachedMembers.length >= 45) break;
+  }
+
+  for (const member of uncachedMembers) {
     if (!integrations.some((i) => i.integrationUserId === member.user.id)) {
       console.log(`Unlinked member: ${member.user.id} (${member.nick || member.user.id})`);
+      await env.CZQM_CACHE.put(`discord:${member.user.id}`, 'true', {
+        expirationTtl: 60 * 2 // 2 minutes
+      });
 
       requests.push({
         method: 'PATCH',
@@ -105,6 +122,11 @@ export const syncDiscord = async (
       });
     } else {
       console.log(`Syncing Discord member: ${member.user.id} (${member.nick || member.user.id})`);
+
+      await env.CZQM_CACHE.put(`discord:${member.user.id}`, 'true', {
+        expirationTtl: 60 * 15 // 15 min
+      });
+
       const user = integrations.find((i) => i.integrationUserId === member.user.id)!.user;
 
       const roles: string[] = [];
@@ -142,7 +164,9 @@ export const syncDiscord = async (
         'chief-instructor': 'Chief Instructor',
         events: 'Events Coordinator',
         web: 'Webmaster',
-        sector: 'Facility Engineer'
+        sector: 'Facility Engineer',
+        instructor: 'Instructor',
+        mentor: 'Mentor'
       };
       for (const flag of user!.flags) {
         const roleName = flagRoleMap[flag.flag.name];
@@ -208,7 +232,7 @@ export const syncDiscord = async (
 
       roles.push(...additionalRoles);
 
-      requests.push({
+      priorityRequests.push({
         method: 'PATCH',
         endpoint: `/guilds/${env.DISCORD_GUILD_ID}/members/${member.user.id}`,
         body: JSON.stringify({
@@ -224,7 +248,7 @@ export const syncDiscord = async (
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  for await (const request of requests) {
+  for await (const request of [...priorityRequests, ...requests]) {
     const { method, endpoint, body, headers, query } = request;
     const url = new URL('/api' + endpoint, 'https://discord.com');
     if (query) {
@@ -244,6 +268,10 @@ export const syncDiscord = async (
     if (!response.ok) {
       console.error(
         `Discord API request failed: ${response.status} ${response.statusText} for ${url.href}`
+      );
+    } else {
+      console.log(
+        `Discord API request successful: ${response.status} ${response.statusText} for ${url.href}`
       );
     }
 
