@@ -24,7 +24,10 @@ export const integrations = sqliteTable(
 );
 
 export const integrationsRelations = relations(integrations, ({ one }) => ({
-  user: one(users),
+  user: one(users, {
+    fields: [integrations.cid],
+    references: [users.cid],
+  }),
 }));
 
 export type Integration = InferSelectModel<typeof integrations>;
