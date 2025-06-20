@@ -1,14 +1,20 @@
 <script lang="ts">
-  import type { PageData, PageProps } from './$types';
+  import type { PageProps } from './$types';
   import { enhance } from '$app/forms';
 
-  let { data, form }: PageProps = $props();
+  let { data }: PageProps = $props();
 </script>
 
 <section>
   <h1 class="text-2xl font-semibold">Link Discord Account</h1>
 
   {#if data.integrations.some((i) => i.type === 0)}
+    <p>
+      Thank you for linking your Discord account! Your roles will be automatically updated based on
+      your current FIR status. Roles in Discord may take a few minutes after linking to update. Once
+      linked and synced, roles are only updated every 6 hours.
+    </p>
+
     <p class="italic">
       Linked Account: {data.integrations.find((i) => i.type === 0)?.integrationUserName}
     </p>
