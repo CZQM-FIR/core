@@ -10,7 +10,10 @@ export default {
     const { db, client } = createDB(env);
 
     await handleRecordSessions(db, env);
-    await syncDiscord(db, env);
+
+    if (controller.cron === '*/2 * * * *') {
+      await syncDiscord(db, env);
+    }
 
     if (controller.cron === '*/15 * * * *') {
       await vatcanPull(db, env);
