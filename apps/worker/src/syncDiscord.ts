@@ -115,9 +115,28 @@ export const syncDiscord = async (
 
   console.log(`Fetched ${integrations.length} integrations from the database.`);
 
+  let failingCache = false;
+
   const uncachedMembers = [];
-  for (const member of members) {
-    const cached = await env.CZQM_CACHE.get(`discord:${member.user.id}`);
+  const shuffledMembers = members
+    .map((member) => ({ member, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ member }) => member);
+
+  for (const member of shuffledMembers) {
+    let cached: string | null = null;
+
+    try {
+      cached = await env.CZQM_CACHE.get(`discord:${member.user.id}`);
+    } catch (error) {
+      console.error(
+        `Error fetching cache for member ${member.user.id}:`,
+        error,
+        '\nDissabling cache for this run.'
+      );
+      failingCache = true;
+    }
+
     if (cached) {
       console.log(`Cached member: ${member.user.id} (${member.nick || member.user.id})`);
       continue;
@@ -130,9 +149,11 @@ export const syncDiscord = async (
   for (const member of uncachedMembers) {
     if (!integrations.some((i) => i.integrationUserId === member.user.id)) {
       console.log(`Unlinked member: ${member.user.id} (${member.nick || member.user.id})`);
-      await env.CZQM_CACHE.put(`discord:${member.user.id}`, 'true', {
-        expirationTtl: 60 * 2 // 2 minutes
-      });
+      if (!failingCache) {
+        await env.CZQM_CACHE.put(`discord:${member.user.id}`, 'true', {
+          expirationTtl: 60 * 5 // 5 minutes
+        });
+      }
 
       requests.push({
         method: 'PATCH',
@@ -150,9 +171,11 @@ export const syncDiscord = async (
     } else {
       console.log(`Syncing Discord member: ${member.user.id} (${member.nick || member.user.id})`);
 
-      await env.CZQM_CACHE.put(`discord:${member.user.id}`, 'true', {
-        expirationTtl: 60 * 15 // 15 min
-      });
+      if (!failingCache) {
+        await env.CZQM_CACHE.put(`discord:${member.user.id}`, 'true', {
+          expirationTtl: 60 * 60 // 1 hour
+        });
+      }
 
       const user = integrations.find((i) => i.integrationUserId === member.user.id)!.user;
 
