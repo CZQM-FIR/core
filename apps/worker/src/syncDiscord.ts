@@ -2,6 +2,31 @@ import { Client } from '@libsql/client';
 import { type } from 'arktype';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 
+const managedRoles = [
+  'Guest',
+  'Inactive',
+  'Suspended',
+  'Observer',
+  'Student 1',
+  'Student 2',
+  'Student 3',
+  'Controller 1',
+  'Controller 3',
+  'Instructor 1',
+  'Instructor 3',
+  'Supervisor',
+  'Admin',
+  'Home Controller',
+  'Visitor',
+  'Staff',
+  'FIR Chief',
+  'Deputy Chief',
+  'Chief Instructor',
+  'Events Coordinator',
+  'Webmaster',
+  'Facility Engineer'
+];
+
 export const syncDiscord = async (
   db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
   env: Env
@@ -113,7 +138,9 @@ export const syncDiscord = async (
         method: 'PATCH',
         endpoint: `/guilds/${env.DISCORD_GUILD_ID}/members/${member.user.id}`,
         body: JSON.stringify({
-          roles: [],
+          roles: member.roles.filter(
+            (r) => !managedRoles.includes(guildRoles.find((role) => role.id === r)?.name || '')
+          ),
           nick: null
         }),
         headers: {
@@ -204,30 +231,7 @@ export const syncDiscord = async (
       const additionalRoles = member.roles.filter(
         (roleId) =>
           !roles.some((role) => role === roleId) &&
-          ![
-            'Guest',
-            'Inactive',
-            'Suspended',
-            'Observer',
-            'Student 1',
-            'Student 2',
-            'Student 3',
-            'Controller 1',
-            'Controller 3',
-            'Instructor 1',
-            'Instructor 3',
-            'Supervisor',
-            'Admin',
-            'Home Controller',
-            'Visitor',
-            'Staff',
-            'FIR Chief',
-            'Deputy Chief',
-            'Chief Instructor',
-            'Events Coordinator',
-            'Webmaster',
-            'Facility Engineer'
-          ].includes(guildRoles.find((r) => r.id === roleId)?.name || '')
+          !managedRoles.includes(guildRoles.find((r) => r.id === roleId)?.name || '')
       );
 
       roles.push(...additionalRoles);
