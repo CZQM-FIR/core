@@ -16,7 +16,8 @@
     </p>
 
     <p class="italic">
-      Linked Account: {data.integrations.find((i) => i.type === 0)?.integrationUserName}
+      Linked Account: {data.integrations.find((i) => i.type === 0)?.integrationUserName ||
+        'LINKED FROM VATCAN'}
     </p>
     <form action="?/unlinkDiscord" method="post" use:enhance>
       <button type="submit" class="btn btn-primary mt-3">Unlink Discord Account</button>
