@@ -2,7 +2,7 @@ import type { PageServerLoad } from './$types';
 import { getUserRole } from '$lib/utilities/getUserRole';
 import { db } from '$lib/db';
 import { type } from 'arktype';
-import { fail } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 
 const ExtendedUser = type({
   cid: 'number.integer',
@@ -12,20 +12,18 @@ const ExtendedUser = type({
     long: 'string',
     short: 'string'
   },
-  flags: [
-    {
-      userId: 'number.integer >= 0',
-      flagId: 'number.integer >= 0',
-      flag: {
-        name: 'string'
-      }
+  flags: type({
+    userId: 'number.integer >= 0',
+    flagId: 'number.integer >= 0',
+    flag: {
+      name: 'string'
     }
-  ],
+  }).array(),
   'role?': 'string',
   active: 'number.integer >= -1 & number.integer <= 1'
 });
 
-const ExtendedUsers = type([ExtendedUser]);
+const ExtendedUsers = ExtendedUser.array();
 
 export const load = (async () => {
   const users = ExtendedUsers(
@@ -58,7 +56,9 @@ export const load = (async () => {
   );
 
   if (users instanceof type.errors) {
-    return fail(500);
+    error(500, {
+      message: 'Invalid User Data: ' + users.issues
+    });
   }
 
   const controllers = users.filter((controller) => {

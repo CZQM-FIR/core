@@ -1,26 +1,24 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
 import { type } from 'arktype';
-import { fail } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 
 const StaffUser = type({
   cid: 'number',
   name_full: 'string',
   'bio?': 'string',
-  flags: [
-    {
-      userId: 'number',
-      flagId: 'number',
-      flag: {
-        name: 'string'
-      }
+  flags: type({
+    userId: 'number',
+    flagId: 'number',
+    flag: {
+      name: 'string'
     }
-  ],
+  }).array(),
   'role?': 'string',
   'email?': 'string.email'
 });
 
-const StaffUsers = type([StaffUser]);
+const StaffUsers = StaffUser.array();
 
 export const load = (async () => {
   const users = StaffUsers(
@@ -45,7 +43,7 @@ export const load = (async () => {
   );
 
   if (users instanceof type.errors) {
-    return fail(500);
+    return error(500);
   }
 
   const staff = users.filter((user) => user.flags.some((flag) => flag.flag.name === 'staff'));

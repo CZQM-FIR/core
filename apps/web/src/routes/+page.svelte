@@ -41,7 +41,7 @@
         </ul>
       </div>
       <div>
-        <h1 class="mb-3 text-3xl font-semibold">Upcomming Events</h1>
+        <h1 class="mb-3 text-3xl font-semibold">Upcoming Events</h1>
         <ul class="bg-base-100 max-w-120 rounded px-4 py-3">
           {#if data.events.length === 0}
             <p class="w-full text-center">No Upcoming Events</p>

@@ -1,5 +1,5 @@
 import { db } from '$lib/db';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { and, eq } from 'drizzle-orm';
 import * as schema from '@czqm/db/schema';
@@ -23,7 +23,7 @@ export const actions = {
     });
 
     if (discordIntegration) {
-      return fail(400, {
+      return error(400, {
         message: 'Discord integration already exists.'
       });
     }
@@ -40,7 +40,7 @@ export const actions = {
     });
 
     if (!discordIntegration) {
-      return fail(400, {
+      return error(400, {
         message: 'Discord integration does not exist.'
       });
     }
