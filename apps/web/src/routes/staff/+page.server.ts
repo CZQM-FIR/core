@@ -6,7 +6,7 @@ import { error } from '@sveltejs/kit';
 const StaffUser = type({
   cid: 'number',
   name_full: 'string',
-  'bio?': 'string',
+  bio: 'string | null',
   flags: type({
     userId: 'number',
     flagId: 'number',
@@ -43,7 +43,7 @@ export const load = (async () => {
   );
 
   if (users instanceof type.errors) {
-    return error(500);
+    return error(500, { message: users.issues.toString() });
   }
 
   const staff = users.filter((user) => user.flags.some((flag) => flag.flag.name === 'staff'));
