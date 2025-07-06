@@ -8,7 +8,7 @@ const ExtendedUser = type({
   cid: 'number.integer',
   name_full: 'string',
   rating: {
-    id: 'number.integer >= 0',
+    id: 'number.integer >= -1',
     long: 'string',
     short: 'string'
   },
