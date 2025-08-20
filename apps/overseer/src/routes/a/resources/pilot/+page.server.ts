@@ -18,7 +18,7 @@ export const actions = {
 		const FormData = type({
 			name: 'string',
 			link: 'string',
-			public: type("'true' | 'false'").pipe((v) => v === 'true'),
+			public: type("'on' | null").pipe((v) => v === 'on'),
 			category: 'string',
 			description: 'string'
 		});
@@ -101,7 +101,7 @@ export const actions = {
 		const FormData = type({
 			name: 'string',
 			link: 'string',
-			public: type("'true' | 'false'").pipe((v) => v === 'true'),
+			public: type("'on' | null").pipe((v) => v === 'on'),
 			category: 'string',
 			description: 'string',
 			id: type('string.integer')
