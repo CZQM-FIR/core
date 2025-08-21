@@ -12,3 +12,4 @@ export * from "./resources";
 export * from "./soloEndorsements";
 export * from "./roster";
 export * from "./integrations";
+export * from "./preferences";

@@ -4,6 +4,7 @@ import { news, ratings, sessions, tickets, usersToFlags } from "./index";
 import { soloEndorsements } from "./soloEndorsements";
 import { roster } from "./roster";
 import { integrations } from "./integrations";
+import { preferences } from "./preferences";
 
 export const users = sqliteTable(
   "users",
@@ -42,6 +43,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   soloEndorsements: many(soloEndorsements),
   roster: many(roster),
   integrations: many(integrations),
+  preferences: many(preferences),
 }));
 
 export type User = InferSelectModel<typeof users>;
