@@ -23,6 +23,10 @@
     Notifications will be sent as a private message in Discord. Please ensure the "Allow DMs from
     other members in this server" privacy setting is enabled to receive notifications.
   </p>
+  <p class="mt-1 font-light">
+    Some notification types are required and cannot be disabled. Should you have any questions or
+    concerns, please contact the webmaster <a href="/contact" class="link">here</a>.
+  </p>
 
   {#if form?.success}
     <div class="alert alert-success mt-4">
