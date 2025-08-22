@@ -30,84 +30,84 @@
     </div>
   {/if}
 
-  <!-- {#if data.discord} -->
-  <form method="POST" action="?/savePreferences">
-    <div class="mt-6 overflow-x-auto">
-      <table class="table-compact table w-full max-w-md">
-        <thead>
-          <tr>
-            <th class="py-2">Notification Type</th>
-            <th class="py-2">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="h-10">
-            <td class="py-1 text-gray-400">Policy Changes</td>
-            <td class="py-1"
-              ><Toggle
-                name="policyChanges"
-                checked={getPreferenceValue('policyChanges')}
-                readonly
-                tooltip={reqNotifTooltip}
-              /></td
-            >
-          </tr>
-          <tr class="h-10">
-            <td class="py-1 text-gray-400">Important / Urgent FIR Updates</td>
-            <td class="py-1"
-              ><Toggle
-                name="urgentFirUpdates"
-                checked={getPreferenceValue('urgentFirUpdates')}
-                readonly
-                tooltip={reqNotifTooltip}
-              /></td
-            >
-          </tr>
-          <tr class="h-10">
-            <td class="py-1 text-gray-400">Training Updates</td>
-            <td class="py-1"
-              ><Toggle
-                name="trainingUpdates"
-                checked={getPreferenceValue('trainingUpdates')}
-                readonly
-                tooltip={reqNotifTooltip}
-              /></td
-            >
-          </tr>
-          <tr class="h-10">
-            <td class="py-1 text-gray-400">Unauthorized Connection Alerts </td>
-            <td class="py-1"
-              ><Toggle
-                name="unauthorizedConnection"
-                checked={getPreferenceValue('unauthorizedConnection')}
-                readonly
-                tooltip={reqNotifTooltip}
-              /></td
-            >
-          </tr>
-          <tr class="h-10">
-            <td class="py-1 text-gray-400">Event Posted</td>
-            <td class="py-1"
-              ><Toggle name="newEventPosted" checked={getPreferenceValue('newEventPosted')} /></td
-            >
-          </tr>
-          <tr class="h-10">
-            <td class="py-1 text-gray-400">News Article Posted</td>
-            <td class="py-1"
-              ><Toggle
-                name="newNewsArticlePosted"
-                checked={getPreferenceValue('newNewsArticlePosted')}
-              /></td
-            >
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="mt-6">
-      <button type="submit" class="btn btn-primary">Save Preferences</button>
-    </div>
-  </form>
-  <!-- {:else}
+  {#if data.discord}
+    <form method="POST" action="?/savePreferences">
+      <div class="mt-6 overflow-x-auto">
+        <table class="table-compact table w-full max-w-md">
+          <thead>
+            <tr>
+              <th class="py-2">Notification Type</th>
+              <th class="py-2">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="h-10">
+              <td class="py-1 text-gray-400">Policy Changes</td>
+              <td class="py-1"
+                ><Toggle
+                  name="policyChanges"
+                  checked={getPreferenceValue('policyChanges')}
+                  readonly
+                  tooltip={reqNotifTooltip}
+                /></td
+              >
+            </tr>
+            <tr class="h-10">
+              <td class="py-1 text-gray-400">Important / Urgent FIR Updates</td>
+              <td class="py-1"
+                ><Toggle
+                  name="urgentFirUpdates"
+                  checked={getPreferenceValue('urgentFirUpdates')}
+                  readonly
+                  tooltip={reqNotifTooltip}
+                /></td
+              >
+            </tr>
+            <tr class="h-10">
+              <td class="py-1 text-gray-400">Training Updates</td>
+              <td class="py-1"
+                ><Toggle
+                  name="trainingUpdates"
+                  checked={getPreferenceValue('trainingUpdates')}
+                  readonly
+                  tooltip={reqNotifTooltip}
+                /></td
+              >
+            </tr>
+            <tr class="h-10">
+              <td class="py-1 text-gray-400">Unauthorized Connection Alerts </td>
+              <td class="py-1"
+                ><Toggle
+                  name="unauthorizedConnection"
+                  checked={getPreferenceValue('unauthorizedConnection')}
+                  readonly
+                  tooltip={reqNotifTooltip}
+                /></td
+              >
+            </tr>
+            <tr class="h-10">
+              <td class="py-1 text-gray-400">Event Posted</td>
+              <td class="py-1"
+                ><Toggle name="newEventPosted" checked={getPreferenceValue('newEventPosted')} /></td
+              >
+            </tr>
+            <tr class="h-10">
+              <td class="py-1 text-gray-400">News Article Posted</td>
+              <td class="py-1"
+                ><Toggle
+                  name="newNewsArticlePosted"
+                  checked={getPreferenceValue('newNewsArticlePosted')}
+                /></td
+              >
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-6">
+        <button type="submit" class="btn btn-primary">Save Preferences</button>
+      </div>
+    </form>
+  {:else}
     <h2 class="mt-6 text-center text-xl font-semibold">
       You must have your Discord account linked to configure notifications!
     </h2>
@@ -116,5 +116,5 @@
         >here</a
       >.
     </p>
-  {/if} -->
+  {/if}
 </section>
