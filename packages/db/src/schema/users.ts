@@ -1,6 +1,7 @@
 import { relations, type InferSelectModel } from "drizzle-orm";
 import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { news, ratings, sessions, tickets, usersToFlags } from "./index";
+import { bookings } from "./bookings";
 import { soloEndorsements } from "./soloEndorsements";
 import { roster } from "./roster";
 import { integrations } from "./integrations";
@@ -44,6 +45,12 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   roster: many(roster),
   integrations: many(integrations),
   preferences: many(preferences),
+  bookingsAsOwner: many(bookings, {
+    relationName: "bookingsAsOwner",
+  }),
+  bookingsAsController: many(bookings, {
+    relationName: "bookingsAsController",
+  }),
 }));
 
 export type User = InferSelectModel<typeof users>;

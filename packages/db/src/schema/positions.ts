@@ -1,4 +1,6 @@
-import type { InferSelectModel } from "drizzle-orm";
+import { relations, type InferSelectModel } from "drizzle-orm";
+import { sessions } from "./sessions";
+import { bookings } from "./bookings";
 import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const positions = sqliteTable(
@@ -14,5 +16,10 @@ export const positions = sqliteTable(
     index("positions_name_idx").on(t.name),
   ]
 );
+
+export const positionsRelations = relations(positions, ({ many }) => ({
+  sessions: many(sessions),
+  bookings: many(bookings),
+}));
 
 export type Position = InferSelectModel<typeof positions>;
