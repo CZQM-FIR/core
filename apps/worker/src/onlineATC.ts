@@ -218,7 +218,10 @@ export const handleOnlineSessions = async (
         await notifyUnauthorizedSession(session, db, env, 'discord');
       } else if (controller.rating === 1) {
         await notifyUnauthorizedSession(session, db, env, 'suspended');
-      } else if (!rosterData || rosterData.status === -1) {
+      } else if (
+        (!rosterData || rosterData.status === -1) &&
+        position.callsign.split('_').pop()?.toLowerCase() !== 'obs'
+      ) {
         await notifyUnauthorizedSession(session, db, env, 'roster');
       } else {
         await notifySession(session, db, env);
