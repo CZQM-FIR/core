@@ -15,7 +15,7 @@ export const tickets = sqliteTable(
       .notNull()
       .references(() => ticketType.id, { onDelete: "cascade" }),
     status: text().notNull().default("open"),
-    createdAt: int("created_at").notNull().default(new Date().getTime()),
+    createdAt: int("created_at").notNull(),
   },
   (t) => [
     index("tickets_authorId_idx").on(t.authorId),
@@ -50,7 +50,7 @@ export const ticketMessages = sqliteTable(
       .notNull()
       .references(() => users.cid, { onDelete: "cascade" }),
     message: text().notNull(),
-    createdAt: int("created_at").notNull().default(new Date().getTime()),
+    createdAt: int("created_at").notNull(),
   },
   (t) => [
     index("ticket_messages_ticketId_idx").on(t.ticketId),
