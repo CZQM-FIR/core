@@ -167,14 +167,14 @@ export const handleOnlineSessions = async (
   console.log(`Found ${nonCzqmControllersOnline.length} non-CZQM controllers online.`);
 
   for await (const controller of czqmControllersOnline) {
-    const preExsittingSession = await db.query.onlineSessions.findFirst({
+    const preExistingSession = await db.query.onlineSessions.findFirst({
       where: and(
         eq(onlineSessions.userId, controller.cid),
         eq(onlineSessions.start, new Date(controller.start))
       )
     });
 
-    if (preExsittingSession) {
+    if (preExistingSession) {
       continue;
     } else {
       const position = allPositions.find((p) => p.callsign === controller.callsign);
