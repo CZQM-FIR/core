@@ -127,6 +127,20 @@
       "when": 1759022088353,
       "tag": "0017_optimal_tattoo",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1759084923816,
+      "tag": "0018_natural_hiroim",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1759085088127,
+      "tag": "0019_flat_prowler",
+      "breakpoints": true
     }
   ]
 }

@@ -9,9 +9,7 @@ export const soloEndorsements = sqliteTable(
     controllerId: int("controller_id")
       .notNull()
       .references(() => users.cid, { onDelete: "cascade" }),
-    expiresAt: int("expires_at", { mode: "timestamp" })
-      .notNull()
-      .default(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+    expiresAt: int("expires_at", { mode: "timestamp" }).notNull(),
     positionId: int("position_id")
       .notNull()
       .references(() => positions.id),
