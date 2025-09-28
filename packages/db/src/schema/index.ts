@@ -13,3 +13,4 @@ export * from "./soloEndorsements";
 export * from "./roster";
 export * from "./integrations";
 export * from "./preferences";
+export * from "./onlineSessions";

@@ -30,3 +30,7 @@ yarn-error.log*
 .turbo
 
 dist
+
+# database
+local.db*
+czqm.db*
