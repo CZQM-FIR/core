@@ -13,8 +13,10 @@ export default {
     const { db, client } = createDB(env);
     console.log(`Worker triggered by cron: ${controller.cron}`);
 
-    await handleRecordSessions(db, env);
-    await handleOnlineSessions(db, env);
+    if (controller.cron === '* * * * *') {
+      await handleRecordSessions(db, env);
+      await handleOnlineSessions(db, env);
+    }
 
     if (controller.cron === '*/2 * * * *') {
       await syncDiscord(db, env);
