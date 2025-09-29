@@ -8,7 +8,7 @@
   let user = $state(data.userData);
 
   let sessions = user?.sessions
-    ?.filter((s) => s.positionId !== -1)
+    ?.filter((s) => s.positionId !== -1 && s.positionId !== 0)
     .sort((a, b) => {
       return new Date(b.logonTime).getTime() - new Date(a.logonTime).getTime();
     })
