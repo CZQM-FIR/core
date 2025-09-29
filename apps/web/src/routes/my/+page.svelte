@@ -19,7 +19,12 @@
   let thisMonth =
     user.sessions
       .filter((session) => {
-        return new Date(session.logonTime).getMonth() === new Date().getMonth();
+        const now = new Date();
+        const sessionDate = new Date(session.logonTime);
+        return (
+          sessionDate.getMonth() === now.getMonth() &&
+          sessionDate.getFullYear() === now.getFullYear()
+        );
       })
       .map((s) => s.duration)
       .reduce((a, b) => a + b, 0) / 3600;
@@ -27,11 +32,16 @@
     user.sessions
       .filter((session) => {
         const now = new Date();
+        const sessionDate = new Date(session.logonTime);
         const currentMonth = now.getMonth();
-        const sessionMonth = new Date(session.logonTime).getMonth();
+        const sessionMonth = sessionDate.getMonth();
         const quarterStartMonth = currentMonth - (currentMonth % 3);
 
-        return sessionMonth >= quarterStartMonth && sessionMonth <= quarterStartMonth + 2;
+        return (
+          sessionDate.getFullYear() === now.getFullYear() &&
+          sessionMonth >= quarterStartMonth &&
+          sessionMonth <= quarterStartMonth + 2
+        );
       })
       .map((s) => s.duration)
       .reduce((a, b) => a + b, 0) / 3600;
@@ -40,11 +50,16 @@
     user.sessions
       .filter((session) => {
         const now = new Date();
+        const sessionDate = new Date(session.logonTime);
         const currentMonth = now.getMonth();
-        const sessionMonth = new Date(session.logonTime).getMonth();
+        const sessionMonth = sessionDate.getMonth();
         const quarterStartMonth = currentMonth - (currentMonth % 3);
 
-        return sessionMonth >= quarterStartMonth && sessionMonth <= quarterStartMonth + 2;
+        return (
+          sessionDate.getFullYear() === now.getFullYear() &&
+          sessionMonth >= quarterStartMonth &&
+          sessionMonth <= quarterStartMonth + 2
+        );
       })
       .filter((session) => {
         if ([-1, 0].includes(session.positionId)) return false;
