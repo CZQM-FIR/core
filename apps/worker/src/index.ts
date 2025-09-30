@@ -14,7 +14,6 @@ export default {
     console.log(`Worker triggered by cron: ${controller.cron}`);
 
     if (controller.cron === '* * * * *') {
-      await handleRecordSessions(db, env);
       await handleOnlineSessions(db, env);
     }
 
@@ -26,8 +25,9 @@ export default {
       await vatcanPull(db, env);
     }
 
-    if (controller.cron === '0 0 * * *') {
-      await recurringEvents(db);
+    if (controller.cron === '0 2 * * *') {
+      // await recurringEvents(db);
+      await handleRecordSessions(db);
     }
 
     client.close();
