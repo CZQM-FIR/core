@@ -114,22 +114,25 @@ export const handleOnlineSessions = async (
   db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
   env: Env
 ) => {
-  const onlineControllersData = await fetch('https://api.vatsim.net/v2/atc/online');
-  const onlineControllers = (
-    (await onlineControllersData.json()) as {
-      id: number;
+  const onlineControllersData = await fetch('https://data.vatsim.net/v3/vatsim-data.json');
+  const onlineControllersJson = (await onlineControllersData.json()) as {
+    controllers: {
+      cid: number;
       callsign: string;
-      start: string;
+      logon_time: string;
       rating: number;
-    }[]
-  ).map((c: { id: number; callsign: string; start: string; rating: number }) => {
-    return {
-      cid: c.id,
-      callsign: c.callsign,
-      start: c.start,
-      rating: c.rating
-    };
-  }) as OnlineController[];
+    }[];
+  };
+  const onlineControllers = onlineControllersJson.controllers.map(
+    (c: { cid: number; callsign: string; logon_time: string; rating: number }) => {
+      return {
+        cid: c.cid,
+        callsign: c.callsign,
+        start: c.logon_time,
+        rating: c.rating
+      };
+    }
+  ) as OnlineController[];
 
   console.log(`Fetched ${onlineControllers.length} online controllers from VATSIM.`);
 
