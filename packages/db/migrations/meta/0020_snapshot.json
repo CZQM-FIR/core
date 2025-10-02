@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "747be839-1184-45d2-8f46-8be691fbd227",
+  "id": "e392f318-1075-4e46-80a2-c0e0a7cbf75a",
   "prevId": "cae48815-1798-41d8-aeb9-7a2deb41e51b",
   "tables": {
     "flags": {
@@ -602,8 +602,8 @@
           "autoincrement": false,
           "default": 0
         },
-        "flightsAmmended": {
-          "name": "flightsAmmended",
+        "flightsAmended": {
+          "name": "flightsAmended",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,

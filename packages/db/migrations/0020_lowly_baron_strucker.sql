@@ -14,7 +14,7 @@ ALTER TABLE `users` ADD `hoursLastUpdated` integer DEFAULT '"1970-01-01T00:00:00
 ALTER TABLE `sessions` ADD `ratingId` integer REFERENCES ratings(id);--> statement-breakpoint
 ALTER TABLE `sessions` ADD `aircraftTracked` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
 ALTER TABLE `sessions` ADD `aircraftSeen` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
-ALTER TABLE `sessions` ADD `flightsAmmended` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE `sessions` ADD `flightsAmended` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
 ALTER TABLE `sessions` ADD `handoffsInitiated` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
 ALTER TABLE `sessions` ADD `handoffsReceived` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
 ALTER TABLE `sessions` ADD `handoffsRefused` integer DEFAULT 0 NOT NULL;--> statement-breakpoint

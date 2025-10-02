@@ -17,7 +17,7 @@ export const sessions = sqliteTable(
     ratingId: int().references(() => ratings.id),
     aircraftTracked: int().notNull().default(0),
     aircraftSeen: int().notNull().default(0),
-    flightsAmmended: int().notNull().default(0),
+    flightsAmended: int().notNull().default(0),
     handoffsInitiated: int().notNull().default(0),
     handoffsReceived: int().notNull().default(0),
     handoffsRefused: int().notNull().default(0),
