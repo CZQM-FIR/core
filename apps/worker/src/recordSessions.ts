@@ -67,7 +67,7 @@ export const handleRecordSessions = async (
 
   const positions = await db.query.positions.findMany({});
 
-  for await (const controller of allControllers.splice(0, 5)) {
+  for await (const controller of allControllers.slice(0, 5)) {
     // fetch their sessions from vatsim
     const fetchedSessions = [];
     let count = 1;
