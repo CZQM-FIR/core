@@ -1,5 +1,4 @@
 import { createDB } from './db';
-// import { handleRecordSessions } from './recordSessions';
 import { handleOnlineSessions } from './onlineATC';
 import { handleRecordSessions } from './recordSessions';
 import { recurringEvents } from './recurringEvents';
@@ -15,6 +14,7 @@ export default {
 
     if (controller.cron === '* * * * *') {
       await handleOnlineSessions(db, env);
+      await handleRecordSessions(db);
     }
 
     if (controller.cron === '*/2 * * * *') {
@@ -26,8 +26,7 @@ export default {
     }
 
     if (controller.cron === '0 2 * * *') {
-      // await recurringEvents(db);
-      await handleRecordSessions(db);
+      await recurringEvents(db);
     }
 
     client.close();

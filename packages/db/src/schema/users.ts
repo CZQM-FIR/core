@@ -23,6 +23,7 @@ export const users = sqliteTable(
     bio: text(),
     discord_id: int(),
     active: int().notNull().default(1), // 1 active, 0 inactive, -1 LoA
+    hoursLastUpdated: int({ mode: "timestamp" }).notNull().default(new Date(0)),
   },
   (t) => [
     index("users_ratingID_idx").on(t.ratingID),

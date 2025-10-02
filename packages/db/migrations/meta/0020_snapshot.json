@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "679bf22d-3be3-4314-a021-1d60ca0d9ef8",
+  "id": "747be839-1184-45d2-8f46-8be691fbd227",
   "prevId": "cae48815-1798-41d8-aeb9-7a2deb41e51b",
   "tables": {
     "flags": {
@@ -251,6 +251,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": 1
+        },
+        "hoursLastUpdated": {
+          "name": "hoursLastUpdated",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'\"1970-01-01T00:00:00.000Z\"'"
         }
       },
       "indexes": {
@@ -1457,8 +1465,9 @@
           "name": "start",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'\"1970-01-01T00:00:00.000Z\"'"
         }
       },
       "indexes": {},
