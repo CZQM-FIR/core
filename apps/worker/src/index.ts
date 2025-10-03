@@ -24,7 +24,7 @@ const Env = type({
   WEBHOOK_UNAUTHORIZED_CONTROLLER: 'string',
   DISCORD_BOT_TOKEN: 'string',
   DISCORD_GUILD_ID: 'string',
-  RECORD_SESSIONS_DELAY: 'number.integer>=0',
+  RECORD_SESSIONS_DELAY: 'string.integer.parse',
   VATCAN_API_TOKEN: 'string'
 });
 
