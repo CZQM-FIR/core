@@ -271,9 +271,9 @@ export const syncDiscord = async (
         `Discord API request failed: ${response.status} ${response.statusText} for ${url.href}`
       );
     } else {
-      console.log(
-        `Discord API request successful: ${response.status} ${response.statusText} for ${url.href}`
-      );
+      // console.log(
+      //   `Discord API request successful: ${response.status} ${response.statusText} for ${url.href}`
+      // );
     }
 
     if (response.headers.get('x-ratelimit-remaining') === '0') {

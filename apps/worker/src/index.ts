@@ -1,10 +1,10 @@
 import { type } from 'arktype';
-import { createDB } from './db';
-import { handleOnlineSessions } from './onlineATC';
-import { handleRecordSessions } from './recordSessions';
-import { recurringEvents } from './recurringEvents';
-import { syncDiscord } from './syncDiscord';
-import { vatcanPull } from './vatcanPull';
+import { createDB } from './db.js';
+import { handleOnlineSessions } from './onlineATC.js';
+import { handleRecordSessions } from './recordSessions.js';
+import { recurringEvents } from './recurringEvents.js';
+import { syncDiscord } from './syncDiscord.js';
+import { vatcanPull } from './vatcanPull.js';
 import 'dotenv/config';
 import cron from 'node-cron';
 
@@ -23,7 +23,7 @@ const Env = type({
   WEBHOOK_ONLINE_CONTROLLERS: 'string',
   WEBHOOK_UNAUTHORIZED_CONTROLLER: 'string',
   DISCORD_BOT_TOKEN: 'string',
-  DISCORD_GUILD_ID: 'string',
+  DISCORD_GUILD_ID: 'string.integer',
   RECORD_SESSIONS_DELAY: 'string.integer.parse',
   VATCAN_API_TOKEN: 'string'
 });
@@ -31,7 +31,7 @@ const Env = type({
 export type Env = typeof Env.infer;
 
 async function main(): Promise<void> {
-  console.log('Running cron job at', new Date());
+  console.log('Initializing Cron Worker', new Date());
 
   const env = Env(process.env);
 
@@ -42,28 +42,41 @@ async function main(): Promise<void> {
   cron.schedule('* * * * *', async () => {
     try {
       const { db, client } = createDB(env);
+
+      console.log('Running Online ATC Handler', new Date());
       await handleOnlineSessions(db, env);
-      await handleRecordSessions(db, env);
       client.close();
     } catch (err) {
       console.error('Scheduled job failed:', err);
+    } finally {
+      console.log('Finished Online ATC Handler', new Date());
     }
   });
 
   cron.schedule('*/2 * * * *', async () => {
     try {
       const { db, client } = createDB(env);
+
+      console.log('Running Discord Sync', new Date());
       await syncDiscord(db, env);
       client.close();
     } catch (err) {
       console.error('Scheduled job failed:', err);
+    } finally {
+      console.log('Finished Discord Sync', new Date());
     }
   });
 
   cron.schedule('*/15 * * * *', async () => {
     try {
       const { db, client } = createDB(env);
+      console.log('Running VATCAN sync', new Date());
       await vatcanPull(db, env);
+      console.log('Finished VATCAN sync', new Date());
+
+      console.log('Running Record Sessions', new Date());
+      await handleRecordSessions(db, env);
+      console.log('Finished Record Sessions', new Date());
       client.close();
     } catch (err) {
       console.error('Scheduled job failed:', err);
@@ -73,10 +86,14 @@ async function main(): Promise<void> {
   cron.schedule('0 2 * * *', async () => {
     try {
       const { db, client } = createDB(env);
+
+      console.log('Running Recurring Events', new Date());
       await recurringEvents(db);
       client.close();
     } catch (err) {
       console.error('Scheduled job failed:', err);
+    } finally {
+      console.log('Finished Recurring Events', new Date());
     }
   });
 }
