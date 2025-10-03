@@ -3,6 +3,7 @@ import { Client } from '@libsql/client';
 import { type } from 'arktype';
 import { eq } from 'drizzle-orm';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
+import { Env } from '.';
 
 const positionPrefixes = [
   'CZQM',
@@ -45,7 +46,8 @@ const VatsimSessions = type({
 });
 
 export const handleRecordSessions = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client }
+  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
+  env: Env
 ) => {
   console.log('Starting session recording job');
 
@@ -213,6 +215,6 @@ export const handleRecordSessions = async (
     );
 
     // delay between users to avoid rate limiting
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, env.RECORD_SESSIONS_DELAY || 5000));
   }
 };

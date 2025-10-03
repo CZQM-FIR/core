@@ -1,7 +1,8 @@
-import { Client } from '@libsql/client/.';
+import { Client } from '@libsql/client';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 import * as schema from '@czqm/db/schema';
 import { and, eq } from 'drizzle-orm';
+import type { Env } from '.';
 
 type VatcanApiUser = {
   cid: number;

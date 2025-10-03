@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { Position, positions, users, onlineSessions, roster, integrations } from '@czqm/db/schema';
 import { Client } from '@libsql/client';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
+import type { Env } from '.';
 
 type OnlineController = {
   cid: number;

@@ -14,6 +14,7 @@ export const integrations = sqliteTable(
         onDelete: "cascade",
       }),
     integrationUserName: text("integration_user_name"),
+    lastSyncedAt: int("last_synced_at", { mode: "timestamp" }),
   },
   (t) => [
     unique().on(t.cid, t.type),
