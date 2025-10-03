@@ -141,6 +141,13 @@
       "when": 1759085088127,
       "tag": "0019_flat_prowler",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1759369315402,
+      "tag": "0020_lowly_baron_strucker",
+      "breakpoints": true
     }
   ]
 }

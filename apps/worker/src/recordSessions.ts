@@ -1,6 +1,7 @@
-import { and, eq } from 'drizzle-orm';
-import { Position, positions, sessions, users } from '@czqm/db/schema';
+import * as schema from '@czqm/db/schema';
 import { Client } from '@libsql/client';
+import { type } from 'arktype';
+import { eq } from 'drizzle-orm';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 
 const positionPrefixes = [
@@ -19,132 +20,199 @@ const positionPrefixes = [
   'CYYG'
 ];
 
-type VatsimController = {
-  cid: number;
-  name: string;
-  callsign: string;
-  frequency: string;
-  facility: number;
-  rating: number;
-  server: string;
-  visual_range: number;
-  text_atis: string[];
-  last_updated: string;
-  logon_time: string;
-};
-
-type Session = {
-  cid: number;
-  position: Position;
-  logonTime: Date;
-};
+const VatsimSessions = type({
+  items: type({
+    connection_id: {
+      id: 'number.integer',
+      vatsim_id: 'string.integer' as type.cast<number>,
+      rating: 'number.integer',
+      callsign: 'string',
+      start: type('string').pipe((s) => new Date(s)),
+      end: type('string').pipe((s) => new Date(s))
+    },
+    aircrafttracked: 'number.integer',
+    aircraftseen: 'number.integer',
+    flightsamended: 'number.integer',
+    handoffsinitiated: 'number.integer',
+    handoffsreceived: 'number.integer',
+    handoffsrefused: 'number.integer',
+    squawksassigned: 'number.integer',
+    cruisealtsmodified: 'number.integer',
+    tempaltsmodified: 'number.integer',
+    scratchpadmods: 'number.integer'
+  }).array(),
+  count: 'number.integer>=0'
+});
 
 export const handleRecordSessions = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
-  env: Env
+  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client }
 ) => {
-  const controllers = (
-    (await (await fetch('https://data.vatsim.net/v3/vatsim-data.json')).json()) as any
-  ).controllers as VatsimController[];
+  console.log('Starting session recording job');
 
+  // get list of all czqm controllers and visitors
   const allUsers = await db.query.users.findMany({
-    columns: {
-      cid: true
-    },
-    with: {
-      flags: {
-        with: {
-          flag: true
-        }
-      }
-    }
+    with: { flags: { with: { flag: true } } }
   });
-
-  const czqmControllers = allUsers
-    .filter((c) => {
-      return c.flags.some(({ flagId }) => flagId === 4 || flagId === 5);
-    })
-    .map((c) => c.cid);
-
-  const czqmControllersOnline = controllers.filter(
-    (c) => czqmControllers.includes(c.cid) && c.frequency !== '199.998'
+  const czqmControllers = allUsers.filter((c) => {
+    return c.flags.some((f) => f.flag.name === 'controller');
+  });
+  const czqmVisitors = allUsers.filter((c) => {
+    return c.flags.some((f) => f.flag.name === 'visitor');
+  });
+  const allControllers = [...czqmControllers, ...czqmVisitors].sort(
+    (a, b) => b.hoursLastUpdated.getTime() - a.hoursLastUpdated.getTime()
   );
 
-  const allPositions = await db.query.positions.findMany();
+  console.log(`Found ${allControllers.length} controllers to update sessions for`);
 
-  for (const controller of czqmControllersOnline) {
-    const currentSession = await db.query.sessions.findFirst({
-      where: and(
-        eq(sessions.userId, controller.cid),
-        eq(sessions.logonTime, new Date(controller.logon_time))
-      )
+  const positions = await db.query.positions.findMany({});
+
+  for await (const controller of allControllers.slice(0, 5)) {
+    // fetch their sessions from vatsim
+    const fetchedSessions = [];
+    let count = 1;
+    let offset = 0;
+
+    while (fetchedSessions.length < count) {
+      const sessionsData = await fetch(
+        `https://api.vatsim.net/v2/members/${controller.cid}/atc?offset=${offset}&limit=1000`
+      );
+      const sessionsJson = await sessionsData.json();
+      const sessionsParsed = VatsimSessions(sessionsJson);
+
+      if (sessionsParsed instanceof type.errors) {
+        throw new Error(
+          `Failed to parse VATSIM sessions for user ${controller.cid}: ${sessionsParsed.summary}`
+        );
+      }
+
+      count = sessionsParsed.count;
+      fetchedSessions.push(...sessionsParsed.items);
+      offset += 1000;
+    }
+
+    console.log(`Fetched ${fetchedSessions.length} sessions for user ${controller.cid}`);
+
+    const czqmSessions = fetchedSessions.filter((s) => {
+      // filter to only czqm positions
+      return positionPrefixes.some((prefix) =>
+        s.connection_id.callsign.toUpperCase().startsWith(prefix)
+      );
+    });
+    const externalSessions = fetchedSessions.filter((s) => {
+      return !positionPrefixes.some((prefix) =>
+        s.connection_id.callsign.toUpperCase().startsWith(prefix)
+      );
     });
 
-    if (currentSession) {
-      // session already exists
-      console.log('Session already exists', controller.callsign, controller.cid);
-
-      await db
-        .update(sessions)
-        .set({
-          duration:
-            Math.floor(Date.now() / 1000) -
-            Math.floor(new Date(controller.logon_time).getTime() / 1000)
-        })
-        .where(eq(sessions.id, currentSession.id));
-    } else {
-      console.log('Session does not exist', controller.callsign, controller.cid);
-
-      const position = allPositions.find((p) => p.callsign === controller.callsign);
-
-      console.log('Position', position);
-
-      if (!position) {
-        if (!positionPrefixes.includes(controller.callsign.split('_')[0])) {
-          console.log('Not a position we care about', controller.callsign, controller.cid);
-          // not a position we care about but a user we care about
-          await db.insert(sessions).values({
-            userId: controller.cid,
-            positionId: 0,
-            logonTime: new Date(controller.logon_time),
-            duration:
-              Math.floor(Date.now() / 1000) -
-              Math.floor(new Date(controller.logon_time).getTime() / 1000)
-          });
+    const czqmValues = await Promise.all(
+      czqmSessions.map(async (s) => {
+        let positionId: number;
+        if (positions.some((p) => p.callsign === s.connection_id.callsign)) {
+          positionId = positions.find((p) => p.callsign === s.connection_id.callsign)!.id;
         } else {
-          // a position we do not yet track but should
-          const newPosition = (
-            await db
-              .insert(positions)
-              .values({
-                callsign: controller.callsign,
-                name: controller.callsign,
-                frequency: controller.frequency
-              })
-              .returning()
-          )[0];
-
-          await db.insert(sessions).values({
-            userId: controller.cid,
-            positionId: newPosition.id,
-            logonTime: new Date(controller.logon_time),
-            duration:
-              Math.floor(Date.now() / 1000) -
-              Math.floor(new Date(controller.logon_time).getTime() / 1000)
+          // First try to find if the position already exists in the database
+          let position = await db.query.positions.findFirst({
+            where: (p, { eq }) => eq(p.callsign, s.connection_id.callsign)
           });
-        }
-      } else {
-        // a position we do track
 
-        await db.insert(sessions).values({
+          if (!position) {
+            // Only insert if it doesn't exist
+            try {
+              await db.insert(schema.positions).values({
+                callsign: s.connection_id.callsign,
+                name: s.connection_id.callsign,
+                frequency: '199.998'
+              });
+
+              // Fetch the newly created position
+              position = await db.query.positions.findFirst({
+                where: (p, { eq }) => eq(p.callsign, s.connection_id.callsign)
+              });
+            } catch (error) {
+              // If insert fails, try to fetch again (race condition)
+              position = await db.query.positions.findFirst({
+                where: (p, { eq }) => eq(p.callsign, s.connection_id.callsign)
+              });
+
+              if (!position) {
+                throw error;
+              }
+            }
+          }
+
+          if (!position) {
+            throw new Error(
+              `Failed to create or find position with callsign: ${s.connection_id.callsign}`
+            );
+          }
+
+          positionId = position.id;
+          // Add to positions array for future reference
+          positions.push(position);
+        }
+
+        return {
+          id: s.connection_id.id,
           userId: controller.cid,
-          positionId: position.id,
-          logonTime: new Date(controller.logon_time),
-          duration:
-            Math.floor(Date.now() / 1000) -
-            Math.floor(new Date(controller.logon_time).getTime() / 1000)
-        });
-      }
+          positionId: positionId,
+          duration: Math.floor(
+            (s.connection_id.end.getTime() - s.connection_id.start.getTime()) / 1000
+          ),
+          logonTime: s.connection_id.start,
+          ratingId: s.connection_id.rating,
+          aircraftTracked: s.aircrafttracked,
+          aircraftSeen: s.aircraftseen,
+          flightsAmended: s.flightsamended,
+          handoffsInitiated: s.handoffsinitiated,
+          handoffsReceived: s.handoffsreceived,
+          handoffsRefused: s.handoffsrefused,
+          squawksAssigned: s.squawksassigned,
+          cruiseAltsModified: s.cruisealtsmodified,
+          tempAltsModified: s.tempaltsmodified,
+          scratchpadMods: s.scratchpadmods
+        };
+      })
+    );
+    const externalValues = externalSessions.map((s) => {
+      return {
+        id: s.connection_id.id,
+        userId: controller.cid,
+        positionId: 0,
+        duration: Math.floor(
+          (s.connection_id.end.getTime() - s.connection_id.start.getTime()) / 1000
+        ),
+        logonTime: s.connection_id.start,
+        ratingId: s.connection_id.rating,
+        aircraftTracked: s.aircrafttracked,
+        aircraftSeen: s.aircraftseen,
+        flightsAmended: s.flightsamended,
+        handoffsInitiated: s.handoffsinitiated,
+        handoffsReceived: s.handoffsreceived,
+        handoffsRefused: s.handoffsrefused,
+        squawksAssigned: s.squawksassigned,
+        cruiseAltsModified: s.cruisealtsmodified,
+        tempAltsModified: s.tempaltsmodified,
+        scratchpadMods: s.scratchpadmods
+      };
+    });
+
+    if ([...czqmValues, ...externalValues].length > 0) {
+      await db
+        .insert(schema.sessions)
+        .values([...czqmValues, ...externalValues])
+        .onConflictDoNothing();
     }
+    await db
+      .update(schema.users)
+      .set({ hoursLastUpdated: new Date() })
+      .where(eq(schema.users.cid, controller.cid));
+
+    console.log(
+      `Inserted ${czqmValues.length + externalValues.length} sessions for user ${controller.cid} (${czqmValues.length} CZQM, ${externalValues.length} external)`
+    );
+
+    // delay between users to avoid rate limiting
+    await new Promise((resolve) => setTimeout(resolve, 5000));
   }
 };

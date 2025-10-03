@@ -1,5 +1,4 @@
 import { createDB } from './db';
-// import { handleRecordSessions } from './recordSessions';
 import { handleOnlineSessions } from './onlineATC';
 import { handleRecordSessions } from './recordSessions';
 import { recurringEvents } from './recurringEvents';
@@ -14,8 +13,8 @@ export default {
     console.log(`Worker triggered by cron: ${controller.cron}`);
 
     if (controller.cron === '* * * * *') {
-      await handleRecordSessions(db, env);
       await handleOnlineSessions(db, env);
+      await handleRecordSessions(db);
     }
 
     if (controller.cron === '*/2 * * * *') {
@@ -26,7 +25,7 @@ export default {
       await vatcanPull(db, env);
     }
 
-    if (controller.cron === '0 0 * * *') {
+    if (controller.cron === '0 2 * * *') {
       await recurringEvents(db);
     }
 

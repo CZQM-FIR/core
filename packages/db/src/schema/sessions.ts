@@ -1,5 +1,5 @@
 import { index, int, sqliteTable } from "drizzle-orm/sqlite-core";
-import { positions, users } from "./index";
+import { positions, ratings, users } from "./index";
 import { relations, type InferSelectModel } from "drizzle-orm";
 
 export const sessions = sqliteTable(
@@ -12,8 +12,19 @@ export const sessions = sqliteTable(
     positionId: int()
       .notNull()
       .references(() => positions.id, { onDelete: "cascade" }),
-    duration: int().notNull(),
+    duration: int().notNull(), // in seconds
     logonTime: int({ mode: "timestamp" }).notNull().default(new Date(0)),
+    ratingId: int().references(() => ratings.id),
+    aircraftTracked: int().notNull().default(0),
+    aircraftSeen: int().notNull().default(0),
+    flightsAmended: int().notNull().default(0),
+    handoffsInitiated: int().notNull().default(0),
+    handoffsReceived: int().notNull().default(0),
+    handoffsRefused: int().notNull().default(0),
+    squawksAssigned: int().notNull().default(0),
+    cruiseAltsModified: int().notNull().default(0),
+    tempAltsModified: int().notNull().default(0),
+    scratchpadMods: int().notNull().default(0),
   },
   (t) => [
     index("sessions_userId_idx").on(t.userId),
@@ -30,6 +41,10 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   position: one(positions, {
     fields: [sessions.positionId],
     references: [positions.id],
+  }),
+  rating: one(ratings, {
+    fields: [sessions.ratingId],
+    references: [ratings.id],
   }),
 }));
 
