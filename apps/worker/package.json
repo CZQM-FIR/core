@@ -2,15 +2,17 @@
   "name": "worker",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "deploy": "wrangler deploy",
-    "dev": "wrangler dev --test-scheduled",
-    "start": "wrangler dev --test-scheduled",
-    "cf-typegen": "wrangler types"
+    "build": "esbuild src/index.ts --bundle --platform=node --target=es2020 --format=esm --outfile=dist/index.js --external:arktype --external:dotenv --external:node-cron --external:@libsql/client",
+    "build:tsc": "tsc",
+    "start": "tsx src/index.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250321.0",
     "@eslint/js": "^9.18.0",
+    "@types/node": "^20.11.0",
+    "esbuild": "^0.21.5",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "globals": "^16.0.0",
@@ -24,6 +26,7 @@
     "@czqm/db": "workspace:*",
     "@libsql/client": "^0.15.1",
     "arktype": "^2.1.20",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.5.0",
+    "node-cron": "^4.2.1"
   }
 }

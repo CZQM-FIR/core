@@ -1,4 +1,4 @@
-import { Client } from '@libsql/client/.';
+import { Client } from '@libsql/client';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { events } from '@czqm/db/schema';
 import { eq } from 'drizzle-orm';

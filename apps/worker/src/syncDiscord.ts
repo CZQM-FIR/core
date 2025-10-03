@@ -1,6 +1,7 @@
 import { Client } from '@libsql/client';
 import { type } from 'arktype';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
+import type { Env } from '.';
 
 const managedRoles = [
   'Guest',
@@ -56,6 +57,8 @@ export const syncDiscord = async (
       'Content-Type': 'application/json'
     }
   });
+  const rolesJson = await rolesData.json();
+  console.log(rolesJson);
 
   const RolesData = type({
     id: 'string.integer',
@@ -63,7 +66,7 @@ export const syncDiscord = async (
     managed: 'boolean'
   }).array();
 
-  const guildRoles = RolesData(await rolesData.json());
+  const guildRoles = RolesData(rolesJson);
 
   if (guildRoles instanceof type.errors) {
     console.error('Invalid roles data:', guildRoles.summary);
@@ -113,47 +116,17 @@ export const syncDiscord = async (
     }
   });
 
+  integrations.sort(
+    (a, b) =>
+      (a.lastSyncedAt ? new Date(a.lastSyncedAt).getTime() : 0) -
+      (b.lastSyncedAt ? new Date(b.lastSyncedAt).getTime() : 0)
+  );
+
   console.log(`Fetched ${integrations.length} integrations from the database.`);
 
-  let failingCache = false;
-
-  const uncachedMembers = [];
-  const shuffledMembers = members
-    .map((member) => ({ member, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ member }) => member);
-
-  for (const member of shuffledMembers) {
-    let cached: string | null = null;
-
-    try {
-      cached = await env.CZQM_CACHE.get(`discord:${member.user.id}`);
-    } catch (error) {
-      console.error(
-        `Error fetching cache for member ${member.user.id}:`,
-        error,
-        '\nDissabling cache for this run.'
-      );
-      failingCache = true;
-    }
-
-    if (cached) {
-      console.log(`Cached member: ${member.user.id} (${member.nick || member.user.id})`);
-      continue;
-    } else {
-      uncachedMembers.push(member);
-    }
-    if (uncachedMembers.length >= 45) break;
-  }
-
-  for (const member of uncachedMembers) {
+  for (const member of members) {
     if (!integrations.some((i) => i.integrationUserId === member.user.id)) {
       console.log(`Unlinked member: ${member.user.id} (${member.nick || member.user.id})`);
-      if (!failingCache) {
-        await env.CZQM_CACHE.put(`discord:${member.user.id}`, 'true', {
-          expirationTtl: 60 * 5 // 5 minutes
-        });
-      }
 
       requests.push({
         method: 'PATCH',
@@ -169,13 +142,14 @@ export const syncDiscord = async (
         }
       });
     } else {
-      console.log(`Syncing Discord member: ${member.user.id} (${member.nick || member.user.id})`);
-
-      if (!failingCache) {
-        await env.CZQM_CACHE.put(`discord:${member.user.id}`, 'true', {
-          expirationTtl: 60 * 60 // 1 hour
-        });
+      const integrationIndex = integrations.findIndex(
+        (i) => i.integrationUserId === member.user.id
+      );
+      if (integrationIndex >= 30) {
+        continue;
       }
+
+      console.log(`Syncing Discord member: ${member.user.id} (${member.nick || member.user.id})`);
 
       const user = integrations.find((i) => i.integrationUserId === member.user.id)!.user;
 
@@ -297,9 +271,9 @@ export const syncDiscord = async (
         `Discord API request failed: ${response.status} ${response.statusText} for ${url.href}`
       );
     } else {
-      console.log(
-        `Discord API request successful: ${response.status} ${response.statusText} for ${url.href}`
-      );
+      // console.log(
+      //   `Discord API request successful: ${response.status} ${response.statusText} for ${url.href}`
+      // );
     }
 
     if (response.headers.get('x-ratelimit-remaining') === '0') {
