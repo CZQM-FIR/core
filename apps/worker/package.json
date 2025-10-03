@@ -2,9 +2,10 @@
   "name": "worker",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "tsx src/index.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250321.0",
