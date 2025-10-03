@@ -182,7 +182,8 @@ export const handleOnlineSessions = async (
     } else {
       const position = allPositions.find((p) => p.callsign === controller.callsign);
 
-      if (!position) continue;
+      if (!position || controller.callsign.includes('OBS') || controller.callsign.includes('SUP'))
+        continue;
 
       const userData = await db.query.users.findFirst({
         where: eq(users.cid, controller.cid),
