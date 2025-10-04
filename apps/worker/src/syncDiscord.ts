@@ -32,8 +32,6 @@ export const syncDiscord = async (
   db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
   env: Env
 ) => {
-  console.log('Syncing Discord members...');
-
   const requests: {
     method: string;
     endpoint: string;
@@ -125,7 +123,7 @@ export const syncDiscord = async (
 
   for (const member of members) {
     if (!integrations.some((i) => i.integrationUserId === member.user.id)) {
-      console.log(`Unlinked member: ${member.user.id} (${member.nick || member.user.id})`);
+      // console.log(`Unlinked member: ${member.user.id} (${member.nick || member.user.id})`);
 
       requests.push({
         method: 'PATCH',
@@ -148,7 +146,7 @@ export const syncDiscord = async (
         continue;
       }
 
-      console.log(`Syncing Discord member: ${member.user.id} (${member.nick || member.user.id})`);
+      // console.log(`Syncing Discord member: ${member.user.id} (${member.nick || member.user.id})`);
 
       const user = integrations.find((i) => i.integrationUserId === member.user.id)!.user;
 

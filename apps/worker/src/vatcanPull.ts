@@ -26,8 +26,6 @@ export const vatcanPull = async (
   db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
   env: Env
 ) => {
-  console.log('Pulling from vatcan...');
-
   const data = await fetch('https://vatcan.ca/api/v2/facility/roster', {
     headers: {
       Authorization: `Token ${env.VATCAN_API_TOKEN}`
@@ -80,7 +78,6 @@ export const vatcanPull = async (
           ratingID: controller.rating
         }
       });
-    console.log(2);
 
     await db
       .insert(schema.usersToFlags)

@@ -273,8 +273,6 @@ export const handleOnlineSessions = async (
 
       await notifyUnauthorizedSession(session, db, env, 'nonczqm');
 
-      console.log(new Date(controller.start));
-
       try {
         await db.insert(onlineSessions).values({
           userId: controller.cid,

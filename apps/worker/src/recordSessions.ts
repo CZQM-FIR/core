@@ -49,8 +49,6 @@ export const handleRecordSessions = async (
   db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
   env: Env
 ) => {
-  console.log('Starting session recording job');
-
   // get list of all czqm controllers and visitors
   const allUsers = await db.query.users.findMany({
     with: { flags: { with: { flag: true } } }
