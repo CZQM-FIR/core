@@ -197,11 +197,18 @@ export const handleRecordSessions = async (
       };
     });
 
-    if ([...czqmValues, ...externalValues].length > 0) {
-      await db
-        .insert(schema.sessions)
-        .values([...czqmValues, ...externalValues])
-        .onConflictDoNothing();
+    const allValues = [...czqmValues, ...externalValues];
+    if (allValues.length > 0) {
+      // Batch insertions into groups of 500
+      const batchSize = 500;
+      for (let i = 0; i < allValues.length; i += batchSize) {
+        const batch = allValues.slice(i, i + batchSize);
+        await db.insert(schema.sessions).values(batch).onConflictDoNothing();
+
+        console.log(
+          `Inserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(allValues.length / batchSize)} (${batch.length} sessions) for user ${controller.cid}`
+        );
+      }
     }
     await db
       .update(schema.users)
