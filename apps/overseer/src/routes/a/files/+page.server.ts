@@ -4,12 +4,7 @@ import { db } from '$lib/db';
 import { users } from '@czqm/db/schema';
 import { eq } from 'drizzle-orm';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import {
-	CLOUDFLARE_ACCOUNT_ID,
-	R2_ACCESS_KEY,
-	R2_ACCESS_KEY_ID,
-	R2_BUCKET_NAME
-} from '$env/static/private';
+import env from '$lib/env';
 import { type } from 'arktype';
 
 export const actions: Actions = {
@@ -53,17 +48,17 @@ export const actions: Actions = {
 		if (fileName && file) {
 			const s3 = new S3Client({
 				region: 'auto',
-				endpoint: `https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+				endpoint: `https://${env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
 				credentials: {
-					accessKeyId: R2_ACCESS_KEY_ID,
-					secretAccessKey: R2_ACCESS_KEY
+					accessKeyId: env.R2_ACCESS_KEY_ID,
+					secretAccessKey: env.R2_ACCESS_KEY
 				}
 			});
 
 			try {
 				await s3.send(
 					new PutObjectCommand({
-						Bucket: R2_BUCKET_NAME,
+						Bucket: env.R2_BUCKET_NAME,
 						Key: fileName,
 						Body: new Uint8Array(await file.arrayBuffer()),
 						ContentType: file.type

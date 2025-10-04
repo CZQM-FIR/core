@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PUBLIC_WEB_URL } from '$env/static/public';
+	import env from '$lib/publicEnv';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -17,7 +17,7 @@
 							You must be logged in to access this page. Please return to the main site to login.
 						</p>
 					</div>
-					<a href={PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
+					<a href={env.PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
 				</div>
 			</div>
 		</div>
@@ -30,7 +30,7 @@
 						<p class="">Welcome to Overseer, the CZQM FIR's controller management system.</p>
 						<p>Please select a function above.</p>
 					</div>
-					<a href={PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
+					<a href={env.PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
 				</div>
 			</div>
 		</div>
@@ -46,7 +46,7 @@
 						</p>
 						<p>If you believe you should have access, please contact the webmaster.</p>
 					</div>
-					<a href={PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
+					<a href={env.PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
 				</div>
 			</div>
 		</div>

@@ -5,13 +5,10 @@ import { fail } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { users } from '@czqm/db/schema';
 import { S3Client } from '@aws-sdk/client-s3';
-import { CLOUDFLARE_ACCOUNT_ID } from '$env/static/private';
-import { R2_ACCESS_KEY_ID } from '$env/static/private';
-import { R2_ACCESS_KEY } from '$env/static/private';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { R2_BUCKET_NAME } from '$env/static/private';
 import { events } from '@czqm/db/schema';
 import { type } from 'arktype';
+import env from '$lib/env';
 
 export const load = (async ({ params }) => {
 	const event = await db.query.events.findFirst({
@@ -88,17 +85,17 @@ export const actions = {
 		if (image.name) {
 			const s3 = new S3Client({
 				region: 'auto',
-				endpoint: `https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+				endpoint: `https://${env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
 				credentials: {
-					accessKeyId: R2_ACCESS_KEY_ID,
-					secretAccessKey: R2_ACCESS_KEY
+					accessKeyId: env.R2_ACCESS_KEY_ID,
+					secretAccessKey: env.R2_ACCESS_KEY
 				}
 			});
 
 			try {
 				await s3.send(
 					new PutObjectCommand({
-						Bucket: R2_BUCKET_NAME,
+						Bucket: env.R2_BUCKET_NAME,
 						Key: fileName,
 						Body: new Uint8Array(await image.arrayBuffer()),
 						ContentType: image.type
