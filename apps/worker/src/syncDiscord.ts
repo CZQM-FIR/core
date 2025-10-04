@@ -58,7 +58,6 @@ export const syncDiscord = async (
     }
   });
   const rolesJson = await rolesData.json();
-  console.log(rolesJson);
 
   const RolesData = type({
     id: 'string.integer',
@@ -286,6 +285,4 @@ export const syncDiscord = async (
       await sleep(500);
     }
   }
-
-  console.log('Discord members sync completed.');
 };
