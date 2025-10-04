@@ -1,4 +1,4 @@
-name: Worker Docker Image
+name: Overseer Docker Image
 
 on:
   push:
