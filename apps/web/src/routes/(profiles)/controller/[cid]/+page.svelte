@@ -72,7 +72,8 @@
 
     const favPositionArray = Object.values(positionDurations);
 
-    favPositionArray.sort((a, b) => {
+    favPositionArray.filter(p => p.position.callsign !== 'EXTERNAL')
+    .sort((a, b) => {
       return b.duration - a.duration;
     });
 
