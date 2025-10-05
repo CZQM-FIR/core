@@ -28,9 +28,6 @@ cron.schedule('*/5 * * * *', async () => {
 });
 
 const Env = type({
-  VATSIM_CLIENT_ID: 'string.integer',
-  VATSIM_CLIENT_SECRET: 'string',
-  VATSIM_URL: 'string.url',
   TURSO_URL: 'string',
   TURSO_TOKEN: 'string',
   PUBLIC_WEB_URL: 'string.url',
