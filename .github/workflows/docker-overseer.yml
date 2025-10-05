@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "apps/overseer/**"
+      - "packages/**"
   workflow_dispatch: # manual trigger if needed
 
 jobs:
