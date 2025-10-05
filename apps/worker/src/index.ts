@@ -121,7 +121,9 @@ async function main(): Promise<void> {
     });
   });
 
-  app.listen(env.UPTIME_PORT ?? 3000, () => console.log('Server running on port 3000'));
+  app.listen(env.UPTIME_PORT ?? 3000, () =>
+    console.log(`Server running on port ${env.UPTIME_PORT ?? 3000}`)
+  );
 }
 
 main().catch((err) => {
