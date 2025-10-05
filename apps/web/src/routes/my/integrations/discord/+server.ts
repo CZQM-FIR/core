@@ -33,11 +33,11 @@ export const GET: RequestHandler = async ({ url, locals }) => {
   const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
     method: 'POST',
     body: new URLSearchParams({
-      client_id: DISCORD_CLIENT_ID,
-      client_secret: DISCORD_CLIENT_SECRET,
+      client_id: DISCORD_CLIENT_ID!,
+      client_secret: DISCORD_CLIENT_SECRET!,
       grant_type: 'authorization_code',
       code,
-      redirect_uri: DISCORD_REDIRECT_URI
+      redirect_uri: DISCORD_REDIRECT_URI!
     })
   });
 
