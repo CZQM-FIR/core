@@ -7,6 +7,25 @@ import { syncDiscord } from './syncDiscord.js';
 import { vatcanPull } from './vatcanPull.js';
 import 'dotenv/config';
 import cron from 'node-cron';
+import express from 'express';
+
+const app = express();
+let lastRun: string | null = null;
+let lastSuccess = true;
+
+// Example cron job that runs every 5 minutes
+cron.schedule('*/5 * * * *', async () => {
+  try {
+    // Run your actual job logic here
+    console.log('Running job...');
+    // If it succeeds:
+    lastRun = new Date().toISOString();
+    lastSuccess = true;
+  } catch (err) {
+    console.error('Cron job failed:', err);
+    lastSuccess = false;
+  }
+});
 
 const Env = type({
   VATSIM_CLIENT_ID: 'string.integer',
@@ -25,7 +44,8 @@ const Env = type({
   DISCORD_BOT_TOKEN: 'string',
   DISCORD_GUILD_ID: 'string.integer',
   RECORD_SESSIONS_DELAY: 'string.integer.parse',
-  VATCAN_API_TOKEN: 'string'
+  VATCAN_API_TOKEN: 'string',
+  UPTIME_PORT: 'string.integer.parse|null'
 });
 
 export type Env = typeof Env.infer;
@@ -96,6 +116,15 @@ async function main(): Promise<void> {
       console.log('Finished Recurring Events', new Date());
     }
   });
+
+  app.get('/cron-health', (req, res) => {
+    res.json({
+      status: lastSuccess ? 'ok' : 'error',
+      lastRun
+    });
+  });
+
+  app.listen(env.UPTIME_PORT ?? 3000, () => console.log('Server running on port 3000'));
 }
 
 main().catch((err) => {

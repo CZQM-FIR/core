@@ -46,4 +46,6 @@ COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
 
 WORKDIR /app/apps/worker
 
+EXPOSE 3000
+
 CMD ["node", "dist/index.js"]
