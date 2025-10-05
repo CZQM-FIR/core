@@ -1,7 +1,9 @@
 import { Client } from '@libsql/client';
 import { type } from 'arktype';
+import { eq } from 'drizzle-orm';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { Env } from '.';
+import * as schema from '@czqm/db/schema';
 
 const managedRoles = [
   'Guest',
@@ -98,7 +100,7 @@ export const syncDiscord = async (
     return;
   }
 
-  const integrations = await db.query.integrations.findMany({
+  let integrations = await db.query.integrations.findMany({
     with: {
       user: {
         with: {
@@ -113,17 +115,22 @@ export const syncDiscord = async (
     }
   });
 
-  integrations.sort(
+  integrations = integrations.sort(
     (a, b) =>
       (a.lastSyncedAt ? new Date(a.lastSyncedAt).getTime() : 0) -
       (b.lastSyncedAt ? new Date(b.lastSyncedAt).getTime() : 0)
   );
 
+  for (const integration of integrations) {
+    console.log(integration.cid, integration.lastSyncedAt);
+  }
+
   console.log(`Fetched ${integrations.length} integrations from the database.`);
 
   for (const member of members) {
     if (!integrations.some((i) => i.integrationUserId === member.user.id)) {
-      // console.log(`Unlinked member: ${member.user.id} (${member.nick || member.user.id})`);
+      if (env.NODE_ENV === 'dev')
+        console.log(`[DEV] Unlinked member: ${member.user.id} (${member.nick || member.user.id})`);
 
       requests.push({
         method: 'PATCH',
@@ -146,7 +153,10 @@ export const syncDiscord = async (
         continue;
       }
 
-      // console.log(`Syncing Discord member: ${member.user.id} (${member.nick || member.user.id})`);
+      if (env.NODE_ENV === 'dev')
+        console.log(
+          `[DEV] Syncing Discord member: ${member.user.id} (${member.nick || member.user.id})`
+        );
 
       const user = integrations.find((i) => i.integrationUserId === member.user.id)!.user;
 
@@ -241,6 +251,12 @@ export const syncDiscord = async (
           'X-Audit-Log-Reason': 'Linked Member'
         }
       });
+
+      // update lastSyncedAt
+      await db
+        .update(schema.integrations)
+        .set({ lastSyncedAt: new Date() })
+        .where(eq(schema.integrations.integrationUserId, member.user.id));
     }
   }
 
@@ -268,9 +284,10 @@ export const syncDiscord = async (
         `Discord API request failed: ${response.status} ${response.statusText} for ${url.href}`
       );
     } else {
-      // console.log(
-      //   `Discord API request successful: ${response.status} ${response.statusText} for ${url.href}`
-      // );
+      if (env.NODE_ENV === 'dev')
+        console.log(
+          `[DEV] (${[...priorityRequests, ...requests].indexOf(request) + 1}/${[...priorityRequests, ...requests].length}) Discord API request successful: ${response.status} ${response.statusText} for ${url.href}`
+        );
     }
 
     if (response.headers.get('x-ratelimit-remaining') === '0') {
@@ -280,7 +297,7 @@ export const syncDiscord = async (
       console.log(`Rate limit hit, waiting for ${waitTime}ms`);
       await sleep(waitTime);
     } else {
-      await sleep(500);
+      await sleep(1000);
     }
   }
 };

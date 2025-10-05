@@ -42,7 +42,8 @@ const Env = type({
   DISCORD_GUILD_ID: 'string.integer',
   RECORD_SESSIONS_DELAY: 'string.integer.parse',
   VATCAN_API_TOKEN: 'string',
-  UPTIME_PORT: 'string.integer.parse|null'
+  UPTIME_PORT: 'string.integer.parse?',
+  NODE_ENV: '"dev"|"production"?'
 });
 
 export type Env = typeof Env.infer;
@@ -56,72 +57,111 @@ async function main(): Promise<void> {
     throw new Error(`Invalid environment variables: ${env.summary}`);
   }
 
-  cron.schedule('* * * * *', async () => {
-    try {
+  if (env.NODE_ENV === 'dev') {
+    app.get('/dev/discord', async (req, res) => {
       const { db, client } = createDB(env);
-
-      console.log('Running Online ATC Handler', new Date());
-      await handleOnlineSessions(db, env);
-      client.close();
-    } catch (err) {
-      console.error('Scheduled job failed:', err);
-    } finally {
-      console.log('Finished Online ATC Handler', new Date());
-    }
-  });
-
-  cron.schedule('*/2 * * * *', async () => {
-    try {
-      const { db, client } = createDB(env);
-
-      console.log('Running Discord Sync', new Date());
       await syncDiscord(db, env);
       client.close();
-    } catch (err) {
-      console.error('Scheduled job failed:', err);
-    } finally {
-      console.log('Finished Discord Sync', new Date());
-    }
-  });
+      res.send('OK');
+    });
 
-  cron.schedule('*/15 * * * *', async () => {
-    try {
+    app.get('/dev/online', async (req, res) => {
       const { db, client } = createDB(env);
-      console.log('Running VATCAN sync', new Date());
+      await handleOnlineSessions(db, env);
+      client.close();
+      res.send('OK');
+    });
+
+    app.get('/dev/vatcan', async (req, res) => {
+      const { db, client } = createDB(env);
       await vatcanPull(db, env);
-      console.log('Finished VATCAN sync', new Date());
       client.close();
-    } catch (err) {
-      console.error('Scheduled job failed:', err);
-    }
-  });
+      res.send('OK');
+    });
 
-  cron.schedule('0 * * * *', async () => {
-    try {
+    app.get('/dev/records', async (req, res) => {
       const { db, client } = createDB(env);
-
-      console.log('Running Record Sessions', new Date());
       await handleRecordSessions(db, env);
-      console.log('Finished Record Sessions', new Date());
       client.close();
-    } catch (err) {
-      console.error('Scheduled hourly job failed:', err);
-    }
-  });
+      res.send('OK');
+    });
 
-  cron.schedule('0 2 * * *', async () => {
-    try {
+    app.get('/dev/recurring', async (req, res) => {
       const { db, client } = createDB(env);
-
-      console.log('Running Recurring Events', new Date());
       await recurringEvents(db);
       client.close();
-    } catch (err) {
-      console.error('Scheduled job failed:', err);
-    } finally {
-      console.log('Finished Recurring Events', new Date());
-    }
-  });
+      res.send('OK');
+    });
+
+    console.log('Running in development mode, manual endpoints enabled');
+  } else {
+    cron.schedule('* * * * *', async () => {
+      try {
+        const { db, client } = createDB(env);
+
+        console.log('Running Online ATC Handler', new Date());
+        await handleOnlineSessions(db, env);
+        client.close();
+      } catch (err) {
+        console.error('Scheduled job failed:', err);
+      } finally {
+        console.log('Finished Online ATC Handler', new Date());
+      }
+    });
+
+    cron.schedule('*/2 * * * *', async () => {
+      try {
+        const { db, client } = createDB(env);
+
+        console.log('Running Discord Sync', new Date());
+        await syncDiscord(db, env);
+        client.close();
+      } catch (err) {
+        console.error('Scheduled job failed:', err);
+      } finally {
+        console.log('Finished Discord Sync', new Date());
+      }
+    });
+
+    cron.schedule('*/15 * * * *', async () => {
+      try {
+        const { db, client } = createDB(env);
+        console.log('Running VATCAN sync', new Date());
+        await vatcanPull(db, env);
+        console.log('Finished VATCAN sync', new Date());
+        client.close();
+      } catch (err) {
+        console.error('Scheduled job failed:', err);
+      }
+    });
+
+    cron.schedule('0 * * * *', async () => {
+      try {
+        const { db, client } = createDB(env);
+
+        console.log('Running Record Sessions', new Date());
+        await handleRecordSessions(db, env);
+        console.log('Finished Record Sessions', new Date());
+        client.close();
+      } catch (err) {
+        console.error('Scheduled hourly job failed:', err);
+      }
+    });
+
+    cron.schedule('0 2 * * *', async () => {
+      try {
+        const { db, client } = createDB(env);
+
+        console.log('Running Recurring Events', new Date());
+        await recurringEvents(db);
+        client.close();
+      } catch (err) {
+        console.error('Scheduled job failed:', err);
+      } finally {
+        console.log('Finished Recurring Events', new Date());
+      }
+    });
+  }
 
   app.get('/cron-health', (req, res) => {
     res.json({
@@ -130,9 +170,9 @@ async function main(): Promise<void> {
     });
   });
 
-  app.listen(env.UPTIME_PORT ?? 3000, () =>
-    console.log(`Server running on port ${env.UPTIME_PORT ?? 3000}`)
-  );
+  app.listen(env.UPTIME_PORT ?? 3000, () => {
+    console.log(`Server running on port ${env.UPTIME_PORT ?? 3000}`);
+  });
 }
 
 main().catch((err) => {
