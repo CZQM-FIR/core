@@ -80,12 +80,21 @@ export const GET: RequestHandler = async ({ url, locals }) => {
     return new Response('Invalid user data', { status: 500 });
   }
 
-  await db.insert(integrations).values({
-    cid: locals.user.cid,
-    type: 0,
-    integrationUserId: userData.id,
-    integrationUserName: userData.username
-  });
+  await db
+    .insert(integrations)
+    .values({
+      cid: locals.user.cid,
+      type: 0,
+      integrationUserId: userData.id,
+      integrationUserName: userData.username
+    })
+    .onConflictDoUpdate({
+      target: [integrations.cid, integrations.type],
+      set: {
+        integrationUserId: userData.id,
+        integrationUserName: userData.username
+      }
+    });
 
   await fetch(`https://discord.com/api/guilds/${DISCORD_GUILD_ID}/members/${userData.id}`, {
     method: 'PUT',
