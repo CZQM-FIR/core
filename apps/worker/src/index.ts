@@ -90,13 +90,22 @@ async function main(): Promise<void> {
       console.log('Running VATCAN sync', new Date());
       await vatcanPull(db, env);
       console.log('Finished VATCAN sync', new Date());
+      client.close();
+    } catch (err) {
+      console.error('Scheduled job failed:', err);
+    }
+  });
+
+  cron.schedule('0 * * * *', async () => {
+    try {
+      const { db, client } = createDB(env);
 
       console.log('Running Record Sessions', new Date());
       await handleRecordSessions(db, env);
       console.log('Finished Record Sessions', new Date());
       client.close();
     } catch (err) {
-      console.error('Scheduled job failed:', err);
+      console.error('Scheduled hourly job failed:', err);
     }
   });
 
