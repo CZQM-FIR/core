@@ -51,13 +51,37 @@ export const vatcanPull = async (
     }
   });
 
-  for (const controller of controllers
-    .filter(
-      (c: VatcanApiUser) =>
-        !users.some((u) => u.cid === c.cid) ||
-        !users.find((u) => u.cid === c.cid)?.flags.some((f) => f.flag.name === 'controller')
-    )
-    .slice(0, 20)) {
+  // remove controller and visitor flags from users who are no longer controllers or visitors
+  for (const user of users) {
+    if (user.flags.some((f) => f.flag.name === 'controller')) {
+      if (!controllers.some((c) => c.cid === user.cid)) {
+        await db.delete(schema.usersToFlags).where(
+          and(
+            eq(schema.usersToFlags.userId, user.cid),
+            eq(schema.usersToFlags.flagId, 5) // controller
+          )
+        );
+        user.flags = user.flags.filter((f) => f.flag.name !== 'controller');
+      }
+    }
+    if (user.flags.some((f) => f.flag.name === 'visitor')) {
+      if (!visitors.some((c) => c.cid === user.cid)) {
+        await db.delete(schema.usersToFlags).where(
+          and(
+            eq(schema.usersToFlags.userId, user.cid),
+            eq(schema.usersToFlags.flagId, 4) // visitor
+          )
+        );
+        user.flags = user.flags.filter((f) => f.flag.name !== 'visitor');
+      }
+    }
+  }
+
+  for (const controller of controllers.filter(
+    (c: VatcanApiUser) =>
+      !users.some((u) => u.cid === c.cid) ||
+      !users.find((u) => u.cid === c.cid)?.flags.some((f) => f.flag.name === 'controller')
+  )) {
     await db
       .insert(schema.users)
       .values({
@@ -92,13 +116,11 @@ export const vatcanPull = async (
     );
   }
 
-  for (const controller of visitors
-    .filter(
-      (c: VatcanApiUser) =>
-        !users.some((u) => u.cid === c.cid) ||
-        !users.find((u) => u.cid === c.cid)?.flags.some((f) => f.flag.name === 'visitor')
-    )
-    .slice(0, 20)) {
+  for (const controller of visitors.filter(
+    (c: VatcanApiUser) =>
+      !users.some((u) => u.cid === c.cid) ||
+      !users.find((u) => u.cid === c.cid)?.flags.some((f) => f.flag.name === 'visitor')
+  )) {
     await db
       .insert(schema.users)
       .values({
