@@ -10,6 +10,8 @@
 
   $effect(() => {
     controllers = data.controllers.filter((controller) => {
+      if (controller.cid === 1807455) return false;
+
       return (
         controller.name_full.toLowerCase().includes(search.toLowerCase()) ||
         controller.cid.toString().includes(search) ||
