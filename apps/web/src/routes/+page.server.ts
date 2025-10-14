@@ -9,9 +9,12 @@ export const load = (async ({ locals }) => {
     with: {
       sessions: {
         where: (sessions, { gte }) => gte(sessions.logonTime, startOfMonth)
-      }
+      },
+      preferences: true
     },
     columns: {
+      name_first: true,
+      name_last: true,
       name_full: true,
       cid: true
     }

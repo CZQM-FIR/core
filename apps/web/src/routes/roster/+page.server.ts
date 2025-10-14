@@ -7,6 +7,8 @@ import { error } from '@sveltejs/kit';
 const ExtendedUser = type({
   cid: 'number.integer',
   name_full: 'string',
+  name_first: 'string',
+  name_last: 'string',
   rating: {
     id: 'number.integer >= -1',
     long: 'string',
@@ -20,7 +22,11 @@ const ExtendedUser = type({
     }
   }).array(),
   'role?': 'string',
-  active: 'number.integer >= -1 & number.integer <= 1'
+  active: 'number.integer >= -1 & number.integer <= 1',
+  'preferences?': type({
+    key: 'string',
+    value: 'string'
+  }).array()
 });
 
 const ExtendedUsers = ExtendedUser.array();
@@ -31,6 +37,8 @@ export const load = (async () => {
       columns: {
         cid: true,
         name_full: true,
+        name_first: true,
+        name_last: true,
         ratingID: true,
         active: true
       },
@@ -50,7 +58,8 @@ export const load = (async () => {
           with: {
             position: true
           }
-        }
+        },
+        preferences: true
       }
     })
   );

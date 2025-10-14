@@ -1,6 +1,6 @@
 import { db } from '$lib/db';
 import { preferences } from '@czqm/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load = (async ({ locals }) => {
@@ -38,39 +38,64 @@ export const actions = {
     const formData = await request.formData();
     const cid = locals.user.cid;
 
+    const type = formData.get('type');
+
     // List of all preference keys from the form
-    const preferenceKeys = [
-      'policyChanges',
-      'urgentFirUpdates',
-      'trainingUpdates',
-      'unauthorizedConnection',
-      'newEventPosted',
-      'newNewsArticlePosted'
-    ];
+    const preferenceKeys =
+      type === 'notification'
+        ? [
+            'policyChanges',
+            'urgentFirUpdates',
+            'trainingUpdates',
+            'unauthorizedConnection',
+            'newEventPosted',
+            'newNewsArticlePosted'
+          ]
+        : type === 'privacy'
+          ? []
+          : [];
 
     // Process each preference
-    for (const key of preferenceKeys) {
-      const value = formData.get(key) === 'on' ? 'true' : 'false';
+    if (type === 'notification') {
+      for (const key of preferenceKeys) {
+        const value = formData.get(key) === 'on' ? 'true' : 'false';
 
-      // Check if preference already exists
-      const existingPreference = await db.query.preferences.findFirst({
-        where: and(eq(preferences.cid, cid), eq(preferences.key, key))
-      });
-
-      if (existingPreference) {
-        // Update existing preference
+        // Upsert preference
         await db
-          .update(preferences)
-          .set({ value })
-          .where(and(eq(preferences.cid, cid), eq(preferences.key, key)));
-      } else {
-        // Insert new preference
-        await db.insert(preferences).values({
-          cid,
-          key,
-          value
-        });
+          .insert(preferences)
+          .values({
+            cid,
+            key,
+            value
+          })
+          .onConflictDoUpdate({
+            target: [preferences.cid, preferences.key],
+            set: { value }
+          });
       }
+    } else if (type === 'privacy') {
+      const name = formData.get('name') as string;
+
+      // Validate the value
+      const validValues = ['full', 'initial', 'cid'];
+      if (!validValues.includes(name)) {
+        return {
+          success: false,
+          error: 'Invalid value for display name preference.'
+        };
+      }
+
+      await db
+        .insert(preferences)
+        .values({
+          cid,
+          key: 'displayName',
+          value: name
+        })
+        .onConflictDoUpdate({
+          target: [preferences.cid, preferences.key],
+          set: { value: name }
+        });
     }
 
     // Fetch and return the updated preferences

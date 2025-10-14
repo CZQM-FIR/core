@@ -2,19 +2,45 @@
   import type { PageData } from './$types';
   import type { ActionData } from './$types';
   import Toggle from '$lib/components/Toggle.svelte';
+  import { onMount } from 'svelte';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
 
+  let hideToast = $state(false);
+
   const reqNotifTooltip = 'Required notification - cannot be disabled';
 
-  // Function to get preference value, defaulting to true (on) if not found
-  function getPreferenceValue(key: string): boolean {
+  let notifications = $state({
+    policyChanges: true,
+    urgentFirUpdates: true,
+    trainingUpdates: true,
+    unauthorizedConnection: true,
+    newEventPosted: true,
+    newNewsArticlePosted: true
+  });
+
+  let privacy = $state({
+    name: 'full'
+  });
+
+  onMount(() => {
+    setTimeout(() => {
+      hideToast = true;
+    }, 5000);
+  });
+
+  $effect(() => {
     // Use form result preferences if available (after successful submission), otherwise use initial data
     const preferences = form?.preferences || data.preferences;
-    if (!preferences) return true;
-    const preference = preferences.find((p) => p.key === key);
-    return preference ? preference.value === 'true' : true;
-  }
+
+    for (const key in notifications) {
+      const pref = preferences?.find((p) => p.key === key);
+      notifications[key as keyof typeof notifications] = pref ? pref.value === 'true' : true;
+    }
+
+    const namePref = preferences?.find((p) => p.key === 'displayName');
+    privacy.name = namePref ? (namePref.value as string) : 'full';
+  });
 </script>
 
 <section>
@@ -28,90 +54,91 @@
     concerns, please contact the webmaster <a href="/contact" class="link">here</a>.
   </p>
 
-  {#if form?.success}
+  {#if form?.success && !hideToast}
     <div class="alert alert-success mt-4">
-      <span>Your notification preferences have been saved successfully!</span>
+      <span>Your preferences have been saved successfully!</span>
     </div>
   {/if}
 
-  {#if data.discord}
-    <form method="POST" action="?/savePreferences">
-      <div class="mt-6 overflow-x-auto">
-        <table class="table-compact table w-full max-w-md">
-          <thead>
-            <tr>
-              <th class="py-2">Notification Type</th>
-              <th class="py-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="h-10">
-              <td class="py-1 text-gray-400">Policy Changes</td>
-              <td class="py-1"
-                ><Toggle
-                  name="policyChanges"
-                  checked={getPreferenceValue('policyChanges')}
-                  readonly
-                  tooltip={reqNotifTooltip}
-                /></td
-              >
-            </tr>
-            <tr class="h-10">
-              <td class="py-1 text-gray-400">Important / Urgent FIR Updates</td>
-              <td class="py-1"
-                ><Toggle
-                  name="urgentFirUpdates"
-                  checked={getPreferenceValue('urgentFirUpdates')}
-                  readonly
-                  tooltip={reqNotifTooltip}
-                /></td
-              >
-            </tr>
-            <tr class="h-10">
-              <td class="py-1 text-gray-400">Training Updates</td>
-              <td class="py-1"
-                ><Toggle
-                  name="trainingUpdates"
-                  checked={getPreferenceValue('trainingUpdates')}
-                  readonly
-                  tooltip={reqNotifTooltip}
-                /></td
-              >
-            </tr>
-            <tr class="h-10">
-              <td class="py-1 text-gray-400">Unauthorized Connection Alerts </td>
-              <td class="py-1"
-                ><Toggle
-                  name="unauthorizedConnection"
-                  checked={getPreferenceValue('unauthorizedConnection')}
-                  readonly
-                  tooltip={reqNotifTooltip}
-                /></td
-              >
-            </tr>
-            <tr class="h-10">
-              <td class="py-1 text-gray-400">Event Posted</td>
-              <td class="py-1"
-                ><Toggle name="newEventPosted" checked={getPreferenceValue('newEventPosted')} /></td
-              >
-            </tr>
-            <tr class="h-10">
-              <td class="py-1 text-gray-400">News Article Posted</td>
-              <td class="py-1"
-                ><Toggle
-                  name="newNewsArticlePosted"
-                  checked={getPreferenceValue('newNewsArticlePosted')}
-                /></td
-              >
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="mt-6">
-        <button type="submit" class="btn btn-primary">Save Preferences</button>
-      </div>
-    </form>
-  {:else}
+  <!-- {#if data.discord} -->
+  <form method="POST" action="?/savePreferences">
+    <input type="text" readonly hidden name="type" value="notification" />
+    <div class="mt-6 flex flex-col gap-3 overflow-x-auto">
+      <table class="table-compact table w-full max-w-md">
+        <thead>
+          <tr>
+            <th class="py-2">Notification Type</th>
+            <th class="py-2">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="h-10">
+            <td class="py-1 text-gray-400">Policy Changes</td>
+            <td class="py-1"
+              ><Toggle
+                name="policyChanges"
+                checked={notifications.policyChanges}
+                readonly
+                tooltip={reqNotifTooltip}
+              /></td
+            >
+          </tr>
+          <tr class="h-10">
+            <td class="py-1 text-gray-400">Important / Urgent FIR Updates</td>
+            <td class="py-1"
+              ><Toggle
+                name="urgentFirUpdates"
+                checked={notifications.urgentFirUpdates}
+                readonly
+                tooltip={reqNotifTooltip}
+              /></td
+            >
+          </tr>
+          <tr class="h-10">
+            <td class="py-1 text-gray-400">Training Updates</td>
+            <td class="py-1"
+              ><Toggle
+                name="trainingUpdates"
+                checked={notifications.trainingUpdates}
+                readonly
+                tooltip={reqNotifTooltip}
+              /></td
+            >
+          </tr>
+          <tr class="h-10">
+            <td class="py-1 text-gray-400">Unauthorized Connection Alerts </td>
+            <td class="py-1"
+              ><Toggle
+                name="unauthorizedConnection"
+                checked={notifications.unauthorizedConnection}
+                readonly
+                tooltip={reqNotifTooltip}
+              /></td
+            >
+          </tr>
+          <tr class="h-10">
+            <td class="py-1 text-gray-400">Event Posted</td>
+            <td class="py-1"
+              ><Toggle name="newEventPosted" checked={notifications.newEventPosted} /></td
+            >
+          </tr>
+          <tr class="h-10">
+            <td class="py-1 text-gray-400">News Article Posted</td>
+            <td class="py-1"
+              ><Toggle
+                name="newNewsArticlePosted"
+                checked={notifications.newNewsArticlePosted}
+              /></td
+            >
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-6">
+      <button type="submit" class="btn btn-primary">Save Notification Preferences</button>
+    </div>
+  </form>
+  <!-- {:else}
     <h2 class="mt-6 text-center text-xl font-semibold">
       You must have your Discord account linked to configure notifications!
     </h2>
@@ -120,5 +147,46 @@
         >here</a
       >.
     </p>
-  {/if}
+  {/if} -->
+  <h1 class="mt-5 text-2xl font-semibold">Privacy Preferences</h1>
+  <p class="font-light">
+    Our members privacy and safety is our priority. Please adjust the settings below to allow us to
+    best cater to your privacy needs. Should you have any questions regarding your privaxy, please
+    see our <a href="/privacy" class="link">privacy policy</a> or
+    <a href="/contact" class="link">contact us</a>.
+  </p>
+
+  <form method="POST" action="?/savePreferences" class="my-6 flex flex-row gap-3">
+    <input type="text" readonly hidden name="type" value="privacy" />
+
+    <div class="flex flex-col gap-3 overflow-x-auto">
+      <table class="table-compact table w-full max-w-md">
+        <thead>
+          <tr>
+            <th class="py-2">Privacy Setting</th>
+            <th class="py-2">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="h-10">
+            <td class="py-1 text-gray-400">Display Name</td>
+            <td class="py-1"
+              ><select name="name" id="name" class="select" value={privacy.name}>
+                <option value="full">{data.user.name_full} {data.user.cid} (full name)</option>
+                <option value="initial"
+                  >{data.user.name_first}
+                  {data.user.name_last[0]}
+                  {data.user.cid} (last initial)</option
+                >
+                <option value="cid">{data.user.cid} (cid only)</option>
+              </select></td
+            >
+          </tr>
+        </tbody>
+      </table>
+      <div class="mt-6">
+        <button type="submit" class="btn btn-primary">Save Privacy Preferences</button>
+      </div>
+    </div>
+  </form>
 </section>

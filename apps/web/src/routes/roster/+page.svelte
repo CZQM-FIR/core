@@ -3,6 +3,7 @@
   import RosterStatusIndicator from './RosterStatusIndicator.svelte';
   import { getRosterStatus } from '$lib/utilities/getRosterStatus';
   import { CircleCheck, CircleMinus, CircleX } from '@lucide/svelte';
+  import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
 
   let { data }: { data: PageData } = $props();
 
@@ -10,8 +11,6 @@
 
   $effect(() => {
     controllers = data.controllers.filter((controller) => {
-      if (controller.cid === 1807455) return false;
-
       return (
         controller.name_full.toLowerCase().includes(search.toLowerCase()) ||
         controller.cid.toString().includes(search) ||
@@ -49,7 +48,7 @@
             <th class="flex flex-col">
               <span class="font-bold"
                 ><a href="/controller/{controller.cid}" class="hover:link"
-                  >{controller.name_full} ({controller.rating.short})</a
+                  >{getUserDisplayName(controller)} ({controller.rating.short})</a
                 ></span
               >
               <span class="font-normal">{controller.role}</span>

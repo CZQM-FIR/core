@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
   import type { PageData } from './$types';
   import { User } from '@lucide/svelte';
 
@@ -54,7 +55,7 @@
               </p>
               <div class="badge badge-neutral flex flex-row gap-1">
                 <User size="15" />
-                <p>{article.author ? article.author.name_full : 'CZQM Staff'}</p>
+                <p>{article.author ? getUserDisplayName(article.author) : 'CZQM Staff'}</p>
               </div>
             </div>
           </div>
