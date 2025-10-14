@@ -3,6 +3,7 @@
   import sanitizeHtml from 'sanitize-html';
   import type { PageData } from './$types';
   import { User } from '@lucide/svelte';
+  import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
 
   let { data }: { data: PageData } = $props();
 
@@ -55,7 +56,7 @@
       </div>
       <div class="badge badge-neutral ms-auto flex flex-row gap-1">
         <User size="15" />
-        <p>{article.author?.name_full}</p>
+        <p>{article.author ? getUserDisplayName(article.author) : ''}</p>
       </div>
     </div>
     <div class="divider"></div>

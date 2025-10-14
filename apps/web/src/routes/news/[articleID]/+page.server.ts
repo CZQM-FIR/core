@@ -13,7 +13,12 @@ export const load = (async ({ params }) => {
       author: {
         columns: {
           cid: true,
-          name_full: true
+          name_full: true,
+          name_first: true,
+          name_last: true
+        },
+        with: {
+          preferences: true
         }
       }
     }

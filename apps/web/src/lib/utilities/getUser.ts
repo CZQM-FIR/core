@@ -1,6 +1,7 @@
 import { users } from '@czqm/db/schema';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/db';
+import { getUserDisplayName } from './getUserDisplayName';
 
 export const getUserByCID = async (cid: number, subjectCID: number | null = null) => {
   if (subjectCID) {
@@ -80,4 +81,34 @@ export const getAllUsers = async (subjectCID: number | null = null) => {
       flags: true
     }
   });
+};
+
+export const getUserDisplayNameByCID = async (cid: number): Promise<string> => {
+  const user = await db.query.users.findFirst({
+    where: eq(users.cid, cid),
+    with: {
+      preferences: true
+    }
+  });
+
+  if (!user) {
+    return cid.toString();
+  }
+
+  return getUserDisplayName(user);
+};
+
+export const getUserDisplayNameByCID = async (cid: number): Promise<string> => {
+  const user = await db.query.users.findFirst({
+    where: eq(users.cid, cid),
+    with: {
+      preferences: true
+    }
+  });
+
+  if (!user) {
+    return cid.toString();
+  }
+
+  return getUserDisplayName(user);
 };

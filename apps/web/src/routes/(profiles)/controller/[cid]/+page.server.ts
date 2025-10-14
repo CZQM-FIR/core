@@ -25,7 +25,8 @@ export const load = (async ({ params }) => {
         with: {
           position: true
         }
-      }
+      },
+      preferences: true
     },
     columns: {
       cid: true,

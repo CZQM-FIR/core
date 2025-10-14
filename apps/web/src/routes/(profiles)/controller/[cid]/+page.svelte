@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getRosterStatus } from '$lib/utilities/getRosterStatus';
+  import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
   import RosterStatusIndicator from '../../../roster/RosterStatusIndicator.svelte';
   import type { PageData } from './$types';
 
@@ -85,7 +86,7 @@
 <section>
   <div class="container mx-auto py-6">
     <h1 class="flex flex-row items-baseline gap-3">
-      <span class="text-3xl font-semibold">{user?.name_full}</span><span>{data.role}</span>
+      <span class="text-3xl font-semibold">{getUserDisplayName(user)}</span><span>{data.role}</span>
     </h1>
     <div class="divider"></div>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

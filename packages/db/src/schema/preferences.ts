@@ -1,5 +1,5 @@
 import { relations, type InferSelectModel } from "drizzle-orm";
-import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, int, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 import { users } from "./index";
 
 export const preferences = sqliteTable(
@@ -17,7 +17,7 @@ export const preferences = sqliteTable(
   (t) => [
     index("preferences_cid_idx").on(t.cid),
     index("preferences_key_idx").on(t.key),
-    index("preferences_cid_key_idx").on(t.cid, t.key),
+    unique("preferences_cid_key_unique").on(t.cid, t.key),
   ]
 );
 

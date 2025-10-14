@@ -7,7 +7,12 @@ export const load = (async () => {
       controller: {
         columns: {
           cid: true,
-          name_full: true
+          name_full: true,
+          name_first: true,
+          name_last: true
+        },
+        with: {
+          preferences: true
         }
       },
       position: true

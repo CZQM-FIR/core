@@ -6,6 +6,8 @@ import { error } from '@sveltejs/kit';
 const StaffUser = type({
   cid: 'number',
   name_full: 'string',
+  name_first: 'string',
+  name_last: 'string',
   bio: 'string | null',
   flags: type({
     userId: 'number',
@@ -13,6 +15,10 @@ const StaffUser = type({
     flag: {
       name: 'string'
     }
+  }).array(),
+  preferences: type({
+    key: 'string',
+    value: 'string'
   }).array(),
   'role?': 'string',
   'email?': 'string.email'
@@ -26,9 +32,12 @@ export const load = (async () => {
       columns: {
         cid: true,
         name_full: true,
+        name_first: true,
+        name_last: true,
         bio: true
       },
       with: {
+        preferences: true,
         flags: {
           with: {
             flag: {
@@ -111,10 +120,14 @@ export const load = (async () => {
     return u.flags.some((f) => ['mentor', 'instructor', 'chief-instructor'].includes(f.flag.name));
   });
 
+  const chiefInstructor = trainingTeam.find((u) =>
+    u.flags.some((f) => f.flag.name === 'chief-instructor')
+  );
+
   return {
     staff,
     trainingTeam: [
-      trainingTeam.find((u) => u.flags.some((f) => f.flag.name === 'chief-instructor')),
+      ...(chiefInstructor ? [chiefInstructor] : []),
       ...trainingTeam
         .filter((u) => !u.flags.some((f) => f.flag.name === 'chief-instructor'))
         .sort((a, b) => {

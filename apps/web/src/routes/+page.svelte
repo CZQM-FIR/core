@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -29,7 +30,7 @@
             <li>
               #{i + 1}
               <a href="/controller/{controller.cid}" class="hover:link text-lg font-semibold"
-                >{controller.name_full}</a
+                >{getUserDisplayName(controller)}</a
               >
               - {(controller.totalDuration / 3600).toFixed(2)}
               hours
