@@ -17,14 +17,14 @@ export const actions = {
 			title: 'string',
 			text: 'string',
 			image: 'File | null',
-			anonymous: type("'on' | 'off'").pipe((v) => v === 'on')
+			'anonymous?': type("'on' | 'off'").pipe((v) => v === 'on')
 		});
-
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));
 		if (data instanceof type.errors) {
+			console.error(data.summary);
 			return fail(400, { status: 400, message: 'Invalid form data' });
 		}
-		const { title, text, image, anonymous } = data;
+		const { title, text, image, anonymous = false } = data;
 
 		if (!locals.user) return fail(401);
 
