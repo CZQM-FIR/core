@@ -7,8 +7,6 @@ export const getUserDisplayName = (user: {
 }): string => {
   const namePreference = user.preferences?.find((p) => p.key === 'displayName')?.value || 'full';
 
-  console.log(`Name preference for ${user.name_full}`, user.preferences);
-
   switch (namePreference) {
     case 'full':
       return user.name_full;

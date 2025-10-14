@@ -9,7 +9,6 @@ export const getRosterStatus = (userData: any, position: RosterPosition) => {
         r.position?.callsign.toLowerCase().includes(position) &&
         r.expiresAt > new Date().getTime()
       ) {
-        console.log('soloEndorsement', r);
         return true;
       }
     }).length > 0
