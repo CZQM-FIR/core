@@ -57,8 +57,8 @@
     </ul>
     <p>
       Your full name as provided by VATSIM may be displayed publicly; however, at user discretion,
-      through a setting located on the myCZQM dashboard, a user's full name may be replaced by ther
-      first name and last initial or solely their VATSIM CID.
+      through a setting located on the myCZQM dashboard, your full name may be replaced by your
+      first name and last initial or solely your VATSIM CID.
     </p>
     <h3>Discord</h3>
     <p>
@@ -126,8 +126,8 @@
     </p>
     <p>
       Should you wish for your data to be removed from VATCAN or VATSIM, please contact them
-      directly as outlined in their privacy policies. The removal of yout data from VATCAN or VATSIM
-      may not guarentee the removal of your data from CZQM systems. Please submit a separate request
+      directly as outlined in their privacy policies. The removal of your data from VATCAN or VATSIM
+      may not guarantee the removal of your data from CZQM systems. Please submit a separate request
       to CZQM to ensure your data is removed from our systems.
     </p>
     <h2>Changes to this Document</h2>
