@@ -11,5 +11,7 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[svelte]": {
     "editor.defaultFormatter": "svelte.svelte-vscode"
-  }
+  },
+  "cSpell.enabled": true,
+  "cSpell.words": ["Callsign", "CZQM", "PIPEDA", "VATCAN", "VATSIM"]
 }

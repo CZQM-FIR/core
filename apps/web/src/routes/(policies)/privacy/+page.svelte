@@ -3,7 +3,8 @@
 
 <section>
   <div class="prose container mx-auto max-w-240 py-6">
-    <h1>CZQM / QX Privacy Policy</h1>
+    <h1 class="mb-0">CZQM / QX Privacy Policy</h1>
+    <span class="mt-0 text-sm">Last Updated 13 October 2025</span>
     <p>
       When you use CZQM / QX Moncton / Gander services such as but not limited to czqm.ca, and the
       CZQM Discord, there is information sent to us and stored to allow us to provide services to
@@ -35,24 +36,35 @@
     </ul>
     <h3>VATCAN</h3>
     <p>
-      When you transfer to the CZQM FIR through <a href="https://vatcan.ca">VATCAN.ca</a>, your
-      name, email address, and other VATSIM account information are collected and stored by CZQM.
-      This information is accessed and updated daily.
+      When you transfer to or become a visitor to the CZQM FIR through <a href="https://vatcan.ca"
+        >VATCAN.ca</a
+      >, your name, email address, and other VATSIM account information are collected and stored by
+      CZQM. This information is accessed and updated daily while you are a member of the FIR.
     </p>
     <h2>Usage</h2>
     <p>
       To allow the function of the core CZQM web services, we utilize your information across
-      several of our services. We will never share your data unless required by law. The information
-      we collect is maintained with confidentiality to the extent possible.
+      several of our services. We will never share your data unless required by law or as outlined
+      in this policy. The information we collect is maintained with confidentiality to the extent
+      possible.
     </p>
     <p>The following account information may be shared publicly:</p>
     <ul>
       <li>VATSIM Certificate ID (CID)</li>
-      <li>Your full name</li>
       <li>Your vatsim rating and account status</li>
       <li>VATCAN Facility Association</li>
       <li>Your VATSIM controlling sessions</li>
     </ul>
+    <p>
+      Your full name as provided by VATSIM may be displayed publicly; however, at user discretion,
+      through a setting located on the myCZQM dashboard, your full name may be replaced by your
+      first name and last initial or solely your VATSIM CID.
+    </p>
+    <h3>Discord</h3>
+    <p>
+      When you link your Discord account on the myCZQM dashboard, your full name will be transmitted
+      and stored on Discord's servers. This is to allow us to maintain our Discord server.
+    </p>
     <h2>Cookies</h2>
     <p>
       A <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies">browser cookie</a
@@ -77,9 +89,9 @@
       >.
     </p>
     <p>
-      Data requests will be honoured and delivered within one month. In the event CZQM cannot meet
-      the one month timeframe, CZQM will email you prior to the due date for a further two month
-      extension from the time of your initial request.
+      Data requests will be honoured and delivered within 30 days. In the event CZQM cannot meet the
+      30 day timeframe, CZQM will email you prior to the due date for a further 60 day extension
+      from the time of your initial request.
     </p>
     <p>
       Only personal information directly relating to the member will be delivered. To protect the
@@ -114,7 +126,9 @@
     </p>
     <p>
       Should you wish for your data to be removed from VATCAN or VATSIM, please contact them
-      directly as outlined in their privacy policies.
+      directly as outlined in their privacy policies. The removal of your data from VATCAN or VATSIM
+      may not guarantee the removal of your data from CZQM systems. Please submit a separate request
+      to CZQM to ensure your data is removed from our systems.
     </p>
     <h2>Changes to this Document</h2>
     <p>Changes to this privacy policy will be communicated to all members.</p>
