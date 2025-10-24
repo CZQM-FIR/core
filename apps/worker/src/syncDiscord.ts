@@ -21,6 +21,7 @@ const managedRoles = [
   'Admin',
   'Home Controller',
   'Visitor',
+  'Student',
   'Staff',
   'FIR Chief',
   'Deputy Chief',
