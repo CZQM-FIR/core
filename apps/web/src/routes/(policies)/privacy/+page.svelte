@@ -4,7 +4,7 @@
 <section>
   <div class="prose container mx-auto max-w-240 py-6">
     <h1 class="mb-0">CZQM / QX Privacy Policy</h1>
-    <span class="mt-0 text-sm">Last Updated 13 October 2025</span>
+    <span class="mt-0 text-sm">Last Updated 23 October 2025</span>
     <p>
       When you use CZQM / QX Moncton / Gander services such as but not limited to czqm.ca, and the
       CZQM Discord, there is information sent to us and stored to allow us to provide services to
