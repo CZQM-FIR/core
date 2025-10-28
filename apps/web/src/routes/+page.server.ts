@@ -21,7 +21,8 @@ export const load = (async ({ locals }) => {
   });
 
   const controllersWithDuration = controllers.map((controller) => {
-    const totalDuration = controller.sessions.reduce((sum, session) => {
+    const czqmSessions = controller.sessions.filter((s) => ![-1, 0].includes(s.positionId));
+    const totalDuration = czqmSessions.reduce((sum, session) => {
       return sum + (session.duration || 0);
     }, 0);
     return { ...controller, totalDuration };
