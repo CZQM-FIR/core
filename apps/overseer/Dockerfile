@@ -14,9 +14,6 @@ RUN pnpm run build
 FROM node:20-slim AS runtime
 ENV NODE_ENV=production
 ENV PORT=5101
-# Increase body size limit to 10MB for file uploads (event images)
-# Default is 512KB which is too small for image uploads
-ENV BODY_SIZE_LIMIT=10485760
 RUN groupadd -r app && useradd -r -g app app
 WORKDIR /app
 # Copy build output and dependencies from builder
