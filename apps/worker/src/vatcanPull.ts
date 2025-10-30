@@ -77,11 +77,7 @@ export const vatcanPull = async (
     }
   }
 
-  for (const controller of controllers.filter(
-    (c: VatcanApiUser) =>
-      !users.some((u) => u.cid === c.cid) ||
-      !users.find((u) => u.cid === c.cid)?.flags.some((f) => f.flag.name === 'controller')
-  )) {
+  for (const controller of controllers) {
     await db
       .insert(schema.users)
       .values({
@@ -116,11 +112,7 @@ export const vatcanPull = async (
     );
   }
 
-  for (const controller of visitors.filter(
-    (c: VatcanApiUser) =>
-      !users.some((u) => u.cid === c.cid) ||
-      !users.find((u) => u.cid === c.cid)?.flags.some((f) => f.flag.name === 'visitor')
-  )) {
+  for (const controller of visitors) {
     await db
       .insert(schema.users)
       .values({
