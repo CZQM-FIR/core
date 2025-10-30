@@ -8,6 +8,7 @@
 
 	let lastQuarter = $state(false);
 	let onlyIssue = $state(false);
+	let active = $state(false);
 
 	$effect(() => {
 		filtered = data.users.filter((user) => {
@@ -29,9 +30,9 @@
 							? user.hours.this.external > user.hours.this.internal
 							: user.hours.this.external < user.hours.this.internal);
 
-				return hasIssue && matchesSearch;
+				return hasIssue && matchesSearch && (active ? user.active === 1 : true);
 			} else {
-				return matchesSearch;
+				return matchesSearch && (active ? user.active === 1 : true);
 			}
 		});
 	});
@@ -42,18 +43,22 @@
 		<h1 class="pt-6 text-2xl font-semibold">Controller Activity</h1>
 		<div class="divider"></div>
 
-		<div class="flex flex-col gap-3">
+		<div class="flex flex-row gap-3">
 			<label class="input">
 				<Search class="opacity-50" size="15" />
 				<input type="search" class="grow" placeholder="Search" bind:value={search} />
 			</label>
 			<div class="flex items-center gap-3">
-				<input type="checkbox" bind:checked={onlyIssue} class="toggle" />
-				<span>{onlyIssue ? 'Only Not Meeting Hours' : 'All Hours'}</span>
-			</div>
-			<div class="flex items-center gap-3">
 				<input type="checkbox" bind:checked={lastQuarter} class="toggle" />
 				<span>{lastQuarter ? 'Last Quarter' : 'This Quarter'}</span>
+			</div>
+			<div class="flex items-center gap-3">
+				<input type="checkbox" bind:checked={active} class="toggle" />
+				<span>{active ? 'Active Controllers' : 'All Controllers'}</span>
+			</div>
+			<div class="flex items-center gap-3">
+				<input type="checkbox" bind:checked={onlyIssue} class="toggle" />
+				<span>{onlyIssue ? 'Only Not Meeting Hours' : 'All Hours'}</span>
 			</div>
 		</div>
 
