@@ -10,49 +10,30 @@
 	let onlyIssue = $state(false);
 
 	$effect(() => {
-		filtered =
-			search == ''
-				? data.users.filter((user) => {
-						if (onlyIssue) {
-							if (lastQuarter) {
-								return (
-									user.hours.last.internal < 3 ||
-									user.hours.last.external > user.hours.last.internal
-								);
-							} else {
-								return (
-									user.hours.this.internal < 3 ||
-									user.hours.this.external > user.hours.this.internal
-								);
-							}
-						} else {
-							return true;
-						}
-					})
-				: data.users.filter((user) => {
-						if (onlyIssue) {
-							if (lastQuarter) {
-								return (
-									(user.hours.last.internal < 3 ||
-										user.hours.last.external > user.hours.last.internal) &&
-									(user.name_full.toLowerCase().includes(search.toLowerCase()) ||
-										user.cid.toString().includes(search))
-								);
-							} else {
-								return (
-									(user.hours.this.internal < 3 ||
-										user.hours.this.external > user.hours.this.internal) &&
-									(user.name_full.toLowerCase().includes(search.toLowerCase()) ||
-										user.cid.toString().includes(search))
-								);
-							}
-						} else {
-							return (
-								user.name_full.toLowerCase().includes(search.toLowerCase()) ||
-								user.cid.toString().includes(search)
-							);
-						}
-					});
+		filtered = data.users.filter((user) => {
+			// First check if user matches search criteria
+			const matchesSearch =
+				search === '' ||
+				user.name_full.toLowerCase().includes(search.toLowerCase()) ||
+				user.cid.toString().includes(search);
+
+			if (onlyIssue) {
+				// Check if user has hour requirement issues
+				const hasIssue = lastQuarter
+					? user.hours.last.internal < 3 ||
+						(user.flags.some((f) => f.flag.name === 'controller')
+							? user.hours.last.external > user.hours.last.internal
+							: user.hours.last.external < user.hours.last.internal)
+					: user.hours.this.internal < 3 ||
+						(user.flags.some((f) => f.flag.name === 'controller')
+							? user.hours.this.external > user.hours.this.internal
+							: user.hours.this.external < user.hours.this.internal);
+
+				return hasIssue && matchesSearch;
+			} else {
+				return matchesSearch;
+			}
+		});
 	});
 </script>
 
