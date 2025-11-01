@@ -132,7 +132,7 @@ importers:
         version: 5.41.3
       svelte-check:
         specifier: ^4.0.0
-        version: 4.2.1(svelte@5.41.3)(typescript@5.8.3)
+        version: 4.3.3(svelte@5.41.3)(typescript@5.8.3)
       tailwindcss:
         specifier: ^4.0.0
         version: 4.1.10
@@ -244,7 +244,7 @@ importers:
         version: 5.41.3
       svelte-check:
         specifier: ^4.0.0
-        version: 4.2.1(svelte@5.41.3)(typescript@5.8.3)
+        version: 4.3.3(svelte@5.41.3)(typescript@5.8.3)
       tailwindcss:
         specifier: ^4.0.13
         version: 4.1.10
@@ -7105,17 +7105,17 @@ packages:
     engines: {node: '>= 0.4'}
     dev: true
 
-  /svelte-check@4.2.1(svelte@5.41.3)(typescript@5.8.3):
-    resolution: {integrity: sha512-e49SU1RStvQhoipkQ/aonDhHnG3qxHSBtNfBRb9pxVXoa+N7qybAo32KgA9wEb2PCYFNaDg7bZCdhLD1vHpdYA==}
+  /svelte-check@4.3.3(svelte@5.41.3)(typescript@5.8.3):
+    resolution: {integrity: sha512-RYP0bEwenDXzfv0P1sKAwjZSlaRyqBn0Fz1TVni58lqyEiqgwztTpmodJrGzP6ZT2aHl4MbTvWP6gbmQ3FOnBg==}
     engines: {node: '>= 18.0.0'}
     hasBin: true
     peerDependencies:
       svelte: ^5.41.3
       typescript: '>=5.0.0'
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/trace-mapping': 0.3.31
       chokidar: 4.0.3
-      fdir: 6.4.6(picomatch@4.0.2)
+      fdir: 6.5.0(picomatch@4.0.3)
       picocolors: 1.1.1
       sade: 1.8.1
       svelte: 5.41.3
