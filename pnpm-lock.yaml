@@ -65,7 +65,7 @@ importers:
         version: 2.1.20
       dotenv:
         specifier: ^16.5.0
-        version: 16.5.0
+        version: 16.6.1
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20250303.0
@@ -174,7 +174,7 @@ importers:
         version: 2.1.20
       dotenv:
         specifier: ^16.4.5
-        version: 16.5.0
+        version: 16.6.1
       marked:
         specifier: ^15.0.12
         version: 15.0.12
@@ -277,7 +277,7 @@ importers:
         version: 2.1.20
       dotenv:
         specifier: ^16.5.0
-        version: 16.5.0
+        version: 16.6.1
       express:
         specifier: ^5.1.0
         version: 5.1.0
@@ -329,7 +329,7 @@ importers:
     devDependencies:
       dotenv:
         specifier: ^16.5.0
-        version: 16.5.0
+        version: 16.6.1
       drizzle-kit:
         specifier: ^0.31.1
         version: 0.31.1
@@ -4997,7 +4997,7 @@ packages:
     hasBin: true
     dependencies:
       cross-spawn: 7.0.6
-      dotenv: 16.5.0
+      dotenv: 16.6.1
       dotenv-expand: 10.0.0
       minimist: 1.2.8
     dev: true
@@ -5007,8 +5007,8 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
-  /dotenv@16.5.0:
-    resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
+  /dotenv@16.6.1:
+    resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
     engines: {node: '>=12'}
 
   /drizzle-kit@0.31.1:
