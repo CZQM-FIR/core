@@ -57,6 +57,6 @@
 		"@oslojs/encoding": "^1.1.0",
 		"@tailwindcss/postcss": "^4.0.13",
 		"arktype": "^2.1.20",
-		"dotenv": "^16.4.7"
+		"dotenv": "^16.5.0"
 	}
 }
