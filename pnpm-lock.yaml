@@ -69,7 +69,7 @@ importers:
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20250303.0
-        version: 4.20250614.0
+        version: 4.20251014.0
       '@eslint/compat':
         specifier: ^1.2.5
         version: 1.3.0(eslint@9.29.0)
@@ -147,7 +147,7 @@ importers:
         version: 6.4.1
       wrangler:
         specifier: ^3.114.0
-        version: 3.114.9(@cloudflare/workers-types@4.20250614.0)
+        version: 3.114.9(@cloudflare/workers-types@4.20251014.0)
 
   apps/web:
     dependencies:
@@ -184,7 +184,7 @@ importers:
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20241112.0
-        version: 4.20250614.0
+        version: 4.20251014.0
       '@sveltejs/adapter-auto':
         specifier: ^4.0.0
         version: 4.0.0(@sveltejs/kit@2.21.5)
@@ -262,7 +262,7 @@ importers:
         version: 5.4.21(@types/node@22.15.31)
       wrangler:
         specifier: ^3.99.0
-        version: 3.114.9(@cloudflare/workers-types@4.20250614.0)
+        version: 3.114.9(@cloudflare/workers-types@4.20251014.0)
 
   apps/worker:
     dependencies:
@@ -287,7 +287,7 @@ importers:
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20250321.0
-        version: 4.20250614.0
+        version: 4.20251014.0
       '@eslint/js':
         specifier: ^9.18.0
         version: 9.29.0
@@ -323,7 +323,7 @@ importers:
         version: 8.34.0(eslint@9.29.0)(typescript@5.8.3)
       wrangler:
         specifier: ^4.5.0
-        version: 4.20.0(@cloudflare/workers-types@4.20250614.0)
+        version: 4.20.0(@cloudflare/workers-types@4.20251014.0)
 
   packages/db:
     devDependencies:
@@ -1067,8 +1067,8 @@ packages:
     dev: true
     optional: true
 
-  /@cloudflare/workers-types@4.20250614.0:
-    resolution: {integrity: sha512-a2r9Yamj+7YlXUeGbnpwZdxGyTx1rMyLdt2xtzk46HgpGq3QV8ka8s3B+tB4OzDPXH9x5TmplwlO9vTJkCXG1w==}
+  /@cloudflare/workers-types@4.20251014.0:
+    resolution: {integrity: sha512-tEW98J/kOa0TdylIUOrLKRdwkUw0rvvYVlo+Ce0mqRH3c8kSoxLzUH9gfCvwLe0M89z1RkzFovSKAW2Nwtyn3w==}
     dev: true
 
   /@cspotcode/source-map-support@0.8.1:
@@ -4071,11 +4071,11 @@ packages:
       '@sveltejs/kit': ^2.0.0
       wrangler: ^3.87.0 || ^4.0.0
     dependencies:
-      '@cloudflare/workers-types': 4.20250614.0
+      '@cloudflare/workers-types': 4.20251014.0
       '@sveltejs/kit': 2.21.5(@sveltejs/vite-plugin-svelte@5.1.0)(svelte@5.41.3)(vite@6.4.1)
       esbuild: 0.24.2
       worktop: 0.8.0-next.18
-      wrangler: 3.114.9(@cloudflare/workers-types@4.20250614.0)
+      wrangler: 3.114.9(@cloudflare/workers-types@4.20251014.0)
     dev: true
 
   /@sveltejs/adapter-netlify@5.0.2(@sveltejs/kit@2.21.5):
@@ -7561,7 +7561,7 @@ packages:
       regexparam: 3.0.0
     dev: true
 
-  /wrangler@3.114.9(@cloudflare/workers-types@4.20250614.0):
+  /wrangler@3.114.9(@cloudflare/workers-types@4.20251014.0):
     resolution: {integrity: sha512-1e0gL+rxLF04kM9bW4sxoDGLXpJ1x53Rx1t18JuUm6F67qadKKPISyUAXuBeIQudWrCWEBXaTVnSdLHz0yBXbA==}
     engines: {node: '>=16.17.0'}
     hasBin: true
@@ -7573,7 +7573,7 @@ packages:
     dependencies:
       '@cloudflare/kv-asset-handler': 0.3.4
       '@cloudflare/unenv-preset': 2.0.2(unenv@2.0.0-rc.14)(workerd@1.20250408.0)
-      '@cloudflare/workers-types': 4.20250614.0
+      '@cloudflare/workers-types': 4.20251014.0
       '@esbuild-plugins/node-globals-polyfill': 0.2.3(esbuild@0.17.19)
       '@esbuild-plugins/node-modules-polyfill': 0.2.2(esbuild@0.17.19)
       blake3-wasm: 2.1.5
@@ -7590,7 +7590,7 @@ packages:
       - utf-8-validate
     dev: true
 
-  /wrangler@4.20.0(@cloudflare/workers-types@4.20250614.0):
+  /wrangler@4.20.0(@cloudflare/workers-types@4.20251014.0):
     resolution: {integrity: sha512-gxMLaSnYp3VLdGPZu4fc/9UlB7PnSVwni25v32NM9szG2yTt+gx5RunWzmoLplplIfEMkBuV3wA47vccNu7zcA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
@@ -7602,7 +7602,7 @@ packages:
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.0
       '@cloudflare/unenv-preset': 2.3.2(unenv@2.0.0-rc.17)(workerd@1.20250604.0)
-      '@cloudflare/workers-types': 4.20250614.0
+      '@cloudflare/workers-types': 4.20251014.0
       blake3-wasm: 2.1.5
       esbuild: 0.25.4
       miniflare: 4.20250604.1
