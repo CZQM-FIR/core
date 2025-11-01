@@ -8,7 +8,7 @@ COPY . .
 # Install all dependencies including dev deps and optional platform-specific packages
 RUN pnpm install --prod=false --reporter=append-only
 WORKDIR /repo/apps/overseer
-RUN pnpm run build
+RUN pnpm dotenv -e build.env -- pnpm build
 
 # Runtime: small production image running Node adapter server
 FROM node:20-slim AS runtime
