@@ -102,7 +102,7 @@ importers:
         version: 10.1.0
       daisyui:
         specifier: ^5.0.3
-        version: 5.0.43
+        version: 5.3.10
       eslint:
         specifier: ^9.18.0
         version: 9.29.0
@@ -214,7 +214,7 @@ importers:
         version: 2.16.0
       daisyui:
         specifier: ^5.0.3
-        version: 5.0.43
+        version: 5.3.10
       eslint:
         specifier: ^9.7.0
         version: 9.29.0
@@ -4912,8 +4912,8 @@ packages:
     hasBin: true
     dev: true
 
-  /daisyui@5.0.43:
-    resolution: {integrity: sha512-2pshHJ73vetSpsbAyaOncGnNYL0mwvgseS1EWy1I9Qpw8D11OuBoDNIWrPIME4UFcq2xuff3A9x+eXbuFR9fUQ==}
+  /daisyui@5.3.10:
+    resolution: {integrity: sha512-vmjyPmm0hvFhA95KB6uiGmWakziB2pBv6CUcs5Ka/3iMBMn9S+C3SZYx9G9l2JrgTZ1EFn61F/HrPcwaUm2kLQ==}
     dev: true
 
   /data-uri-to-buffer@2.0.2:
