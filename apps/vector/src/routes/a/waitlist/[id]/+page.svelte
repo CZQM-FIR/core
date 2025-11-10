@@ -1,21 +1,14 @@
 <script lang="ts">
-	import { waitlistRelations } from '@czqm/db/schema';
 	import type { PageData } from './$types';
-	import {
-		Trash,
-		SquareCheck,
-		SquareArrowUp,
-		SquareArrowDown,
-		ArrowUp,
-		ArrowDown
-	} from '@lucide/svelte';
+	import { Trash, SquareCheck, ArrowUp, ArrowDown, UserPlus } from '@lucide/svelte';
 	import {
 		getWaitlist,
 		moveUserUp,
 		moveUserDown,
-		removeUserFromWaitlist
+		removeUserFromWaitlist,
+		addUserToWaitlist
 	} from '$lib/remote/waitlist.remote';
-	import { goto } from '$app/navigation';
+	import { getAllControllers } from '$lib/remote/users.remote';
 
 	let { data }: { data: PageData } = $props();
 </script>
@@ -28,9 +21,26 @@
 	{:then waitlist}
 		<h1 class="text-3xl font-semibold">{waitlist ? waitlist.name : ''} Wait List</h1>
 		<p class="text-primary hover:link"><a href="/a/waitlist">&lt; Back to Waitlists</a></p>
-		<!-- <div class="divider my-0"></div> -->
 
-		<h2 class="mt-4 text-xl font-semibold">Students</h2>
+		<div class="flex flex-row justify-between">
+			<h2 class="mt-4 text-xl font-semibold">Students</h2>
+			<form class="my-2 flex flex-row gap-2" {...addUserToWaitlist}>
+				<input type="text" name="waitlistId" value={data.id} hidden />
+				<select class="select" required name="userId">
+					{#await getAllControllers()}
+						<option disabled selected>Loading Controllers...</option>
+					{:then controllers}
+						<option disabled selected>Select a Student</option>
+						{#each controllers.filter((c) => !waitlist.students.some((s) => s.cid === c.cid)) as controller}
+							<option value={controller.cid}>
+								{controller.name_full} ({controller.cid})
+							</option>
+						{/each}
+					{/await}
+				</select>
+				<button class="btn btn-primary me-auto"><UserPlus /></button>
+			</form>
+		</div>
 		<div class="divider my-0"></div>
 		{#if waitlist.students.length === 0}
 			<p>No students on this waitlist</p>
