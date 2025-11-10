@@ -13,5 +13,14 @@
     "editor.defaultFormatter": "svelte.svelte-vscode"
   },
   "cSpell.enabled": true,
-  "cSpell.words": ["Callsign", "CZQM", "PIPEDA", "VATCAN", "VATSIM"]
+  "cSpell.words": [
+    "Callsign",
+    "CZQM",
+    "onclickcapture",
+    "PIPEDA",
+    "VATCAN",
+    "VATSIM",
+    "waitlist",
+    "waitlists"
+  ]
 }

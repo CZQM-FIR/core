@@ -1,0 +1,1 @@
+ALTER TABLE `waiting_users` ADD `wait_time` text;

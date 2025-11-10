@@ -29,17 +29,9 @@
 					>
 				</div>
 				<ul class="menu dropdown-content menu-sm rounded-box bg-base-300 z-50 mt-3 p-2 shadow-sm">
-					{#if data.user?.flags.some((f) => ['staff', 'admin'].includes(f.flag.name))}
-						{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'chief-instructor', 'web'].includes(f.flag.name) )}
-							<li><a href="/a/users">Users</a></li>
-							<li><a href="/a/activity">Activity</a></li>
-						{/if}
-						{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'events'].includes(f.flag.name) )}
-							<li><a href="/a/events">Events</a></li>
-						{/if}
-						<li><a href="/a/news">News</a></li>
-						<li><a href="/a/resources">Resources</a></li>
-						<li><a href="/a/files">File Upload</a></li>
+					<li><a href="/waitlist">Wait List</a></li>
+					{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'chief-instructor'].includes(f.flag.name) )}
+						<li><a href="/a/waitlist">Wait List Management</a></li>
 					{/if}
 				</ul>
 			</div>
@@ -47,17 +39,9 @@
 		</div>
 		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
-				{#if data.user?.flags.some((f) => ['staff', 'admin'].includes(f.flag.name))}
-					{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'chief-instructor', 'web'].includes(f.flag.name) )}
-						<li><a href="/a/users">Users</a></li>
-						<li><a href="/a/activity">Activity</a></li>
-					{/if}
-					{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'events'].includes(f.flag.name) )}
-						<li><a href="/a/events">Events</a></li>
-					{/if}
-					<li><a href="/a/news">News</a></li>
-					<li><a href="/a/resources">Resources</a></li>
-					<li><a href="/a/files">File Upload</a></li>
+				<li><a href="/waitlist">Wait List</a></li>
+				{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'chief-instructor'].includes(f.flag.name) )}
+					<li><a href="/a/waitlist">Wait List Management</a></li>
 				{/if}
 			</ul>
 		</div>

@@ -162,6 +162,41 @@
       "when": 1760401237160,
       "tag": "0022_fixed_ravenous",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1762640793778,
+      "tag": "0023_calm_shen",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1762641039916,
+      "tag": "0024_calm_the_santerians",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1762641121693,
+      "tag": "0025_lying_the_leader",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1762641445287,
+      "tag": "0026_violet_owl",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1762643038155,
+      "tag": "0027_concerned_hex",
+      "breakpoints": true
     }
   ]
 }

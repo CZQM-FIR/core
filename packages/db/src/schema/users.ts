@@ -5,6 +5,7 @@ import { soloEndorsements } from "./soloEndorsements";
 import { roster } from "./roster";
 import { integrations } from "./integrations";
 import { preferences } from "./preferences";
+import { waitingUsers } from "./waitlist";
 
 export const users = sqliteTable(
   "users",
@@ -45,6 +46,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   roster: many(roster),
   integrations: many(integrations),
   preferences: many(preferences),
+  waitlistEntries: many(waitingUsers),
 }));
 
 export type User = InferSelectModel<typeof users>;
