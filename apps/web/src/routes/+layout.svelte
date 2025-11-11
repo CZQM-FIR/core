@@ -18,6 +18,7 @@
 
   import CZQMLogo from '$lib/assets/images/CZQM-White.svg';
   import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
+  import { PUBLIC_VECTOR_URL } from '$env/static/public';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 </script>
@@ -124,6 +125,7 @@
         <li><a href="/events">Events</a></li>
         <li><a href="/news">News</a></li>
         <li><a href="/contact">Contact Us</a></li>
+        <li><a href={PUBLIC_VECTOR_URL}>Vector</a></li>
       </ul>
     </div>
     <div class="navbar-end">
