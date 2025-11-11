@@ -1,4 +1,5 @@
-import { command, form, query } from '$app/server';
+import { command, form, getRequestEvent, query } from '$app/server';
+import { getUser } from '$lib/auth';
 import { db } from '$lib/db';
 import { moodleQueue, waitingUsers, waitlists } from '@czqm/db/schema';
 import { error } from '@sveltejs/kit';
@@ -6,6 +7,16 @@ import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
 
 export const getWaitlist = query(type('number.integer >= 0'), async (waitlistId) => {
+	const actioner = await getUser(getRequestEvent());
+	if (
+		!actioner ||
+		!actioner.flags.some((f) =>
+			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+		)
+	) {
+		throw error(403, 'Forbidden');
+	}
+
 	const waitlist = await db.query.waitlists.findFirst({
 		where: eq(waitlists.id, waitlistId),
 		with: {
@@ -29,6 +40,16 @@ const WaitlistUserOptions = type({
 });
 
 export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, userId }) => {
+	const actioner = await getUser(getRequestEvent());
+	if (
+		!actioner ||
+		!actioner.flags.some((f) =>
+			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+		)
+	) {
+		throw error(403, 'Forbidden');
+	}
+
 	const waitlist = await db.query.waitlists.findFirst({
 		where: eq(waitlists.id, waitlistId),
 		with: {
@@ -62,6 +83,16 @@ export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, user
 });
 
 export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, userId }) => {
+	const actioner = await getUser(getRequestEvent());
+	if (
+		!actioner ||
+		!actioner.flags.some((f) =>
+			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+		)
+	) {
+		throw error(403, 'Forbidden');
+	}
+
 	const waitlist = await db.query.waitlists.findFirst({
 		where: eq(waitlists.id, waitlistId),
 		with: {
@@ -98,6 +129,16 @@ export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, us
 export const removeUserFromWaitlist = command(
 	WaitlistUserOptions,
 	async ({ waitlistId, userId }) => {
+		const actioner = await getUser(getRequestEvent());
+		if (
+			!actioner ||
+			!actioner.flags.some((f) =>
+				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+			)
+		) {
+			throw error(403, 'Forbidden');
+		}
+
 		const waitlist = await db.query.waitlists.findFirst({
 			where: eq(waitlists.id, waitlistId),
 			with: {
@@ -139,6 +180,16 @@ export const addUserToWaitlist = form(
 		userId: 'string.integer'
 	}),
 	async ({ waitlistId: waitlistIdString, userId: userIdString }) => {
+		const actioner = await getUser(getRequestEvent());
+		if (
+			!actioner ||
+			!actioner.flags.some((f) =>
+				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+			)
+		) {
+			throw error(403, 'Forbidden');
+		}
+
 		const waitlistId = Number(waitlistIdString);
 		const userId = Number(userIdString);
 
@@ -180,6 +231,16 @@ export const addUserToWaitlist = form(
 export const enrolUserFromWaitlist = command(
 	WaitlistUserOptions,
 	async ({ waitlistId, userId }) => {
+		const actioner = await getUser(getRequestEvent());
+		if (
+			!actioner ||
+			!actioner.flags.some((f) =>
+				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+			)
+		) {
+			throw error(403, 'Forbidden');
+		}
+
 		const waitlist = await db.query.waitlists.findFirst({
 			where: eq(waitlists.id, waitlistId),
 			with: {
@@ -219,6 +280,16 @@ export const editWaitlistEstimatedTime = form(
 		estimatedTime: 'string'
 	}),
 	async ({ waitlistId: waitlistIdString, estimatedTime }) => {
+		const actioner = await getUser(getRequestEvent());
+		if (
+			!actioner ||
+			!actioner.flags.some((f) =>
+				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+			)
+		) {
+			throw error(403, 'Forbidden');
+		}
+
 		const waitlistId = Number(waitlistIdString);
 
 		await db

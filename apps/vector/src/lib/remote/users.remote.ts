@@ -1,7 +1,17 @@
-import { query } from '$app/server';
+import { getRequestEvent, query } from '$app/server';
+import { getUser } from '$lib/auth';
 import { db } from '$lib/db';
+import { error } from '@sveltejs/kit';
 
 export const getHomeControllers = query(async () => {
+	const actioner = await getUser(getRequestEvent());
+	if (
+		!actioner ||
+		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.flag.name))
+	) {
+		throw error(403, 'Forbidden');
+	}
+
 	const users = await db.query.users.findMany({
 		with: {
 			flags: {
@@ -16,6 +26,14 @@ export const getHomeControllers = query(async () => {
 });
 
 export const getVisitingControllers = query(async () => {
+	const actioner = await getUser(getRequestEvent());
+	if (
+		!actioner ||
+		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.flag.name))
+	) {
+		throw error(403, 'Forbidden');
+	}
+
 	const users = await db.query.users.findMany({
 		with: {
 			flags: {
@@ -30,6 +48,14 @@ export const getVisitingControllers = query(async () => {
 });
 
 export const getAllControllers = query(async () => {
+	const actioner = await getUser(getRequestEvent());
+	if (
+		!actioner ||
+		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.flag.name))
+	) {
+		throw error(403, 'Forbidden');
+	}
+
 	const users = await db.query.users.findMany({
 		orderBy: (users) => [users.name_last],
 		with: {

@@ -84,3 +84,55 @@ export function auth(event: RequestEvent): Promise<SessionValidationResult> {
 export type SessionValidationResult =
 	| { session: AuthSession; user: User }
 	| { session: null; user: null };
+
+export type UserWithRelations = User & {
+	flags: Array<{
+		flagId: number;
+		userId: number;
+		flag: {
+			id: number;
+			name: string;
+			showInSelect: boolean | null;
+		};
+	}>;
+	rating: {
+		id: number;
+		long: string;
+		short: string;
+	};
+	preferences: Array<{
+		id: number;
+		cid: number;
+		key: string;
+		value: string;
+	}>;
+};
+
+export async function getUser(event: RequestEvent): Promise<UserWithRelations | null> {
+	const token = event.cookies.get('session');
+	if (!token) {
+		return null;
+	}
+	const validation = await validateSessionToken(token);
+
+	if (!validation.user) {
+		return null;
+	}
+
+	const user = await db.query.users.findFirst({
+		where: eq(users.cid, validation.user.cid),
+		with: {
+			flags: {
+				with: { flag: true }
+			},
+			rating: true,
+			preferences: true
+		}
+	});
+
+	if (!user) {
+		return null;
+	}
+
+	return user;
+}
