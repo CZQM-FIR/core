@@ -197,6 +197,27 @@
       "when": 1762643038155,
       "tag": "0027_concerned_hex",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1762751634795,
+      "tag": "0028_mushy_callisto",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1762751759594,
+      "tag": "0029_gray_omega_red",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1762751951362,
+      "tag": "0030_boring_whirlwind",
+      "breakpoints": true
     }
   ]
 }

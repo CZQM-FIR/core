@@ -6,7 +6,9 @@
 		moveUserUp,
 		moveUserDown,
 		removeUserFromWaitlist,
-		addUserToWaitlist
+		addUserToWaitlist,
+		enrolUserFromWaitlist,
+		editWaitlistEstimatedTime
 	} from '$lib/remote/waitlist.remote';
 	import { getAllControllers } from '$lib/remote/users.remote';
 
@@ -22,7 +24,25 @@
 		<h1 class="text-3xl font-semibold">{waitlist ? waitlist.name : ''} Wait List</h1>
 		<p class="text-primary hover:link"><a href="/a/waitlist">&lt; Back to Waitlists</a></p>
 
-		<div class="flex flex-row justify-between">
+		<h2 class="mt-4 text-xl font-semibold">Estimated Wait Time</h2>
+		<div class="divider mt-0"></div>
+
+		<form {...editWaitlistEstimatedTime} class="mb-4 flex flex-row gap-3">
+			<input
+				placeholder="Estimated Wait Time..."
+				class="input"
+				name="estimatedTime"
+				value={waitlist.waitTime}
+			/>
+			<input type="hidden" name="waitlistId" value={data.id} />
+			<button
+				class="btn {!editWaitlistEstimatedTime.pending && editWaitlistEstimatedTime.result?.success
+					? 'btn-success'
+					: 'btn-primary'}">Save</button
+			>
+		</form>
+
+		<div class="flex flex-row items-end justify-between">
 			<h2 class="mt-4 text-xl font-semibold">Students</h2>
 			<form class="my-2 flex flex-row gap-2" {...addUserToWaitlist}>
 				<input type="text" name="waitlistId" value={data.id} hidden />
@@ -85,7 +105,11 @@
 									/>
 								</button>
 								<button class="tooltip tooltip-left" data-tip="Enrol Student">
-									<SquareCheck class="hover:text-success transition-colors" />
+									<SquareCheck
+										onclick={() =>
+											enrolUserFromWaitlist({ userId: student.cid, waitlistId: data.id })}
+										class="hover:text-success transition-colors"
+									/>
 								</button>
 							</div>
 						</div>

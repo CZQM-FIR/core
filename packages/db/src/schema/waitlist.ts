@@ -6,6 +6,8 @@ export const waitlists = sqliteTable("waitlists", {
   id: int().primaryKey({ autoIncrement: true }),
   name: text().notNull(),
   waitTime: text("wait_time"),
+  waitlistCohort: text("waitlist_cohort"),
+  enrolledCohort: text("enrolled_cohort"),
 });
 
 export const waitlistRelations = relations(waitlists, ({ one, many }) => ({

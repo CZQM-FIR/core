@@ -1,0 +1,1 @@
+ALTER TABLE `moodle_queue` ADD `add` integer DEFAULT true NOT NULL;

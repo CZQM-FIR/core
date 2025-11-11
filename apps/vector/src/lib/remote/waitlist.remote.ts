@@ -1,6 +1,6 @@
 import { command, form, query } from '$app/server';
 import { db } from '$lib/db';
-import { waitingUsers, waitlists } from '@czqm/db/schema';
+import { moodleQueue, waitingUsers, waitlists } from '@czqm/db/schema';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
@@ -58,7 +58,7 @@ export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, user
 		.set({ position: otherUser.position + 1 })
 		.where(and(eq(waitingUsers.cid, otherUser.cid), eq(waitingUsers.waitlistId, waitlistId)));
 
-	getWaitlist(waitlistId).refresh();
+	await getWaitlist(waitlistId).refresh();
 });
 
 export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, userId }) => {
@@ -92,7 +92,7 @@ export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, us
 		.set({ position: otherUser.position - 1 })
 		.where(and(eq(waitingUsers.cid, otherUser.cid), eq(waitingUsers.waitlistId, waitlistId)));
 
-	getWaitlist(waitlistId).refresh();
+	await getWaitlist(waitlistId).refresh();
 });
 
 export const removeUserFromWaitlist = command(
@@ -120,7 +120,16 @@ export const removeUserFromWaitlist = command(
 				.where(and(eq(waitingUsers.cid, u.cid), eq(waitingUsers.waitlistId, waitlistId)));
 		}
 
-		getWaitlist(waitlistId).refresh();
+		await getWaitlist(waitlistId).refresh();
+
+		if (waitlist.waitlistCohort) {
+			await db.insert(moodleQueue).values({
+				cid: userId,
+				cohortId: waitlist.waitlistCohort,
+				timestamp: new Date(),
+				add: false
+			});
+		}
 	}
 );
 
@@ -155,5 +164,72 @@ export const addUserToWaitlist = form(
 			position: waitlist.students.length,
 			waitingSince: new Date()
 		});
+
+		if (waitlist.waitlistCohort) {
+			await db.insert(moodleQueue).values({
+				cid: userId,
+				cohortId: waitlist.waitlistCohort,
+				timestamp: new Date()
+			});
+		}
+
+		await getWaitlist(waitlistId).refresh();
+	}
+);
+
+export const enrolUserFromWaitlist = command(
+	WaitlistUserOptions,
+	async ({ waitlistId, userId }) => {
+		const waitlist = await db.query.waitlists.findFirst({
+			where: eq(waitlists.id, waitlistId),
+			with: {
+				students: true
+			}
+		});
+		if (!waitlist) throw error(404, 'Waitlist Not Found');
+
+		const user = waitlist.students.find((s) => s.cid === userId);
+		if (!user) throw error(404, 'User not found');
+
+		if (waitlist.enrolledCohort) {
+			await db.insert(moodleQueue).values({
+				cid: userId,
+				cohortId: waitlist.enrolledCohort,
+				timestamp: new Date()
+			});
+		}
+
+		await db
+			.delete(waitingUsers)
+			.where(and(eq(waitingUsers.cid, userId), eq(waitingUsers.waitlistId, waitlistId)));
+
+		const usersToUpdate = waitlist.students.filter((s) => s.position > user.position);
+		for (const u of usersToUpdate) {
+			await db
+				.update(waitingUsers)
+				.set({ position: u.position - 1 })
+				.where(and(eq(waitingUsers.cid, u.cid), eq(waitingUsers.waitlistId, waitlistId)));
+		}
+	}
+);
+
+export const editWaitlistEstimatedTime = form(
+	type({
+		waitlistId: 'string.integer',
+		estimatedTime: 'string'
+	}),
+	async ({ waitlistId: waitlistIdString, estimatedTime }) => {
+		const waitlistId = Number(waitlistIdString);
+
+		await db
+			.update(waitlists)
+			.set({
+				waitTime: estimatedTime
+			})
+			.where(eq(waitlists.id, waitlistId));
+
+		return {
+			success: true
+		};
 	}
 );

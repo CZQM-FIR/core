@@ -12,7 +12,7 @@
   "[svelte]": {
     "editor.defaultFormatter": "svelte.svelte-vscode"
   },
-  "cSpell.enabled": true,
+  "cSpell.enabled": false,
   "cSpell.words": [
     "Callsign",
     "CZQM",

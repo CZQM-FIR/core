@@ -8,6 +8,7 @@ import { vatcanPull } from './vatcanPull.js';
 import 'dotenv/config';
 import cron from 'node-cron';
 import express from 'express';
+import { syncMoodle } from './syncMoodle.js';
 
 const app = express();
 let lastRun: string | null = null;
@@ -43,7 +44,9 @@ const Env = type({
   RECORD_SESSIONS_DELAY: 'string.integer.parse',
   VATCAN_API_TOKEN: 'string',
   UPTIME_PORT: 'string.integer.parse?',
-  NODE_ENV: '"dev"|"production"?'
+  NODE_ENV: '"dev"|"production"?',
+  MOODLE_TOKEN: 'string',
+  MOODLE_URL: 'string.url'
 });
 
 export type Env = typeof Env.infer;
@@ -93,6 +96,13 @@ async function main(): Promise<void> {
       res.send('OK');
     });
 
+    app.get('/dev/moodle', async (requestAnimationFrame, res) => {
+      const { db, client } = createDB(env);
+      await syncMoodle(db, env);
+      client.close();
+      res.send('OK');
+    });
+
     console.log('Running in development mode, manual endpoints enabled');
   } else {
     cron.schedule('* * * * *', async () => {
@@ -106,6 +116,17 @@ async function main(): Promise<void> {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished Online ATC Handler', new Date());
+      }
+
+      const { db, client } = createDB(env);
+      try {
+        console.log('Running Moodle Sync', new Date());
+        await syncMoodle(db, env);
+      } catch (err) {
+        console.error('Scheduled job failed:', err);
+      } finally {
+        console.log('Finished Moodle Sync', new Date());
+        client.close();
       }
     });
 
