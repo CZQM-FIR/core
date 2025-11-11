@@ -9,7 +9,7 @@
 	<div class="divider my-0"></div>
 	<p class="py-3">Please select a waitlist:</p>
 	<ul class="flex flex-row gap-3">
-		{#each data.waitlists as waitlist}
+		{#each data.waitlists as waitlist (waitlist.id)}
 			<li class="text-lg">
 				<a href="/a/waitlist/{waitlist.id}" class="btn btn-primary">
 					<span class="font-bold">{waitlist.name}</span> - {waitlist.students.length} student{waitlist

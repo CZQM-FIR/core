@@ -51,7 +51,7 @@
 						<option disabled selected>Loading Controllers...</option>
 					{:then controllers}
 						<option disabled selected>Select a Student</option>
-						{#each controllers.filter((c) => !waitlist.students.some((s) => s.cid === c.cid)) as controller}
+						{#each controllers.filter((c) => !waitlist.students.some((s) => s.cid === c.cid)) as controller (controller.cid)}
 							<option value={controller.cid}>
 								{controller.name_full} ({controller.cid})
 							</option>
@@ -66,7 +66,7 @@
 			<p>No students on this waitlist</p>
 		{:else}
 			<div class="flex flex-col gap-3">
-				{#each waitlist.students as student, index}
+				{#each waitlist.students as student, index (student.cid)}
 					<div class="card bg-base-200 shadow-sm">
 						<div class="card-body flex-row">
 							<div class="flex flex-row items-center justify-center">
