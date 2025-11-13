@@ -7,7 +7,8 @@ import { type } from 'arktype';
 import { and, eq, isNull } from 'drizzle-orm';
 
 export const getWaitlist = query(type('number.integer >= 0'), async (waitlistId) => {
-	const actioner = await getUser(getRequestEvent());
+	const event = getRequestEvent();
+	const actioner = await getUser(event);
 	if (
 		!actioner ||
 		!actioner.flags.some((f) =>
@@ -40,7 +41,8 @@ const WaitlistUserOptions = type({
 });
 
 export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, userId }) => {
-	const actioner = await getUser(getRequestEvent());
+	const event = getRequestEvent();
+	const actioner = await getUser(event);
 	if (
 		!actioner ||
 		!actioner.flags.some((f) =>
@@ -83,7 +85,8 @@ export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, user
 });
 
 export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, userId }) => {
-	const actioner = await getUser(getRequestEvent());
+	const event = getRequestEvent();
+	const actioner = await getUser(event);
 	if (
 		!actioner ||
 		!actioner.flags.some((f) =>
@@ -129,7 +132,8 @@ export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, us
 export const removeUserFromWaitlist = command(
 	WaitlistUserOptions,
 	async ({ waitlistId, userId }) => {
-		const actioner = await getUser(getRequestEvent());
+		const event = getRequestEvent();
+		const actioner = await getUser(event);
 		if (
 			!actioner ||
 			!actioner.flags.some((f) =>
@@ -180,7 +184,8 @@ export const addUserToWaitlist = form(
 		userId: 'string.integer'
 	}),
 	async ({ waitlistId: waitlistIdString, userId: userIdString }) => {
-		const actioner = await getUser(getRequestEvent());
+		const event = getRequestEvent();
+		const actioner = await getUser(event);
 		if (
 			!actioner ||
 			!actioner.flags.some((f) =>
@@ -231,7 +236,8 @@ export const addUserToWaitlist = form(
 export const enrolUserFromWaitlist = command(
 	WaitlistUserOptions,
 	async ({ waitlistId, userId }) => {
-		const actioner = await getUser(getRequestEvent());
+		const event = getRequestEvent();
+		const actioner = await getUser(event);
 		if (
 			!actioner ||
 			!actioner.flags.some((f) =>
@@ -286,7 +292,8 @@ export const editWaitlistEstimatedTime = form(
 		estimatedTime: 'string'
 	}),
 	async ({ waitlistId: waitlistIdString, estimatedTime }) => {
-		const actioner = await getUser(getRequestEvent());
+		const event = getRequestEvent();
+		const actioner = await getUser(event);
 		if (
 			!actioner ||
 			!actioner.flags.some((f) =>
@@ -312,7 +319,8 @@ export const editWaitlistEstimatedTime = form(
 );
 
 export const getIndividualsWaitlistEntries = query(async () => {
-	const cid = getRequestEvent().locals.user?.cid;
+	const event = getRequestEvent();
+	const cid = event.locals.user?.cid;
 
 	if (!cid) {
 		throw error(403, 'Forbidden');
@@ -335,7 +343,8 @@ export const getIndividualsWaitlistEntries = query(async () => {
 });
 
 export const getEnrolledWaitlistEntries = query(type('number.integer >= 0'), async (waitlistId) => {
-	const actioner = await getUser(getRequestEvent());
+	const event = getRequestEvent();
+	const actioner = await getUser(event);
 	if (
 		!actioner ||
 		!actioner.flags.some((f) =>
@@ -367,7 +376,8 @@ export const removeUserFromEnrolledCourse = command(
 		userId: 'number.integer'
 	}),
 	async ({ waitlistId: waitlistId, userId: userId }) => {
-		const actioner = await getUser(getRequestEvent());
+		const event = getRequestEvent();
+		const actioner = await getUser(event);
 		if (
 			!actioner ||
 			!actioner.flags.some((f) =>
@@ -425,7 +435,8 @@ export const hideUserFromEnrolledCourse = command(
 		userId: 'number.integer'
 	}),
 	async ({ waitlistId: waitlistId, userId: userId }) => {
-		const actioner = await getUser(getRequestEvent());
+		const event = getRequestEvent();
+		const actioner = await getUser(event);
 		if (
 			!actioner ||
 			!actioner.flags.some((f) =>
