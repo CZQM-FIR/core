@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { LayoutData } from './$types';
-  import { User, Users, LogOut, Blocks, Settings } from '@lucide/svelte';
+  import { User, Users, LogOut, Blocks, Settings, School } from '@lucide/svelte';
   import NavLink from './NavLink.svelte';
-  import { PUBLIC_OVERSEER_URL } from '$env/static/public';
+  import { PUBLIC_OVERSEER_URL, PUBLIC_VECTOR_URL } from '$env/static/public';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
@@ -33,6 +33,9 @@
           <!-- <NavLink name="Tickets" icon={Mail} href="/my/tickets" /> -->
           <NavLink name="Preferences" icon={Settings} href="/my/preferences" />
           <NavLink name="Integrations" icon={Blocks} href="/my/integrations" />
+          {#if data.user.flags.some( (f) => ['admin', 'controller', 'visitor'].includes(f.flag.name) )}
+            <NavLink name="Vector" icon={School} href={PUBLIC_VECTOR_URL} external />
+          {/if}
           {#if data.user.flags.some((f) => ['staff', 'admin'].includes(f.flag.name))}
             <NavLink name="Overseer" icon={Users} href={PUBLIC_OVERSEER_URL} external />
           {/if}

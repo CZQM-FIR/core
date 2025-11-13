@@ -18,39 +18,10 @@
 
   import CZQMLogo from '$lib/assets/images/CZQM-White.svg';
   import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
+  import { PUBLIC_VECTOR_URL } from '$env/static/public';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 </script>
-
-<svelte:head>
-  <title>Moncton / Gander FIR</title>
-  {#if $page.route.id !== '/events/[eventID]' && $page.route.id !== '/news/[articleID]'}
-    <meta
-      name="description"
-      content="Canada's Gateway to the East Coast - Providing realistic ATC services across the maritime provinces on the VATSIM network."
-    />
-
-    <!-- Twitter meta tags -->
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Moncton / Gander FIR" />
-    <meta
-      name="twitter:description"
-      content="Canada's Gateway to the East Coast - Providing realistic ATC services across the maritime provinces on the VATSIM network."
-    />
-    <meta name="twitter:image" content="https://files.czqm.ca/upload/1750000219576-CZQM.png" />
-    <meta name="twitter:site" content="@CZQM_FIR" />
-
-    <!-- Open Graph meta tags -->
-    <meta property="og:title" content="Moncton / Gander FIR" />
-    <meta
-      property="og:description"
-      content="Canada's Gateway to the East Coast - Providing realistic ATC services across the maritime provinces on the VATSIM network."
-    />
-    <meta property="og:image" content="https://files.czqm.ca/upload/1750000219576-CZQM.png" />
-    <meta property="og:url" content="https://czqm.ca" />
-    <meta property="og:type" content="website" />
-  {/if}
-</svelte:head>
 
 <!-- nav bar -->
 <nav class="bg-base-300 w-screen">
@@ -154,6 +125,7 @@
         <li><a href="/events">Events</a></li>
         <li><a href="/news">News</a></li>
         <li><a href="/contact">Contact Us</a></li>
+        <li><a href={PUBLIC_VECTOR_URL}>Vector</a></li>
       </ul>
     </div>
     <div class="navbar-end">

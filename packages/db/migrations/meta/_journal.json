@@ -162,6 +162,13 @@
       "when": 1760401237160,
       "tag": "0022_fixed_ravenous",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1763006516774,
+      "tag": "0023_flippant_hairball",
+      "breakpoints": true
     }
   ]
 }

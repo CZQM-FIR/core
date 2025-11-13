@@ -107,6 +107,34 @@ export const vatcanPull = async (
       })
       .onConflictDoNothing();
 
+    if (controller.rating === 2) {
+      // if the controllers rating is 2 (S1), add them to the S1 waitlist
+      const waitlist = await db.query.waitlists.findFirst({
+        where: eq(schema.waitlists.id, 1),
+        with: {
+          students: true
+        }
+      });
+
+      if (waitlist) {
+        const isAlreadyWaiting = await db.query.waitingUsers.findFirst({
+          where: and(
+            eq(schema.waitingUsers.cid, controller.cid),
+            eq(schema.waitingUsers.waitlistId, waitlist.id)
+          )
+        });
+
+        if (!isAlreadyWaiting) {
+          await db.insert(schema.waitingUsers).values({
+            cid: controller.cid,
+            waitlistId: 1,
+            waitingSince: new Date(),
+            position: waitlist.students.length + 1
+          });
+        }
+      }
+    }
+
     console.log(
       `Inserted new controller: ${controller.first_name} ${controller.last_name} (${controller.cid})`
     );

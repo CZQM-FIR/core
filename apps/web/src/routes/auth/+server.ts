@@ -10,6 +10,7 @@ import {
   validateSessionToken
 } from '$lib/auth';
 import { db } from '$lib/db';
+import { env } from '$env/dynamic/public';
 
 export const GET: RequestHandler = async (event): Promise<Response> => {
   const { url, cookies } = event;
@@ -123,6 +124,10 @@ export const GET: RequestHandler = async (event): Promise<Response> => {
       path: '/'
     });
   }
+
+  // replace app identifier with actual url
+  redirect = redirect.replace('overseer/', env.PUBLIC_OVERSEER_URL);
+  redirect = redirect.replace('vector/', env.PUBLIC_VECTOR_URL);
 
   return new Response(null, {
     status: 302,
