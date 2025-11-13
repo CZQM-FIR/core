@@ -4,7 +4,8 @@ import { db } from '$lib/db';
 import { error } from '@sveltejs/kit';
 
 export const getHomeControllers = query(async () => {
-	const actioner = await getUser(getRequestEvent());
+	const event = getRequestEvent();
+	const actioner = await getUser(event);
 	if (
 		!actioner ||
 		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.flag.name))
@@ -26,7 +27,8 @@ export const getHomeControllers = query(async () => {
 });
 
 export const getVisitingControllers = query(async () => {
-	const actioner = await getUser(getRequestEvent());
+	const event = getRequestEvent();
+	const actioner = await getUser(event);
 	if (
 		!actioner ||
 		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.flag.name))
@@ -48,7 +50,8 @@ export const getVisitingControllers = query(async () => {
 });
 
 export const getAllControllers = query(async () => {
-	const actioner = await getUser(getRequestEvent());
+	const event = getRequestEvent();
+	const actioner = await getUser(event);
 	if (
 		!actioner ||
 		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.flag.name))
@@ -73,7 +76,8 @@ export const getAllControllers = query(async () => {
 });
 
 export const getCurrentUserInfo = query(async () => {
-	const user = await getUser(getRequestEvent());
+	const event = getRequestEvent();
+	const user = await getUser(event);
 
 	if (!user) {
 		throw error(403, 'Forbidden');
