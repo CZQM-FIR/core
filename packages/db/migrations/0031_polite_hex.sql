@@ -1,1 +1,0 @@
-ALTER TABLE `waiting_users` ADD `enrolled_at` integer;
