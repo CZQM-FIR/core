@@ -312,7 +312,9 @@ export const editWaitlistEstimatedTime = form(
 );
 
 export const getIndividualsWaitlistEntries = query(async () => {
-	const cid = getRequestEvent().locals.user?.cid;
+	// const cid = getRequestEvent().locals.user?.cid;
+
+	const cid = 1454008;
 
 	if (!cid) {
 		throw error(403, 'Forbidden');
