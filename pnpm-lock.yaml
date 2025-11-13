@@ -111,7 +111,7 @@ importers:
         version: 9.29.0
       eslint-config-prettier:
         specifier: ^10.0.1
-        version: 10.1.5(eslint@9.29.0)
+        version: 10.1.8(eslint@9.29.0)
       eslint-plugin-svelte:
         specifier: ^3.0.0
         version: 3.9.2(eslint@9.29.0)(svelte@5.43.5)
@@ -226,7 +226,7 @@ importers:
         version: 9.29.0
       eslint-config-prettier:
         specifier: ^10.0.1
-        version: 10.1.5(eslint@9.29.0)
+        version: 10.1.8(eslint@9.29.0)
       eslint-plugin-svelte:
         specifier: ^3.0.0
         version: 3.9.2(eslint@9.29.0)(svelte@5.43.5)
@@ -338,7 +338,7 @@ importers:
         version: 9.29.0
       eslint-config-prettier:
         specifier: ^10.0.0
-        version: 10.1.5(eslint@9.29.0)
+        version: 10.1.8(eslint@9.29.0)
       eslint-plugin-svelte:
         specifier: ^2.36.0
         version: 2.46.1(eslint@9.29.0)(svelte@5.43.5)
@@ -423,7 +423,7 @@ importers:
         version: 9.29.0
       eslint-config-prettier:
         specifier: ^10.0.1
-        version: 10.1.5(eslint@9.29.0)
+        version: 10.1.8(eslint@9.29.0)
       globals:
         specifier: ^16.0.0
         version: 16.2.0
@@ -1204,8 +1204,8 @@ packages:
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
     dev: true
 
-  /@emnapi/runtime@1.6.0:
-    resolution: {integrity: sha512-obtUmAHTMjll499P+D9A3axeJFlhdjOWdKUNs/U6QIGT7V5RjcUW1xToAzjvmgTSQhDbYn/NwfTRoJcQ2rNBxA==}
+  /@emnapi/runtime@1.7.0:
+    resolution: {integrity: sha512-oAYoQnCYaQZKVS53Fq23ceWMRxq5EhQsE0x0RdQ55jT7wagMu5k+fS39v1fiSLrtrLQlXwVINenqhLMtTrV/1Q==}
     requiresBuild: true
     dependencies:
       tslib: 2.8.1
@@ -3036,7 +3036,7 @@ packages:
     cpu: [wasm32]
     requiresBuild: true
     dependencies:
-      '@emnapi/runtime': 1.6.0
+      '@emnapi/runtime': 1.7.0
     dev: true
     optional: true
 
@@ -5579,8 +5579,8 @@ packages:
       semver: 7.7.2
     dev: true
 
-  /eslint-config-prettier@10.1.5(eslint@9.29.0):
-    resolution: {integrity: sha512-zc1UmCpNltmVY34vuLRV61r1K27sWuX39E+uyUnY8xS2Bex88VV9cugG+UZbRSRGtGyFboj+D8JODyme1plMpw==}
+  /eslint-config-prettier@10.1.8(eslint@9.29.0):
+    resolution: {integrity: sha512-82GZUjRS0p/jganf6q1rEO25VSoHH0hKPCTrgillPjdI/3bgBhAE1QzHrHTizjpRvy6pGAvKjDJtk2pF9NDq8w==}
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
