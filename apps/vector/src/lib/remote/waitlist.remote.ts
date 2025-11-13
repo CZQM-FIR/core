@@ -81,7 +81,7 @@ export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, user
 		.set({ position: otherUser.position + 1 })
 		.where(and(eq(waitingUsers.cid, otherUser.cid), eq(waitingUsers.waitlistId, waitlistId)));
 
-	await getWaitlist(waitlistId).refresh();
+	getWaitlist(waitlistId).refresh();
 });
 
 export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, userId }) => {
@@ -126,7 +126,7 @@ export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, us
 		.set({ position: otherUser.position - 1 })
 		.where(and(eq(waitingUsers.cid, otherUser.cid), eq(waitingUsers.waitlistId, waitlistId)));
 
-	await getWaitlist(waitlistId).refresh();
+	getWaitlist(waitlistId).refresh();
 });
 
 export const removeUserFromWaitlist = command(
@@ -165,7 +165,7 @@ export const removeUserFromWaitlist = command(
 				.where(and(eq(waitingUsers.cid, u.cid), eq(waitingUsers.waitlistId, waitlistId)));
 		}
 
-		await getWaitlist(waitlistId).refresh();
+		getWaitlist(waitlistId).refresh();
 
 		if (waitlist.waitlistCohort) {
 			await db.insert(moodleQueue).values({
@@ -229,7 +229,7 @@ export const addUserToWaitlist = form(
 			});
 		}
 
-		await getWaitlist(waitlistId).refresh();
+		getWaitlist(waitlistId).refresh();
 	}
 );
 
@@ -283,6 +283,9 @@ export const enrolUserFromWaitlist = command(
 				.set({ position: u.position - 1 })
 				.where(and(eq(waitingUsers.cid, u.cid), eq(waitingUsers.waitlistId, waitlistId)));
 		}
+
+		getWaitlist(waitlistId).refresh();
+		getEnrolledWaitlistEntries(waitlistId).refresh();
 	}
 );
 
