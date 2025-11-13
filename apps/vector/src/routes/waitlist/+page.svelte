@@ -7,7 +7,7 @@
 	<h1 class="text-3xl font-semibold">Hey there, {(await getCurrentUserInfo()).name_first}!</h1>
 
 	{#await getIndividualsWaitlistEntries()}
-		<p>Loding your wait list information...</p>
+		<p>Loading your wait list information...</p>
 	{:then waitlistEntries}
 		{#if waitlistEntries.length === 0}
 			<p>

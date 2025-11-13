@@ -1,5 +1,5 @@
 import { relations, type InferSelectModel } from "drizzle-orm";
-import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { users } from "./users";
 
 export const moodleQueue = sqliteTable("moodle_queue", {

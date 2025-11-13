@@ -4,7 +4,6 @@ import { XMLParser } from 'fast-xml-parser';
 import type { Env } from '.';
 import { moodleQueue } from '@czqm/db/schema';
 import { eq } from 'drizzle-orm';
-import { get } from 'http';
 
 const parser = new XMLParser({
   ignoreAttributes: false,

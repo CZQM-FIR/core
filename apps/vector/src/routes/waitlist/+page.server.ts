@@ -1,5 +1,5 @@
-import { goto } from '$app/navigation';
 import { getUser } from '$lib/auth';
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load = (async (event) => {
@@ -9,7 +9,7 @@ export const load = (async (event) => {
 			['controller', 'visitor', 'admin'].includes(f.flag.name)
 		)
 	) {
-		goto('/');
+		redirect(303, '/');
 	}
 
 	return {};

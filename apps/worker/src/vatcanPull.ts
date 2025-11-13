@@ -117,12 +117,21 @@ export const vatcanPull = async (
       });
 
       if (waitlist) {
-        await db.insert(schema.waitingUsers).values({
-          cid: controller.cid,
-          waitlistId: 1,
-          waitingSince: new Date(),
-          position: waitlist.students.length + 1
+        const isAlreadyWaiting = await db.query.waitingUsers.findFirst({
+          where: and(
+            eq(schema.waitingUsers.cid, controller.cid),
+            eq(schema.waitingUsers.waitlistId, waitlist.id)
+          )
         });
+
+        if (!isAlreadyWaiting) {
+          await db.insert(schema.waitingUsers).values({
+            cid: controller.cid,
+            waitlistId: 1,
+            waitingSince: new Date(),
+            position: waitlist.students.length + 1
+          });
+        }
       }
     }
 
