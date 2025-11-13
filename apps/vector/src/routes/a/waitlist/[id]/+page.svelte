@@ -83,7 +83,15 @@
 										<div>
 											<button
 												onclickcapture={() =>
-													moveUserUp({ userId: student.cid, waitlistId: data.id })}
+													moveUserUp({ userId: student.cid, waitlistId: data.id }).updates(
+														getWaitlist(data.id).withOverride((waitlist) => {
+															[waitlist.students[index], waitlist.students[index - 1]] = [
+																{ ...waitlist.students[index - 1], position: index },
+																{ ...waitlist.students[index], position: index - 1 }
+															];
+															return waitlist;
+														})
+													)}
 												class="btn btn-xs btn-ghost btn-primary"><ArrowUp /></button
 											>
 										</div>
@@ -92,7 +100,15 @@
 										<div>
 											<button
 												onclickcapture={() =>
-													moveUserDown({ userId: student.cid, waitlistId: data.id })}
+													moveUserDown({ userId: student.cid, waitlistId: data.id }).updates(
+														getWaitlist(data.id).withOverride((waitlist) => {
+															[waitlist.students[index], waitlist.students[index + 1]] = [
+																{ ...waitlist.students[index + 1], position: index },
+																{ ...waitlist.students[index], position: index + 1 }
+															];
+															return waitlist;
+														})
+													)}
 												class="btn btn-xs btn-ghost btn-primary"><ArrowDown /></button
 											>
 										</div>
@@ -107,14 +123,45 @@
 								<button class="tooltip tooltip-left" data-tip="Remove From Wait List">
 									<Trash
 										onclick={() =>
-											removeUserFromWaitlist({ userId: student.cid, waitlistId: data.id })}
+											removeUserFromWaitlist({ userId: student.cid, waitlistId: data.id }).updates(
+												getWaitlist(data.id).withOverride((waitlist) => {
+													waitlist.students = waitlist.students.filter(
+														(s) => s.cid !== student.cid
+													);
+													return waitlist;
+												})
+											)}
 										class="hover:text-error transition-colors"
 									/>
 								</button>
 								<button class="tooltip tooltip-left" data-tip="Enrol Student">
 									<SquareCheck
 										onclick={() =>
-											enrolUserFromWaitlist({ userId: student.cid, waitlistId: data.id })}
+											enrolUserFromWaitlist({ userId: student.cid, waitlistId: data.id }).updates(
+												getWaitlist(data.id).withOverride((waitlist) => {
+													waitlist.students = waitlist.students.filter(
+														(s) => s.cid !== student.cid
+													);
+													return waitlist;
+												}),
+												getEnrolledWaitlistEntries(data.id).withOverride((enrolled) => {
+													const nextId =
+														enrolled && enrolled.length
+															? Math.max(...enrolled.map((e) => e.id)) + 1
+															: 1;
+													return [
+														...enrolled,
+														{
+															id: nextId,
+															cid: student.cid,
+															user: student.user,
+															enrolledAt: new Date(),
+															waitlistId: data.id,
+															hiddenAt: null
+														}
+													];
+												})
+											)}
 										class="hover:text-success transition-colors"
 									/>
 								</button>
@@ -145,14 +192,28 @@
 									<button class="tooltip tooltip-left" data-tip="Unenrol Student">
 										<Trash
 											onclick={() =>
-												removeUserFromEnrolledCourse({ userId: student.cid, waitlistId: data.id })}
+												removeUserFromEnrolledCourse({
+													userId: student.cid,
+													waitlistId: data.id
+												}).updates(
+													getEnrolledWaitlistEntries(data.id).withOverride((enrolled) =>
+														enrolled.filter((e) => e.cid !== student.cid)
+													)
+												)}
 											class="hover:text-error transition-colors"
 										/>
 									</button>
 									<button class="tooltip tooltip-left" data-tip="Course Completed">
 										<SquareCheck
 											onclick={() =>
-												hideUserFromEnrolledCourse({ userId: student.cid, waitlistId: data.id })}
+												hideUserFromEnrolledCourse({
+													userId: student.cid,
+													waitlistId: data.id
+												}).updates(
+													getEnrolledWaitlistEntries(data.id).withOverride((enrolled) =>
+														enrolled.filter((e) => e.cid !== student.cid)
+													)
+												)}
 											class="hover:text-success transition-colors"
 										/>
 									</button>
