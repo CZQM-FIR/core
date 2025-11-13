@@ -4,7 +4,7 @@ import { error, redirect } from '@sveltejs/kit';
 
 export const load = (async ({ locals }) => {
   if (!locals.user) {
-    redirect(303, '/auth?redirect=/controller-resrouces');
+    redirect(303, '/auth?redirect=/controller-resources');
   }
 
   const user = await db.query.users.findFirst({
@@ -19,7 +19,7 @@ export const load = (async ({ locals }) => {
   });
 
   if (!user) {
-    redirect(303, '/auth?redirect=/controller-resrouces');
+    redirect(303, '/auth?redirect=/controller-resources');
   }
 
   if (!user.flags.some((f) => ['visitor', 'controller', 'admin'].includes(f.flag.name))) {
