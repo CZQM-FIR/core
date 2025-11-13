@@ -40,8 +40,9 @@ const notifySession = async (
   }
 
   const position = positionData[0];
+  const t = session.logonTime;
 
-  const message = `📡 ${user.name_full} (${user.cid}) has connected to ${position.name} (${position.callsign}) at ${session.logonTime.toLocaleTimeString()} (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>).`;
+  const message = `📡 ${user.name_full} (${user.cid}) has connected to ${position.name} (${position.callsign}) at ${t.getUTCHours()}:${t.getUTCMinutes()}z (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>).`;
 
   await fetch(env.WEBHOOK_ONLINE_CONTROLLERS!, {
     method: 'POST',
