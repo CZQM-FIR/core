@@ -406,7 +406,12 @@ export const removeUserFromEnrolledCourse = command(
 			});
 		}
 
+		await db
+			.delete(enrolledUsers)
+			.where(and(eq(enrolledUsers.waitlistId, waitlistId), eq(enrolledUsers.cid, userId)));
+
 		getEnrolledWaitlistEntries(waitlistId).refresh();
+		getWaitlist(waitlistId).refresh();
 
 		return {
 			success: true
@@ -442,6 +447,7 @@ export const hideUserFromEnrolledCourse = command(
 			.where(and(eq(enrolledUsers.waitlistId, waitlistId), eq(enrolledUsers.cid, userId)));
 
 		getEnrolledWaitlistEntries(waitlistId).refresh();
+		getWaitlist(waitlistId).refresh();
 
 		return {
 			success: true
