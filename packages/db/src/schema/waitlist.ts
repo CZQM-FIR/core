@@ -54,3 +54,42 @@ export const waitingUsersRelations = relations(
 );
 
 export type WaitingUser = InferSelectModel<typeof waitingUsers>;
+
+export const enrolledUsers = sqliteTable(
+  "enrolled_users",
+  {
+    id: int().primaryKey({ autoIncrement: true }),
+    cid: int("cid")
+      .notNull()
+      .references(() => users.cid, { onDelete: "cascade" }),
+    waitlistId: int("waitlist_id")
+      .notNull()
+      .references(() => waitlists.id, { onDelete: "cascade" }),
+    enrolledAt: int("enrolled_at", { mode: "timestamp" })
+      .notNull()
+      .default(new Date(0)),
+    hiddenAt: int("hidden_at", { mode: "timestamp" }),
+  },
+  (t) => [
+    index("enrolled_users_cid_idx").on(t.cid),
+    index("enrolled_users_waitlistId_idx").on(t.waitlistId),
+    index("enrolled_users_enrolledAt_idx").on(t.enrolledAt),
+    index("enrolled_users_hidden_at_idx").on(t.hiddenAt),
+  ]
+);
+
+export const enrolledUsersRelations = relations(
+  enrolledUsers,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [enrolledUsers.cid],
+      references: [users.cid],
+    }),
+    waitlist: one(waitlists, {
+      fields: [enrolledUsers.waitlistId],
+      references: [waitlists.id],
+    }),
+  })
+);
+
+export type EnrolledUser = InferSelectModel<typeof enrolledUsers>;

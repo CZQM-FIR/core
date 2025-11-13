@@ -71,3 +71,13 @@ export const getAllControllers = query(async () => {
 		u.flags.some((f) => f.flag.name === 'controller' || f.flag.name === 'visitor')
 	);
 });
+
+export const getCurrentUserInfo = query(async () => {
+	const user = await getUser(getRequestEvent());
+
+	if (!user) {
+		throw error(403, 'Forbidden');
+	}
+
+	return user;
+});

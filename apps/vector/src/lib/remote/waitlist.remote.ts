@@ -1,10 +1,10 @@
 import { command, form, getRequestEvent, query } from '$app/server';
 import { getUser } from '$lib/auth';
 import { db } from '$lib/db';
-import { moodleQueue, waitingUsers, waitlists } from '@czqm/db/schema';
+import { enrolledUsers, moodleQueue, waitingUsers, waitlists } from '@czqm/db/schema';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 export const getWaitlist = query(type('number.integer >= 0'), async (waitlistId) => {
 	const actioner = await getUser(getRequestEvent());
@@ -260,6 +260,12 @@ export const enrolUserFromWaitlist = command(
 			});
 		}
 
+		await db.insert(enrolledUsers).values({
+			cid: userId,
+			waitlistId,
+			enrolledAt: new Date()
+		});
+
 		await db
 			.delete(waitingUsers)
 			.where(and(eq(waitingUsers.cid, userId), eq(waitingUsers.waitlistId, waitlistId)));
@@ -298,6 +304,144 @@ export const editWaitlistEstimatedTime = form(
 				waitTime: estimatedTime
 			})
 			.where(eq(waitlists.id, waitlistId));
+
+		return {
+			success: true
+		};
+	}
+);
+
+export const getIndividualsWaitlistEntries = query(async () => {
+	const cid = getRequestEvent().locals.user?.cid;
+
+	if (!cid) {
+		throw error(403, 'Forbidden');
+	}
+
+	const waitlistEntries = await db.query.waitingUsers.findMany({
+		where: eq(waitingUsers.cid, cid),
+		with: {
+			waitlist: {
+				columns: {
+					id: true,
+					name: true,
+					waitTime: true
+				}
+			}
+		}
+	});
+
+	return waitlistEntries;
+});
+
+export const getEnrolledWaitlistEntries = query(type('number.integer >= 0'), async (waitlistId) => {
+	const actioner = await getUser(getRequestEvent());
+	if (
+		!actioner ||
+		!actioner.flags.some((f) =>
+			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+		)
+	) {
+		throw error(403, 'Forbidden');
+	}
+
+	const waitlist = await db.query.waitlists.findFirst({
+		where: eq(waitlists.id, waitlistId)
+	});
+
+	if (!waitlist) throw error(404, 'Waitlist not found');
+
+	const enrolledEntries = await db.query.enrolledUsers.findMany({
+		where: and(eq(enrolledUsers.waitlistId, waitlistId), isNull(enrolledUsers.hiddenAt)),
+		with: {
+			user: true
+		}
+	});
+
+	return enrolledEntries;
+});
+
+export const removeUserFromEnrolledCourse = command(
+	type({
+		waitlistId: 'number.integer',
+		userId: 'number.integer'
+	}),
+	async ({ waitlistId: waitlistId, userId: userId }) => {
+		const actioner = await getUser(getRequestEvent());
+		if (
+			!actioner ||
+			!actioner.flags.some((f) =>
+				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+			)
+		) {
+			throw error(403, 'Forbidden');
+		}
+
+		const enrolledUser = await db.query.enrolledUsers.findFirst({
+			where: and(eq(enrolledUsers.waitlistId, waitlistId), eq(enrolledUsers.cid, userId)),
+			with: {
+				waitlist: true
+			}
+		});
+
+		if (!enrolledUser) throw error(404, 'Enrolled user not found');
+
+		const { enrolledCohort, waitlistCohort } = enrolledUser.waitlist;
+
+		if (enrolledCohort) {
+			await db.insert(moodleQueue).values({
+				cid: userId,
+				cohortId: enrolledCohort,
+				add: false,
+				timestamp: new Date()
+			});
+		}
+
+		if (waitlistCohort) {
+			await db.insert(moodleQueue).values({
+				cid: userId,
+				cohortId: waitlistCohort,
+				add: false,
+				timestamp: new Date()
+			});
+		}
+
+		getEnrolledWaitlistEntries(waitlistId).refresh();
+
+		return {
+			success: true
+		};
+	}
+);
+
+export const hideUserFromEnrolledCourse = command(
+	type({
+		waitlistId: 'number.integer',
+		userId: 'number.integer'
+	}),
+	async ({ waitlistId: waitlistId, userId: userId }) => {
+		const actioner = await getUser(getRequestEvent());
+		if (
+			!actioner ||
+			!actioner.flags.some((f) =>
+				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+			)
+		) {
+			throw error(403, 'Forbidden');
+		}
+
+		const enrolledUser = await db.query.enrolledUsers.findFirst({
+			where: and(eq(enrolledUsers.waitlistId, waitlistId), eq(enrolledUsers.cid, userId))
+		});
+
+		if (!enrolledUser) throw error(404, 'Enrolled user not found');
+
+		await db
+			.update(enrolledUsers)
+			.set({ hiddenAt: new Date() })
+			.where(and(eq(enrolledUsers.waitlistId, waitlistId), eq(enrolledUsers.cid, userId)));
+
+		getEnrolledWaitlistEntries(waitlistId).refresh();
 
 		return {
 			success: true

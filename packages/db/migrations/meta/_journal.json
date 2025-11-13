@@ -218,6 +218,55 @@
       "when": 1762751951362,
       "tag": "0030_boring_whirlwind",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1763000644267,
+      "tag": "0031_polite_hex",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1763000730267,
+      "tag": "0032_loving_zarek",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1763000862818,
+      "tag": "0033_wealthy_vargas",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1763001887244,
+      "tag": "0034_harsh_zzzax",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "6",
+      "when": 1763001968748,
+      "tag": "0035_deep_piledriver",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1763002871207,
+      "tag": "0036_mighty_pestilence",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1763004626399,
+      "tag": "0037_familiar_solo",
+      "breakpoints": true
     }
   ]
 }

@@ -25,12 +25,17 @@
 		<div class="hero bg-base-200 min-h-screen">
 			<div class="hero-content text-center">
 				<div class="max-w-md">
-					<h1 class="text-5xl font-bold">Vector</h1>
+					<h1 class="text-5xl font-bold">Welcome to Vector</h1>
 					<div class="flex flex-col gap-3 py-6">
-						<p class="">Welcome to Vector, the CZQM FIR's training management system.</p>
-						<p>Please select a function above.</p>
+						<p>
+							Welcome to Vector, the CZQM FIR's training management system. View your position on
+							our wait lists or join a wait list for training.
+						</p>
 					</div>
-					<a href={env.PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
+					<div class="flex w-full flex-row justify-center gap-3">
+						<a href="/waitlist" class="btn btn-primary">Go To Wait Lists</a>
+						<a href={env.PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
+					</div>
 				</div>
 			</div>
 		</div>

@@ -14,8 +14,10 @@
   },
   "devDependencies": {
     "dotenv": "^16.5.0",
-    "typescript": "^5.0.0",
-    "drizzle-kit": "^0.31.1"
+    "drizzle-kit": "^0.31.1",
+    "typescript": "^5.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "uuid": "^13.0.0"
+  }
 }

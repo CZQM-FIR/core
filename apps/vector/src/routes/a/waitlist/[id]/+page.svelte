@@ -8,7 +8,10 @@
 		removeUserFromWaitlist,
 		addUserToWaitlist,
 		enrolUserFromWaitlist,
-		editWaitlistEstimatedTime
+		editWaitlistEstimatedTime,
+		getEnrolledWaitlistEntries,
+		removeUserFromEnrolledCourse,
+		hideUserFromEnrolledCourse
 	} from '$lib/remote/waitlist.remote';
 	import { getAllControllers } from '$lib/remote/users.remote';
 
@@ -43,19 +46,23 @@
 		</form>
 
 		<div class="flex flex-row items-end justify-between">
-			<h2 class="mt-4 text-xl font-semibold">Students</h2>
+			<h2 class="mt-4 text-xl font-semibold">Wait Listed Students</h2>
 			<form class="my-2 flex flex-row gap-2" {...addUserToWaitlist}>
 				<input type="text" name="waitlistId" value={data.id} hidden />
 				<select class="select" required name="userId">
 					{#await getAllControllers()}
 						<option disabled selected>Loading Controllers...</option>
 					{:then controllers}
-						<option disabled selected>Select a Student</option>
-						{#each controllers.filter((c) => !waitlist.students.some((s) => s.cid === c.cid)) as controller (controller.cid)}
-							<option value={controller.cid}>
-								{controller.name_full} ({controller.cid})
-							</option>
-						{/each}
+						{#await getEnrolledWaitlistEntries(data.id)}
+							<option disabled selected>Loading Controllers...</option>
+						{:then enrolledEntries}
+							<option disabled selected>Select a Student</option>
+							{#each controllers.filter((c) => !waitlist.students.some((s) => s.cid === c.cid) && !enrolledEntries.some((e) => e.cid === c.cid)) as controller (controller.cid)}
+								<option value={controller.cid}>
+									{controller.name_full} ({controller.cid})
+								</option>
+							{/each}
+						{/await}
 					{/await}
 				</select>
 				<button class="btn btn-primary me-auto"><UserPlus /></button>
@@ -117,6 +124,45 @@
 				{/each}
 			</div>
 		{/if}
+
+		<div>
+			<h2 class="mt-8 text-xl font-semibold">Enrolled Students</h2>
+			<div class="divider my-0"></div>
+			{#await getEnrolledWaitlistEntries(data.id)}
+				<p>Loading Enrolled Students...</p>
+			{:then enrolledEntries}
+				{#if enrolledEntries.length === 0}
+					<p>No students currently enrolled in this course.</p>
+				{:else}
+					{#each enrolledEntries as student (student.cid)}
+						<div class="card bg-base-200 mb-2 shadow-sm">
+							<div class="card-body flex-row items-center">
+								<h2 class="card-title">{student.user.name_full} ({student.cid})</h2>
+								<p class="ms-auto">
+									Enrolled On: {student.enrolledAt.toUTCString().replace(' GMT', 'z')}
+								</p>
+								<div class="ms-auto flex flex-col gap-2">
+									<button class="tooltip tooltip-left" data-tip="Unenrol Student">
+										<Trash
+											onclick={() =>
+												removeUserFromEnrolledCourse({ userId: student.cid, waitlistId: data.id })}
+											class="hover:text-error transition-colors"
+										/>
+									</button>
+									<button class="tooltip tooltip-left" data-tip="Course Completed">
+										<SquareCheck
+											onclick={() =>
+												hideUserFromEnrolledCourse({ userId: student.cid, waitlistId: data.id })}
+											class="hover:text-success transition-colors"
+										/>
+									</button>
+								</div>
+							</div>
+						</div>
+					{/each}
+				{/if}
+			{/await}
+		</div>
 	{:catch error}
 		<p class="text-error">Error loading waitlist: {error.message}</p>
 	{/await}
