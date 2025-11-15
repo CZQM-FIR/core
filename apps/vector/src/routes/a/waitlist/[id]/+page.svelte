@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { Trash, SquareCheck, ArrowUp, ArrowDown, UserPlus } from '@lucide/svelte';
+	import { Trash, SquareCheck, ArrowUp, ArrowDown, UserPlus, SquarePen } from '@lucide/svelte';
 	import {
 		getWaitlist,
 		moveUserUp,
@@ -24,7 +24,14 @@
 		<p class="text-primary hover:link"><a href="/a/waitlist">&lt; Back to Waitlists</a></p>
 		<p>Loading Wait List...</p>
 	{:then waitlist}
-		<h1 class="text-3xl font-semibold">{waitlist ? waitlist.name : ''} Wait List</h1>
+		<h1 class="flex flex-row items-baseline text-3xl font-semibold">
+			<span>{waitlist ? waitlist.name : ''} Wait List</span>
+
+			<a href="/a/waitlist/{waitlist.id}/delete"
+				><Trash class="hover:text-error ms-2 max-h-4 transition-colors" /></a
+			>
+			<SquarePen class="hover:text-primary max-h-4 transition-colors" />
+		</h1>
 		<p class="text-primary hover:link"><a href="/a/waitlist">&lt; Back to Waitlists</a></p>
 
 		<h2 class="mt-4 text-xl font-semibold">Estimated Wait Time</h2>

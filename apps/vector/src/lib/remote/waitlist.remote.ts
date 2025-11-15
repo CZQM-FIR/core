@@ -6,6 +6,23 @@ import { error, redirect } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq, isNull } from 'drizzle-orm';
 
+export const deleteWaitlist = command(type('number.integer >= 0'), async (id) => {
+	const event = getRequestEvent();
+	const actioner = await getUser(event);
+	if (
+		!actioner ||
+		!actioner.flags.some((f) =>
+			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+		)
+	) {
+		throw error(403, 'Forbidden');
+	}
+
+	await db.delete(waitlists).where(eq(waitlists.id, id));
+
+	getWaitlists().refresh();
+});
+
 export const createWaitlist = form(
 	type({
 		name: 'string',
