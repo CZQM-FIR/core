@@ -5,7 +5,7 @@ export const load = (async ({ params }) => {
 	const id = Number(params.id);
 
 	if (isNaN(id)) {
-		return redirect(303, '/a/waitlists');
+		return redirect(303, '/a/waitlist');
 	}
 
 	return { id };
