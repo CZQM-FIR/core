@@ -24,7 +24,7 @@ export const editWaitlistName = form(
 
 		const id = Number(event.params.id);
 
-		if (!id) throw error(400, 'Missing ID');
+		if (isNaN(id)) throw error(400, 'Missing ID');
 
 		await db
 			.update(waitlists)
