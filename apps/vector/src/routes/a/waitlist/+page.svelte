@@ -6,7 +6,9 @@
 <section class="container mx-auto py-5">
 	<div class="flex flex-row items-baseline justify-between">
 		<h1 class="text-2xl font-semibold">Wait List Management</h1>
-		<a class="btn btn-success" href="/a/waitlist/create"><ListPlus /></a>
+		<div class="tooltip" data-tip="New Waitlist">
+			<a class="btn btn-success" href="/a/waitlist/create"><ListPlus /></a>
+		</div>
 	</div>
 	<div class="divider my-0"></div>
 	<p class="py-3">Please select a waitlist:</p>

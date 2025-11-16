@@ -7,6 +7,7 @@
 
 <section class="container mx-auto py-5">
 	<h1 class="text-2xl font-semibold">Create Wait List</h1>
+	<p class="text-primary hover:link"><a href="/a/waitlist">&lt; Back to Waitlists</a></p>
 	<div class="divider mt-0"></div>
 
 	<form {...createWaitlist}>
