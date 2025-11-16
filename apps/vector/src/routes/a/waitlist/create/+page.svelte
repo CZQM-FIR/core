@@ -1,8 +1,5 @@
 <script lang="ts">
 	import { createWaitlist } from '$lib/remote/waitlist.remote';
-	import type { PageProps } from './$types';
-
-	let { data }: PageProps = $props();
 </script>
 
 <section class="container mx-auto py-5">
