@@ -11,11 +11,26 @@
 		editWaitlistEstimatedTime,
 		getEnrolledWaitlistEntries,
 		removeUserFromEnrolledCourse,
-		hideUserFromEnrolledCourse
+		hideUserFromEnrolledCourse,
+		editWaitlistName
 	} from '$lib/remote/waitlist.remote';
 	import { getAllControllers } from '$lib/remote/users.remote';
 
 	let { data }: { data: PageData } = $props();
+
+	let editing = $state(false);
+
+	$effect(() => {
+		let result = editWaitlistName.result?.success;
+
+		if (result) {
+			editing = false;
+		}
+	});
+
+	const toggleEditing = () => {
+		editing = !editing;
+	};
 </script>
 
 <section class="container mx-auto py-5">
@@ -25,12 +40,19 @@
 		<p>Loading Wait List...</p>
 	{:then waitlist}
 		<h1 class="flex flex-row items-baseline text-3xl font-semibold">
-			<span>{waitlist ? waitlist.name : ''} Wait List</span>
+			{#if editing}
+				<form class="flex flex-row gap-3" {...editWaitlistName}>
+					<input type="text" value={waitlist.name} name="name" required class="input text-xl" />
+					<button class="btn btn-primary">Save</button>
+				</form>
+			{:else}
+				<span>{waitlist ? waitlist.name : ''} Wait List</span>
 
-			<a href="/a/waitlist/{waitlist.id}/delete"
-				><Trash class="hover:text-error ms-2 max-h-4 transition-colors" /></a
-			>
-			<SquarePen class="hover:text-primary max-h-4 transition-colors" />
+				<a href="/a/waitlist/{waitlist.id}/delete"
+					><Trash class="hover:text-error ms-2 max-h-4 transition-colors" /></a
+				>
+				<SquarePen class="hover:text-primary max-h-4 transition-colors" onclick={toggleEditing} />
+			{/if}
 		</h1>
 		<p class="text-primary hover:link"><a href="/a/waitlist">&lt; Back to Waitlists</a></p>
 
