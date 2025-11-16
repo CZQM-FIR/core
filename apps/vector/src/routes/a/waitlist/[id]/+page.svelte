@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { Trash, SquareCheck, ArrowUp, ArrowDown, UserPlus } from '@lucide/svelte';
+	import { Trash, SquareCheck, ArrowUp, ArrowDown, UserPlus, SquarePen } from '@lucide/svelte';
 	import {
 		getWaitlist,
 		moveUserUp,
@@ -11,11 +11,26 @@
 		editWaitlistEstimatedTime,
 		getEnrolledWaitlistEntries,
 		removeUserFromEnrolledCourse,
-		hideUserFromEnrolledCourse
+		hideUserFromEnrolledCourse,
+		editWaitlistName
 	} from '$lib/remote/waitlist.remote';
 	import { getAllControllers } from '$lib/remote/users.remote';
 
 	let { data }: { data: PageData } = $props();
+
+	let editing = $state(false);
+
+	$effect(() => {
+		let result = editWaitlistName.result?.success;
+
+		if (result) {
+			editing = false;
+		}
+	});
+
+	const toggleEditing = () => {
+		editing = !editing;
+	};
 </script>
 
 <section class="container mx-auto py-5">
@@ -24,7 +39,35 @@
 		<p class="text-primary hover:link"><a href="/a/waitlist">&lt; Back to Waitlists</a></p>
 		<p>Loading Wait List...</p>
 	{:then waitlist}
-		<h1 class="text-3xl font-semibold">{waitlist ? waitlist.name : ''} Wait List</h1>
+		<h1 class="flex flex-row items-baseline text-3xl font-semibold">
+			{#if editing}
+				<form class="flex flex-row gap-3" {...editWaitlistName}>
+					<input
+						type="text"
+						value={waitlist.name}
+						name="name"
+						required
+						class="input text-xl"
+						placeholder="Waitlist Name"
+					/>
+					<button class="btn btn-primary">Save</button>
+				</form>
+			{:else}
+				<span>{waitlist ? waitlist.name : ''} Wait List</span>
+
+				<div class="tooltip" data-tip="Edit Waitlist Name">
+					<SquarePen
+						class="hover:text-primary ms-2 max-h-4 transition-colors"
+						onclick={toggleEditing}
+					/>
+				</div>
+				<div class="tooltip" data-tip="Delete Waitlist">
+					<a href="/a/waitlist/{waitlist.id}/delete"
+						><Trash class="hover:text-error max-h-4 transition-colors" /></a
+					>
+				</div>
+			{/if}
+		</h1>
 		<p class="text-primary hover:link"><a href="/a/waitlist">&lt; Back to Waitlists</a></p>
 
 		<h2 class="mt-4 text-xl font-semibold">Estimated Wait Time</h2>

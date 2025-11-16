@@ -2,9 +2,117 @@ import { command, form, getRequestEvent, query } from '$app/server';
 import { getUser } from '$lib/auth';
 import { db } from '$lib/db';
 import { enrolledUsers, moodleQueue, waitingUsers, waitlists } from '@czqm/db/schema';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq, isNull } from 'drizzle-orm';
+
+export const editWaitlistName = form(
+	type({
+		name: 'string'
+	}),
+	async ({ name }) => {
+		const event = getRequestEvent();
+		const actioner = await getUser(event);
+		if (
+			!actioner ||
+			!actioner.flags.some((f) =>
+				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+			)
+		) {
+			throw error(403, 'Forbidden');
+		}
+
+		const id = Number(event.params.id);
+
+		if (isNaN(id)) throw error(400, 'Missing ID');
+
+		await db
+			.update(waitlists)
+			.set({
+				name
+			})
+			.where(eq(waitlists.id, id));
+
+		getWaitlist(id).refresh();
+
+		return {
+			success: true
+		};
+	}
+);
+
+export const deleteWaitlist = command(type('number.integer >= 0'), async (id) => {
+	const event = getRequestEvent();
+	const actioner = await getUser(event);
+	if (
+		!actioner ||
+		!actioner.flags.some((f) =>
+			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+		)
+	) {
+		throw error(403, 'Forbidden');
+	}
+
+	await db.delete(waitlists).where(eq(waitlists.id, id));
+
+	getWaitlists().refresh();
+});
+
+export const createWaitlist = form(
+	type({
+		name: 'string',
+		wcohort: 'string',
+		cohort: 'string'
+	}),
+	async ({ name, wcohort, cohort }) => {
+		const event = getRequestEvent();
+		const actioner = await getUser(event);
+		if (
+			!actioner ||
+			!actioner.flags.some((f) =>
+				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+			)
+		) {
+			throw error(403, 'Forbidden');
+		}
+
+		const waitlist = await db
+			.insert(waitlists)
+			.values({
+				name,
+				waitlistCohort: wcohort,
+				enrolledCohort: cohort
+			})
+			.returning({
+				id: waitlists.id
+			});
+
+		getWaitlists().refresh();
+
+		redirect(303, `/a/waitlist/${waitlist[0].id}`);
+	}
+);
+
+export const getWaitlists = query(async () => {
+	const event = getRequestEvent();
+	const actioner = await getUser(event);
+	if (
+		!actioner ||
+		!actioner.flags.some((f) =>
+			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
+		)
+	) {
+		throw error(403, 'Forbidden');
+	}
+
+	const allWaitlists = await db.query.waitlists.findMany({
+		with: {
+			students: true
+		}
+	});
+
+	return allWaitlists;
+});
 
 export const getWaitlist = query(type('number.integer >= 0'), async (waitlistId) => {
 	const event = getRequestEvent();
