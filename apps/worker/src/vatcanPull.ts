@@ -133,7 +133,7 @@ export const vatcanPull = async (
             cid: controller.cid,
             waitlistId: 1,
             waitingSince: new Date(),
-            position: waitlist.students.length + 1
+            position: waitlist.students.length
           });
         }
       }
