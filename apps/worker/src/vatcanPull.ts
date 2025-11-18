@@ -78,6 +78,10 @@ export const vatcanPull = async (
   }
 
   for (const controller of controllers) {
+    // Check if user already exists
+    const existingUser = users.find((u) => u.cid === controller.cid);
+    const isNewUser = !existingUser;
+
     await db
       .insert(schema.users)
       .values({
@@ -107,7 +111,7 @@ export const vatcanPull = async (
       })
       .onConflictDoNothing();
 
-    if (controller.rating === 2) {
+    if (isNewUser && controller.rating === 2) {
       // if the controllers rating is 2 (S1), add them to the S1 waitlist
       const waitlist = await db.query.waitlists.findFirst({
         where: eq(schema.waitlists.id, 1),
@@ -136,7 +140,7 @@ export const vatcanPull = async (
     }
 
     console.log(
-      `Inserted new controller: ${controller.first_name} ${controller.last_name} (${controller.cid})`
+      `${isNewUser ? 'Inserted new' : 'Updated'} controller: ${controller.first_name} ${controller.last_name} (${controller.cid})`
     );
   }
 
