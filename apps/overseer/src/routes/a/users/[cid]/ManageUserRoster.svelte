@@ -48,6 +48,7 @@
 	};
 
 	const toggleRosterStatus = async (position: RosterPosition): Promise<void> => {
+		console.log('toggling', position);
 		if (getRosterStatus(position) === 1) {
 			alert(
 				'You cannot change the status of a solo endorsement. Please remove the endorsement first.'
@@ -97,19 +98,19 @@
 	<div class="join">
 		<button
 			class="btn join-item min-w-20 {getRosterButtonColour('gnd')}"
-			onclick={() => toggleRosterStatus('gnd')}>GND</button
+			onclickcapture={() => toggleRosterStatus('gnd')}>GND</button
 		>
 		<button
 			class="btn join-item min-w-20 {getRosterButtonColour('twr')}"
-			onclick={() => toggleRosterStatus('twr')}>TWR</button
+			onclickcapture={() => toggleRosterStatus('twr')}>TWR</button
 		>
 		<button
 			class="btn join-item min-w-20 {getRosterButtonColour('app')}"
-			onclick={() => toggleRosterStatus('app')}>APP</button
+			onclickcapture={() => toggleRosterStatus('app')}>APP</button
 		>
 		<button
 			class="btn join-item min-w-20 {getRosterButtonColour('ctr')}"
-			onclick={() => toggleRosterStatus('ctr')}>CTR</button
+			onclickcapture={() => toggleRosterStatus('ctr')}>CTR</button
 		>
 	</div>
 
