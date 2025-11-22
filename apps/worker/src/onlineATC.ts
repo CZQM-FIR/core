@@ -1,8 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { Position, positions, users, onlineSessions, roster, integrations } from '@czqm/db/schema';
-import { Client } from '@libsql/client';
-import { LibSQLDatabase } from 'drizzle-orm/libsql';
-import type { Env } from '.';
+import type { DB, Env } from '.';
 
 type OnlineController = {
   cid: number;
@@ -17,11 +15,7 @@ type Session = {
   logonTime: Date;
 };
 
-const notifySession = async (
-  session: Session,
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
-  env: Env
-) => {
+const notifySession = async (session: Session, db: DB, env: Env) => {
   const userData = await db.select().from(users).where(eq(users.cid, session.cid)).limit(1);
 
   if (userData.length === 0) {
@@ -58,7 +52,7 @@ const notifySession = async (
 
 const notifyUnauthorizedSession = async (
   session: Session,
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
+  db: DB,
   env: Env,
   reason: 'discord' | 'inactive' | 'roster' | 'suspended' | 'nonczqm'
 ) => {
@@ -112,10 +106,7 @@ const notifyUnauthorizedSession = async (
   console.log('Session notification sent:', message);
 };
 
-export const handleOnlineSessions = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
-  env: Env
-) => {
+export const handleOnlineSessions = async (db: DB, env: Env) => {
   const onlineControllersData = await fetch('https://data.vatsim.net/v3/vatsim-data.json');
   const onlineControllersJson = (await onlineControllersData.json()) as {
     controllers: {

@@ -9,6 +9,11 @@ import 'dotenv/config';
 import cron from 'node-cron';
 import express from 'express';
 import { syncMoodle } from './syncMoodle.js';
+import { notificationsJob } from './notifications.js';
+import { LibSQLDatabase } from 'drizzle-orm/libsql';
+import { Client } from '@libsql/client';
+
+export type DB = LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client };
 
 const app = express();
 let lastRun: string | null = null;
@@ -96,9 +101,16 @@ async function main(): Promise<void> {
       res.send('OK');
     });
 
-    app.get('/dev/moodle', async (requestAnimationFrame, res) => {
+    app.get('/dev/moodle', async (req, res) => {
       const { db, client } = createDB(env);
       await syncMoodle(db, env);
+      client.close();
+      res.send('OK');
+    });
+
+    app.get('/dev/notifications', async (req, res) => {
+      const { db, client } = createDB(env);
+      await notificationsJob(db);
       client.close();
       res.send('OK');
     });
@@ -106,19 +118,18 @@ async function main(): Promise<void> {
     console.log('Running in development mode, manual endpoints enabled');
   } else {
     cron.schedule('* * * * *', async () => {
+      let { db, client } = createDB(env);
       try {
-        const { db, client } = createDB(env);
-
         console.log('Running Online ATC Handler', new Date());
         await handleOnlineSessions(db, env);
-        client.close();
       } catch (err) {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished Online ATC Handler', new Date());
+        client.close();
       }
 
-      const { db, client } = createDB(env);
+      ({ db, client } = createDB(env));
       try {
         console.log('Running Moodle Sync', new Date());
         await syncMoodle(db, env);
@@ -126,6 +137,17 @@ async function main(): Promise<void> {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished Moodle Sync', new Date());
+        client.close();
+      }
+
+      ({ db, client } = createDB(env));
+      try {
+        console.log('Running Notifications Job', new Date());
+        await notificationsJob(db);
+      } catch (err) {
+        console.error('Scheduled job failed:', err);
+      } finally {
+        console.log('Finished Notifications Job', new Date());
         client.close();
       }
     });

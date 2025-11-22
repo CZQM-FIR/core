@@ -1,9 +1,7 @@
 import * as schema from '@czqm/db/schema';
-import { Client } from '@libsql/client';
 import { type } from 'arktype';
 import { eq } from 'drizzle-orm';
-import { LibSQLDatabase } from 'drizzle-orm/libsql';
-import { Env } from '.';
+import { DB, Env } from '.';
 
 const positionPrefixes = [
   'CZQM',
@@ -45,10 +43,7 @@ const VatsimSessions = type({
   count: 'number.integer>=0'
 });
 
-export const handleRecordSessions = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
-  env: Env
-) => {
+export const handleRecordSessions = async (db: DB, env: Env) => {
   // get list of all czqm controllers and visitors
   const allUsers = await db.query.users.findMany({
     with: { flags: { with: { flag: true } } }
