@@ -1,11 +1,8 @@
-import { Client } from '@libsql/client';
-import { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { events } from '@czqm/db/schema';
 import { eq } from 'drizzle-orm';
+import { DB } from '.';
 
-export const recurringEvents = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client }
-) => {
+export const recurringEvents = async (db: DB) => {
   console.log('Checking recurring events for Updates...');
 
   const eventsData = await db.select().from(events).where(eq(events.recurring, true));

@@ -2,7 +2,7 @@ import { Client } from '@libsql/client';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 import * as schema from '@czqm/db/schema';
 import { and, eq } from 'drizzle-orm';
-import type { Env } from '.';
+import type { DB, Env } from '.';
 
 type VatcanApiUser = {
   cid: number;
@@ -22,10 +22,7 @@ type VatcanApiResponse = {
   };
 };
 
-export const vatcanPull = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
-  env: Env
-) => {
+export const vatcanPull = async (db: DB, env: Env) => {
   const data = await fetch('https://vatcan.ca/api/v2/facility/roster', {
     headers: {
       Authorization: `Token ${env.VATCAN_API_TOKEN}`

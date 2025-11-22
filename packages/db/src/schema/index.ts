@@ -16,3 +16,4 @@ export * from "./preferences";
 export * from "./onlineSessions";
 export * from "./waitlist";
 export * from "./moodle";
+export * from "./notifications";
