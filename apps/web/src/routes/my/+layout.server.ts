@@ -4,9 +4,9 @@ import { db } from '$lib/db';
 import { eq } from 'drizzle-orm';
 import { users } from '@czqm/db/schema';
 
-export const load = (async ({ locals }) => {
+export const load = (async ({ locals, route }) => {
   if (!locals.user) {
-    redirect(303, '/auth?redirect=/my');
+    redirect(303, `/auth?redirect=${route}`);
   }
 
   const user = await db.query.users.findFirst({
@@ -21,7 +21,7 @@ export const load = (async ({ locals }) => {
   });
 
   if (!user) {
-    redirect(303, '/auth?redirect=/my');
+    redirect(303, `/auth?redirect=${route}`);
   }
 
   return { user };
