@@ -1,4 +1,3 @@
-
 # Builder: install pnpm via corepack, install workspace deps and build the overseer app
 FROM node:20-slim AS builder
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -14,6 +13,9 @@ RUN pnpm dotenv -e build.env -- pnpm build
 FROM node:20-slim AS runtime
 ENV NODE_ENV=production
 ENV PORT=5101
+
+ENV BODY_SIZE_LIMIT=100M
+
 RUN groupadd -r app && useradd -r -g app app
 WORKDIR /app
 # Copy build output and dependencies from builder
@@ -25,4 +27,3 @@ EXPOSE ${PORT}
 USER app
 # Start: run the Node adapter server
 CMD ["node", "build/index.js"]
-
