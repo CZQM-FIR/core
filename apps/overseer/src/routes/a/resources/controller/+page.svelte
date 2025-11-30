@@ -109,7 +109,7 @@
 									? ''
 									: 'ms-auto'}"
 							>
-								<button onclick={() => (edit = edit === resource.id ? null : resource.id)}>
+								<button onclickcapture={() => (edit = edit === resource.id ? null : resource.id)}>
 									<SquarePen class="cursor-pointer text-2xl" size="15" />
 								</button>
 								<form
@@ -121,7 +121,7 @@
 									<input type="text" name="id" value={resource.id} hidden />
 									<button
 										type="submit"
-										onclick={() => {
+										onclickcapture={() => {
 											deleted.push(resource.id);
 											setTimeout(() => {
 												deleted = deleted.filter((id) => id !== resource.id);

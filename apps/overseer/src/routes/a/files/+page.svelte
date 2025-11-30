@@ -35,7 +35,7 @@
 			<button
 				type="button"
 				class="btn btn-outline btn-primary {copied ? 'btn-success' : ''}"
-				onclick={() => copyLink(`https://files.czqm.ca/${form.key}`)}
+				onclickcapture={() => copyLink(`https://files.czqm.ca/${form.key}`)}
 			>
 				{copied ? 'Copied!' : 'Copy'}
 			</button>
