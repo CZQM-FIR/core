@@ -12,15 +12,23 @@
 				.reduce((a, b) => a + b.duration, 0) / 3600
 		).toFixed(2)
 	);
+	const now = new Date();
+	const currentQuarter = Math.floor(now.getMonth() / 3);
+	const currentYear = now.getFullYear();
+	const lastQuarterNum = currentQuarter === 0 ? 3 : currentQuarter - 1;
+	const lastQuarterYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
+
 	const activity = $state(
 		(
 			data
-				.user!.sessions.filter(
-					(s) =>
-						s.logonTime.getMonth() >= new Date().getMonth() - 3 &&
-						s.positionId !== 0 &&
-						s.logonTime.getFullYear() === new Date().getFullYear()
-				)
+				.user!.sessions.filter((s) => {
+					const sessionDate = new Date(s.logonTime);
+					const sessionQuarter = Math.floor(sessionDate.getMonth() / 3);
+					const sessionYear = sessionDate.getFullYear();
+					return (
+						sessionQuarter === currentQuarter && sessionYear === currentYear && s.positionId !== 0
+					);
+				})
 				.filter((s) =>
 					(data.user!.ratingID >= 5 ? ['APP', 'CTR'] : ['GND', 'TWR', 'APP', 'CTR']).includes(
 						s.position.callsign.split('_').pop() ?? ''
@@ -32,13 +40,16 @@
 	const lastActivity = $state(
 		(
 			data
-				.user!.sessions.filter(
-					(s) =>
-						s.logonTime.getMonth() >= new Date().getMonth() - 6 &&
-						s.logonTime.getMonth() < new Date().getMonth() - 3 &&
-						s.positionId !== 0 &&
-						s.logonTime.getFullYear() === new Date().getFullYear()
-				)
+				.user!.sessions.filter((s) => {
+					const sessionDate = new Date(s.logonTime);
+					const sessionQuarter = Math.floor(sessionDate.getMonth() / 3);
+					const sessionYear = sessionDate.getFullYear();
+					return (
+						sessionQuarter === lastQuarterNum &&
+						sessionYear === lastQuarterYear &&
+						s.positionId !== 0
+					);
+				})
 				.filter((s) =>
 					(data.user!.ratingID >= 5 ? ['APP', 'CTR'] : ['GND', 'TWR', 'APP', 'CTR']).includes(
 						s.position.callsign.split('_').pop() ?? ''
@@ -59,24 +70,30 @@
 	const externalQuarter = $state(
 		(
 			data
-				.user!.sessions.filter(
-					(s) =>
-						s.logonTime.getMonth() >= new Date().getMonth() - 3 &&
-						s.logonTime.getFullYear() === new Date().getFullYear() &&
-						s.positionId === 0
-				)
+				.user!.sessions.filter((s) => {
+					const sessionDate = new Date(s.logonTime);
+					const sessionQuarter = Math.floor(sessionDate.getMonth() / 3);
+					const sessionYear = sessionDate.getFullYear();
+					return (
+						sessionQuarter === currentQuarter && sessionYear === currentYear && s.positionId === 0
+					);
+				})
 				.reduce((a, b) => a + b.duration, 0) / 3600
 		).toFixed(2)
 	);
 	const externalLastQuarter = $state(
 		(
 			data
-				.user!.sessions.filter(
-					(s) =>
-						s.logonTime.getMonth() >= new Date().getMonth() - 6 &&
-						s.logonTime.getMonth() < new Date().getMonth() - 3 &&
+				.user!.sessions.filter((s) => {
+					const sessionDate = new Date(s.logonTime);
+					const sessionQuarter = Math.floor(sessionDate.getMonth() / 3);
+					const sessionYear = sessionDate.getFullYear();
+					return (
+						sessionQuarter === lastQuarterNum &&
+						sessionYear === lastQuarterYear &&
 						s.positionId === 0
-				)
+					);
+				})
 				.reduce((a, b) => a + b.duration, 0) / 3600
 		).toFixed(2)
 	);
