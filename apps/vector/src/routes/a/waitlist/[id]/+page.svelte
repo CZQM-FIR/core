@@ -58,7 +58,7 @@
 				<div class="tooltip" data-tip="Edit Waitlist Name">
 					<SquarePen
 						class="hover:text-primary ms-2 max-h-4 transition-colors"
-						onclick={toggleEditing}
+						onclickcapture={toggleEditing}
 					/>
 				</div>
 				<div class="tooltip" data-tip="Delete Waitlist">
@@ -165,7 +165,7 @@
 							<div class="ms-auto flex flex-col gap-2">
 								<button class="tooltip tooltip-left" data-tip="Remove From Wait List">
 									<Trash
-										onclick={() =>
+										onclickcapture={() =>
 											removeUserFromWaitlist({ userId: student.cid, waitlistId: data.id }).updates(
 												getWaitlist(data.id).withOverride((waitlist) => {
 													waitlist.students = waitlist.students.filter(
@@ -179,7 +179,7 @@
 								</button>
 								<button class="tooltip tooltip-left" data-tip="Enrol Student">
 									<SquareCheck
-										onclick={() =>
+										onclickcapture={() =>
 											enrolUserFromWaitlist({ userId: student.cid, waitlistId: data.id }).updates(
 												getWaitlist(data.id).withOverride((waitlist) => {
 													waitlist.students = waitlist.students.filter(
@@ -234,7 +234,7 @@
 								<div class="ms-auto flex flex-col gap-2">
 									<button class="tooltip tooltip-left" data-tip="Unenrol Student">
 										<Trash
-											onclick={() =>
+											onclickcapture={() =>
 												removeUserFromEnrolledCourse({
 													userId: student.cid,
 													waitlistId: data.id
@@ -248,7 +248,7 @@
 									</button>
 									<button class="tooltip tooltip-left" data-tip="Course Completed">
 										<SquareCheck
-											onclick={() =>
+											onclickcapture={() =>
 												hideUserFromEnrolledCourse({
 													userId: student.cid,
 													waitlistId: data.id

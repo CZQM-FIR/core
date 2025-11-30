@@ -158,7 +158,7 @@
             </tr>
             <tr>
               <td
-                onclick={() => activityModal?.showModal()}
+                onclickcapture={() => activityModal?.showModal()}
                 class="hover:link flex items-baseline gap-2">Activity Hours <Info size="15" /></td
               >
               <td class={activityHours < 3 ? 'text-warning' : ''}
@@ -167,7 +167,7 @@
             </tr>
             <tr>
               <td
-                onclick={() => externalModal?.showModal()}
+                onclickcapture={() => externalModal?.showModal()}
                 class="hover:link flex items-baseline gap-2">External Hours <Info size="15" /></td
               >
               <td
