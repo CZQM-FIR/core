@@ -8,6 +8,7 @@
 	import UserActivity from './UserActivity.svelte';
 	import ManageFlags from './ManageFlags.svelte';
 	import ManageUserActiveStatus from './ManageUserActiveStatus.svelte';
+	import { page } from '$app/state';
 
 	let { data, form }: PageProps = $props();
 
