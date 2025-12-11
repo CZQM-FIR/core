@@ -1,23 +1,20 @@
 <script lang="ts">
 	import { Plus, Search, SquarePen, Trash2 } from '@lucide/svelte';
+	import { formatUtcTime } from '@czqm/common/datetime';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	let search = $state('');
 
-	let filtered = $derived(data.events);
-
-	$effect(() => {
-		filtered =
-			search == ''
-				? data.events
-				: data.events.filter((event) => {
-						return (
-							event.name.toLowerCase().includes(search.toLowerCase()) ||
-							event.description.toString().includes(search)
-						);
-					});
+	let filtered = $derived.by(() => {
+		if (search === '') return data.events;
+		return data.events.filter((event) => {
+			return (
+				event.name.toLowerCase().includes(search.toLowerCase()) ||
+				event.description.toLowerCase().includes(search.toLowerCase())
+			);
+		});
 	});
 </script>
 
@@ -51,11 +48,11 @@
 						<td>{event.name}</td>
 						<td
 							>{event.start.toLocaleString('en-GB', { timeZone: 'UTC' })}
-							{event.start.getUTCHours()}:{event.start.getUTCMinutes()}z</td
+							{formatUtcTime(event.start)}</td
 						>
 						<td
 							>{event.end.toLocaleString('en-GB', { timeZone: 'UTC' })}
-							{event.end.getUTCHours()}:{event.end.getUTCMinutes()}z</td
+							{formatUtcTime(event.end)}</td
 						>
 						<td class="flex flex-row items-center justify-end gap-3">
 							<a href={`/a/events/${event.id}`}>

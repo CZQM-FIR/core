@@ -1,0 +1,22 @@
+{
+  "name": "@czqm/common",
+  "type": "module",
+  "exports": {
+    "./auth": "./src/auth/index.ts",
+    "./auth/*": "./src/auth/*.ts",
+    "./roles": "./src/roles/index.ts",
+    "./users": "./src/users/index.ts",
+    "./notifications": "./src/notifications/index.ts",
+    "./constants": "./src/constants/index.ts",
+    "./datetime": "./src/datetime/index.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@czqm/db": "workspace:*",
+    "@oslojs/crypto": "*",
+    "@oslojs/encoding": "*",
+    "drizzle-orm": "*"
+  }
+}

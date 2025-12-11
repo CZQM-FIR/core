@@ -1,23 +1,20 @@
 <script lang="ts">
 	import { Plus, Search, SquarePen, Trash2 } from '@lucide/svelte';
+	import { formatUtcTime } from '@czqm/common/datetime';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	let search = $state('');
 
-	let filtered = $derived(data.articles);
-
-	$effect(() => {
-		filtered =
-			search == ''
-				? data.articles
-				: data.articles.filter((article) => {
-						return (
-							article.title.toLowerCase().includes(search.toLowerCase()) ||
-							article.author?.name_full.toLowerCase().includes(search.toLowerCase())
-						);
-					});
+	let filtered = $derived.by(() => {
+		if (search === '') return data.articles;
+		return data.articles.filter((article) => {
+			return (
+				article.title.toLowerCase().includes(search.toLowerCase()) ||
+				article.author?.name_full.toLowerCase().includes(search.toLowerCase())
+			);
+		});
 	});
 </script>
 
@@ -51,7 +48,7 @@
 						<td>{article.title}</td>
 						<td
 							>{article.date.toLocaleString('en-GB', { timeZone: 'UTC' })}
-							{article.date.getUTCHours()}:{article.date.getUTCMinutes()}z</td
+							{formatUtcTime(article.date)}</td
 						>
 						<td>{article.author ? article.author.name_full : 'CZQM Staff'}</td>
 						<td class="flex flex-row items-center justify-end gap-3">

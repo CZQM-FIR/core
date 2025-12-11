@@ -7,7 +7,10 @@
     "dev": "tsx watch src/index.ts",
     "build": "esbuild src/index.ts --bundle --platform=node --target=es2020 --format=esm --outfile=dist/index.js --external:arktype --external:dotenv --external:node-cron --external:@libsql/client --external:express",
     "build:tsc": "tsc",
-    "start": "tsx src/index.ts"
+    "start": "tsx src/index.ts",
+    "lint": "prettier --check . && eslint .",
+    "lint:fix": "prettier --write . && eslint . --fix",
+    "format": "prettier --write ."
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250321.0",
@@ -26,6 +29,7 @@
   },
   "dependencies": {
     "@czqm/db": "workspace:*",
+    "@czqm/common": "workspace:*",
     "@libsql/client": "^0.15.1",
     "arktype": "^2.1.20",
     "dotenv": "^16.5.0",

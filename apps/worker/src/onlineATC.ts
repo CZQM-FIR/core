@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { Position, positions, users, onlineSessions, roster, integrations } from '@czqm/db/schema';
 import { Client } from '@libsql/client';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
+import { formatUtcTime } from '@czqm/common/datetime';
 import type { Env } from '.';
 
 type OnlineController = {
@@ -40,9 +41,8 @@ const notifySession = async (
   }
 
   const position = positionData[0];
-  const t = session.logonTime;
 
-  const message = `📡 ${user.name_full} (${user.cid}) has connected to ${position.name} (${position.callsign}) at ${t.getUTCHours()}:${t.getUTCMinutes()}z (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>).`;
+  const message = `📡 ${user.name_full} (${user.cid}) has connected to ${position.name} (${position.callsign}) at ${formatUtcTime(session.logonTime)} (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>).`;
 
   await fetch(env.WEBHOOK_ONLINE_CONTROLLERS!, {
     method: 'POST',
@@ -98,7 +98,7 @@ const notifyUnauthorizedSession = async (
       reasonText = 'Unknown reason';
   }
 
-  const message = `⚠️⚠️ ${user.name_full} (${user.cid}) has started an UNAUTHORIZED connection to ${position.name} (${position.callsign}) at ${session.logonTime.toLocaleTimeString()} (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>). Reason: ${reasonText} ⚠️⚠️`;
+  const message = `⚠️⚠️ ${user.name_full} (${user.cid}) has started an UNAUTHORIZED connection to ${position.name} (${position.callsign}) at ${formatUtcTime(session.logonTime)} (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>). Reason: ${reasonText} ⚠️⚠️`;
 
   await fetch(env.WEBHOOK_UNAUTHORIZED_CONTROLLER!, {
     method: 'POST',

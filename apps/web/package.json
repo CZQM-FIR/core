@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@czqm/db": "workspace:*",
+    "@czqm/common": "workspace:*",
     "@libsql/client": "^0.15.0",
     "@lucide/svelte": "^0.511.0",
     "@oslojs/crypto": "^1.0.1",

@@ -39,6 +39,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.787.0
         version: 3.828.0
+      '@czqm/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@czqm/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -266,6 +269,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@czqm/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@czqm/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -381,6 +387,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@czqm/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@czqm/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -442,6 +451,25 @@ importers:
       wrangler:
         specifier: ^4.5.0
         version: 4.20.0(@cloudflare/workers-types@4.20250614.0)
+
+  packages/common:
+    dependencies:
+      '@czqm/db':
+        specifier: workspace:*
+        version: link:../db
+      '@oslojs/crypto':
+        specifier: '*'
+        version: 1.0.1
+      '@oslojs/encoding':
+        specifier: '*'
+        version: 1.1.0
+      drizzle-orm:
+        specifier: '*'
+        version: 0.44.2
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.8.3
 
   packages/db:
     dependencies:

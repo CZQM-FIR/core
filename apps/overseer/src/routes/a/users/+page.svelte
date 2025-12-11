@@ -5,18 +5,15 @@
 	let { data }: PageProps = $props();
 
 	let search = $state('');
-	let filtered = $derived(data.users);
 
-	$effect(() => {
-		filtered =
-			search == ''
-				? data.users
-				: data.users.filter((user) => {
-						return (
-							user.name_full.toLowerCase().includes(search.toLowerCase()) ||
-							user.cid.toString().includes(search)
-						);
-					});
+	let filtered = $derived.by(() => {
+		if (search === '') return data.users;
+		return data.users.filter((user) => {
+			return (
+				user.name_full.toLowerCase().includes(search.toLowerCase()) ||
+				user.cid.toString().includes(search)
+			);
+		});
 	});
 </script>
 

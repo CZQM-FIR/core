@@ -4,14 +4,12 @@
 	let { data }: { data: PageData } = $props();
 
 	let search = $state('');
-	let filtered = $derived(data.users);
-
 	let lastQuarter = $state(false);
 	let onlyIssue = $state(false);
 	let active = $state(false);
 
-	$effect(() => {
-		filtered = data.users.filter((user) => {
+	let filtered = $derived.by(() => {
+		return data.users.filter((user) => {
 			// First check if user matches search criteria
 			const matchesSearch =
 				search === '' ||

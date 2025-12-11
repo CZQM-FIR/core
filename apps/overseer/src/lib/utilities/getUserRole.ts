@@ -1,32 +1,19 @@
+/**
+ * User role utilities
+ * Following DIP: Uses shared role logic
+ * Following OCP: Role priority can be extended via constants
+ */
 import { users } from '@czqm/db/schema';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/db';
+import { getUserRole as getRole, type UserFlag } from '@czqm/common/roles';
 
-export const getUserRole = (flags: { flag: { name: string } }[]) => {
-	if (flags.some((flag) => flag.flag.name === 'chief')) return 'FIR Chief';
-	else if (flags.some((flag) => flag.flag.name === 'deputy')) return 'Deputy FIR Chief';
-	else if (flags.some((flag) => flag.flag.name === 'chief-instructor')) return 'Chief Instructor';
-	else if (flags.some((flag) => flag.flag.name === 'web')) return 'Webmaster';
-	else if (flags.some((flag) => flag.flag.name === 'events')) return 'Events Coordinator';
-	else if (flags.some((flag) => flag.flag.name === 'sector')) return 'Facility Engineer';
-	else if (flags.some((flag) => flag.flag.name === 'instructor')) return 'Instructor';
-	else if (flags.some((flag) => flag.flag.name === 'mentor')) return 'Mentor';
-	else if (
-		flags.some((flag) => flag.flag.name === 'visitor') &&
-		flags.some((flag) => flag.flag.name === 'inactive')
-	)
-		return 'Inacvtive Visitor';
-	else if (
-		flags.some((flag) => flag.flag.name === 'controller') &&
-		flags.some((flag) => flag.flag.name === 'inactive')
-	)
-		return 'Inacvtive Home Controller';
-	else if (flags.some((flag) => flag.flag.name === 'visitor')) return 'Visitor';
-	else if (flags.some((flag) => flag.flag.name === 'controller')) return 'Home Controller';
-	else return 'Guest';
+// Re-export with same signature for backward compatibility
+export const getUserRole = (flags: { flag: { name: string } }[]): string => {
+	return getRole(flags as UserFlag[]);
 };
 
-export const getUserRoleByCID = async (cid: number) => {
+export const getUserRoleByCID = async (cid: number): Promise<string> => {
 	const user = await db.query.users.findFirst({
 		where: eq(users.cid, cid),
 		columns: {
