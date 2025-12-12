@@ -49,7 +49,7 @@
           {/if}
           {#each data.events as event}
             <li>
-              <a href="/event/{event.id}" class="hover:link">
+              <a href="/events/{event.id}" class="hover:link">
                 <span class="text-lg font-semibold">{event.name}</span>
                 <span class="font-light">
                   {new Date(event.start).toLocaleString('en-US', {
