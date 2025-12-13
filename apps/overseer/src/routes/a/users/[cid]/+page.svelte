@@ -9,7 +9,7 @@
 	import ManageFlags from './ManageFlags.svelte';
 	import ManageUserActiveStatus from './ManageUserActiveStatus.svelte';
 
-	let { data, form, params }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 
 	let localUserData: RosterUserData = $state(data.user!);
 </script>
@@ -22,9 +22,9 @@
 		<div class="flex flex-col flex-wrap gap-5 lg:flex-row">
 			<ManageUserInfo {data} />
 			<ManageUserRoster {data} />
-			<ManageUserActiveStatus {data} {form} {params} />
-			<ManageUserEndorsements {data} {localUserData} {form} {params} />
-			<ManageFlags {data} {form} {params} />
+			<ManageUserActiveStatus {data} {form} />
+			<ManageUserEndorsements {data} {localUserData} {form} />
+			<ManageFlags {data} />
 			<UserActivity {data} showExternal={true} />
 		</div>
 	</div>

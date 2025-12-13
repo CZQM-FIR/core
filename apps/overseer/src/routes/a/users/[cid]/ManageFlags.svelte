@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import type { PageProps } from './$types';
+	import type { PageData } from './$types';
 
-	let { data }: PageProps = $props();
+	let { data }: { data: PageData } = $props();
 </script>
 
 <div class="flex min-w-96 flex-col rounded border border-gray-600 p-4">
