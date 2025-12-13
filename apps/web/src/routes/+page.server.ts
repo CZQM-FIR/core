@@ -10,7 +10,8 @@ export const load = (async ({ locals }) => {
       sessions: {
         where: (sessions, { gte }) => gte(sessions.logonTime, startOfMonth)
       },
-      preferences: true
+      preferences: true,
+      flags: { with: { flag: true } }
     },
     columns: {
       name_first: true,
@@ -29,6 +30,10 @@ export const load = (async ({ locals }) => {
   });
 
   const top5Controllers = controllersWithDuration
+    .filter(
+      (c) =>
+        c.totalDuration > 0 && c.flags.some((f) => ['controller', 'visitor'].includes(f.flag.name))
+    )
     .sort((a, b) => b.totalDuration - a.totalDuration)
     .slice(0, 5);
 
