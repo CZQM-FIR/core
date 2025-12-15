@@ -44,10 +44,12 @@ export const notifyUsers = async (payload: NotificationPayload, users: number[] 
 
 	members = members.filter((m) => {
 		if (!m.flags.some((f) => ['controller', 'visitor'].includes(f.flag.name))) return false; // only notify controllers and visitors
-		if (requiredNotifications.includes(type)) return true; // always notify for required notifications
-		if (!m.integrations.some((i) => i.type === 0))
-			// must have discord integration
+		if (!m.integrations.some((i) => i.type === 0)) return false; // must have discord integration
+		if (requiredNotifications.includes(type)) {
+			return true; // always notify for required notifications
+		} else {
 			return m.preferences.some((p) => p.key === type && p.value === 'true'); // check user preferences
+		}
 	});
 
 	const values: (typeof schema.notifications.$inferInsert)[] = members.map((m) => ({

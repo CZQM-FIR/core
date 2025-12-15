@@ -110,7 +110,7 @@ async function main(): Promise<void> {
 
     app.get('/dev/notifications', async (req, res) => {
       const { db, client } = createDB(env);
-      await notificationsJob(db);
+      await notificationsJob(db, env);
       client.close();
       res.send('OK');
     });
@@ -143,7 +143,7 @@ async function main(): Promise<void> {
       ({ db, client } = createDB(env));
       try {
         console.log('Running Notifications Job', new Date());
-        await notificationsJob(db);
+        await notificationsJob(db, env);
       } catch (err) {
         console.error('Scheduled job failed:', err);
       } finally {

@@ -1,8 +1,8 @@
 import * as schema from '@czqm/db/schema';
-import { DB } from '.';
+import { DB, Env } from '.';
 import { eq } from 'drizzle-orm';
 
-export const notificationsJob = async (db: DB) => {
+export const notificationsJob = async (db: DB, env: Env) => {
   // Fetch notifications that need to be sent
   const notifications = await db.query.notifications.findMany({
     where: (notifications, { isNull }) => isNull(notifications.sent),
@@ -37,7 +37,7 @@ export const notificationsJob = async (db: DB) => {
     if (!user.integrations?.length) continue;
 
     if (
-      user.preferences.some((pref) => pref.key === notification.type && Boolean(pref.value)) ||
+      user.preferences.some((pref) => pref.key === notification.type && pref.value === 'true') ||
       (!user.preferences.find((pref) => pref.key === notification.type) &&
         defaultOnPreferences.includes(notification.type))
     ) {
@@ -55,7 +55,7 @@ export const notificationsJob = async (db: DB) => {
     const dmRes = await fetch('https://discord.com/api/users/@me/channels', {
       method: 'POST',
       headers: {
-        Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+        Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -74,7 +74,7 @@ export const notificationsJob = async (db: DB) => {
     const messageRes = await fetch(`https://discord.com/api/channels/${channelId}/messages`, {
       method: 'POST',
       headers: {
-        Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+        Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
