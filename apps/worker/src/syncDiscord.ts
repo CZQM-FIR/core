@@ -1,8 +1,6 @@
-import { Client } from '@libsql/client';
 import { type } from 'arktype';
 import { eq } from 'drizzle-orm';
-import { LibSQLDatabase } from 'drizzle-orm/libsql';
-import type { Env } from '.';
+import type { DB, Env } from '.';
 import * as schema from '@czqm/db/schema';
 
 const managedRoles = [
@@ -33,10 +31,7 @@ const managedRoles = [
   'Facility Engineer'
 ];
 
-export const syncDiscord = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
-  env: Env
-) => {
+export const syncDiscord = async (db: DB, env: Env) => {
   const requests: {
     method: string;
     endpoint: string;

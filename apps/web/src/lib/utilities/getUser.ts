@@ -97,18 +97,3 @@ export const getUserDisplayNameByCID = async (cid: number): Promise<string> => {
 
   return getUserDisplayName(user);
 };
-
-export const getUserDisplayNameByCID = async (cid: number): Promise<string> => {
-  const user = await db.query.users.findFirst({
-    where: eq(users.cid, cid),
-    with: {
-      preferences: true
-    }
-  });
-
-  if (!user) {
-    return cid.toString();
-  }
-
-  return getUserDisplayName(user);
-};

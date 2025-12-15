@@ -1,7 +1,5 @@
-import { Client } from '@libsql/client';
-import { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { XMLParser } from 'fast-xml-parser';
-import type { Env } from '.';
+import type { DB, Env } from '.';
 import { moodleQueue } from '@czqm/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -48,10 +46,7 @@ const getMoodleCohortId = async (cohortId: string, env: Env): Promise<number> =>
   )?.VALUE;
 };
 
-export const syncMoodle = async (
-  db: LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client },
-  env: Env
-) => {
+export const syncMoodle = async (db: DB, env: Env) => {
   const token = env.MOODLE_TOKEN;
 
   const queue = await db.query.moodleQueue.findMany({

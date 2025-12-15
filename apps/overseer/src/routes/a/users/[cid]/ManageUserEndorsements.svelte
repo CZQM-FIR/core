@@ -1,8 +1,12 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
+	import type { PageData, ActionData } from './$types';
 	import type { RosterUserData } from '@czqm/db/schema';
 
-	let { data, localUserData, form }: PageProps & { localUserData: RosterUserData } = $props();
+	let {
+		data,
+		localUserData,
+		form
+	}: { data: PageData; localUserData: RosterUserData; form: ActionData } = $props();
 
 	let activeEndorsements = localUserData.soloEndorsements.filter((e) => e.expiresAt > new Date());
 </script>

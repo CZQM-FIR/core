@@ -70,7 +70,8 @@ export const actions = {
       description: message,
       typeId: category,
       authorId: user.cid,
-      status: 'open'
+      status: 'open',
+      createdAt: Math.floor(Date.now() / 1000)
     });
 
     return {
