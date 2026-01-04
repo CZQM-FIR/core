@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { Position, positions, users, onlineSessions, roster, integrations } from '@czqm/db/schema';
 import type { DB, Env } from '.';
+import { notifyUsers } from '@czqm/common/notifications';
 
 type OnlineController = {
   cid: number;
@@ -103,7 +104,19 @@ const notifyUnauthorizedSession = async (
     })
   });
 
-  console.log('Session notification sent:', message);
+  console.log('Session notification sent to staff:', message);
+
+  await notifyUsers(
+    {
+      title: 'Unauthorized Connection Detected',
+      message: `Hello ${user.name_full},\n\nOur system has automatically detected that you have connected to ${position.name} (${position.callsign}) without proper authorization. Reason: ${reasonText}. The staff team has been notified and will review the connection. If you believe this is a mistake, please contact the staff team for further assistance.\n\nThank you for your understanding.`,
+      type: 'unauthorizedConnection'
+    },
+    {
+      db,
+      webUrl: env.PUBLIC_WEB_URL
+    }
+  );
 };
 
 export const handleOnlineSessions = async (db: DB, env: Env) => {

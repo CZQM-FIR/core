@@ -1,21 +1,7 @@
 import * as schema from "@czqm/db/schema";
 import type { NotificationPayload } from "./types";
 import { requiredNotifications } from "./types";
-
-type DrizzleDB = {
-  query: {
-    users: {
-      findMany: (opts?: unknown) => Promise<UserWithRelations[]>;
-    };
-  };
-  insert: <T extends typeof schema.notifications>(
-    table: T
-  ) => {
-    values: (
-      values: (typeof schema.notifications.$inferInsert)[]
-    ) => Promise<void>;
-  };
-};
+import type { LibSQLDatabase } from "drizzle-orm/libsql";
 
 type UserWithRelations = typeof schema.users.$inferSelect & {
   flags: { flag: { name: string } }[];
@@ -24,7 +10,7 @@ type UserWithRelations = typeof schema.users.$inferSelect & {
 };
 
 export interface NotifyUsersOptions {
-  db: DrizzleDB;
+  db: LibSQLDatabase<typeof schema>;
   webUrl: string;
 }
 
@@ -40,7 +26,7 @@ export const notifyUsers = async (
   const { message, type, title } = payload;
   const { db, webUrl } = options;
 
-  let members = await db.query.users.findMany({
+  let members: UserWithRelations[] = await db.query.users.findMany({
     with: {
       flags: {
         with: {

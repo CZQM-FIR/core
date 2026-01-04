@@ -381,6 +381,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@czqm/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@czqm/db':
         specifier: workspace:*
         version: link:../../packages/db

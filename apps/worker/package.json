@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@czqm/db": "workspace:*",
+    "@czqm/common": "workspace:*",
     "@libsql/client": "^0.15.1",
     "arktype": "^2.1.20",
     "dotenv": "^16.5.0",
