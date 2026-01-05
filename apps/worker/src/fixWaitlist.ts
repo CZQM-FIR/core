@@ -10,7 +10,7 @@ export const fixWaitlistsJob = async (db: DB) => {
   });
 
   for (const waitlist of waitlists.filter((wl) => wl.students.length > 0)) {
-    const students = waitlist.students.sort((a, b) => {
+    const students = [...waitlist.students].sort((a, b) => {
       if (a.position !== b.position) return a.position - b.position;
       return a.waitingSince.getTime() - b.waitingSince.getTime();
     });
