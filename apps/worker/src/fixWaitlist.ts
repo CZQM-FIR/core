@@ -17,7 +17,7 @@ export const fixWaitlistsJob = async (db: DB) => {
 
     const data = students.map((student, index) => {
       return {
-        ...student,
+        id: student.id,
         position: index
       };
     });
