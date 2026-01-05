@@ -12,6 +12,7 @@ import { syncMoodle } from './syncMoodle.js';
 import { notificationsJob } from './notifications.js';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Client } from '@libsql/client';
+import { fixWaitlistsJob } from './fixWaitlist.js';
 
 export type DB = LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client };
 
@@ -115,6 +116,13 @@ async function main(): Promise<void> {
       res.send('OK');
     });
 
+    app.get('/dev/fixwaitlists', async (req, res) => {
+      const { db, client } = createDB(env);
+      await fixWaitlistsJob(db);
+      client.close();
+      res.send('OK');
+    });
+
     console.log('Running in development mode, manual endpoints enabled');
   } else {
     cron.schedule('* * * * *', async () => {
@@ -194,7 +202,6 @@ async function main(): Promise<void> {
     cron.schedule('0 2 * * *', async () => {
       try {
         const { db, client } = createDB(env);
-
         console.log('Running Recurring Events', new Date());
         await recurringEvents(db);
         client.close();
@@ -202,6 +209,17 @@ async function main(): Promise<void> {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished Recurring Events', new Date());
+      }
+
+      try {
+        const { db, client } = createDB(env);
+        console.log('Running Fix Waitlists', new Date());
+        await fixWaitlistsJob(db);
+        client.close();
+      } catch (err) {
+        console.error('Scheduled job failed:', err);
+      } finally {
+        console.log('Finished Fix Waitlists', new Date());
       }
     });
   }
