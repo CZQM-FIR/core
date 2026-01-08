@@ -52,7 +52,11 @@ const Env = type({
   UPTIME_PORT: 'string.integer.parse?',
   NODE_ENV: '"dev"|"production"?',
   MOODLE_TOKEN: 'string',
-  MOODLE_URL: 'string.url'
+  MOODLE_URL: 'string.url',
+  AWS_SENDER_EMAIL: 'string.email',
+  AWS_ACCESS_KEY_ID: 'string',
+  AWS_SECRET_ACCESS_KEY: 'string',
+  AWS_REGION: 'string'
 });
 
 export type Env = typeof Env.infer;

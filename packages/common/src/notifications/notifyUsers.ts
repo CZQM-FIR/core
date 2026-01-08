@@ -23,7 +23,7 @@ export const notifyUsers = async (
   options: NotifyUsersOptions,
   users: number[] = []
 ) => {
-  const { message, type, title } = payload;
+  const { message, type, title, location = "email" } = payload;
   const { db, webUrl } = options;
 
   let members: UserWithRelations[] = await db.query.users.findMany({
@@ -45,7 +45,6 @@ export const notifyUsers = async (
   members = members.filter((m) => {
     if (!m.flags.some((f) => ["controller", "visitor"].includes(f.flag.name)))
       return false;
-    if (!m.integrations.some((i) => i.type === 0)) return false;
     if (requiredNotifications.includes(type)) {
       return true;
     } else {
@@ -67,6 +66,7 @@ export const notifyUsers = async (
           url: `${webUrl}/my/preferences`,
         },
       ],
+      location: m.integrations.some((i) => i.type === 0) ? location : "email",
     })
   );
 

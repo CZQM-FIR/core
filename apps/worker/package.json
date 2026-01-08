@@ -25,6 +25,7 @@
     "wrangler": "^4.5.0"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.787.0",
     "@czqm/db": "workspace:*",
     "@czqm/common": "workspace:*",
     "@libsql/client": "^0.15.1",

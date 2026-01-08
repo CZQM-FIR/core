@@ -10,6 +10,7 @@ export interface NotificationPayload {
   type: NotificationType;
   title?: string;
   message: string;
+  location?: "email" | "discord";
 }
 
 export const requiredNotifications: NotificationType[] = [
