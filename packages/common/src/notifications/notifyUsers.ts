@@ -1,18 +1,11 @@
 import * as schema from "@czqm/db/schema";
-import type { NotificationPayload } from "./types";
+import type {
+  NotificationPayload,
+  NotifyUsersOptions,
+  UserWithRelations,
+} from "./types";
 import { requiredNotifications } from "./types";
 import type { LibSQLDatabase } from "drizzle-orm/libsql";
-
-type UserWithRelations = typeof schema.users.$inferSelect & {
-  flags: { flag: { name: string } }[];
-  integrations: { type: number }[];
-  preferences: { key: string; value: string }[];
-};
-
-export interface NotifyUsersOptions {
-  db: LibSQLDatabase<typeof schema>;
-  webUrl: string;
-}
 
 /**
  * Queue notifications to be sent to users via Discord DM.
