@@ -19,7 +19,7 @@ export const notifyUsersViaDiscord = async (
   const { message, type, title, location = "email" } = payload;
   const { db, webUrl } = options;
 
-  let members: UserWithRelations[] = await db.query.users.findMany({
+  let usersToNotify: UserWithRelations[] = await db.query.users.findMany({
     with: {
       flags: {
         with: {
@@ -32,10 +32,10 @@ export const notifyUsersViaDiscord = async (
   });
 
   if (users.length > 0) {
-    members = members.filter((m) => users.includes(m.cid));
+    usersToNotify = usersToNotify.filter((m) => users.includes(m.cid));
   }
 
-  members = members.filter((m) => {
+  usersToNotify = usersToNotify.filter((m) => {
     if (!m.flags.some((f) => ["controller", "visitor"].includes(f.flag.name)))
       return false;
     if (requiredNotifications.includes(type)) {
@@ -45,8 +45,8 @@ export const notifyUsersViaDiscord = async (
     }
   });
 
-  const values: (typeof schema.notifications.$inferInsert)[] = members.map(
-    (m) => ({
+  const values: (typeof schema.notifications.$inferInsert)[] =
+    usersToNotify.map((m) => ({
       timestamp: new Date(),
       userId: m.cid,
       type,
@@ -60,8 +60,7 @@ export const notifyUsersViaDiscord = async (
         },
       ],
       location: m.integrations.some((i) => i.type === 0) ? location : "email",
-    })
-  );
+    }));
 
   if (values.length > 0) {
     await db.insert(schema.notifications).values(values);

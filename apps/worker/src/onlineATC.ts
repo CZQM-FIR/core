@@ -126,7 +126,8 @@ const notifyUnauthorizedSession = async (
     {
       db,
       webUrl: env.PUBLIC_WEB_URL
-    }
+    },
+    [user.cid]
   );
 
   if (userData.length > 0) {
