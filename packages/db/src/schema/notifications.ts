@@ -25,6 +25,7 @@ export const notifications = sqliteTable(
         disabled?: boolean;
       }[]
     >(),
+    location: text().notNull().default("email").$type<"discord" | "email">(),
   },
   (table) => {
     return {

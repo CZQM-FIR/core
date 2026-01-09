@@ -1,0 +1,14 @@
+{
+  "name": "@czqm/common",
+  "type": "module",
+  "exports": {
+    "./notifications": "./src/notifications/index.ts"
+  },
+  "dependencies": {
+    "@czqm/db": "workspace:*",
+    "drizzle-orm": "^0.44.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
