@@ -33,6 +33,7 @@ interface EmailNotificationQueueItem extends NotificationQueueItem {
   body: string;
   to?: string;
   bcc?: string[];
+  replyto?: string;
 }
 
 const sendEmail = async (notification: EmailNotificationQueueItem, env: Env) => {
@@ -49,6 +50,7 @@ const sendEmail = async (notification: EmailNotificationQueueItem, env: Env) => 
   try {
     const command = new SendEmailCommand({
       Source: env.AWS_SENDER_EMAIL,
+      ...(notification.replyto && { ReplyToAddresses: [notification.replyto] }),
       Destination: {
         ToAddresses: [to || user.email],
         BccAddresses: bcc || []
@@ -168,13 +170,14 @@ export const notificationsJob = async (db: DB, env: Env) => {
           to: 'string.email?',
           bcc: 'string.email[]?',
           subject: 'string',
-          body: 'string'
+          body: 'string',
+          replyto: 'string.email?'
         });
 
         const messageJson = MessageJson(JSON.parse(notification.message));
 
         if (!(messageJson instanceof type.errors)) {
-          const { to, bcc, subject, body } = messageJson;
+          const { to, bcc, subject, body, replyto } = messageJson;
 
           const email = await sendEmail(
             {
@@ -183,7 +186,8 @@ export const notificationsJob = async (db: DB, env: Env) => {
               bcc,
               subject,
               body,
-              user
+              user,
+              replyto
             },
             env
           );

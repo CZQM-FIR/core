@@ -1,3 +1,8 @@
-export type { NotificationType, NotificationPayload } from "./types";
+export type {
+  NotificationType,
+  NotificationPayload,
+  NotifyUsersOptions,
+} from "./types";
 export { requiredNotifications, defaultOnPreferences } from "./types";
-export { notifyUsers, type NotifyUsersOptions } from "./notifyUsers";
+export { notifyUsersViaDiscord } from "./notifyUsers";
+export * from "./templates";

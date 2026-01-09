@@ -11,7 +11,7 @@ import type { LibSQLDatabase } from "drizzle-orm/libsql";
  * Queue notifications to be sent to users via Discord DM.
  * Notifications are inserted into the database and processed by the worker.
  */
-export const notifyUsers = async (
+export const notifyUsersViaDiscord = async (
   payload: NotificationPayload,
   options: NotifyUsersOptions,
   users: number[] = []
