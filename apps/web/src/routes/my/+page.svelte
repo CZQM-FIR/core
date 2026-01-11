@@ -133,7 +133,12 @@
     </form>
   </div>
   <div class="bg-base-300 flex w-96 flex-col gap-2 rounded-lg p-5">
-    <h4 class="text-md font-semibold">Controller Hours</h4>
+    <div>
+      <h4 class="text-md font-semibold">Controller Hours</h4>
+      {#if user.flags.some((f) => [3].includes(f.flag.id))}
+        <p class="text-sm text-gray-300 italic">You are exempt from activity requirements.</p>
+      {/if}
+    </div>
 
     {#if user.flags.some((f) => [4, 5].includes(f.flag.id))}
       <div class="overflow-x-auto">
