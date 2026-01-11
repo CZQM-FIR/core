@@ -6,47 +6,56 @@
 
   let { data }: { data: PageData } = $props();
 
-  let user = $state(data.userData);
+  let user = $derived(data.userData);
 
-  let sessions = user?.sessions
-    ?.filter((s) => s.positionId !== -1 && s.positionId !== 0)
-    .sort((a, b) => {
-      return new Date(b.logonTime).getTime() - new Date(a.logonTime).getTime();
-    })
-    .slice(0, 10);
+  let sessions = $derived(
+    user?.sessions
+      ?.filter((s) => s.positionId !== -1 && s.positionId !== 0)
+      .sort((a, b) => {
+        return new Date(b.logonTime).getTime() - new Date(a.logonTime).getTime();
+      })
+      .slice(0, 10)
+  );
 
-  let thisMonth = user?.sessions
-    ?.filter((s) => s.positionId !== -1)
-    .filter((s) => {
-      let date = new Date(s.logonTime);
-      return (
-        date.getMonth() === new Date().getMonth() && date.getFullYear() === new Date().getFullYear()
-      );
-    })
-    .reduce((acc, session) => {
-      return acc + session.duration;
-    }, 0);
-  let thisYear = user?.sessions
-    ?.filter((s) => s.positionId !== -1)
-    .filter((s) => {
-      let date = new Date(s.logonTime);
-      return date.getFullYear() === new Date().getFullYear();
-    })
-    .reduce((acc, session) => {
-      return acc + session.duration;
-    }, 0);
-  let allTime = user?.sessions
-    ?.filter((s) => s.positionId !== -1)
-    .reduce((acc, session) => {
-      return acc + session.duration;
-    }, 0);
+  let thisMonth = $derived(
+    user?.sessions
+      ?.filter((s) => s.positionId !== -1)
+      .filter((s) => {
+        let date = new Date(s.logonTime);
+        return (
+          date.getMonth() === new Date().getMonth() &&
+          date.getFullYear() === new Date().getFullYear()
+        );
+      })
+      .reduce((acc, session) => {
+        return acc + session.duration;
+      }, 0)
+  );
+  let thisYear = $derived(
+    user?.sessions
+      ?.filter((s) => s.positionId !== -1)
+      .filter((s) => {
+        let date = new Date(s.logonTime);
+        return date.getFullYear() === new Date().getFullYear();
+      })
+      .reduce((acc, session) => {
+        return acc + session.duration;
+      }, 0)
+  );
+  let allTime = $derived(
+    user?.sessions
+      ?.filter((s) => s.positionId !== -1)
+      .reduce((acc, session) => {
+        return acc + session.duration;
+      }, 0)
+  );
 
   let favPosition: {
     position: { name: string; callsign: string };
     duration: number;
-  } | null = $state(null);
+  } | null = $derived.by(() => {
+    if (!user?.sessions) return null;
 
-  if (user?.sessions) {
     const positionDurations = user.sessions
       .filter((s) => s.positionId !== -1)
       .reduce(
@@ -79,8 +88,8 @@
         return b.duration - a.duration;
       });
 
-    favPosition = favPositionArray[0] ?? null;
-  }
+    return favPositionArray[0] ?? null;
+  });
 </script>
 
 <section>
