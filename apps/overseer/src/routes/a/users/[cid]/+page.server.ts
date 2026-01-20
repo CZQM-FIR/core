@@ -488,8 +488,9 @@ export const actions = {
 
 		// check if the user already has an endorsement for this position
 		if (
-			user.soloEndorsements.some((e) => e.position.callsign === positionName) &&
-			user.soloEndorsements.some((e) => e.expiresAt > new Date())
+			user.soloEndorsements.some(
+				(e) => e.position.callsign === positionName && e.expiresAt > new Date()
+			)
 		) {
 			return {
 				status: 409,
