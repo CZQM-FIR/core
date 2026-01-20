@@ -487,10 +487,13 @@ export const actions = {
 		}
 
 		// check if the user already has an endorsement for this position
-		if (user.soloEndorsements.some((e) => e.position.callsign === positionName)) {
+		if (
+			user.soloEndorsements.some((e) => e.position.callsign === positionName) &&
+			user.soloEndorsements.some((e) => e.expiresAt > new Date())
+		) {
 			return {
 				status: 409,
-				statusText: 'User already has an endorsement for this position'
+				statusText: 'User already has an active endorsement for this position'
 			};
 		}
 
@@ -506,6 +509,12 @@ export const actions = {
 				controllerId: user.cid,
 				positionId: position.id,
 				expiresAt: new Date(Date.now() + duration * 24 * 60 * 60 * 1000)
+			})
+			.onConflictDoUpdate({
+				target: [soloEndorsements.controllerId, soloEndorsements.positionId],
+				set: {
+					expiresAt: new Date(Date.now() + duration * 24 * 60 * 60 * 1000)
+				}
 			})
 			.returning();
 
