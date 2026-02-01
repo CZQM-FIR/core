@@ -235,9 +235,22 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
         where: eq(roster.controllerId, controller.cid)
       });
 
-      const rosterData = rosterDataPoints.filter(
-        (r) => r.position === position.callsign.split('_').pop()?.toLowerCase()
-      )[0];
+      const unitType = position.callsign.split('_').pop()?.toLowerCase() || '';
+
+      const rosterStatus = rosterDataPoints.filter((r) => {
+        let checkUnit: string;
+
+        switch (unitType) {
+          case 'del':
+          case 'tmu':
+            checkUnit = 'gnd';
+            break;
+          default:
+            checkUnit = unitType;
+        }
+
+        return r.position === checkUnit;
+      })[0];
 
       const session = {
         cid: controller.cid,
@@ -252,10 +265,7 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
         await notifyUnauthorizedSession(session, db, env, 'discord');
       } else if (controller.rating === 1) {
         await notifyUnauthorizedSession(session, db, env, 'suspended');
-      } else if (
-        (!rosterData || rosterData.status === -1) &&
-        position.callsign.split('_').pop()?.toLowerCase() !== 'obs'
-      ) {
+      } else if ((!rosterStatus || rosterStatus.status === -1) && unitType !== 'obs') {
         await notifyUnauthorizedSession(session, db, env, 'roster');
       } else {
         await notifySession(session, db, env);
