@@ -43,8 +43,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/db
       '@iconify/svelte':
-        specifier: ^4.2.0
-        version: 4.2.0(svelte@5.46.1)
+        specifier: ^5.0.0
+        version: 5.2.1(svelte@5.46.1)
       '@libsql/client':
         specifier: ^0.15.0
         version: 0.15.9
@@ -158,8 +158,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/db
       '@iconify/svelte':
-        specifier: ^4.2.0
-        version: 4.2.0(svelte@5.46.1)
+        specifier: ^5.0.0
+        version: 5.2.1(svelte@5.46.1)
       '@libsql/client':
         specifier: ^0.15.0
         version: 0.15.9
@@ -3066,8 +3066,8 @@ packages:
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
     dev: true
 
-  /@iconify/svelte@4.2.0(svelte@5.46.1):
-    resolution: {integrity: sha512-fEl0T7SAPonK7xk6xUlRPDmFDZVDe2Z7ZstlqeDS/sS8ve2uyU+Qa8rTWbIqzZJlRvONkK5kVXiUf9nIc+6OOQ==}
+  /@iconify/svelte@5.2.1(svelte@5.46.1):
+    resolution: {integrity: sha512-zHmsIPmnIhGd5gc95bNN5FL+GifwMZv7M2rlZEpa7IXYGFJm/XGHdWf6PWQa6OBoC+R69WyiPO9NAj5wjfjbow==}
     peerDependencies:
       svelte: ^5.46.1
     dependencies:
