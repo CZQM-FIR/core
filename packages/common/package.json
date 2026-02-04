@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@czqm/db": "workspace:*",
-    "drizzle-orm": "^0.44.2"
+    "drizzle-orm": "1.0.0-beta.13-f728631"
   },
   "devDependencies": {
     "typescript": "^5.0.0"
