@@ -1,6 +1,6 @@
 import { index, int, sqliteTable } from "drizzle-orm/sqlite-core";
 import { positions, ratings, users } from "./index";
-import { relations, type InferSelectModel } from "drizzle-orm";
+import { type InferSelectModel } from "drizzle-orm";
 
 export const sessions = sqliteTable(
   "sessions",
@@ -30,22 +30,7 @@ export const sessions = sqliteTable(
     index("sessions_userId_idx").on(t.userId),
     index("sessions_positionId_idx").on(t.positionId),
     index("sessions_logonTime_idx").on(t.logonTime),
-  ]
+  ],
 );
-
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  controller: one(users, {
-    fields: [sessions.userId],
-    references: [users.cid],
-  }),
-  position: one(positions, {
-    fields: [sessions.positionId],
-    references: [positions.id],
-  }),
-  rating: one(ratings, {
-    fields: [sessions.ratingId],
-    references: [ratings.id],
-  }),
-}));
 
 export type Session = InferSelectModel<typeof sessions>;

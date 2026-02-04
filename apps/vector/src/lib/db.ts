@@ -1,8 +1,8 @@
 import { drizzle } from 'drizzle-orm/libsql';
-import { createClient } from '@libsql/client';
 import * as schema from '@czqm/db/schema';
 import { building } from '$app/environment';
 import env from '$lib/env';
+import { relations } from '@czqm/db/relations';
 
 let _db: ReturnType<typeof drizzle<typeof schema>> | undefined;
 
@@ -13,8 +13,13 @@ function getDb() {
 	}
 
 	if (!_db) {
-		const client = createClient({ url: env.TURSO_URL, authToken: env.TURSO_TOKEN });
-		_db = drizzle(client, { schema });
+		_db = drizzle({
+			connection: {
+				url: env.TURSO_URL,
+				authToken: env.TURSO_TOKEN
+			},
+			relations
+		});
 	}
 
 	return _db;

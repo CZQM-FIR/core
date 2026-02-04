@@ -2,7 +2,8 @@
   "name": "@czqm/db",
   "type": "module",
   "exports": {
-    "./schema": "./src/schema/index.ts"
+    "./schema": "./src/schema/index.ts",
+    "./relations": "./src/relations.ts"
   },
   "scripts": {
     "db:generate": "drizzle-kit generate",

@@ -1,4 +1,4 @@
-import { relations, type InferSelectModel } from "drizzle-orm";
+import { type InferSelectModel } from "drizzle-orm";
 import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { users } from "./index";
 
@@ -22,20 +22,8 @@ export const tickets = sqliteTable(
     index("tickets_typeId_idx").on(t.typeId),
     index("tickets_status_idx").on(t.status),
     index("tickets_createdAt_idx").on(t.createdAt),
-  ]
+  ],
 );
-
-export const ticketRelations = relations(tickets, ({ one, many }) => ({
-  type: one(ticketType, {
-    fields: [tickets.typeId],
-    references: [ticketType.id],
-  }),
-  author: one(users, {
-    fields: [tickets.authorId],
-    references: [users.cid],
-  }),
-  messages: many(ticketMessages),
-}));
 
 export type Ticket = InferSelectModel<typeof tickets>;
 
@@ -56,21 +44,7 @@ export const ticketMessages = sqliteTable(
     index("ticket_messages_ticketId_idx").on(t.ticketId),
     index("ticket_messages_authorId_idx").on(t.authorId),
     index("ticket_messages_createdAt_idx").on(t.createdAt),
-  ]
-);
-
-export const ticketMessagesRelations = relations(
-  ticketMessages,
-  ({ one, many }) => ({
-    ticket: one(tickets, {
-      fields: [ticketMessages.ticketId],
-      references: [tickets.id],
-    }),
-    author: one(users, {
-      fields: [ticketMessages.authorId],
-      references: [users.cid],
-    }),
-  })
+  ],
 );
 
 export type TicketMessage = InferSelectModel<typeof ticketMessages>;
@@ -81,7 +55,7 @@ export const ticketType = sqliteTable(
     id: int().primaryKey({ autoIncrement: true }),
     name: text().notNull(),
   },
-  (t) => [index("ticket_types_name_idx").on(t.name)]
+  (t) => [index("ticket_types_name_idx").on(t.name)],
 );
 
 export type TicketType = InferSelectModel<typeof ticketType>;
