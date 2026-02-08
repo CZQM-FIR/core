@@ -45,9 +45,9 @@ INSERT INTO positions VALUES (39, 'LFVP_TWR', 118.5, 'St. Pierre Tower');
 
 -- Insert data into the `flags` table
 INSERT INTO flags VALUES (0, 'delete');
-INSERT INTO flags VALUES (1, 'leave');
-INSERT INTO flags VALUES (2, 'inactive');
-INSERT INTO flags VALUES (3, 'no-email');
+-- INSERT INTO flags VALUES (1, 'leave');
+-- INSERT INTO flags VALUES (2, 'inactive');
+INSERT INTO flags VALUES (3, 'activity-excempt');
 INSERT INTO flags VALUES (4, 'visitor');
 INSERT INTO flags VALUES (5, 'controller');
 INSERT INTO flags VALUES (6, 'fss');

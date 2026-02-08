@@ -46,8 +46,10 @@
 <section>
   <h1 class="text-2xl font-semibold">Notification Preferences</h1>
   <p class="font-light">
-    Notifications will be sent as a private message in Discord. Please ensure the "Allow DMs from
-    other members in this server" privacy setting is enabled to receive notifications.
+    Notifications will be sent as a private message in Discord and/or as an email from <em
+      >noreply@czqm.ca</em
+    >. Please ensure the "Allow DMs from other members in this server" privacy setting is enabled in
+    Discord to receive notifications.
   </p>
   <p class="mt-1 font-light">
     Some notification types are required and cannot be disabled. Should you have any questions or

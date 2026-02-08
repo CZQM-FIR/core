@@ -1,6 +1,18 @@
 import { and, eq } from 'drizzle-orm';
-import { Position, positions, users, onlineSessions, roster, integrations } from '@czqm/db/schema';
+import {
+  Position,
+  positions,
+  users,
+  onlineSessions,
+  roster,
+  integrations,
+  notifications
+} from '@czqm/db/schema';
 import type { DB, Env } from '.';
+import {
+  notifyUsersViaDiscord,
+  unauthorizedConnectionEmailTemplate
+} from '@czqm/common/notifications';
 
 type OnlineController = {
   cid: number;
@@ -35,8 +47,10 @@ const notifySession = async (session: Session, db: DB, env: Env) => {
 
   const position = positionData[0];
   const t = session.logonTime;
+  const hours = String(t.getUTCHours()).padStart(2, '0');
+  const minutes = String(t.getUTCMinutes()).padStart(2, '0');
 
-  const message = `📡 ${user.name_full} (${user.cid}) has connected to ${position.name} (${position.callsign}) at ${t.getUTCHours()}:${t.getUTCMinutes()}z (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>).`;
+  const message = `📡 ${user.name_full} (${user.cid}) has connected to ${position.name} (${position.callsign}) at ${hours}:${minutes}z (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>).`;
 
   await fetch(env.WEBHOOK_ONLINE_CONTROLLERS!, {
     method: 'POST',
@@ -103,7 +117,30 @@ const notifyUnauthorizedSession = async (
     })
   });
 
-  console.log('Session notification sent:', message);
+  console.log('Session notification sent to staff:', message);
+
+  await notifyUsersViaDiscord(
+    {
+      title: 'Unauthorized Connection Detected',
+      message: `Hello ${user.name_full},\n\nOur system has automatically detected that you have connected to ${position.name} (${position.callsign}) without proper authorization. Reason: ${reasonText}. The staff team has been notified and will review the connection. If you believe this is a mistake, please contact the staff team for further assistance.\n\nThank you for your understanding.`,
+      type: 'unauthorizedConnection'
+    },
+    {
+      db,
+      webUrl: env.PUBLIC_WEB_URL
+    },
+    [user.cid]
+  );
+
+  if (userData.length > 0) {
+    await db.insert(notifications).values({
+      timestamp: new Date(),
+      type: 'unauthorizedConnection',
+      userId: session.cid,
+      location: 'email',
+      message: unauthorizedConnectionEmailTemplate(session, userData[0], reasonText)
+    });
+  }
 };
 
 export const handleOnlineSessions = async (db: DB, env: Env) => {
@@ -198,9 +235,22 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
         where: eq(roster.controllerId, controller.cid)
       });
 
-      const rosterData = rosterDataPoints.filter(
-        (r) => r.position === position.callsign.split('_').pop()?.toLowerCase()
-      )[0];
+      const unitType = position.callsign.split('_').pop()?.toLowerCase() || '';
+
+      const rosterStatus = rosterDataPoints.filter((r) => {
+        let checkUnit: string;
+
+        switch (unitType) {
+          case 'del':
+          case 'tmu':
+            checkUnit = 'gnd';
+            break;
+          default:
+            checkUnit = unitType;
+        }
+
+        return r.position === checkUnit;
+      })[0];
 
       const session = {
         cid: controller.cid,
@@ -215,10 +265,7 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
         await notifyUnauthorizedSession(session, db, env, 'discord');
       } else if (controller.rating === 1) {
         await notifyUnauthorizedSession(session, db, env, 'suspended');
-      } else if (
-        (!rosterData || rosterData.status === -1) &&
-        position.callsign.split('_').pop()?.toLowerCase() !== 'obs'
-      ) {
+      } else if ((!rosterStatus || rosterStatus.status === -1) && unitType !== 'obs') {
         await notifyUnauthorizedSession(session, db, env, 'roster');
       } else {
         await notifySession(session, db, env);

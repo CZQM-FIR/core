@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "esbuild src/index.ts --bundle --platform=node --target=es2020 --format=esm --outfile=dist/index.js --external:arktype --external:dotenv --external:node-cron --external:@libsql/client --external:express",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=es2020 --format=esm --outfile=dist/index.js --external:arktype --external:dotenv --external:node-cron --external:@libsql/client --external:express --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
     "build:tsc": "tsc",
     "start": "tsx src/index.ts"
   },
@@ -25,7 +25,9 @@
     "wrangler": "^4.5.0"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.787.0",
     "@czqm/db": "workspace:*",
+    "@czqm/common": "workspace:*",
     "@libsql/client": "^0.15.1",
     "arktype": "^2.1.20",
     "dotenv": "^16.5.0",

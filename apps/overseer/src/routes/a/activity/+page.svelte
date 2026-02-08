@@ -30,7 +30,12 @@
 							? user.hours.this.external > user.hours.this.internal
 							: user.hours.this.external < user.hours.this.internal);
 
-				return hasIssue && matchesSearch && (active ? user.active === 1 : true);
+				return (
+					hasIssue &&
+					matchesSearch &&
+					(active ? user.active === 1 : true) &&
+					!user.flags.some((f) => f.flag.id === 3)
+				);
 			} else {
 				return matchesSearch && (active ? user.active === 1 : true);
 			}

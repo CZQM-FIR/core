@@ -1,5 +1,5 @@
 import { relations, type InferSelectModel } from "drizzle-orm";
-import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, int, sqliteTable, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { positions, users } from "./index";
 
 export const soloEndorsements = sqliteTable(
@@ -14,7 +14,10 @@ export const soloEndorsements = sqliteTable(
       .notNull()
       .references(() => positions.id),
   },
-  (t) => [index("controller_id_idx").on(t.controllerId)]
+  (t) => [
+    index("controller_id_idx").on(t.controllerId),
+    uniqueIndex("controller_position_idx").on(t.controllerId, t.positionId),
+  ],
 );
 
 export const soloEndorsementRelations = relations(
@@ -28,7 +31,7 @@ export const soloEndorsementRelations = relations(
       fields: [soloEndorsements.positionId],
       references: [positions.id],
     }),
-  })
+  }),
 );
 
 export type SoloEndorsement = InferSelectModel<typeof soloEndorsements>;

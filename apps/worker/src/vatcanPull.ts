@@ -1,5 +1,3 @@
-import { Client } from '@libsql/client';
-import { LibSQLDatabase } from 'drizzle-orm/libsql';
 import * as schema from '@czqm/db/schema';
 import { and, eq } from 'drizzle-orm';
 import type { DB, Env } from '.';
@@ -48,27 +46,17 @@ export const vatcanPull = async (db: DB, env: Env) => {
     }
   });
 
-  // remove controller and visitor flags from users who are no longer controllers or visitors
+  // remove all flags from users who are no longer controllers or visitors
   for (const user of users) {
     if (user.flags.some((f) => f.flag.name === 'controller')) {
       if (!controllers.some((c) => c.cid === user.cid)) {
-        await db.delete(schema.usersToFlags).where(
-          and(
-            eq(schema.usersToFlags.userId, user.cid),
-            eq(schema.usersToFlags.flagId, 5) // controller
-          )
-        );
+        await db.delete(schema.usersToFlags).where(eq(schema.usersToFlags.userId, user.cid));
         user.flags = user.flags.filter((f) => f.flag.name !== 'controller');
       }
     }
     if (user.flags.some((f) => f.flag.name === 'visitor')) {
       if (!visitors.some((c) => c.cid === user.cid)) {
-        await db.delete(schema.usersToFlags).where(
-          and(
-            eq(schema.usersToFlags.userId, user.cid),
-            eq(schema.usersToFlags.flagId, 4) // visitor
-          )
-        );
+        await db.delete(schema.usersToFlags).where(eq(schema.usersToFlags.userId, user.cid));
         user.flags = user.flags.filter((f) => f.flag.name !== 'visitor');
       }
     }
