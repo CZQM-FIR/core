@@ -13,8 +13,9 @@ import { notificationsJob } from './notifications.js';
 import { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Client } from '@libsql/client';
 import { fixWaitlistsJob } from './fixWaitlist.js';
+import * as schema from '@czqm/db/schema';
 
-export type DB = LibSQLDatabase<typeof import('@czqm/db/schema')> & { $client: Client };
+export type DB = LibSQLDatabase<typeof schema> & { $client: Client };
 
 const app = express();
 let lastRun: string | null = null;
