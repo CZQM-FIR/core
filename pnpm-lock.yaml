@@ -15,8 +15,8 @@ importers:
         specifier: ^6.2.4
         version: 6.2.4(svelte@5.46.1)(vite@6.4.1)
       drizzle-orm:
-        specifier: ^0.44.0
-        version: 0.44.2(@cloudflare/workers-types@4.20250614.0)(@libsql/client@0.15.9)
+        specifier: ^0.45.0
+        version: 0.45.1(@cloudflare/workers-types@4.20250614.0)(@libsql/client@0.15.9)
       svelte:
         specifier: ^5.46.1
         version: 5.46.1
@@ -400,8 +400,8 @@ importers:
         specifier: ^16.5.0
         version: 16.5.0
       drizzle-orm:
-        specifier: ^0.44.0
-        version: 0.44.2(@cloudflare/workers-types@4.20250614.0)(@libsql/client@0.15.9)
+        specifier: ^0.45.0
+        version: 0.45.1(@cloudflare/workers-types@4.20250614.0)(@libsql/client@0.15.9)
       express:
         specifier: ^5.1.0
         version: 5.1.0
@@ -458,8 +458,8 @@ importers:
         specifier: workspace:*
         version: link:../db
       drizzle-orm:
-        specifier: ^0.44.2
-        version: 0.44.2(@cloudflare/workers-types@4.20250614.0)(@libsql/client@0.15.9)
+        specifier: ^0.45.0
+        version: 0.45.1(@cloudflare/workers-types@4.20250614.0)(@libsql/client@0.15.9)
     devDependencies:
       typescript:
         specifier: ^5.0.0
@@ -5680,8 +5680,8 @@ packages:
       - supports-color
     dev: true
 
-  /drizzle-orm@0.44.2(@cloudflare/workers-types@4.20250614.0)(@libsql/client@0.15.9):
-    resolution: {integrity: sha512-zGAqBzWWkVSFjZpwPOrmCrgO++1kZ5H/rZ4qTGeGOe18iXGVJWf3WPfHOVwFIbmi8kHjfJstC6rJomzGx8g/dQ==}
+  /drizzle-orm@0.45.1(@cloudflare/workers-types@4.20250614.0)(@libsql/client@0.15.9):
+    resolution: {integrity: sha512-Te0FOdKIistGNPMq2jscdqngBRfBpC8uMFVwqjf6gtTVJHIQ/dosgV/CLBU2N4ZJBsXL5savCba9b0YJskKdcA==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
