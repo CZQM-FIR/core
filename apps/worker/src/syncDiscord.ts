@@ -127,7 +127,6 @@ export const syncDiscord = async (db: DB, env: Env) => {
   console.log(`Fetched ${integrations.length} integrations from the database.`);
 
   for (const member of members) {
-    if (integrations.find((i) => i.integrationUserId === member.user.id)?.cid !== 1807455) continue;
     if (!integrations.some((i) => i.integrationUserId === member.user.id)) {
       if (env.NODE_ENV === 'dev')
         console.log(`[DEV] Unlinked member: ${member.user.id} (${member.nick || member.user.id})`);
