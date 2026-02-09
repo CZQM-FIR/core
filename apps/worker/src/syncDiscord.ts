@@ -107,7 +107,8 @@ export const syncDiscord = async (db: DB, env: Env) => {
             with: {
               flag: true
             }
-          }
+          },
+          preferences: true
         }
       }
     }
@@ -228,7 +229,19 @@ export const syncDiscord = async (db: DB, env: Env) => {
         }
       }
 
-      const nick = user?.name_full || '';
+      let nick: string;
+
+      switch (user?.preferences.find((p) => p.key === 'name')?.value) {
+        case 'cid':
+          nick = user.cid.toString();
+          break;
+        case 'initial':
+          nick = `${user.name_first} ${user.name_last[0]}.`;
+          break;
+        case 'full':
+        default:
+          nick = `${user.name_first} ${user.name_last}`;
+      }
 
       const additionalRoles = member.roles.filter(
         (roleId) =>
