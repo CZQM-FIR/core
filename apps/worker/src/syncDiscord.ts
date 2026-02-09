@@ -127,6 +127,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
   console.log(`Fetched ${integrations.length} integrations from the database.`);
 
   for (const member of members) {
+    if (integrations.find((i) => i.integrationUserId === member.user.id)?.cid !== 1807455) continue;
     if (!integrations.some((i) => i.integrationUserId === member.user.id)) {
       if (env.NODE_ENV === 'dev')
         console.log(`[DEV] Unlinked member: ${member.user.id} (${member.nick || member.user.id})`);
@@ -145,12 +146,12 @@ export const syncDiscord = async (db: DB, env: Env) => {
         }
       });
     } else {
-      const integrationIndex = integrations.findIndex(
-        (i) => i.integrationUserId === member.user.id
-      );
-      if (integrationIndex >= 30) {
-        continue;
-      }
+      // const integrationIndex = integrations.findIndex(
+      //   (i) => i.integrationUserId === member.user.id
+      // );
+      // if (integrationIndex >= 30) {
+      //   continue;
+      // }
 
       if (env.NODE_ENV === 'dev')
         console.log(
@@ -231,7 +232,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
 
       let nick: string;
 
-      switch (user?.preferences.find((p) => p.key === 'name')?.value) {
+      switch (user?.preferences.find((p) => p.key === 'displayName')?.value) {
         case 'cid':
           nick = user.cid.toString();
           break;
