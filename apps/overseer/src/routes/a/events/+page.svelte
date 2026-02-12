@@ -50,12 +50,18 @@
 					<tr>
 						<td>{event.name}</td>
 						<td
-							>{event.start.toLocaleString('en-GB', { timeZone: 'UTC' })}
-							{event.start.getUTCHours()}:{event.start.getUTCMinutes()}z</td
+							>{event.start.toLocaleDateString('en-GB', { timeZone: 'UTC' })}
+							{event.start.getUTCHours().toString().padStart(2, '0')}:{event.start
+								.getUTCMinutes()
+								.toString()
+								.padStart(2, '0')}z</td
 						>
 						<td
-							>{event.end.toLocaleString('en-GB', { timeZone: 'UTC' })}
-							{event.end.getUTCHours()}:{event.end.getUTCMinutes()}z</td
+							>{event.end.toLocaleDateString('en-GB', { timeZone: 'UTC' })}
+							{event.end.getUTCHours().toString().padStart(2, '0')}:{event.end
+								.getUTCMinutes()
+								.toString()
+								.padStart(2, '0')}z</td
 						>
 						<td class="flex flex-row items-center justify-end gap-3">
 							<a href={`/a/events/${event.id}`}>
