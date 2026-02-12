@@ -14,18 +14,14 @@ import type { LibSQLDatabase } from "drizzle-orm/libsql";
 export const notifyUsersViaDiscord = async (
   payload: NotificationPayload,
   options: NotifyUsersOptions,
-  users: number[] = []
+  users: number[] = [],
 ) => {
   const { message, type, title, location = "email" } = payload;
   const { db, webUrl } = options;
 
   let usersToNotify: UserWithRelations[] = await db.query.users.findMany({
     with: {
-      flags: {
-        with: {
-          flag: true,
-        },
-      },
+      flags: true,
       integrations: true,
       preferences: true,
     },
@@ -36,7 +32,7 @@ export const notifyUsersViaDiscord = async (
   }
 
   usersToNotify = usersToNotify.filter((m) => {
-    if (!m.flags.some((f) => ["controller", "visitor"].includes(f.flag.name)))
+    if (!m.flags.some((f) => ["controller", "visitor"].includes(f.name)))
       return false;
     if (requiredNotifications.includes(type)) {
       return true;

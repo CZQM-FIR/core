@@ -15,9 +15,7 @@ export const editWaitlistName = form(
 		const actioner = await getUser(event);
 		if (
 			!actioner ||
-			!actioner.flags.some((f) =>
-				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-			)
+			!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 		) {
 			throw error(403, 'Forbidden');
 		}
@@ -46,9 +44,7 @@ export const deleteWaitlist = command(type('number.integer >= 0'), async (id) =>
 	const actioner = await getUser(event);
 	if (
 		!actioner ||
-		!actioner.flags.some((f) =>
-			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-		)
+		!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 	) {
 		throw error(403, 'Forbidden');
 	}
@@ -69,9 +65,7 @@ export const createWaitlist = form(
 		const actioner = await getUser(event);
 		if (
 			!actioner ||
-			!actioner.flags.some((f) =>
-				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-			)
+			!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 		) {
 			throw error(403, 'Forbidden');
 		}
@@ -98,9 +92,7 @@ export const getWaitlists = query(async () => {
 	const actioner = await getUser(event);
 	if (
 		!actioner ||
-		!actioner.flags.some((f) =>
-			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-		)
+		!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 	) {
 		throw error(403, 'Forbidden');
 	}
@@ -119,15 +111,13 @@ export const getWaitlist = query(type('number.integer >= 0'), async (waitlistId)
 	const actioner = await getUser(event);
 	if (
 		!actioner ||
-		!actioner.flags.some((f) =>
-			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-		)
+		!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 	) {
 		throw error(403, 'Forbidden');
 	}
 
 	const waitlist = await db.query.waitlists.findFirst({
-		where: eq(waitlists.id, waitlistId),
+		where: { id: waitlistId },
 		with: {
 			students: {
 				orderBy: (students) => [students.position],
@@ -153,15 +143,13 @@ export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, user
 	const actioner = await getUser(event);
 	if (
 		!actioner ||
-		!actioner.flags.some((f) =>
-			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-		)
+		!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 	) {
 		throw error(403, 'Forbidden');
 	}
 
 	const waitlist = await db.query.waitlists.findFirst({
-		where: eq(waitlists.id, waitlistId),
+		where: { id: waitlistId },
 		with: {
 			students: true
 		}
@@ -197,15 +185,13 @@ export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, us
 	const actioner = await getUser(event);
 	if (
 		!actioner ||
-		!actioner.flags.some((f) =>
-			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-		)
+		!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 	) {
 		throw error(403, 'Forbidden');
 	}
 
 	const waitlist = await db.query.waitlists.findFirst({
-		where: eq(waitlists.id, waitlistId),
+		where: { id: waitlistId },
 		with: {
 			students: true
 		}
@@ -244,15 +230,13 @@ export const removeUserFromWaitlist = command(
 		const actioner = await getUser(event);
 		if (
 			!actioner ||
-			!actioner.flags.some((f) =>
-				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-			)
+			!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 		) {
 			throw error(403, 'Forbidden');
 		}
 
 		const waitlist = await db.query.waitlists.findFirst({
-			where: eq(waitlists.id, waitlistId),
+			where: { id: waitlistId },
 			with: {
 				students: true
 			}
@@ -296,9 +280,7 @@ export const addUserToWaitlist = form(
 		const actioner = await getUser(event);
 		if (
 			!actioner ||
-			!actioner.flags.some((f) =>
-				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-			)
+			!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 		) {
 			throw error(403, 'Forbidden');
 		}
@@ -307,7 +289,7 @@ export const addUserToWaitlist = form(
 		const userId = Number(userIdString);
 
 		const waitlist = await db.query.waitlists.findFirst({
-			where: eq(waitlists.id, waitlistId),
+			where: { id: waitlistId },
 			with: {
 				students: true
 			}
@@ -318,7 +300,7 @@ export const addUserToWaitlist = form(
 		if (existingUser) throw error(400, 'User already on waitlist');
 
 		const user = await db.query.users.findFirst({
-			where: eq(waitingUsers.cid, userId)
+			where: { cid: userId }
 		});
 		if (!user) throw error(404, 'User not found');
 
@@ -348,15 +330,13 @@ export const enrolUserFromWaitlist = command(
 		const actioner = await getUser(event);
 		if (
 			!actioner ||
-			!actioner.flags.some((f) =>
-				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-			)
+			!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 		) {
 			throw error(403, 'Forbidden');
 		}
 
 		const waitlist = await db.query.waitlists.findFirst({
-			where: eq(waitlists.id, waitlistId),
+			where: { id: waitlistId },
 			with: {
 				students: true
 			}
@@ -407,9 +387,7 @@ export const editWaitlistEstimatedTime = form(
 		const actioner = await getUser(event);
 		if (
 			!actioner ||
-			!actioner.flags.some((f) =>
-				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-			)
+			!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 		) {
 			throw error(403, 'Forbidden');
 		}
@@ -438,7 +416,7 @@ export const getIndividualsWaitlistEntries = query(async () => {
 	}
 
 	const waitlistEntries = await db.query.waitingUsers.findMany({
-		where: eq(waitingUsers.cid, cid),
+		where: { cid: cid! },
 		with: {
 			waitlist: {
 				columns: {
@@ -458,21 +436,19 @@ export const getEnrolledWaitlistEntries = query(type('number.integer >= 0'), asy
 	const actioner = await getUser(event);
 	if (
 		!actioner ||
-		!actioner.flags.some((f) =>
-			['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-		)
+		!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 	) {
 		throw error(403, 'Forbidden');
 	}
 
 	const waitlist = await db.query.waitlists.findFirst({
-		where: eq(waitlists.id, waitlistId)
+		where: { id: waitlistId }
 	});
 
 	if (!waitlist) throw error(404, 'Waitlist not found');
 
 	const enrolledEntries = await db.query.enrolledUsers.findMany({
-		where: and(eq(enrolledUsers.waitlistId, waitlistId), isNull(enrolledUsers.hiddenAt)),
+		where: { waitlistId, hiddenAt: { isNull: true } },
 		with: {
 			user: true
 		}
@@ -491,15 +467,13 @@ export const removeUserFromEnrolledCourse = command(
 		const actioner = await getUser(event);
 		if (
 			!actioner ||
-			!actioner.flags.some((f) =>
-				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-			)
+			!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 		) {
 			throw error(403, 'Forbidden');
 		}
 
 		const enrolledUser = await db.query.enrolledUsers.findFirst({
-			where: and(eq(enrolledUsers.waitlistId, waitlistId), eq(enrolledUsers.cid, userId)),
+			where: { waitlistId, cid: userId },
 			with: {
 				waitlist: true
 			}
@@ -550,15 +524,13 @@ export const hideUserFromEnrolledCourse = command(
 		const actioner = await getUser(event);
 		if (
 			!actioner ||
-			!actioner.flags.some((f) =>
-				['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name)
-			)
+			!actioner.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 		) {
 			throw error(403, 'Forbidden');
 		}
 
 		const enrolledUser = await db.query.enrolledUsers.findFirst({
-			where: and(eq(enrolledUsers.waitlistId, waitlistId), eq(enrolledUsers.cid, userId))
+			where: { waitlistId, cid: userId }
 		});
 
 		if (!enrolledUser) throw error(404, 'Enrolled user not found');

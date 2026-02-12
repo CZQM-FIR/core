@@ -82,7 +82,7 @@ export const GET: RequestHandler = async (event): Promise<Response> => {
   const user = ((await userResponse.json()) as any).data;
 
   const dbUser = await db.query.users.findFirst({
-    where: eq(users.cid, user.cid)
+    where: { cid: user.cid }
   });
 
   if (dbUser) {

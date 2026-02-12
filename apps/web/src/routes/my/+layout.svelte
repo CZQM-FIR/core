@@ -33,10 +33,10 @@
           <!-- <NavLink name="Tickets" icon={Mail} href="/my/tickets" /> -->
           <NavLink name="Preferences" icon={Settings} href="/my/preferences" />
           <NavLink name="Integrations" icon={Blocks} href="/my/integrations" />
-          {#if data.user.flags.some( (f) => ['admin', 'controller', 'visitor'].includes(f.flag.name) )}
+          {#if data.user.flags.some((f) => ['admin', 'controller', 'visitor'].includes(f.name))}
             <NavLink name="Vector" icon={School} href={PUBLIC_VECTOR_URL} external />
           {/if}
-          {#if data.user.flags.some((f) => ['staff', 'admin'].includes(f.flag.name))}
+          {#if data.user.flags.some((f) => ['staff', 'admin'].includes(f.name))}
             <NavLink name="Overseer" icon={Users} href={PUBLIC_OVERSEER_URL} external />
           {/if}
           <NavLink name="Logout" icon={LogOut} href="/auth/logout" />

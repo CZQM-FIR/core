@@ -8,22 +8,18 @@ export const getHomeControllers = query(async () => {
 	const actioner = await getUser(event);
 	if (
 		!actioner ||
-		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.flag.name))
+		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.name))
 	) {
 		throw error(403, 'Forbidden');
 	}
 
 	const users = await db.query.users.findMany({
 		with: {
-			flags: {
-				with: {
-					flag: true
-				}
-			}
+			flags: true
 		}
 	});
 
-	return users.filter((u) => u.flags.some((f) => f.flag.name === 'controller'));
+	return users.filter((u) => u.flags.some((f) => f.name === 'controller'));
 });
 
 export const getVisitingControllers = query(async () => {
@@ -31,22 +27,18 @@ export const getVisitingControllers = query(async () => {
 	const actioner = await getUser(event);
 	if (
 		!actioner ||
-		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.flag.name))
+		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.name))
 	) {
 		throw error(403, 'Forbidden');
 	}
 
 	const users = await db.query.users.findMany({
 		with: {
-			flags: {
-				with: {
-					flag: true
-				}
-			}
+			flags: true
 		}
 	});
 
-	return users.filter((u) => u.flags.some((f) => f.flag.name === 'visitor'));
+	return users.filter((u) => u.flags.some((f) => f.name === 'visitor'));
 });
 
 export const getAllControllers = query(async () => {
@@ -54,7 +46,7 @@ export const getAllControllers = query(async () => {
 	const actioner = await getUser(event);
 	if (
 		!actioner ||
-		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.flag.name))
+		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.name))
 	) {
 		throw error(403, 'Forbidden');
 	}
@@ -62,17 +54,11 @@ export const getAllControllers = query(async () => {
 	const users = await db.query.users.findMany({
 		orderBy: (users) => [users.name_last],
 		with: {
-			flags: {
-				with: {
-					flag: true
-				}
-			}
+			flags: true
 		}
 	});
 
-	return users.filter((u) =>
-		u.flags.some((f) => f.flag.name === 'controller' || f.flag.name === 'visitor')
-	);
+	return users.filter((u) => u.flags.some((f) => f.name === 'controller' || f.name === 'visitor'));
 });
 
 export const getCurrentUserInfo = query(async () => {

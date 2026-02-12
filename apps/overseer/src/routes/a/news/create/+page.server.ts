@@ -1,5 +1,4 @@
-import { news, users } from '@czqm/db/schema';
-import { eq } from 'drizzle-orm';
+import { news } from '@czqm/db/schema';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
 import { fail } from '@sveltejs/kit';
@@ -29,20 +28,13 @@ export const actions = {
 		if (!locals.user) return fail(401);
 
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user.cid),
+			where: { cid: locals.user!.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
-		if (
-			!actioner ||
-			!actioner.flags.some((f) => f.flag.name === 'admin' || f.flag.name === 'staff')
-		) {
+		if (!actioner || !actioner.flags.some((f) => f.name === 'admin' || f.name === 'staff')) {
 			return fail(401);
 		}
 

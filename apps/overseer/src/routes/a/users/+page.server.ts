@@ -10,22 +10,14 @@ export const load = (async () => {
 			active: true
 		},
 		with: {
-			flags: {
-				columns: {
-					flagId: false,
-					userId: false
-				},
-				with: {
-					flag: true
-				}
-			},
+			flags: true,
 			rating: true
 		}
 	});
 
 	const usersWithRoles = await Promise.all(
 		users
-			.filter((u) => u.flags.some((f) => ['visitor', 'controller'].includes(f.flag.name)))
+			.filter((u) => u.flags.some((f) => ['visitor', 'controller'].includes(f.name)))
 			.map(async (user) => {
 				const role = await getUserRole(user.flags);
 				return {

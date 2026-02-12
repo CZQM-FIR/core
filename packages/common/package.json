@@ -2,10 +2,12 @@
   "name": "@czqm/common",
   "type": "module",
   "exports": {
+    ".": "./src/index.ts",
     "./notifications": "./src/notifications/index.ts"
   },
   "dependencies": {
     "@czqm/db": "workspace:*",
+    "arktype": "^2.1.20",
     "drizzle-orm": "1.0.0-beta.13-f728631"
   },
   "devDependencies": {

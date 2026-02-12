@@ -5,13 +5,9 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load = (async ({ locals }) => {
   const user = await db.query.users.findFirst({
-    where: (users, { eq }) => eq(users.cid, locals.user.cid),
+    where: { cid: locals.user.cid },
     with: {
-      flags: {
-        with: {
-          flag: true
-        }
-      },
+      flags: true,
       preferences: true,
       integrations: true
     }
@@ -100,7 +96,7 @@ export const actions = {
 
     // Fetch and return the updated preferences
     const updatedPreferences = await db.query.preferences.findMany({
-      where: eq(preferences.cid, cid)
+      where: { cid }
     });
 
     return {

@@ -30,7 +30,7 @@
 				</div>
 				<ul class="menu dropdown-content menu-sm rounded-box bg-base-300 z-50 mt-3 p-2 shadow-sm">
 					<li><a href="/waitlist">Wait List</a></li>
-					{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'chief-instructor'].includes(f.flag.name) )}
+					{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'chief-instructor'].includes(f.name) )}
 						<li><a href="/a/waitlist">Wait List Management</a></li>
 					{/if}
 				</ul>
@@ -40,7 +40,7 @@
 		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
 				<li><a href="/waitlist">Wait List</a></li>
-				{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'chief-instructor'].includes(f.flag.name) )}
+				{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'chief-instructor'].includes(f.name) )}
 					<li><a href="/a/waitlist">Wait List Management</a></li>
 				{/if}
 			</ul>

@@ -1,26 +1,19 @@
-import { users } from '@czqm/db/schema';
-import { eq } from 'drizzle-orm';
 import { db } from '$lib/db';
 
 export const getUserByCID = async (cid: number, subjectCID: number | null = null) => {
 	if (subjectCID) {
 		const subject = await db.query.users.findFirst({
-			where: eq(users.cid, subjectCID),
+			where: { cid: subjectCID },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
-		if (
-			subject &&
-			subject.flags.some((f) => ['instructor', 'mentor', 'staff'].includes(f.flag.name))
-		) {
+		if (subject && subject.flags.some((f) => ['instructor', 'mentor', 'staff'].includes(f.name))) {
 			return db.query.users.findFirst({
-				where: eq(users.cid, cid),
+				where: {
+					cid: cid
+				},
 				with: {
 					rating: true,
 					sessions: true,
@@ -31,7 +24,9 @@ export const getUserByCID = async (cid: number, subjectCID: number | null = null
 	}
 
 	return db.query.users.findFirst({
-		where: eq(users.cid, cid),
+		where: {
+			cid: cid
+		},
 		columns: {
 			email: false
 		},
@@ -46,20 +41,15 @@ export const getUserByCID = async (cid: number, subjectCID: number | null = null
 export const getAllUsers = async (subjectCID: number | null = null) => {
 	if (subjectCID) {
 		const subject = await db.query.users.findFirst({
-			where: eq(users.cid, subjectCID),
+			where: {
+				cid: subjectCID
+			},
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
-		if (
-			subject &&
-			subject.flags.some((f) => ['instructor', 'mentor', 'staff'].includes(f.flag.name))
-		) {
+		if (subject && subject.flags.some((f) => ['instructor', 'mentor', 'staff'].includes(f.name))) {
 			return db.query.users.findMany({
 				with: {
 					rating: true,

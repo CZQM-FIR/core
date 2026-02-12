@@ -1,5 +1,5 @@
 import { type } from 'arktype';
-import { createDB } from './db.js';
+import { createDB } from '@czqm/common';
 import { handleOnlineSessions } from './onlineATC.js';
 import { handleRecordSessions } from './recordSessions.js';
 import { recurringEvents } from './recurringEvents.js';
@@ -10,12 +10,8 @@ import cron from 'node-cron';
 import express from 'express';
 import { syncMoodle } from './syncMoodle.js';
 import { notificationsJob } from './notifications.js';
-import { LibSQLDatabase } from 'drizzle-orm/libsql';
-import { Client } from '@libsql/client';
 import { fixWaitlistsJob } from './fixWaitlist.js';
-import * as schema from '@czqm/db/schema';
-
-export type DB = LibSQLDatabase<typeof schema> & { $client: Client };
+import { Env } from '@czqm/common';
 
 const app = express();
 let lastRun: string | null = null;
@@ -35,33 +31,6 @@ cron.schedule('*/5 * * * *', async () => {
   }
 });
 
-const Env = type({
-  TURSO_URL: 'string',
-  TURSO_TOKEN: 'string',
-  PUBLIC_WEB_URL: 'string.url',
-  PUBLIC_OVERSEER_URL: 'string.url',
-  CLOUDFLARE_ACCOUNT_ID: 'string',
-  R2_ACCESS_KEY_ID: 'string',
-  R2_ACCESS_KEY: 'string',
-  R2_BUCKET_NAME: 'string',
-  WEBHOOK_ONLINE_CONTROLLERS: 'string',
-  WEBHOOK_UNAUTHORIZED_CONTROLLER: 'string',
-  DISCORD_BOT_TOKEN: 'string',
-  DISCORD_GUILD_ID: 'string.integer',
-  RECORD_SESSIONS_DELAY: 'string.integer.parse',
-  VATCAN_API_TOKEN: 'string',
-  UPTIME_PORT: 'string.integer.parse?',
-  NODE_ENV: '"dev"|"production"?',
-  MOODLE_TOKEN: 'string',
-  MOODLE_URL: 'string.url',
-  AWS_SENDER_EMAIL: 'string.email',
-  AWS_ACCESS_KEY_ID: 'string',
-  AWS_SECRET_ACCESS_KEY: 'string',
-  AWS_REGION: 'string'
-});
-
-export type Env = typeof Env.infer;
-
 async function main(): Promise<void> {
   console.log('Initializing Cron Worker', new Date());
 
@@ -71,67 +40,58 @@ async function main(): Promise<void> {
     throw new Error(`Invalid environment variables: ${env.summary}`);
   }
 
+  const db = createDB(env);
+
   if (env.NODE_ENV === 'dev') {
     app.get('/dev/discord', async (req, res) => {
-      const { db, client } = createDB(env);
       await syncDiscord(db, env);
-      client.close();
       res.send('OK');
     });
 
     app.get('/dev/online', async (req, res) => {
-      const { db, client } = createDB(env);
       await handleOnlineSessions(db, env);
-      client.close();
       res.send('OK');
     });
 
     app.get('/dev/vatcan', async (req, res) => {
-      const { db, client } = createDB(env);
       await vatcanPull(db, env);
-      client.close();
+
       res.send('OK');
     });
 
     app.get('/dev/records', async (req, res) => {
-      const { db, client } = createDB(env);
       await handleRecordSessions(db, env);
-      client.close();
+
       res.send('OK');
     });
 
     app.get('/dev/recurring', async (req, res) => {
-      const { db, client } = createDB(env);
       await recurringEvents(db);
-      client.close();
+
       res.send('OK');
     });
 
     app.get('/dev/moodle', async (req, res) => {
-      const { db, client } = createDB(env);
       await syncMoodle(db, env);
-      client.close();
+
       res.send('OK');
     });
 
     app.get('/dev/notifications', async (req, res) => {
-      const { db, client } = createDB(env);
       await notificationsJob(db, env);
-      client.close();
+
       res.send('OK');
     });
 
     app.get('/dev/fixwaitlists', async (req, res) => {
-      const { db, client } = createDB(env);
       await fixWaitlistsJob(db);
-      client.close();
+
       res.send('OK');
     });
 
     console.log('Running in development mode, manual endpoints enabled');
   } else {
     cron.schedule('* * * * *', async () => {
-      let { db, client } = createDB(env);
       try {
         console.log('Running Online ATC Handler', new Date());
         await handleOnlineSessions(db, env);
@@ -139,10 +99,8 @@ async function main(): Promise<void> {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished Online ATC Handler', new Date());
-        client.close();
       }
 
-      ({ db, client } = createDB(env));
       try {
         console.log('Running Moodle Sync', new Date());
         await syncMoodle(db, env);
@@ -150,10 +108,8 @@ async function main(): Promise<void> {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished Moodle Sync', new Date());
-        client.close();
       }
 
-      ({ db, client } = createDB(env));
       try {
         console.log('Running Notifications Job', new Date());
         await notificationsJob(db, env);
@@ -161,17 +117,13 @@ async function main(): Promise<void> {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished Notifications Job', new Date());
-        client.close();
       }
     });
 
     cron.schedule('*/2 * * * *', async () => {
       try {
-        const { db, client } = createDB(env);
-
         console.log('Running Discord Sync', new Date());
         await syncDiscord(db, env);
-        client.close();
       } catch (err) {
         console.error('Scheduled job failed:', err);
       } finally {
@@ -181,11 +133,9 @@ async function main(): Promise<void> {
 
     cron.schedule('*/15 * * * *', async () => {
       try {
-        const { db, client } = createDB(env);
         console.log('Running VATCAN sync', new Date());
         await vatcanPull(db, env);
         console.log('Finished VATCAN sync', new Date());
-        client.close();
       } catch (err) {
         console.error('Scheduled job failed:', err);
       }
@@ -193,12 +143,9 @@ async function main(): Promise<void> {
 
     cron.schedule('0 * * * *', async () => {
       try {
-        const { db, client } = createDB(env);
-
         console.log('Running Record Sessions', new Date());
         await handleRecordSessions(db, env);
         console.log('Finished Record Sessions', new Date());
-        client.close();
       } catch (err) {
         console.error('Scheduled hourly job failed:', err);
       }
@@ -206,10 +153,8 @@ async function main(): Promise<void> {
 
     cron.schedule('0 2 * * *', async () => {
       try {
-        const { db, client } = createDB(env);
         console.log('Running Recurring Events', new Date());
         await recurringEvents(db);
-        client.close();
       } catch (err) {
         console.error('Scheduled job failed:', err);
       } finally {
@@ -217,10 +162,8 @@ async function main(): Promise<void> {
       }
 
       try {
-        const { db, client } = createDB(env);
         console.log('Running Fix Waitlists', new Date());
         await fixWaitlistsJob(db);
-        client.close();
       } catch (err) {
         console.error('Scheduled job failed:', err);
       } finally {

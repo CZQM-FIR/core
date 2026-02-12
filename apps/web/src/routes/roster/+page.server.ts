@@ -15,11 +15,7 @@ const ExtendedUser = type({
     short: 'string'
   },
   flags: type({
-    userId: 'number.integer >= 0',
-    flagId: 'number.integer >= 0',
-    flag: {
-      name: 'string'
-    }
+    name: 'string'
   }).array(),
   'role?': 'string',
   active: 'number.integer >= -1 & number.integer <= 1',
@@ -44,12 +40,8 @@ export const load = (async () => {
       },
       with: {
         flags: {
-          with: {
-            flag: {
-              columns: {
-                name: true
-              }
-            }
+          columns: {
+            name: true
           }
         },
         rating: true,
@@ -71,9 +63,7 @@ export const load = (async () => {
   }
 
   const controllers = users.filter((controller) => {
-    return controller.flags.some(
-      (flag) => flag.flag.name === 'controller' || flag.flag.name === 'visitor'
-    );
+    return controller.flags.some((flag) => flag.name === 'controller' || flag.name === 'visitor');
   });
 
   controllers.map(async (controller) => {

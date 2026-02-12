@@ -9,13 +9,9 @@ export const load = (async ({ locals, url }) => {
 	}
 
 	const user = await db.query.users.findFirst({
-		where: (users, { eq }) => eq(users.cid, locals.user!.cid),
+		where: { cid: locals.user!.cid },
 		with: {
-			flags: {
-				with: {
-					flag: true
-				}
-			}
+			flags: true
 		}
 	});
 

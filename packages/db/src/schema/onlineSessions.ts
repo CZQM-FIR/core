@@ -1,6 +1,5 @@
 import { index, int, sqliteTable } from "drizzle-orm/sqlite-core";
-import { positions, users } from "./index";
-import { relations, type InferSelectModel } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
 
 export const onlineSessions = sqliteTable("online_sessions", {
   id: int().primaryKey({ autoIncrement: true }),

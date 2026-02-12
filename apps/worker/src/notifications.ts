@@ -1,5 +1,5 @@
 import * as schema from '@czqm/db/schema';
-import { DB, Env } from '.';
+import { DB, Env } from '@czqm/common';
 import { eq } from 'drizzle-orm';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { type } from 'arktype';
@@ -9,7 +9,7 @@ interface NotificationQueueItem {
   user: schema.User & {
     integrations: schema.Integration[];
     preferences: schema.Preference[];
-    flags: (schema.UsersToFlags & { flag: schema.Flag })[];
+    flags: schema.Flag[];
   };
 }
 
@@ -121,17 +121,13 @@ const sendDiscordMessage = async (env: Env, notification: DiscordNotificationQue
 export const notificationsJob = async (db: DB, env: Env) => {
   // Fetch notifications that need to be sent
   const notifications = await db.query.notifications.findMany({
-    where: (notifications, { isNull }) => isNull(notifications.sent),
+    where: { sent: { isNull: true } },
     with: {
       user: {
         with: {
           integrations: true,
           preferences: true,
-          flags: {
-            with: {
-              flag: true
-            }
-          }
+          flags: true
         }
       }
     }

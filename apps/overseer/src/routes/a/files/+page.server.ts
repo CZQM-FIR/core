@@ -1,8 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { db } from '$lib/db';
-import { users } from '@czqm/db/schema';
-import { eq } from 'drizzle-orm';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import env from '$lib/env';
 import { type } from 'arktype';
@@ -26,20 +24,13 @@ export const actions: Actions = {
 		}
 
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user?.cid || 0),
+			where: { cid: locals.user?.cid || 0 },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
-		if (
-			!actioner ||
-			!actioner.flags.some((f) => f.flag.name === 'admin' || f.flag.name === 'staff')
-		) {
+		if (!actioner || !actioner.flags.some((f) => f.name === 'admin' || f.name === 'staff')) {
 			return fail(401);
 		}
 

@@ -3,16 +3,15 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import { users } from '@czqm/db/schema';
+import { events } from '@czqm/db/schema';
 import { S3Client } from '@aws-sdk/client-s3';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { events } from '@czqm/db/schema';
 import { type } from 'arktype';
 import env from '$lib/env';
 
 export const load = (async ({ params }) => {
 	const event = await db.query.events.findFirst({
-		where: (events, { eq }) => eq(events.id, Number(params.id))
+		where: { id: Number(params.id) }
 	});
 
 	if (!event) {
@@ -48,13 +47,9 @@ export const actions = {
 		if (!locals.user) return fail(401);
 
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user.cid),
+			where: { cid: locals.user!.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
@@ -62,18 +57,18 @@ export const actions = {
 			!actioner ||
 			!actioner.flags.some(
 				(f) =>
-					f.flag.name === 'admin' ||
-					f.flag.name === 'chief' ||
-					f.flag.name === 'deputy' ||
-					f.flag.name === 'chief-instructor' ||
-					f.flag.name === 'events'
+					f.name === 'admin' ||
+					f.name === 'chief' ||
+					f.name === 'deputy' ||
+					f.name === 'chief-instructor' ||
+					f.name === 'events'
 			)
 		) {
 			return fail(401, { message: 'Unauthorized' });
 		}
 
 		const event = await db.query.events.findFirst({
-			where: eq(events.id, id)
+			where: { id }
 		});
 
 		if (!event) {

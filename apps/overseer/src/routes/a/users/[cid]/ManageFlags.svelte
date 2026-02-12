@@ -19,14 +19,12 @@
 	{#if data.user!.flags.length > 0}
 		<div class="divider mb-0">Current Flags</div>
 		<ul class="">
-			{#each data.user!.flags as flag (flag.flagId)}
+			{#each data.user!.flags as flag (flag.id)}
 				<li>
 					<form action="?/removeFlag" method="post" use:enhance>
 						<input type="text" name="cid" required hidden value={data.cid} />
-						<input type="text" name="flag" required hidden value={flag.flagId} />
-						<button type="submit" class="hover:text-error hover:line-through"
-							>- {flag.flag.name}</button
-						>
+						<input type="text" name="flag" required hidden value={flag.id} />
+						<button type="submit" class="hover:text-error hover:line-through">- {flag.name}</button>
 					</form>
 				</li>
 			{/each}

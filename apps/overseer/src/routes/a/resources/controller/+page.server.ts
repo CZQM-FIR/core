@@ -7,7 +7,7 @@ import { type } from 'arktype';
 
 export const load = (async () => {
 	const resources = await db.query.resources.findMany({
-		where: (resources, { eq }) => eq(resources.type, 'controller')
+		where: { type: 'controller' }
 	});
 
 	return {
@@ -84,17 +84,13 @@ export const actions = {
 		}
 
 		const user = await db.query.users.findFirst({
-			where: (users, { eq }) => eq(users.cid, localUser.cid),
+			where: { cid: localUser.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
-		if (!user || !user.flags.some((f) => ['staff', 'admin'].includes(f.flag.name))) {
+		if (!user || !user.flags.some((f) => ['staff', 'admin'].includes(f.name))) {
 			return fail(401, {
 				ok: false,
 				status: 401,
@@ -173,17 +169,13 @@ export const actions = {
 		}
 
 		const user = await db.query.users.findFirst({
-			where: (users, { eq }) => eq(users.cid, localUser.cid),
+			where: { cid: localUser.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
-		if (!user || !user.flags.some((f) => ['staff', 'admin'].includes(f.flag.name))) {
+		if (!user || !user.flags.some((f) => ['staff', 'admin'].includes(f.name))) {
 			return fail(401, {
 				ok: false,
 				status: 401,
@@ -198,7 +190,7 @@ export const actions = {
 		}
 
 		const resource = await db.query.resources.findFirst({
-			where: (resources, { eq }) => eq(resources.id, id)
+			where: { id }
 		});
 
 		if (!resource) {
@@ -272,17 +264,13 @@ export const actions = {
 		}
 
 		const user = await db.query.users.findFirst({
-			where: (users, { eq }) => eq(users.cid, localUser.cid),
+			where: { cid: localUser.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
-		if (!user || !user.flags.some((f) => ['staff', 'admin'].includes(f.flag.name))) {
+		if (!user || !user.flags.some((f) => ['staff', 'admin'].includes(f.name))) {
 			return fail(401, {
 				ok: false,
 				status: 401,
@@ -292,7 +280,7 @@ export const actions = {
 		}
 
 		const resource = await db.query.resources.findFirst({
-			where: (resources, { eq }) => eq(resources.id, id)
+			where: { id }
 		});
 
 		if (!resource) {

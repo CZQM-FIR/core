@@ -1,14 +1,8 @@
-import { and, eq } from 'drizzle-orm';
-import {
-  Position,
-  positions,
-  users,
-  onlineSessions,
-  roster,
-  integrations,
-  notifications
-} from '@czqm/db/schema';
-import type { DB, Env } from '.';
+import { eq } from 'drizzle-orm';
+import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import { Position, positions, users, onlineSessions, notifications } from '@czqm/db/schema';
+import * as schema from '@czqm/db/schema';
+import type { DB, Env } from '@czqm/common';
 import {
   notifyUsersViaDiscord,
   unauthorizedConnectionEmailTemplate
@@ -126,7 +120,7 @@ const notifyUnauthorizedSession = async (
       type: 'unauthorizedConnection'
     },
     {
-      db,
+      db: db as unknown as LibSQLDatabase<typeof schema>,
       webUrl: env.PUBLIC_WEB_URL
     },
     [user.cid]
@@ -171,17 +165,13 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
       cid: true
     },
     with: {
-      flags: {
-        with: {
-          flag: true
-        }
-      }
+      flags: true
     }
   });
 
   const czqmControllers = allUsers
     .filter((c) => {
-      return c.flags.some(({ flagId }) => flagId === 4 || flagId === 5);
+      return c.flags.some(({ id }) => id === 4 || id === 5);
     })
     .map((c) => c.cid);
 
@@ -201,10 +191,7 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
 
   for await (const controller of czqmControllersOnline) {
     const preExistingSession = await db.query.onlineSessions.findFirst({
-      where: and(
-        eq(onlineSessions.userId, controller.cid),
-        eq(onlineSessions.start, new Date(controller.start))
-      )
+      where: { userId: controller.cid, start: { eq: new Date(controller.start) } }
     });
 
     if (preExistingSession) {
@@ -216,7 +203,7 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
         continue;
 
       const userData = await db.query.users.findFirst({
-        where: eq(users.cid, controller.cid),
+        where: { cid: controller.cid },
         columns: {
           active: true,
           cid: true,
@@ -224,7 +211,7 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
         },
         with: {
           integrations: {
-            where: eq(integrations.type, 0)
+            where: { type: 0 }
           }
         }
       });
@@ -232,7 +219,7 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
       if (!userData) continue;
 
       const rosterDataPoints = await db.query.roster.findMany({
-        where: eq(roster.controllerId, controller.cid)
+        where: { controllerId: controller.cid }
       });
 
       const unitType = position.callsign.split('_').pop()?.toLowerCase() || '';
@@ -290,10 +277,7 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
 
   for await (const controller of nonCzqmControllersOnline) {
     const preExsittingSession = await db.query.onlineSessions.findFirst({
-      where: and(
-        eq(onlineSessions.userId, controller.cid),
-        eq(onlineSessions.start, new Date(controller.start))
-      )
+      where: { userId: controller.cid, start: { eq: new Date(controller.start) } }
     });
 
     if (preExsittingSession) {

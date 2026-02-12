@@ -8,10 +8,10 @@ export const load = (async ({ locals }) => {
   const controllers = await db.query.users.findMany({
     with: {
       sessions: {
-        where: (sessions, { gte }) => gte(sessions.logonTime, startOfMonth)
+        where: { logonTime: { gte: startOfMonth } }
       },
       preferences: true,
-      flags: { with: { flag: true } }
+      flags: true
     },
     columns: {
       name_first: true,
@@ -31,15 +31,15 @@ export const load = (async ({ locals }) => {
 
   const top5Controllers = controllersWithDuration
     .filter(
-      (c) =>
-        c.totalDuration > 0 && c.flags.some((f) => ['controller', 'visitor'].includes(f.flag.name))
+      (c) => c.totalDuration > 0 && c.flags.some((f) => ['controller', 'visitor'].includes(f.name))
     )
     .sort((a, b) => b.totalDuration - a.totalDuration)
     .slice(0, 5);
 
   const events = await db.query.events.findMany({
-    where: (events, { gte }) =>
-      gte(events.end, new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())),
+    where: {
+      end: { gte: new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) }
+    },
     orderBy: (events, { desc }) => desc(events.start)
   });
 
