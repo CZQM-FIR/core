@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ChevronLeft } from '@lucide/svelte';
 	import type { PageProps } from './$types';
 	import { onMount } from 'svelte';
 
@@ -20,7 +21,10 @@
 <section>
 	<div class="container mx-auto">
 		<h1 class="pt-6 text-2xl font-semibold">Edit {event.name}</h1>
-		<div class="divider"></div>
+		<a href="/a/events" class="text-primary hover:link flex flex-row items-center gap-1">
+			<ChevronLeft size="15" /> Back to Events
+		</a>
+		<div class="divider mt-0"></div>
 
 		<form method="POST" enctype="multipart/form-data">
 			<input type="hidden" name="id" value={event.id} />

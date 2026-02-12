@@ -23,7 +23,7 @@ export const load = (async ({ params }) => {
 
 export const actions = {
 	default: async ({ request, locals }) => {
-		const FormCheckbox = type("'on' | 'off'").pipe((v) => v === 'on');
+		const FormCheckbox = type("'on'").optional();
 		const FormData = type({
 			name: 'string',
 			start: 'string.date',
@@ -37,12 +37,11 @@ export const actions = {
 		const data = FormData(Object.fromEntries((await request.formData()).entries()));
 
 		if (data instanceof type.errors) {
-			return fail(400, { message: 'Invalid form data' });
+			return fail(400, { message: `Invalid form data: ${data.summary}` });
 		}
 
-		const { id, name, start, end, description, image, recurring } = data;
-
-		console.log(recurring);
+		const { id, name, start, end, description, image, recurring: recurringRaw } = data;
+		const recurring = recurringRaw === 'on';
 
 		if (!locals.user) return fail(401);
 
@@ -110,7 +109,7 @@ export const actions = {
 				end: new Date(end),
 				description,
 				image: image ? fileName : event.image,
-				recurring: recurring
+				recurring
 			})
 			.where(eq(events.id, id));
 
