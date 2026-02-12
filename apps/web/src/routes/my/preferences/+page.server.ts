@@ -1,6 +1,5 @@
 import { db } from '$lib/db';
 import { preferences } from '@czqm/db/schema';
-import { eq } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load = (async ({ locals }) => {
