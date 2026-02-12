@@ -55,7 +55,7 @@
                 {truncate(
                   event.description
                     .split('')
-                    .filter((i) => !['*', '#', '~'].includes(i))
+                    .filter((i: string) => !['*', '#', '~'].includes(i))
                     .join(''),
                   100
                 )}
