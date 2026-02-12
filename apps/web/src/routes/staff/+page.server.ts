@@ -10,11 +10,7 @@ const StaffUser = type({
   name_last: 'string',
   bio: 'string | null',
   flags: type({
-    userId: 'number',
-    flagId: 'number',
-    flag: {
-      name: 'string'
-    }
+    name: 'string'
   }).array(),
   preferences: type({
     key: 'string',
@@ -39,12 +35,8 @@ export const load = (async () => {
       with: {
         preferences: true,
         flags: {
-          with: {
-            flag: {
-              columns: {
-                name: true
-              }
-            }
+          columns: {
+            name: true
           }
         }
       }
@@ -55,7 +47,7 @@ export const load = (async () => {
     return error(500, { message: users.issues.toString() });
   }
 
-  const staff = users.filter((user) => user.flags.some((flag) => flag.flag.name === 'staff'));
+  const staff = users.filter((user) => user.flags.some((flag) => flag.name === 'staff'));
 
   const sorting = {
     chief: 5,
@@ -71,13 +63,13 @@ export const load = (async () => {
     let bScore = 0;
 
     for (const flag of a.flags) {
-      if (flag.flag.name in sorting)
-        aScore = Math.max(aScore, sorting[flag.flag.name as keyof typeof sorting]);
+      if (flag.name in sorting)
+        aScore = Math.max(aScore, sorting[flag.name as keyof typeof sorting]);
     }
 
     for (const flag of b.flags) {
-      if (flag.flag.name in sorting)
-        bScore = Math.max(bScore, sorting[flag.flag.name as keyof typeof sorting]);
+      if (flag.name in sorting)
+        bScore = Math.max(bScore, sorting[flag.name as keyof typeof sorting]);
     }
 
     return bScore - aScore;
@@ -87,27 +79,27 @@ export const load = (async () => {
     const roles = [];
     let email: string | undefined;
 
-    if (staff.flags.some((flag) => flag.flag.name === 'chief')) {
+    if (staff.flags.some((flag) => flag.name === 'chief')) {
       roles.push('FIR Chief');
       email = email ?? 'chief@czqm.ca';
     }
-    if (staff.flags.some((flag) => flag.flag.name === 'deputy')) {
+    if (staff.flags.some((flag) => flag.name === 'deputy')) {
       roles.push('Deputy FIR Chief');
       email = email ?? 'deputy@czqm.ca';
     }
-    if (staff.flags.some((flag) => flag.flag.name === 'chief-instructor')) {
+    if (staff.flags.some((flag) => flag.name === 'chief-instructor')) {
       roles.push('Chief Instructor');
       email = email ?? 'instructor@czqm.ca';
     }
-    if (staff.flags.some((flag) => flag.flag.name === 'web')) {
+    if (staff.flags.some((flag) => flag.name === 'web')) {
       roles.push('Webmaster');
       email = email ?? 'webmaster@czqm.ca';
     }
-    if (staff.flags.some((flag) => flag.flag.name === 'events')) {
+    if (staff.flags.some((flag) => flag.name === 'events')) {
       roles.push('Events Coordinator');
       email = email ?? 'events@czqm.ca';
     }
-    if (staff.flags.some((flag) => flag.flag.name === 'sector')) {
+    if (staff.flags.some((flag) => flag.name === 'sector')) {
       roles.push('Facility Engineer');
       email = email ?? 'engineer@czqm.ca';
     }
@@ -117,11 +109,11 @@ export const load = (async () => {
   });
 
   const trainingTeam = users.filter((u) => {
-    return u.flags.some((f) => ['mentor', 'instructor', 'chief-instructor'].includes(f.flag.name));
+    return u.flags.some((f) => ['mentor', 'instructor', 'chief-instructor'].includes(f.name));
   });
 
   const chiefInstructor = trainingTeam.find((u) =>
-    u.flags.some((f) => f.flag.name === 'chief-instructor')
+    u.flags.some((f) => f.name === 'chief-instructor')
   );
 
   return {
@@ -129,10 +121,10 @@ export const load = (async () => {
     trainingTeam: [
       ...(chiefInstructor ? [chiefInstructor] : []),
       ...trainingTeam
-        .filter((u) => !u.flags.some((f) => f.flag.name === 'chief-instructor'))
+        .filter((u) => !u.flags.some((f) => f.name === 'chief-instructor'))
         .sort((a, b) => {
-          const aScore = a.flags.some((f) => f.flag.name === 'instructor') ? 1 : 0;
-          const bScore = b.flags.some((f) => f.flag.name === 'instructor') ? 1 : 0;
+          const aScore = a.flags.some((f) => f.name === 'instructor') ? 1 : 0;
+          const bScore = b.flags.some((f) => f.name === 'instructor') ? 1 : 0;
           if (bScore !== aScore) return bScore - aScore;
           return a.name_full.localeCompare(b.name_full);
         })

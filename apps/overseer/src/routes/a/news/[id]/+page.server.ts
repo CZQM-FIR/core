@@ -2,16 +2,16 @@ import { db } from '$lib/db';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
-import { news, users } from '@czqm/db/schema';
+import { news } from '@czqm/db/schema';
 import { S3Client } from '@aws-sdk/client-s3';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { type } from 'arktype';
 import env from '$lib/env';
+import { eq } from 'drizzle-orm';
 
 export const load = (async ({ params }) => {
 	const article = await db.query.news.findFirst({
-		where: (news, { eq }) => eq(news.id, Number(params.id))
+		where: { id: Number(params.id) }
 	});
 
 	if (!article) {
@@ -41,25 +41,18 @@ export const actions = {
 		if (!locals.user) return fail(401);
 
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user.cid),
+			where: { cid: locals.user!.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
-		if (
-			!actioner ||
-			!actioner.flags.some((f) => f.flag.name === 'admin' || f.flag.name === 'staff')
-		) {
+		if (!actioner || !actioner.flags.some((f) => f.name === 'admin' || f.name === 'staff')) {
 			return fail(401, { message: 'Unauthorized' });
 		}
 
 		const article = await db.query.news.findFirst({
-			where: eq(news.id, id)
+			where: { id }
 		});
 
 		if (!article) {

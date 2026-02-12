@@ -3,6 +3,14 @@ import { db } from '$lib/db';
 import { getUserRole } from '$lib/utilities/getUserRole';
 
 export const load = (async () => {
+	const now = new Date();
+	const currentQuarter = Math.floor(now.getMonth() / 3);
+	const currentYear = now.getFullYear();
+	const startNextQuarter = new Date(currentYear, currentQuarter * 3 + 3, 1);
+	const lastQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
+	const lastYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
+	const startLastQuarter = new Date(lastYear, lastQuarter * 3, 1);
+
 	const users = await db.query.users.findMany({
 		columns: {
 			cid: true,
@@ -12,17 +20,32 @@ export const load = (async () => {
 		with: {
 			flags: {
 				columns: {
-					flagId: false,
-					userId: false
-				},
-				with: {
-					flag: true
+					name: true
 				}
 			},
-			rating: true,
+			rating: {
+				columns: {
+					id: true
+				}
+			},
 			sessions: {
+				columns: {
+					duration: true,
+					logonTime: true,
+					positionId: true
+				},
 				with: {
-					position: true
+					position: {
+						columns: {
+							callsign: true
+						}
+					}
+				},
+				where: {
+					logonTime: {
+						gte: startLastQuarter,
+						lt: startNextQuarter
+					}
 				}
 			}
 		}
@@ -30,10 +53,6 @@ export const load = (async () => {
 
 	const modifiedUsers = await Promise.all(
 		users.map(async (user) => {
-			const now = new Date();
-			const currentQuarter = Math.floor(now.getMonth() / 3);
-			const currentYear = now.getFullYear();
-
 			const sessionsThisQuarter = user.sessions.filter((session) => {
 				const sessionDate = new Date(session.logonTime);
 				const sessionQuarter = Math.floor(sessionDate.getMonth() / 3);
@@ -41,9 +60,6 @@ export const load = (async () => {
 
 				return sessionQuarter === currentQuarter && sessionYear === currentYear;
 			});
-
-			const lastQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
-			const lastYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
 
 			const sessionsLastQuarter = user.sessions.filter((session) => {
 				const sessionDate = new Date(session.logonTime);
@@ -95,7 +111,7 @@ export const load = (async () => {
 
 	return {
 		users: modifiedUsers.filter((u) =>
-			u.flags.some((f) => ['controller', 'visitor'].includes(f.flag.name))
+			u.flags.some((f) => ['controller', 'visitor'].includes(f.name))
 		)
 	};
 }) satisfies PageServerLoad;

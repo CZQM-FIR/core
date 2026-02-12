@@ -1,6 +1,6 @@
 import * as schema from '@czqm/db/schema';
 import { and, eq } from 'drizzle-orm';
-import type { DB, Env } from '.';
+import type { DB, Env } from '@czqm/common';
 
 type VatcanApiUser = {
   cid: number;
@@ -38,26 +38,22 @@ export const vatcanPull = async (db: DB, env: Env) => {
 
   const users = await db.query.users.findMany({
     with: {
-      flags: {
-        with: {
-          flag: true
-        }
-      }
+      flags: true
     }
   });
 
   // remove all flags from users who are no longer controllers or visitors
   for (const user of users) {
-    if (user.flags.some((f) => f.flag.name === 'controller')) {
+    if (user.flags.some((f) => f.name === 'controller')) {
       if (!controllers.some((c) => c.cid === user.cid)) {
         await db.delete(schema.usersToFlags).where(eq(schema.usersToFlags.userId, user.cid));
-        user.flags = user.flags.filter((f) => f.flag.name !== 'controller');
+        user.flags = user.flags.filter((f) => f.name !== 'controller');
       }
     }
-    if (user.flags.some((f) => f.flag.name === 'visitor')) {
+    if (user.flags.some((f) => f.name === 'visitor')) {
       if (!visitors.some((c) => c.cid === user.cid)) {
         await db.delete(schema.usersToFlags).where(eq(schema.usersToFlags.userId, user.cid));
-        user.flags = user.flags.filter((f) => f.flag.name !== 'visitor');
+        user.flags = user.flags.filter((f) => f.name !== 'visitor');
       }
     }
   }
@@ -99,7 +95,7 @@ export const vatcanPull = async (db: DB, env: Env) => {
     if (isNewUser && controller.rating === 2) {
       // if the controllers rating is 2 (S1), add them to the S1 waitlist
       const waitlist = await db.query.waitlists.findFirst({
-        where: eq(schema.waitlists.id, 1),
+        where: { id: 1 },
         with: {
           students: true
         }
@@ -107,10 +103,7 @@ export const vatcanPull = async (db: DB, env: Env) => {
 
       if (waitlist) {
         const isAlreadyWaiting = await db.query.waitingUsers.findFirst({
-          where: and(
-            eq(schema.waitingUsers.cid, controller.cid),
-            eq(schema.waitingUsers.waitlistId, waitlist.id)
-          )
+          where: { cid: controller.cid, waitlistId: waitlist.id }
         });
 
         if (!isAlreadyWaiting) {
@@ -183,7 +176,7 @@ export const vatcanPull = async (db: DB, env: Env) => {
   };
 
   for await (const pos of Object.keys(staff) as (keyof typeof staffPositions)[]) {
-    const posUsers = users.filter((u) => u.flags.some((f) => f.flag.name === staffPositions[pos]));
+    const posUsers = users.filter((u) => u.flags.some((f) => f.name === staffPositions[pos]));
     if (posUsers.length === 0) {
       await db
         .insert(schema.usersToFlags)
@@ -213,9 +206,9 @@ export const vatcanPull = async (db: DB, env: Env) => {
                 eq(schema.usersToFlags.flagId, flagIDs[pos])
               )
             );
-          user.flags = user.flags.filter((f) => f.flag.name !== staffPositions[pos]);
+          user.flags = user.flags.filter((f) => f.name !== staffPositions[pos]);
 
-          if (!user.flags.some((f) => Object.values(staffPositions).includes(f.flag.name))) {
+          if (!user.flags.some((f) => Object.values(staffPositions).includes(f.name))) {
             await db.delete(schema.usersToFlags).where(
               and(
                 eq(schema.usersToFlags.userId, user.cid),

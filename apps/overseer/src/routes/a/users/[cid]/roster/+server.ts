@@ -1,18 +1,14 @@
 import { db } from '$lib/db';
 import { and, eq } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
-import { roster, users } from '@czqm/db/schema';
+import { roster } from '@czqm/db/schema';
 
 export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	if (!locals.user) return new Response(null, { status: 401 });
 	const actioner = await db.query.users.findFirst({
-		where: eq(users.cid, locals.user.cid),
+		where: { cid: locals.user!.cid },
 		with: {
-			flags: {
-				with: {
-					flag: true
-				}
-			}
+			flags: true
 		}
 	});
 
@@ -20,10 +16,10 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 		!actioner ||
 		!actioner.flags.some(
 			(f) =>
-				f.flag.name === 'admin' ||
-				f.flag.name === 'chief' ||
-				f.flag.name === 'deputy' ||
-				f.flag.name === 'chief-instructor'
+				f.name === 'admin' ||
+				f.name === 'chief' ||
+				f.name === 'deputy' ||
+				f.name === 'chief-instructor'
 		)
 	)
 		return new Response(null, { status: 401 });
@@ -35,7 +31,7 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	};
 
 	const user = await db.query.users.findFirst({
-		where: eq(users.cid, cid),
+		where: { cid },
 		with: {
 			roster: true
 		}
@@ -46,7 +42,7 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 		return new Response(null, { status: 409 });
 
 	const existingRoster = await db.query.roster.findFirst({
-		where: and(eq(roster.controllerId, cid), eq(roster.position, position))
+		where: { controllerId: cid, position }
 	});
 
 	if (existingRoster) {
@@ -66,7 +62,7 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	}
 
 	const newData = await db.query.users.findFirst({
-		where: eq(users.cid, Number(params.cid)),
+		where: { cid: Number(params.cid) },
 		with: {
 			rating: true,
 			roster: true,

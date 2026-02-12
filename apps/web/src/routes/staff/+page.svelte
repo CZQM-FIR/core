@@ -48,9 +48,9 @@
           <a href="/controller/{user.cid}" class="hover:link text-lg">{getUserDisplayName(user)}</a>
         </h2>
         <p class="text-sm text-gray-400">
-          {user.flags.some((f) => f.flag.name === 'chief-instructor')
+          {user.flags.some((f) => f.name === 'chief-instructor')
             ? 'Chief Instructor'
-            : user.flags.some((f) => f.flag.name === 'instructor')
+            : user.flags.some((f) => f.name === 'instructor')
               ? 'Instructor'
               : 'Mentor'}
         </p>

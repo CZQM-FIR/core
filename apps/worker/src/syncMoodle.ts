@@ -1,5 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
-import type { DB, Env } from '.';
+import type { DB, Env } from '@czqm/common';
 import { moodleQueue } from '@czqm/db/schema';
 import { eq } from 'drizzle-orm';
 

@@ -4,19 +4,15 @@ import type { LayoutServerLoad } from './$types';
 
 export const load = (async ({ locals }) => {
 	const user = await db.query.users.findFirst({
-		where: (users, { eq }) => eq(users.cid, locals.user!.cid),
+		where: { cid: locals.user!.cid },
 		with: {
-			flags: {
-				with: {
-					flag: true
-				}
-			}
+			flags: true
 		}
 	});
 
 	if (
 		!user ||
-		!user.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.flag.name))
+		!user.flags.some((f) => ['admin', 'chief-instructor', 'chief', 'deputy'].includes(f.name))
 	) {
 		throw redirect(303, '/');
 	}

@@ -1,19 +1,15 @@
 import { db } from '$lib/db';
 import { and, eq } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
-import { flags, positions, soloEndorsements, users, usersToFlags } from '@czqm/db/schema';
+import { soloEndorsements, users, usersToFlags } from '@czqm/db/schema';
 import { fail } from '@sveltejs/kit';
 import { type } from 'arktype';
 
 export const load = (async ({ params }) => {
 	const user = await db.query.users.findFirst({
-		where: eq(users.cid, Number(params.cid)),
+		where: { cid: Number(params.cid) },
 		with: {
-			flags: {
-				with: {
-					flag: true
-				}
-			},
+			flags: true,
 			rating: true,
 			roster: true,
 			soloEndorsements: {
@@ -31,7 +27,7 @@ export const load = (async ({ params }) => {
 
 	const flags = (await db.query.flags.findMany({}))
 		.filter((f) => f.showInSelect)
-		.filter((f) => !user?.flags.some((uf) => uf.flagId === f.id));
+		.filter((f) => !user?.flags.some((uf) => uf.id === f.id));
 
 	return { user, cid: params.cid, flags };
 }) satisfies PageServerLoad;
@@ -59,23 +55,19 @@ export const actions = {
 
 		if (!locals.user) return new Response(null, { status: 401 });
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user.cid),
+			where: { cid: locals.user!.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 		if (
 			!actioner ||
 			!actioner.flags.some(
 				(f) =>
-					f.flag.name === 'admin' ||
-					f.flag.name === 'chief' ||
-					f.flag.name === 'deputy' ||
-					f.flag.name === 'chief-instructor'
+					f.name === 'admin' ||
+					f.name === 'chief' ||
+					f.name === 'deputy' ||
+					f.name === 'chief-instructor'
 			)
 		)
 			return fail(401, {
@@ -84,22 +76,18 @@ export const actions = {
 			});
 
 		const user = await db.query.users.findFirst({
-			where: eq(users.cid, cid),
+			where: { cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 		if (!user) return fail(404, { ok: false, message: 'User not found' });
-		if (user.flags.some((f) => f.flagId === flagId)) {
+		if (user.flags.some((f) => f.id === flagId)) {
 			return fail(400, { ok: false, message: 'User already has this flag' });
 		}
 
 		const flag = await db.query.flags.findFirst({
-			where: eq(flags.id, flagId)
+			where: { id: flagId }
 		});
 
 		if (!flag) return fail(404, { ok: false, message: 'Flag not found' });
@@ -141,23 +129,19 @@ export const actions = {
 
 		if (!locals.user) return new Response(null, { status: 401 });
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user.cid),
+			where: { cid: locals.user!.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 		if (
 			!actioner ||
 			!actioner.flags.some(
 				(f) =>
-					f.flag.name === 'admin' ||
-					f.flag.name === 'chief' ||
-					f.flag.name === 'deputy' ||
-					f.flag.name === 'chief-instructor'
+					f.name === 'admin' ||
+					f.name === 'chief' ||
+					f.name === 'deputy' ||
+					f.name === 'chief-instructor'
 			)
 		)
 			return fail(401, {
@@ -166,22 +150,18 @@ export const actions = {
 			});
 
 		const user = await db.query.users.findFirst({
-			where: eq(users.cid, cid),
+			where: { cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 		if (!user) return fail(404, { ok: false, message: 'User not found' });
-		if (!user.flags.some((f) => f.flagId === flagId)) {
+		if (!user.flags.some((f) => f.id === flagId)) {
 			return fail(400, { ok: false, message: 'User does not have this flag' });
 		}
 
 		const flag = await db.query.flags.findFirst({
-			where: eq(flags.id, flagId)
+			where: { id: flagId }
 		});
 
 		if (!flag) return fail(404, { ok: false, message: 'Flag not found' });
@@ -223,29 +203,25 @@ export const actions = {
 		// verify the actioner has perms
 		if (!locals.user) return new Response(null, { status: 401 });
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user.cid),
+			where: { cid: locals.user!.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 		if (
 			!actioner ||
 			!actioner.flags.some(
 				(f) =>
-					f.flag.name === 'admin' ||
-					f.flag.name === 'chief' ||
-					f.flag.name === 'deputy' ||
-					f.flag.name === 'chief-instructor'
+					f.name === 'admin' ||
+					f.name === 'chief' ||
+					f.name === 'deputy' ||
+					f.name === 'chief-instructor'
 			)
 		)
 			return fail(401);
 
 		const user = await db.query.users.findFirst({
-			where: eq(users.cid, cid),
+			where: { cid },
 			with: {
 				soloEndorsements: {
 					with: {
@@ -305,29 +281,25 @@ export const actions = {
 		// verify the actioner has perms
 		if (!locals.user) return new Response(null, { status: 401 });
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user.cid),
+			where: { cid: locals.user!.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 		if (
 			!actioner ||
 			!actioner.flags.some(
 				(f) =>
-					f.flag.name === 'admin' ||
-					f.flag.name === 'chief' ||
-					f.flag.name === 'deputy' ||
-					f.flag.name === 'chief-instructor'
+					f.name === 'admin' ||
+					f.name === 'chief' ||
+					f.name === 'deputy' ||
+					f.name === 'chief-instructor'
 			)
 		)
 			return fail(401);
 
 		const user = await db.query.users.findFirst({
-			where: eq(users.cid, cid),
+			where: { cid },
 			with: {
 				soloEndorsements: {
 					with: {
@@ -379,29 +351,25 @@ export const actions = {
 		// verify the actioner has perms
 		if (!locals.user) return new Response(null, { status: 401 });
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user.cid),
+			where: { cid: locals.user!.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 		if (
 			!actioner ||
 			!actioner.flags.some(
 				(f) =>
-					f.flag.name === 'admin' ||
-					f.flag.name === 'chief' ||
-					f.flag.name === 'deputy' ||
-					f.flag.name === 'chief-instructor'
+					f.name === 'admin' ||
+					f.name === 'chief' ||
+					f.name === 'deputy' ||
+					f.name === 'chief-instructor'
 			)
 		)
 			return fail(401);
 
 		const user = await db.query.users.findFirst({
-			where: eq(users.cid, cid),
+			where: { cid },
 			with: {
 				soloEndorsements: {
 					with: {
@@ -443,29 +411,25 @@ export const actions = {
 		// verify the actioner has perms
 		if (!locals.user) return new Response(null, { status: 401 });
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user.cid),
+			where: { cid: locals.user!.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 		if (
 			!actioner ||
 			!actioner.flags.some(
 				(f) =>
-					f.flag.name === 'admin' ||
-					f.flag.name === 'chief' ||
-					f.flag.name === 'deputy' ||
-					f.flag.name === 'chief-instructor'
+					f.name === 'admin' ||
+					f.name === 'chief' ||
+					f.name === 'deputy' ||
+					f.name === 'chief-instructor'
 			)
 		)
 			return fail(401);
 
 		const user = await db.query.users.findFirst({
-			where: eq(users.cid, cid),
+			where: { cid },
 			with: {
 				soloEndorsements: {
 					with: {
@@ -499,7 +463,7 @@ export const actions = {
 		}
 
 		const position = await db.query.positions.findFirst({
-			where: eq(positions.callsign, positionName.toUpperCase())
+			where: { callsign: positionName.toUpperCase() }
 		});
 
 		if (!position) return { status: 404, statusText: 'Position not found' };
@@ -520,7 +484,7 @@ export const actions = {
 			.returning();
 
 		const endorsement = await db.query.soloEndorsements.findFirst({
-			where: eq(soloEndorsements.id, endorsementInsert[0].id),
+			where: { id: endorsementInsert[0].id },
 			with: {
 				position: true
 			}
@@ -563,21 +527,15 @@ export const actions = {
 		if (!locals.user) return fail(401);
 
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user!.cid),
+			where: { cid: locals.user!.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
 		if (
 			!actioner ||
-			!actioner.flags.some((f) =>
-				['admin', 'chief', 'deputy', 'chief-instructor'].includes(f.flag.name)
-			)
+			!actioner.flags.some((f) => ['admin', 'chief', 'deputy', 'chief-instructor'].includes(f.name))
 		) {
 			return fail(401, {
 				ok: false,
@@ -586,13 +544,9 @@ export const actions = {
 		}
 
 		const user = await db.query.users.findFirst({
-			where: eq(users.cid, cid),
+			where: { cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 		if (!user) return fail(404, { ok: false, message: 'User not found' });

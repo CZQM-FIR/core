@@ -1,10 +1,10 @@
-import { events } from '@czqm/db/schema';
-import { desc, eq } from 'drizzle-orm';
 import { db } from '$lib/db';
 
 export const getAllEvents = async () => {
 	const eventData = db.query.events.findMany({
-		orderBy: [desc(events.start)]
+		orderBy: {
+			start: 'desc'
+		}
 	});
 
 	return eventData;
@@ -12,7 +12,9 @@ export const getAllEvents = async () => {
 
 export const getEventById = async (id: number) => {
 	const event = db.query.events.findFirst({
-		where: eq(events.id, id)
+		where: {
+			id: id
+		}
 	});
 
 	return event;

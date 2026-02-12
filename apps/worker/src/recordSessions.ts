@@ -1,7 +1,7 @@
 import * as schema from '@czqm/db/schema';
 import { type } from 'arktype';
 import { eq } from 'drizzle-orm';
-import { DB, Env } from '.';
+import { DB, Env } from '@czqm/common';
 
 const positionPrefixes = [
   'CZQM',
@@ -46,13 +46,13 @@ const VatsimSessions = type({
 export const handleRecordSessions = async (db: DB, env: Env) => {
   // get list of all czqm controllers and visitors
   const allUsers = await db.query.users.findMany({
-    with: { flags: { with: { flag: true } } }
+    with: { flags: true }
   });
   const czqmControllers = allUsers.filter((c) => {
-    return c.flags.some((f) => f.flag.name === 'controller');
+    return c.flags.some((f) => f.name === 'controller');
   });
   const czqmVisitors = allUsers.filter((c) => {
-    return c.flags.some((f) => f.flag.name === 'visitor');
+    return c.flags.some((f) => f.name === 'visitor');
   });
   const allControllers = [...czqmControllers, ...czqmVisitors].sort(
     (a, b) => b.hoursLastUpdated.getTime() - a.hoursLastUpdated.getTime()
@@ -108,7 +108,7 @@ export const handleRecordSessions = async (db: DB, env: Env) => {
         } else {
           // First try to find if the position already exists in the database
           let position = await db.query.positions.findFirst({
-            where: (p, { eq }) => eq(p.callsign, s.connection_id.callsign)
+            where: { callsign: s.connection_id.callsign }
           });
 
           if (!position) {
@@ -122,12 +122,12 @@ export const handleRecordSessions = async (db: DB, env: Env) => {
 
               // Fetch the newly created position
               position = await db.query.positions.findFirst({
-                where: (p, { eq }) => eq(p.callsign, s.connection_id.callsign)
+                where: { callsign: s.connection_id.callsign }
               });
             } catch (error) {
               // If insert fails, try to fetch again (race condition)
               position = await db.query.positions.findFirst({
-                where: (p, { eq }) => eq(p.callsign, s.connection_id.callsign)
+                where: { callsign: s.connection_id.callsign }
               });
 
               if (!position) {

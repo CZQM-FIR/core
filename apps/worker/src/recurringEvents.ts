@@ -1,6 +1,6 @@
 import { events } from '@czqm/db/schema';
 import { eq } from 'drizzle-orm';
-import { DB } from '.';
+import { DB } from '@czqm/common';
 
 export const recurringEvents = async (db: DB) => {
   console.log('Checking recurring events for Updates...');

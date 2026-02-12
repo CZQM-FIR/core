@@ -5,13 +5,9 @@ import * as schema from '@czqm/db/schema';
 
 export const load = (async ({ locals }) => {
   const user = await db.query.users.findFirst({
-    where: eq(schema.users.cid, locals.user!.cid),
+    where: { cid: locals.user!.cid },
     with: {
-      flags: {
-        with: {
-          flag: true
-        }
-      },
+      flags: true,
       rating: true,
       sessions: {
         with: {

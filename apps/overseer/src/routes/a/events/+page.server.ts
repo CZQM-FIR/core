@@ -30,13 +30,9 @@ export const actions = {
 		if (!locals.user) return { status: 401, body: { message: 'Unauthorized' } };
 
 		const actioner = await db.query.users.findFirst({
-			where: (users, { eq }) => eq(users.cid, locals.user?.cid || 0),
+			where: { cid: locals.user?.cid || 0 },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
@@ -44,18 +40,18 @@ export const actions = {
 			!actioner ||
 			!actioner.flags.some(
 				(f) =>
-					f.flag.name === 'admin' ||
-					f.flag.name === 'chief' ||
-					f.flag.name === 'deputy' ||
-					f.flag.name === 'chief-instructor' ||
-					f.flag.name === 'events'
+					f.name === 'admin' ||
+					f.name === 'chief' ||
+					f.name === 'deputy' ||
+					f.name === 'chief-instructor' ||
+					f.name === 'events'
 			)
 		) {
 			return { status: 401, body: { message: 'Unauthorized' } };
 		}
 
 		const event = await db.query.events.findFirst({
-			where: (events, { eq }) => eq(events.id, id)
+			where: { id }
 		});
 
 		if (!event) {

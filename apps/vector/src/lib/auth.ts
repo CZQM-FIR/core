@@ -120,11 +120,9 @@ export async function getUser(event: RequestEvent): Promise<UserWithRelations | 
 	}
 
 	const user = await db.query.users.findFirst({
-		where: eq(users.cid, validation.user.cid),
+		where: { cid: validation.user!.cid },
 		with: {
-			flags: {
-				with: { flag: true }
-			},
+			flags: true,
 			rating: true,
 			preferences: true
 		}

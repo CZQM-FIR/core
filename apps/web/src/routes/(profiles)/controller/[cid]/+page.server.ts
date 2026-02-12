@@ -7,13 +7,9 @@ export const load = (async ({ params }) => {
   const { cid } = params;
 
   const userData = await db.query.users.findFirst({
-    where: (users, { eq }) => eq(users.cid, Number(cid)),
+    where: { cid: Number(cid) },
     with: {
-      flags: {
-        with: {
-          flag: true
-        }
-      },
+      flags: true,
       rating: true,
       roster: true,
       soloEndorsements: {
@@ -39,7 +35,7 @@ export const load = (async ({ params }) => {
 
   if (
     !userData ||
-    !userData.flags.some((f) => [4, 5].includes(f.flag.id)) ||
+    !userData.flags.some((f) => [4, 5].includes(f.id)) ||
     userData.cid !== Number(cid)
   ) {
     return error(404, {

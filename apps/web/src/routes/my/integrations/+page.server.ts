@@ -9,7 +9,7 @@ const { DISCORD_CLIENT_ID, DISCORD_REDIRECT_URI } = env;
 
 export const load = (async ({ locals }) => {
   const integrations = await db.query.integrations.findMany({
-    where: (integrations, { eq }) => eq(integrations.cid, locals.user.cid)
+    where: { cid: locals.user.cid }
   });
 
   return { integrations };
@@ -18,8 +18,7 @@ export const load = (async ({ locals }) => {
 export const actions = {
   linkDiscord: async ({ locals }) => {
     const discordIntegration = await db.query.integrations.findFirst({
-      where: (integrations, { and, eq }) =>
-        and(eq(schema.integrations.cid, locals.user.cid), eq(schema.integrations.type, 0))
+      where: { cid: locals.user.cid, type: 0 }
     });
 
     if (discordIntegration) {
@@ -35,8 +34,7 @@ export const actions = {
   },
   unlinkDiscord: async ({ locals }) => {
     const discordIntegration = await db.query.integrations.findFirst({
-      where: (integrations, { and, eq }) =>
-        and(eq(schema.integrations.cid, locals.user.cid), eq(schema.integrations.type, 0))
+      where: { cid: locals.user.cid, type: 0 }
     });
 
     if (!discordIntegration) {

@@ -22,11 +22,11 @@
 				// Check if user has hour requirement issues
 				const hasIssue = lastQuarter
 					? user.hours.last.internal < 3 ||
-						(user.flags.some((f) => f.flag.name === 'controller')
+						(user.flags.some((f) => f.name === 'controller')
 							? user.hours.last.external > user.hours.last.internal
 							: user.hours.last.external < user.hours.last.internal)
 					: user.hours.this.internal < 3 ||
-						(user.flags.some((f) => f.flag.name === 'controller')
+						(user.flags.some((f) => f.name === 'controller')
 							? user.hours.this.external > user.hours.this.internal
 							: user.hours.this.external < user.hours.this.internal);
 
@@ -34,7 +34,7 @@
 					hasIssue &&
 					matchesSearch &&
 					(active ? user.active === 1 : true) &&
-					!user.flags.some((f) => f.flag.id === 3)
+					!user.flags.some((f) => f.id === 3)
 				);
 			} else {
 				return matchesSearch && (active ? user.active === 1 : true);

@@ -1,4 +1,4 @@
-import { relations, type InferSelectModel } from "drizzle-orm";
+import { type InferSelectModel } from "drizzle-orm";
 import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import {
   moodleQueue,
@@ -37,24 +37,7 @@ export const users = sqliteTable(
     index("users_ratingID_idx").on(t.ratingID),
     index("users_discord_id_idx").on(t.discord_id),
     index("users_active_idx").on(t.active),
-  ]
+  ],
 );
-
-export const usersRelations = relations(users, ({ one, many }) => ({
-  rating: one(ratings, {
-    fields: [users.ratingID],
-    references: [ratings.id],
-  }),
-  flags: many(usersToFlags),
-  // articles: many(news),
-  sessions: many(sessions),
-  tickets: many(tickets),
-  soloEndorsements: many(soloEndorsements),
-  roster: many(roster),
-  integrations: many(integrations),
-  preferences: many(preferences),
-  waitlistEntries: many(waitingUsers),
-  moodleQueueEntries: many(moodleQueue),
-}));
 
 export type User = InferSelectModel<typeof users>;

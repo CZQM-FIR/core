@@ -1,4 +1,4 @@
-import { relations, type InferSelectModel } from "drizzle-orm";
+import { type InferSelectModel } from "drizzle-orm";
 import { index, int, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 import { positions, users } from "./index";
 
@@ -16,15 +16,8 @@ export const roster = sqliteTable(
     index("roster_controllerId_idx").on(t.controllerId),
     index("roster_position_idx").on(t.position),
     index("roster_status_idx").on(t.status),
-  ]
+  ],
 );
-
-export const rosterRelations = relations(roster, ({ one, many }) => ({
-  controller: one(users, {
-    fields: [roster.controllerId],
-    references: [users.cid],
-  }),
-}));
 
 export type RosterStatus = InferSelectModel<typeof roster>;
 

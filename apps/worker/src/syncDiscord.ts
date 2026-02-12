@@ -1,6 +1,6 @@
 import { type } from 'arktype';
 import { eq } from 'drizzle-orm';
-import type { DB, Env } from '.';
+import type { DB, Env } from '@czqm/common';
 import * as schema from '@czqm/db/schema';
 
 const managedRoles = [
@@ -103,11 +103,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
       user: {
         with: {
           rating: true,
-          flags: {
-            with: {
-              flag: true
-            }
-          },
+          flags: true,
           preferences: true
         }
       }
@@ -199,7 +195,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
         mentor: 'Mentor'
       };
       for (const flag of user!.flags) {
-        const roleName = flagRoleMap[flag.flag.name];
+        const roleName = flagRoleMap[flag.name];
         if (roleName) {
           const role = guildRoles.find((r) => r.name === roleName);
           if (role) {
@@ -211,7 +207,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
       // student role
       if (
         user &&
-        user.flags.some((f) => f.flag.name === 'controller') &&
+        user.flags.some((f) => f.name === 'controller') &&
         user.ratingID >= 2 &&
         user.ratingID <= 4
       ) {
@@ -222,7 +218,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
       }
 
       // if user is not a controller or visitor, add the 'Guest' role
-      if (!user?.flags.some((f) => ['controller', 'visitor'].includes(f.flag.name))) {
+      if (!user?.flags.some((f) => ['controller', 'visitor'].includes(f.name))) {
         const guestRole = guildRoles.find((r) => r.name === 'Guest');
         if (guestRole) {
           roles.push(guestRole.id);

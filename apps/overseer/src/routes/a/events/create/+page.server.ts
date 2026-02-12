@@ -1,5 +1,4 @@
-import { events, users } from '@czqm/db/schema';
-import { eq } from 'drizzle-orm';
+import { events } from '@czqm/db/schema';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
 import { fail } from '@sveltejs/kit';
@@ -32,13 +31,9 @@ export const actions = {
 		if (!locals.user) return fail(401, { status: 401, message: 'Unauthorized' });
 
 		const actioner = await db.query.users.findFirst({
-			where: eq(users.cid, locals.user.cid),
+			where: { cid: locals.user!.cid },
 			with: {
-				flags: {
-					with: {
-						flag: true
-					}
-				}
+				flags: true
 			}
 		});
 
@@ -46,11 +41,11 @@ export const actions = {
 			!actioner ||
 			!actioner.flags.some(
 				(f) =>
-					f.flag.name === 'admin' ||
-					f.flag.name === 'chief' ||
-					f.flag.name === 'deputy' ||
-					f.flag.name === 'chief-instructor' ||
-					f.flag.name === 'events'
+					f.name === 'admin' ||
+					f.name === 'chief' ||
+					f.name === 'deputy' ||
+					f.name === 'chief-instructor' ||
+					f.name === 'events'
 			)
 		) {
 			return fail(401, { status: 401, message: 'Unauthorized' });

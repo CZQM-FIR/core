@@ -1,10 +1,8 @@
-import { news } from '@czqm/db/schema';
-import { desc, eq } from 'drizzle-orm';
 import { db } from '$lib/db';
 
 export const getAllArticles = async () => {
   const articles = db.query.news.findMany({
-    orderBy: [desc(news.date)],
+    orderBy: { date: 'desc' },
     with: {
       author: {
         columns: {
@@ -19,7 +17,7 @@ export const getAllArticles = async () => {
 
 export const getArticleById = async (id: number) => {
   const article = db.query.news.findFirst({
-    where: eq(news.id, id),
+    where: { id },
     with: {
       author: {
         columns: {
