@@ -15,7 +15,7 @@
 
 <section id="resources" class="min-h-screen">
   <div class="container mx-auto">
-    <h1 class="mt-6 text-2xl">Upcomming Events</h1>
+    <h1 class="mt-6 text-2xl">Upcoming Events</h1>
     <div class="divider"></div>
 
     <div class="flex flex-row flex-wrap gap-5">
@@ -55,7 +55,7 @@
                 {truncate(
                   event.description
                     .split('')
-                    .filter((i) => !['*', '#', '~'].includes(i))
+                    .filter((i: string) => !['*', '#', '~'].includes(i))
                     .join(''),
                   100
                 )}
