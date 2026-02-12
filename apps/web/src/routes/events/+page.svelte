@@ -18,13 +18,13 @@
     <h1 class="mt-6 text-2xl">Upcomming Events</h1>
     <div class="divider"></div>
 
-    <div class="flex flex-row flex-wrap">
+    <div class="flex flex-row flex-wrap gap-5">
       {#if data.upcomingEvents.length === 0}
         <p class="w-full text-center">No Upcoming Events</p>
       {/if}
       {#each data.upcomingEvents as event}
         <a href="/events/{event.id}">
-          <div class="card card-compact bg-base-300 w-96 shadow-xl">
+          <div class="card card-compact bg-base-300 h-full w-96 shadow-xl">
             <figure>
               <img src="https://files.czqm.ca/{event.image}" alt="{event.name} Banner Image" />
             </figure>
