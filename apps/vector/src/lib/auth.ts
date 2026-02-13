@@ -87,13 +87,9 @@ export type SessionValidationResult =
 
 export type UserWithRelations = User & {
 	flags: Array<{
-		flagId: number;
-		userId: number;
-		flag: {
-			id: number;
-			name: string;
-			showInSelect: boolean | null;
-		};
+		id: number;
+		name: string;
+		showInSelect: boolean | null;
 	}>;
 	rating: {
 		id: number;

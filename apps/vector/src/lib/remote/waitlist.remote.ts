@@ -9,7 +9,7 @@ import { and, eq } from 'drizzle-orm';
 const waitlistAdminFlags = new Set(['admin', 'chief-instructor', 'chief', 'deputy']);
 
 const hasWaitlistAccess = (user: UserWithRelations | null) =>
-	!!user && user.flags.some((f) => waitlistAdminFlags.has(f.flag.name));
+	!!user && user.flags.some((f) => waitlistAdminFlags.has(f.name));
 
 export const editWaitlistName = form(
 	type({
