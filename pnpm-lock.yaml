@@ -49,8 +49,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.9
       '@lucide/svelte':
-        specifier: ^0.511.0
-        version: 0.511.0(svelte@5.46.1)
+        specifier: ^0.564.0
+        version: 0.564.0(svelte@5.46.1)
       '@oslojs/crypto':
         specifier: ^1.0.1
         version: 1.0.1
@@ -164,8 +164,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.9
       '@lucide/svelte':
-        specifier: ^0.511.0
-        version: 0.511.0(svelte@5.46.1)
+        specifier: ^0.564.0
+        version: 0.564.0(svelte@5.46.1)
       '@oslojs/crypto':
         specifier: ^1.0.1
         version: 1.0.1
@@ -273,8 +273,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.9
       '@lucide/svelte':
-        specifier: ^0.511.0
-        version: 0.511.0(svelte@5.46.1)
+        specifier: ^0.564.0
+        version: 0.564.0(svelte@5.46.1)
       '@oslojs/crypto':
         specifier: ^1.0.1
         version: 1.0.1
@@ -3668,8 +3668,8 @@ packages:
     dev: false
     optional: true
 
-  /@lucide/svelte@0.511.0(svelte@5.46.1):
-    resolution: {integrity: sha512-aLCSPMUJmHlCuLXzXENXa4Z1NV2mN1iAZAFKk4bEbey+/MdsNlu+/DqwVkgW3Yvj6p8y8Vn5xZ2v9CLmPlA6Vw==}
+  /@lucide/svelte@0.564.0(svelte@5.46.1):
+    resolution: {integrity: sha512-jODK/wHX3lKi1CsLgx9wXspsDQ5/WbsNmBqecdTCbaH1Cy3C/n2g3WM1a59sokjq+81eZDFUi/7Yg4rVI3kyow==}
     peerDependencies:
       svelte: ^5.46.1
     dependencies:
