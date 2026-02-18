@@ -69,10 +69,10 @@
     {#if data.pastEvents.length > 0}
       <h1 class="mt-6 text-2xl">Past Events</h1>
       <div class="divider"></div>
-      <div class="flex flex-row flex-wrap">
+      <div class="flex flex-row flex-wrap gap-5">
         {#each data.pastEvents as event}
           <a href="/events/{event.id}">
-            <div class="card card-compact bg-base-300 w-96 shadow-xl">
+            <div class="card card-compact bg-base-300 h-full w-96 shadow-xl">
               <figure>
                 <img src="https://files.czqm.ca/{event.image}" alt="{event.name} Banner Image" />
               </figure>
@@ -82,21 +82,32 @@
                   <div class="badge badge-neutral">
                     {new Date(event.start).toLocaleString('en-US', {
                       month: 'short',
-                      day: '2-digit'
+                      day: '2-digit',
+                      timeZone: 'UTC'
                     })}
                     {new Date(event.start).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
-                      hour12: false
+                      hour12: false,
+                      timeZone: 'UTC'
                     })}z -
                     {new Date(event.end).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
-                      hour12: false
+                      hour12: false,
+                      timeZone: 'UTC'
                     })}z
                   </div>
                 </div>
-                <p>{truncate(event.description, 100)}</p>
+                <p>
+                  {truncate(
+                    event.description
+                      .split('')
+                      .filter((i: string) => !['*', '#', '~'].includes(i))
+                      .join(''),
+                    100
+                  )}
+                </p>
               </div>
             </div>
           </a>
