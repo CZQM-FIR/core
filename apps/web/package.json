@@ -48,6 +48,7 @@
     "wrangler": "^3.99.0"
   },
   "dependencies": {
+    "@czqm/common": "workspace:*",
     "@czqm/db": "workspace:*",
     "@libsql/client": "^0.15.0",
     "@lucide/svelte": "^0.511.0",

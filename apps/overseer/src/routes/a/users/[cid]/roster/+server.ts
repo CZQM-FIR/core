@@ -2,26 +2,13 @@ import { db } from '$lib/db';
 import { and, eq } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 import { roster } from '@czqm/db/schema';
+import { User } from '@czqm/common';
 
 export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	if (!locals.user) return new Response(null, { status: 401 });
-	const actioner = await db.query.users.findFirst({
-		where: { cid: locals.user!.cid },
-		with: {
-			flags: true
-		}
-	});
+	const actioner = await User.fromCid(db, locals.user!.cid);
 
-	if (
-		!actioner ||
-		!actioner.flags.some(
-			(f) =>
-				f.name === 'admin' ||
-				f.name === 'chief' ||
-				f.name === 'deputy' ||
-				f.name === 'chief-instructor'
-		)
-	)
+	if (!actioner || !actioner.hasFlag(['admin', 'chief', 'deputy', 'chief-instructor']))
 		return new Response(null, { status: 401 });
 
 	const cid = Number(params.cid);
@@ -30,12 +17,7 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 		status: -1 | 0 | 1 | 2;
 	};
 
-	const user = await db.query.users.findFirst({
-		where: { cid },
-		with: {
-			roster: true
-		}
-	});
+	const user = await User.fromCid(db, cid);
 	if (!user) return new Response(null, { status: 404 });
 
 	if (user.roster.some((r) => r.status === 1 && r.position === position))
@@ -61,18 +43,7 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 		});
 	}
 
-	const newData = await db.query.users.findFirst({
-		where: { cid: Number(params.cid) },
-		with: {
-			rating: true,
-			roster: true,
-			soloEndorsements: {
-				with: {
-					position: true
-				}
-			}
-		}
-	});
+	const newData = await User.fromCid(db, Number(params.cid));
 
 	return new Response(JSON.stringify({ user: newData }), { status: 200 });
 };

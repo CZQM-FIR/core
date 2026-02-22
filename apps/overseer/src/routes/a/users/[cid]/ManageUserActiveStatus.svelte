@@ -1,83 +1,71 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import type { PageData, ActionData } from './$types';
+	import { setUserActiveStatus, type UserAdminDetails } from '$lib/remote/user-admin.remote';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { details }: { details: UserAdminDetails } = $props();
 
-	let localUserData = $state(data.user!);
+	// Reactively compute the current status from the user's active field
+	let currentStatus = $derived<-1 | 0 | 1>(
+		details.user.active === 'active' ? 1 : details.user.active === 'loa' ? -1 : 0
+	);
 
-	if (form && form.status !== 200 && form.active !== undefined) {
-		localUserData.active = form.active;
-	}
+	// Local state for UI - matches currentStatus unless we're performing an update
+	let localActive = $state<-1 | 0 | 1 | 2>(0);
+
+	// Sync on mount and when currentStatus changes (unless we're in the middle of an update)
+	let isUpdating = $state(false);
+
+	$effect(() => {
+		if (!isUpdating) {
+			localActive = currentStatus;
+		}
+	});
+
+	const setStatus = async (status: -1 | 0 | 1) => {
+		if (localActive === status) {
+			return;
+		}
+
+		const previousStatus = localActive;
+		isUpdating = true;
+		localActive = 2;
+
+		try {
+			const result = await setUserActiveStatus({ cid: details.user.cid, status });
+			localActive = result.active;
+		} catch (err) {
+			console.error('Failed to update user status:', err);
+			localActive = previousStatus;
+		} finally {
+			isUpdating = false;
+		}
+	};
 </script>
 
 <div class="flex min-w-96 flex-col rounded border border-gray-600 p-4">
 	<h1 class="mb-3 text-lg font-semibold">User Activity</h1>
 	<div class="join">
-		<form
-			action="?/setActiveStatus"
-			method="post"
-			use:enhance={() => {
-				let temp = localUserData.active;
-				localUserData.active = 2;
-				return async ({ update, result }) => {
-					await update();
-					if (result.type === 'success') {
-						localUserData.active = 1;
-					} else localUserData.active = temp;
-				};
-			}}
+		<button
+			type="button"
+			onclick={() => setStatus(1)}
+			class="join-item btn btn-success {localActive === 1 ? '' : 'btn-outline'}"
 		>
-			<input type="number" name="status" value={1} hidden />
-			<button
-				type={localUserData.active === 1 ? 'button' : 'submit'}
-				class="join-item btn btn-success {localUserData.active === 1 ? '' : 'btn-outline'}"
-				>Active</button
-			>
-		</form>
+			Active
+		</button>
 
-		<form
-			action="?/setActiveStatus"
-			method="post"
-			use:enhance={() => {
-				let temp = localUserData.active;
-				localUserData.active = 2;
-				return async ({ update, result }) => {
-					await update();
-					if (result.type === 'success') {
-						localUserData.active = -1;
-					} else localUserData.active = temp;
-				};
-			}}
+		<button
+			type="button"
+			onclick={() => setStatus(-1)}
+			class="join-item btn btn-warning {localActive === -1 ? '' : 'btn-outline'}"
 		>
-			<input type="number" name="status" value={-1} hidden />
-			<button
-				type={localUserData.active === -1 ? 'button' : 'submit'}
-				class="join-item btn btn-warning {localUserData.active === -1 ? '' : 'btn-outline'}"
-				>On Leave</button
-			>
-		</form>
+			On Leave
+		</button>
 
-		<form
-			action="?/setActiveStatus"
-			method="post"
-			use:enhance={() => {
-				let temp = localUserData.active;
-				localUserData.active = 2;
-				return async ({ update, result }) => {
-					await update();
-					if (result.type === 'success') {
-						localUserData.active = 0;
-					} else localUserData.active = temp;
-				};
-			}}
+		<button
+			type="button"
+			onclick={() => setStatus(0)}
+			class="join-item btn btn-error {localActive === 0 ? '' : 'btn-outline'}"
 		>
-			<input type="number" name="status" value={0} hidden />
-			<button
-				type={localUserData.active === 0 ? 'button' : 'submit'}
-				class="join-item btn btn-error {localUserData.active === 0 ? '' : 'btn-outline'}"
-				>Inactive</button
-			>
-		</form>
+			Inactive
+		</button>
 	</div>
 </div>

@@ -1,6 +1,10 @@
-import * as schema from '@czqm/db/schema';
-import { and, eq } from 'drizzle-orm';
-import type { DB, Env } from '@czqm/common';
+import type { DB, Env, FlagName } from '@czqm/common';
+import {
+  ensureUserFlag,
+  ensureUserOnWaitlist,
+  removeUserFlag,
+  upsertRosterUser
+} from '@czqm/common';
 
 type VatcanApiUser = {
   cid: number;
@@ -42,79 +46,42 @@ export const vatcanPull = async (db: DB, env: Env) => {
     }
   });
 
+  const existingUsersByCid = new Map(users.map((user) => [user.cid, user]));
+  const controllerCids = new Set(controllers.map((controller) => controller.cid));
+  const visitorCids = new Set(visitors.map((visitor) => visitor.cid));
+
   // remove all flags from users who are no longer controllers or visitors
   for (const user of users) {
-    if (user.flags.some((f) => f.name === 'controller')) {
-      if (!controllers.some((c) => c.cid === user.cid)) {
-        await db.delete(schema.usersToFlags).where(eq(schema.usersToFlags.userId, user.cid));
-        user.flags = user.flags.filter((f) => f.name !== 'controller');
-      }
+    if (user.flags.some((f) => f.name === 'controller') && !controllerCids.has(user.cid)) {
+      await removeUserFlag(db, user.cid, 'controller');
     }
-    if (user.flags.some((f) => f.name === 'visitor')) {
-      if (!visitors.some((c) => c.cid === user.cid)) {
-        await db.delete(schema.usersToFlags).where(eq(schema.usersToFlags.userId, user.cid));
-        user.flags = user.flags.filter((f) => f.name !== 'visitor');
-      }
+
+    if (user.flags.some((f) => f.name === 'visitor') && !visitorCids.has(user.cid)) {
+      await removeUserFlag(db, user.cid, 'visitor');
     }
   }
 
   for (const controller of controllers) {
     // Check if user already exists
-    const existingUser = users.find((u) => u.cid === controller.cid);
+    const existingUser = existingUsersByCid.get(controller.cid);
     const isNewUser = !existingUser;
 
-    await db
-      .insert(schema.users)
-      .values({
-        cid: controller.cid,
-        name_first: controller.first_name,
-        name_last: controller.last_name,
-        name_full: `${controller.first_name} ${controller.last_name}`,
-        email: controller.email,
-        ratingID: controller.rating
-      })
-      .onConflictDoUpdate({
-        target: schema.users.cid,
-        set: {
-          name_first: controller.first_name,
-          name_last: controller.last_name,
-          name_full: `${controller.first_name} ${controller.last_name}`,
-          email: controller.email,
-          ratingID: controller.rating
-        }
-      });
+    await upsertRosterUser(db, {
+      cid: controller.cid,
+      firstName: controller.first_name,
+      lastName: controller.last_name,
+      email: controller.email,
+      ratingId: controller.rating
+    });
 
-    await db
-      .insert(schema.usersToFlags)
-      .values({
-        userId: controller.cid,
-        flagId: 5 // controller
-      })
-      .onConflictDoNothing();
+    await ensureUserFlag(db, controller.cid, 'controller');
 
     if (isNewUser && controller.rating === 2) {
       // if the controllers rating is 2 (S1), add them to the S1 waitlist
-      const waitlist = await db.query.waitlists.findFirst({
-        where: { id: 1 },
-        with: {
-          students: true
-        }
+      await ensureUserOnWaitlist(db, {
+        cid: controller.cid,
+        waitlistName: 'S1'
       });
-
-      if (waitlist) {
-        const isAlreadyWaiting = await db.query.waitingUsers.findFirst({
-          where: { cid: controller.cid, waitlistId: waitlist.id }
-        });
-
-        if (!isAlreadyWaiting) {
-          await db.insert(schema.waitingUsers).values({
-            cid: controller.cid,
-            waitlistId: 1,
-            waitingSince: new Date(),
-            position: waitlist.students.length
-          });
-        }
-      }
     }
 
     console.log(
@@ -122,38 +89,19 @@ export const vatcanPull = async (db: DB, env: Env) => {
     );
   }
 
-  for (const controller of visitors) {
-    await db
-      .insert(schema.users)
-      .values({
-        cid: controller.cid,
-        name_first: controller.first_name,
-        name_last: controller.last_name,
-        name_full: `${controller.first_name} ${controller.last_name}`,
-        email: controller.email,
-        ratingID: controller.rating
-      })
-      .onConflictDoUpdate({
-        target: schema.users.cid,
-        set: {
-          name_first: controller.first_name,
-          name_last: controller.last_name,
-          name_full: `${controller.first_name} ${controller.last_name}`,
-          email: controller.email,
-          ratingID: controller.rating
-        }
-      });
+  for (const visitor of visitors) {
+    await upsertRosterUser(db, {
+      cid: visitor.cid,
+      firstName: visitor.first_name,
+      lastName: visitor.last_name,
+      email: visitor.email,
+      ratingId: visitor.rating
+    });
 
-    await db
-      .insert(schema.usersToFlags)
-      .values({
-        userId: controller.cid,
-        flagId: 4 // visitor
-      })
-      .onConflictDoNothing();
+    await ensureUserFlag(db, visitor.cid, 'visitor');
 
     console.log(
-      `Inserted new visitor: ${controller.first_name} ${controller.last_name} (${controller.cid})`
+      `Inserted new visitor: ${visitor.first_name} ${visitor.last_name} (${visitor.cid})`
     );
   }
 
@@ -164,63 +112,64 @@ export const vatcanPull = async (db: DB, env: Env) => {
     ec: 'events',
     fe: 'sector',
     wm: 'web'
-  };
+  } as const satisfies Record<string, FlagName>;
 
-  const flagIDs = {
-    chief: 23,
-    deputy: 22,
-    ci: 21,
-    wm: 20,
-    ec: 19,
-    fe: 18
-  };
-
-  for await (const pos of Object.keys(staff) as (keyof typeof staffPositions)[]) {
-    const posUsers = users.filter((u) => u.flags.some((f) => f.name === staffPositions[pos]));
-    if (posUsers.length === 0) {
-      await db
-        .insert(schema.usersToFlags)
-        .values([
-          {
-            userId: staff[pos].cid,
-            flagId: flagIDs[pos]
-          },
-          {
-            userId: staff[pos].cid,
-            flagId: 27 // staff
-          }
-        ])
-        .onConflictDoNothing();
-
-      console.log(
-        `Inserted new staff: ${staff[pos].first_name} ${staff[pos].last_name} (${staff[pos].cid})`
-      );
-    } else {
-      for await (const user of posUsers) {
-        if (user.cid !== staff[pos].cid) {
-          await db
-            .delete(schema.usersToFlags)
-            .where(
-              and(
-                eq(schema.usersToFlags.userId, user.cid),
-                eq(schema.usersToFlags.flagId, flagIDs[pos])
-              )
-            );
-          user.flags = user.flags.filter((f) => f.name !== staffPositions[pos]);
-
-          if (!user.flags.some((f) => Object.values(staffPositions).includes(f.name))) {
-            await db.delete(schema.usersToFlags).where(
-              and(
-                eq(schema.usersToFlags.userId, user.cid),
-                eq(schema.usersToFlags.flagId, 27) // staff
-              )
-            );
-          }
-          console.log(
-            `Removed ${staffPositions[pos]} flag from user: ${user.name_full} (${user.cid})`
-          );
-        }
-      }
+  const usersWithFlags = await db.query.users.findMany({
+    with: {
+      flags: true
     }
+  });
+
+  const staffPositionFlags: FlagName[] = Object.values(staffPositions);
+
+  for (const [positionKey, flagName] of Object.entries(staffPositions)) {
+    const assignedStaffUser = staff[positionKey];
+
+    if (!assignedStaffUser) {
+      continue;
+    }
+
+    const currentUsersForPosition = usersWithFlags.filter((user) =>
+      user.flags.some((flag) => flag.name === flagName)
+    );
+
+    for (const user of currentUsersForPosition) {
+      if (user.cid === assignedStaffUser.cid) {
+        continue;
+      }
+
+      await removeUserFlag(db, user.cid, flagName);
+
+      const refreshedUser = await db.query.users.findFirst({
+        where: { cid: user.cid },
+        with: {
+          flags: true
+        }
+      });
+
+      if (
+        refreshedUser &&
+        !refreshedUser.flags.some((flag) => staffPositionFlags.includes(flag.name as FlagName))
+      ) {
+        await removeUserFlag(db, user.cid, 'staff');
+      }
+
+      console.log(`Removed ${flagName} flag from user: ${user.name_full} (${user.cid})`);
+    }
+
+    await upsertRosterUser(db, {
+      cid: assignedStaffUser.cid,
+      firstName: assignedStaffUser.first_name,
+      lastName: assignedStaffUser.last_name,
+      email: assignedStaffUser.email,
+      ratingId: assignedStaffUser.rating
+    });
+
+    await ensureUserFlag(db, assignedStaffUser.cid, flagName);
+    await ensureUserFlag(db, assignedStaffUser.cid, 'staff');
+
+    console.log(
+      `Synced staff ${flagName}: ${assignedStaffUser.first_name} ${assignedStaffUser.last_name} (${assignedStaffUser.cid})`
+    );
   }
 };

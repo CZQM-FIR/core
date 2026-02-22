@@ -1,24 +1,20 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
 import { error, redirect } from '@sveltejs/kit';
+import { User } from '@czqm/common';
 
 export const load = (async ({ locals }) => {
   if (!locals.user) {
     redirect(303, '/auth?redirect=/controller-resources');
   }
 
-  const user = await db.query.users.findFirst({
-    where: { cid: locals.user!.cid },
-    with: {
-      flags: true
-    }
-  });
+  const user = await User.fromCid(db, locals.user!.cid);
 
   if (!user) {
     redirect(303, '/auth?redirect=/controller-resources');
   }
 
-  if (!user.flags.some((f) => ['visitor', 'controller', 'admin'].includes(f.name))) {
+  if (!user.hasFlag(['visitor', 'controller', 'admin'])) {
     return error(403, 'Unauthorized');
   }
 

@@ -4,6 +4,7 @@ import { db } from '$lib/db';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import env from '$lib/env';
 import { type } from 'arktype';
+import { User } from '@czqm/common';
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -23,14 +24,9 @@ export const actions: Actions = {
 			return fail(400, { success: false, error: 'No file uploaded.' });
 		}
 
-		const actioner = await db.query.users.findFirst({
-			where: { cid: locals.user?.cid || 0 },
-			with: {
-				flags: true
-			}
-		});
+		const actioner = await User.fromCid(db, locals.user?.cid || 0);
 
-		if (!actioner || !actioner.flags.some((f) => f.name === 'admin' || f.name === 'staff')) {
+		if (!actioner || !actioner.hasFlag(['admin', 'staff'])) {
 			return fail(401);
 		}
 

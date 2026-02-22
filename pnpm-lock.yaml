@@ -39,6 +39,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.787.0
         version: 3.828.0
+      '@czqm/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@czqm/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -154,6 +157,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.787.0
         version: 3.828.0
+      '@czqm/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@czqm/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -266,6 +272,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@czqm/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@czqm/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -454,6 +463,12 @@ importers:
       '@czqm/db':
         specifier: workspace:*
         version: link:../db
+      '@oslojs/crypto':
+        specifier: ^1.0.1
+        version: 1.0.1
+      '@oslojs/encoding':
+        specifier: ^1.1.0
+        version: 1.1.0
       arktype:
         specifier: ^2.1.20
         version: 2.1.20

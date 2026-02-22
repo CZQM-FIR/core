@@ -1,5 +1,6 @@
 import * as schema from '@czqm/db/schema';
 import { DB, Env } from '@czqm/common';
+import { defaultOnPreferences, type NotificationType } from '@czqm/common/notifications';
 import { eq } from 'drizzle-orm';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { type } from 'arktype';
@@ -134,14 +135,6 @@ export const notificationsJob = async (db: DB, env: Env) => {
   });
 
   const discordNotificationQueue = [];
-  const defaultOnPreferences = [
-    'policyChanges',
-    'urgentFirUpdates',
-    'trainingUpdates',
-    'unauthorizedConnection',
-    'newEventPosted',
-    'newNewsArticlePosted'
-  ];
 
   for (const notification of notifications) {
     const { user } = notification;
@@ -151,7 +144,7 @@ export const notificationsJob = async (db: DB, env: Env) => {
     if (
       user.preferences.some((pref) => pref.key === notification.type && pref.value === 'true') ||
       (!user.preferences.find((pref) => pref.key === notification.type) &&
-        defaultOnPreferences.includes(notification.type))
+        defaultOnPreferences.includes(notification.type as NotificationType))
     ) {
       if (notification.location === 'discord') {
         discordNotificationQueue.push({

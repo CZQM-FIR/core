@@ -1,4 +1,4 @@
-import { LibSQLDatabase } from "drizzle-orm/libsql";
+import type { DB } from "../db";
 import * as schema from "@czqm/db/schema";
 
 export type NotificationType =
@@ -33,12 +33,12 @@ export const defaultOnPreferences: NotificationType[] = [
 ];
 
 export type UserWithRelations = typeof schema.users.$inferSelect & {
-  flags: { flag: { name: string } }[];
+  flags: { name: string }[];
   integrations: { type: number }[];
   preferences: { key: string; value: string }[];
 };
 
 export interface NotifyUsersOptions {
-  db: LibSQLDatabase<typeof schema>;
+  db: DB;
   webUrl: string;
 }

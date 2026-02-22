@@ -1,41 +1,15 @@
+import { dev } from '$app/environment';
 import { drizzle } from 'drizzle-orm/libsql';
-import * as schema from '@czqm/db/schema';
-import { building } from '$app/environment';
-import env from '$lib/env';
+import { env } from '$env/dynamic/private';
 import { relations } from '@czqm/db/relations';
 
-const createDbClient = () =>
-	drizzle<typeof schema, typeof relations>({
-		connection: {
-			url: env.TURSO_URL,
-			authToken: env.TURSO_TOKEN
-		},
-		schema,
-		relations
-	});
+if (!env.TURSO_URL) throw new Error('TURSO_URL is not set');
+if (!dev && !env.TURSO_TOKEN) throw new Error('TURSO_TOKEN is not set');
 
-type Db = ReturnType<typeof createDbClient>;
-
-let _db: Db | undefined;
-
-function getDb() {
-	if (building) {
-		// Return a mock during build time to avoid connection attempts
-		return {} as Db;
-	}
-
-	if (!_db) {
-		_db = createDbClient();
-	}
-
-	return _db;
-}
-
-export const db = new Proxy({} as Db, {
-	get(target, prop) {
-		const database = getDb();
-		const value = database[prop as keyof typeof database];
-		// Bind methods to the database instance
-		return typeof value === 'function' ? value.bind(database) : value;
+export const db = drizzle({
+	relations,
+	connection: {
+		url: env.TURSO_URL,
+		authToken: env.TURSO_TOKEN
 	}
 });

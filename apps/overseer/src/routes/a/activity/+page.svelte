@@ -1,46 +1,12 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import { CircleCheck, CircleMinus, CircleX, Search } from '@lucide/svelte';
-	let { data }: { data: PageData } = $props();
+	import { getActivityUsers } from '$lib/remote/users.remote';
 
 	let search = $state('');
-	let filtered = $derived(data.users);
 
 	let lastQuarter = $state(false);
 	let onlyIssue = $state(false);
 	let active = $state(false);
-
-	$effect(() => {
-		filtered = data.users.filter((user) => {
-			// First check if user matches search criteria
-			const matchesSearch =
-				search === '' ||
-				user.name_full.toLowerCase().includes(search.toLowerCase()) ||
-				user.cid.toString().includes(search);
-
-			if (onlyIssue) {
-				// Check if user has hour requirement issues
-				const hasIssue = lastQuarter
-					? user.hours.last.internal < 3 ||
-						(user.flags.some((f) => f.name === 'controller')
-							? user.hours.last.external > user.hours.last.internal
-							: user.hours.last.external < user.hours.last.internal)
-					: user.hours.this.internal < 3 ||
-						(user.flags.some((f) => f.name === 'controller')
-							? user.hours.this.external > user.hours.this.internal
-							: user.hours.this.external < user.hours.this.internal);
-
-				return (
-					hasIssue &&
-					matchesSearch &&
-					(active ? user.active === 1 : true) &&
-					!user.flags.some((f) => f.id === 3)
-				);
-			} else {
-				return matchesSearch && (active ? user.active === 1 : true);
-			}
-		});
-	});
 </script>
 
 <section>
@@ -67,55 +33,70 @@
 			</div>
 		</div>
 
-		<table class="table-zebra table w-full">
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>CID</th>
-					<th>Rating</th>
-					<th>Role</th>
-					<th></th>
-					<!-- Status-->
-					<th>Hours</th>
-					<th>External Hours</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each filtered as user (user.cid)}
+		{#await getActivityUsers()}
+			<p class="mt-4">Loading users...</p>
+		{:then users}
+			<table class="table-zebra table w-full">
+				<thead>
 					<tr>
-						<td>{user.name_full}</td>
-						<td>{user.cid}</td>
-						<td>{user.rating.short}</td>
-						<td>{user.role}</td>
-						<td class="flex justify-start">
-							{#if user.active === 1}
-								<div class="tooltip" data-tip="Active">
-									<CircleCheck size="18" class="text-success" />
-								</div>
-							{:else if user.active === 0}
-								<div class="tooltip" data-tip="Inactive">
-									<CircleX size="18" class="text-error" />
-								</div>
-							{:else if user.active === -1}
-								<div class="tooltip" data-tip="On Leave">
-									<CircleMinus size="18" class="text-warning" />
-								</div>
-							{/if}
-						</td>
-						{#if lastQuarter}
-							<td class={user.hours.last.internal < 3 ? 'text-warning' : ''}
-								>{user.hours.last.internal}</td
-							>
-							<td>{user.hours.last.external}</td>
-						{:else}
-							<td class={user.hours.this.internal < 3 ? 'text-warning' : ''}
-								>{user.hours.this.internal}</td
-							>
-							<td>{user.hours.this.external}</td>
-						{/if}
+						<th>Name</th>
+						<th>CID</th>
+						<th>Rating</th>
+						<th>Role</th>
+						<th></th>
+						<th>Hours</th>
+						<th>External Hours</th>
 					</tr>
-				{/each}
-			</tbody>
-		</table>
+				</thead>
+				<tbody>
+					{#each users.filter((user) => {
+						const matchesSearch = search === '' || user.name_full
+								.toLowerCase()
+								.includes(search.toLowerCase()) || user.cid.toString().includes(search);
+
+						if (onlyIssue) {
+							return (lastQuarter ? !user.hours.metActivityRequirementLastQuarter : !user.hours.meetingActivityRequirement) && matchesSearch && (active ? user.active === 'active' : true) && !user.isActivityExempt;
+						}
+
+						return matchesSearch && (active ? user.active === 'active' : true);
+					}) as user (user.cid)}
+						<tr>
+							<td><a href="/a/users/{user.cid}">{user.name_full}</a></td>
+							<td>{user.cid}</td>
+							<td>{user.rating.short}</td>
+							<td>{user.role}</td>
+							<td class="flex justify-start">
+								{#if user.active === 'active'}
+									<div class="tooltip" data-tip="Active">
+										<CircleCheck size="18" class="text-success" />
+									</div>
+								{:else if user.active === 'inactive'}
+									<div class="tooltip" data-tip="Inactive">
+										<CircleX size="18" class="text-error" />
+									</div>
+								{:else if user.active === 'loa'}
+									<div class="tooltip" data-tip="On Leave">
+										<CircleMinus size="18" class="text-warning" />
+									</div>
+								{/if}
+							</td>
+							{#if lastQuarter}
+								<td class={!user.hours.metActivityRequirementLastQuarter ? 'text-warning' : ''}
+									>{user.hours.lastQuarterActivityHours.toFixed(2)}</td
+								>
+								<td>{user.hours.lastQuarterExternal.toFixed(2)}</td>
+							{:else}
+								<td class={!user.hours.meetingActivityRequirement ? 'text-warning' : ''}
+									>{user.hours.activityHours.toFixed(2)}</td
+								>
+								<td>{user.hours.thisQuarterExternal.toFixed(2)}</td>
+							{/if}
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		{:catch err}
+			<p class="text-error mt-4">{err.message ?? 'Failed to load users.'}</p>
+		{/await}
 	</div>
 </section>

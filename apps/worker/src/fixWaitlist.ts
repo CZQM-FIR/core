@@ -1,5 +1,5 @@
 import * as schema from '@czqm/db/schema';
-import { DB } from '.';
+import type { DB } from '@czqm/common';
 import { eq } from 'drizzle-orm';
 
 export const fixWaitlistsJob = async (db: DB) => {

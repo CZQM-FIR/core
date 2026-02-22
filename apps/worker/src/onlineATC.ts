@@ -1,8 +1,7 @@
 import { eq } from 'drizzle-orm';
-import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { Position, positions, users, onlineSessions, notifications } from '@czqm/db/schema';
-import * as schema from '@czqm/db/schema';
 import type { DB, Env } from '@czqm/common';
+import { User } from '@czqm/common';
 import {
   notifyUsersViaDiscord,
   unauthorizedConnectionEmailTemplate
@@ -22,24 +21,13 @@ type Session = {
 };
 
 const notifySession = async (session: Session, db: DB, env: Env) => {
-  const userData = await db.select().from(users).where(eq(users.cid, session.cid)).limit(1);
+  const user = await User.fromCid(db, session.cid);
 
-  if (userData.length === 0) {
+  if (!user) {
     return;
   }
 
-  const user = userData[0];
-
-  const positionData = await db
-    .select()
-    .from(positions)
-    .where(eq(positions.id, session.position.id))
-    .limit(1);
-  if (positionData.length === 0) {
-    return;
-  }
-
-  const position = positionData[0];
+  const position = session.position;
   const t = session.logonTime;
   const hours = String(t.getUTCHours()).padStart(2, '0');
   const minutes = String(t.getUTCMinutes()).padStart(2, '0');
@@ -120,7 +108,7 @@ const notifyUnauthorizedSession = async (
       type: 'unauthorizedConnection'
     },
     {
-      db: db as unknown as LibSQLDatabase<typeof schema>,
+      db,
       webUrl: env.PUBLIC_WEB_URL
     },
     [user.cid]
@@ -160,20 +148,11 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
 
   console.log(`Fetched ${onlineControllers.length} online controllers from VATSIM.`);
 
-  const allUsers = await db.query.users.findMany({
-    columns: {
-      cid: true
-    },
-    with: {
-      flags: true
-    }
+  const czqmUsers = await User.fromFlag(db, ['controller', 'visitor'], {
+    withSessions: false
   });
 
-  const czqmControllers = allUsers
-    .filter((c) => {
-      return c.flags.some(({ id }) => id === 4 || id === 5);
-    })
-    .map((c) => c.cid);
+  const czqmControllers = czqmUsers.map((user) => user.cid);
 
   const czqmControllersOnline = onlineControllers.filter((c) => czqmControllers.includes(c.cid));
 
@@ -202,42 +181,26 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
       if (!position || controller.callsign.includes('OBS') || controller.callsign.includes('SUP'))
         continue;
 
-      const userData = await db.query.users.findFirst({
-        where: { cid: controller.cid },
+      const user = czqmUsers.find((u) => u.cid === controller.cid);
+
+      if (!user) continue;
+
+      const discordIntegration = await db.query.integrations.findFirst({
+        where: { cid: controller.cid, type: 0 },
         columns: {
-          active: true,
-          cid: true,
-          name_full: true
-        },
-        with: {
-          integrations: {
-            where: { type: 0 }
-          }
+          id: true
         }
-      });
-
-      if (!userData) continue;
-
-      const rosterDataPoints = await db.query.roster.findMany({
-        where: { controllerId: controller.cid }
       });
 
       const unitType = position.callsign.split('_').pop()?.toLowerCase() || '';
 
-      const rosterStatus = rosterDataPoints.filter((r) => {
-        let checkUnit: string;
-
-        switch (unitType) {
-          case 'del':
-          case 'tmu':
-            checkUnit = 'gnd';
-            break;
-          default:
-            checkUnit = unitType;
-        }
-
-        return r.position === checkUnit;
-      })[0];
+      const rosterUnit = unitType === 'del' || unitType === 'tmu' ? 'gnd' : unitType;
+      const hasRosterAuthorization =
+        (rosterUnit === 'gnd' ||
+          rosterUnit === 'twr' ||
+          rosterUnit === 'app' ||
+          rosterUnit === 'ctr') &&
+        user.getRosterStatus(rosterUnit) !== 'nothing';
 
       const session = {
         cid: controller.cid,
@@ -246,13 +209,13 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
         rating: controller.rating
       };
 
-      if (!userData.active) {
+      if (user.active !== 'active') {
         await notifyUnauthorizedSession(session, db, env, 'inactive');
-      } else if (userData.integrations.length === 0) {
+      } else if (!discordIntegration) {
         await notifyUnauthorizedSession(session, db, env, 'discord');
       } else if (controller.rating === 1) {
         await notifyUnauthorizedSession(session, db, env, 'suspended');
-      } else if ((!rosterStatus || rosterStatus.status === -1) && unitType !== 'obs') {
+      } else if (!hasRosterAuthorization && unitType !== 'obs') {
         await notifyUnauthorizedSession(session, db, env, 'roster');
       } else {
         await notifySession(session, db, env);

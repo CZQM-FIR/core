@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import type { UserAdminDetails } from '$lib/remote/user-admin.remote';
 
-	let { data }: { data: PageData } = $props();
+	let { details }: { details: UserAdminDetails } = $props();
 </script>
 
 <div class="flex flex-col rounded border border-gray-600 p-4">
@@ -17,7 +17,7 @@
 				type="text"
 				class="input w-full cursor-default"
 				readonly
-				value={data.user?.name_first}
+				value={details.user?.name_first}
 			/>
 		</fieldset>
 		<fieldset class="fieldset">
@@ -26,18 +26,18 @@
 				type="text"
 				class="input w-full cursor-default"
 				readonly
-				value={data.user?.name_last}
+				value={details.user?.name_last}
 			/>
 		</fieldset>
 	</div>
 	<fieldset class="fieldset">
 		<legend class="fieldset-legend">Email</legend>
-		<input type="text" class="input w-96 cursor-default" readonly value={data.user?.email} />
+		<input type="text" class="input w-96 cursor-default" readonly value={details.user?.email} />
 	</fieldset>
 	<div class="flex flex-row gap-3">
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">CID</legend>
-			<input type="text" class="input w-full cursor-default" readonly value={data.user?.cid} />
+			<input type="text" class="input w-full cursor-default" readonly value={details.user?.cid} />
 		</fieldset>
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Rating</legend>
@@ -45,7 +45,7 @@
 				type="text"
 				class="input w-full cursor-default"
 				readonly
-				value={`${data.user?.rating.long} (${data.user?.rating.short})`}
+				value={`${details.user?.rating.long} (${details.user?.rating.short})`}
 			/>
 		</fieldset>
 	</div>

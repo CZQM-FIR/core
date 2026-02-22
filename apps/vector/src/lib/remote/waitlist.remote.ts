@@ -1,15 +1,12 @@
 import { command, form, getRequestEvent, query } from '$app/server';
-import { getUser, type UserWithRelations } from '$lib/auth';
 import { db } from '$lib/db';
 import { enrolledUsers, moodleQueue, waitingUsers, waitlists } from '@czqm/db/schema';
 import { error, redirect } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
+import { User, type FlagName } from '@czqm/common';
 
-const waitlistAdminFlags = new Set(['admin', 'chief-instructor', 'chief', 'deputy']);
-
-const hasWaitlistAccess = (user: UserWithRelations | null) =>
-	!!user && user.flags.some((f) => waitlistAdminFlags.has(f.name));
+const waitlistAdminFlags: FlagName[] = ['admin', 'chief-instructor', 'chief', 'deputy'];
 
 export const editWaitlistName = form(
 	type({
@@ -17,8 +14,8 @@ export const editWaitlistName = form(
 	}),
 	async ({ name }) => {
 		const event = getRequestEvent();
-		const actioner = await getUser(event);
-		if (!hasWaitlistAccess(actioner)) {
+		const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+		if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 			throw error(403, 'Forbidden');
 		}
 
@@ -43,8 +40,8 @@ export const editWaitlistName = form(
 
 export const deleteWaitlist = command(type('number.integer >= 0'), async (id) => {
 	const event = getRequestEvent();
-	const actioner = await getUser(event);
-	if (!hasWaitlistAccess(actioner)) {
+	const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+	if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 		throw error(403, 'Forbidden');
 	}
 
@@ -61,8 +58,8 @@ export const createWaitlist = form(
 	}),
 	async ({ name, wcohort, cohort }) => {
 		const event = getRequestEvent();
-		const actioner = await getUser(event);
-		if (!hasWaitlistAccess(actioner)) {
+		const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+		if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 			throw error(403, 'Forbidden');
 		}
 
@@ -85,8 +82,8 @@ export const createWaitlist = form(
 
 export const getWaitlists = query(async () => {
 	const event = getRequestEvent();
-	const actioner = await getUser(event);
-	if (!hasWaitlistAccess(actioner)) {
+	const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+	if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 		throw error(403, 'Forbidden');
 	}
 
@@ -101,8 +98,8 @@ export const getWaitlists = query(async () => {
 
 export const getWaitlist = query(type('number.integer >= 0'), async (waitlistId) => {
 	const event = getRequestEvent();
-	const actioner = await getUser(event);
-	if (!hasWaitlistAccess(actioner)) {
+	const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+	if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 		throw error(403, 'Forbidden');
 	}
 
@@ -130,8 +127,8 @@ const WaitlistUserOptions = type({
 
 export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, userId }) => {
 	const event = getRequestEvent();
-	const actioner = await getUser(event);
-	if (!hasWaitlistAccess(actioner)) {
+	const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+	if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 		throw error(403, 'Forbidden');
 	}
 
@@ -169,8 +166,8 @@ export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, user
 
 export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, userId }) => {
 	const event = getRequestEvent();
-	const actioner = await getUser(event);
-	if (!hasWaitlistAccess(actioner)) {
+	const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+	if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 		throw error(403, 'Forbidden');
 	}
 
@@ -211,8 +208,8 @@ export const removeUserFromWaitlist = command(
 	WaitlistUserOptions,
 	async ({ waitlistId, userId }) => {
 		const event = getRequestEvent();
-		const actioner = await getUser(event);
-		if (!hasWaitlistAccess(actioner)) {
+		const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+		if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 			throw error(403, 'Forbidden');
 		}
 
@@ -258,8 +255,8 @@ export const addUserToWaitlist = form(
 	}),
 	async ({ waitlistId: waitlistIdString, userId: userIdString }) => {
 		const event = getRequestEvent();
-		const actioner = await getUser(event);
-		if (!hasWaitlistAccess(actioner)) {
+		const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+		if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 			throw error(403, 'Forbidden');
 		}
 
@@ -277,9 +274,7 @@ export const addUserToWaitlist = form(
 		const existingUser = waitlist.students.find((s) => s.cid === userId);
 		if (existingUser) throw error(400, 'User already on waitlist');
 
-		const user = await db.query.users.findFirst({
-			where: { cid: userId }
-		});
+		const user = await User.fromCid(db, userId);
 		if (!user) throw error(404, 'User not found');
 
 		await db.insert(waitingUsers).values({
@@ -305,8 +300,8 @@ export const enrolUserFromWaitlist = command(
 	WaitlistUserOptions,
 	async ({ waitlistId, userId }) => {
 		const event = getRequestEvent();
-		const actioner = await getUser(event);
-		if (!hasWaitlistAccess(actioner)) {
+		const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+		if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 			throw error(403, 'Forbidden');
 		}
 
@@ -359,8 +354,8 @@ export const editWaitlistEstimatedTime = form(
 	}),
 	async ({ waitlistId: waitlistIdString, estimatedTime }) => {
 		const event = getRequestEvent();
-		const actioner = await getUser(event);
-		if (!hasWaitlistAccess(actioner)) {
+		const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+		if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 			throw error(403, 'Forbidden');
 		}
 
@@ -405,8 +400,8 @@ export const getIndividualsWaitlistEntries = query(async () => {
 
 export const getEnrolledWaitlistEntries = query(type('number.integer >= 0'), async (waitlistId) => {
 	const event = getRequestEvent();
-	const actioner = await getUser(event);
-	if (!hasWaitlistAccess(actioner)) {
+	const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+	if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 		throw error(403, 'Forbidden');
 	}
 
@@ -433,8 +428,8 @@ export const removeUserFromEnrolledCourse = command(
 	}),
 	async ({ waitlistId: waitlistId, userId: userId }) => {
 		const event = getRequestEvent();
-		const actioner = await getUser(event);
-		if (!hasWaitlistAccess(actioner)) {
+		const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+		if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 			throw error(403, 'Forbidden');
 		}
 
@@ -487,8 +482,8 @@ export const hideUserFromEnrolledCourse = command(
 	}),
 	async ({ waitlistId: waitlistId, userId: userId }) => {
 		const event = getRequestEvent();
-		const actioner = await getUser(event);
-		if (!hasWaitlistAccess(actioner)) {
+		const actioner = await User.fromSessionToken(db, event.cookies.get('session')!);
+		if (!actioner || !actioner.hasFlag(waitlistAdminFlags)) {
 			throw error(403, 'Forbidden');
 		}
 

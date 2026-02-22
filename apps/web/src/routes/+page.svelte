@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
-  import type { PageData } from './$types';
+  import { getHomepageData } from '$lib/remote/home.remote';
 
-  let { data }: { data: PageData } = $props();
+  const homepageData = getHomepageData();
 </script>
 
 <section id="hero" class="hero min-h-screen">
@@ -25,55 +24,67 @@
         <h1 class="mb-3 text-3xl font-semibold">
           Top Controllers for {new Date().toLocaleString('en-US', { month: 'long' })}
         </h1>
-        <ul class="bg-base-100 max-w-120 rounded px-4 py-3">
-          {#each data.top5Controllers as controller, i}
-            <li>
-              #{i + 1}
-              <a href="/controller/{controller.cid}" class="hover:link text-lg font-semibold"
-                >{getUserDisplayName(controller)}</a
-              >
-              - {(controller.totalDuration / 3600).toFixed(2)}
-              hours
-              {#if i < 4}
-                <div class="divider m-0"></div>
-              {/if}
-            </li>
-          {/each}
-        </ul>
+        {#await homepageData}
+          <p class="bg-base-100 max-w-120 rounded px-4 py-3">Loading controllers...</p>
+        {:then data}
+          <ul class="bg-base-100 max-w-120 rounded px-4 py-3">
+            {#each data.top5Controllers as controller, i (controller.cid)}
+              <li>
+                #{i + 1}
+                <a href="/controller/{controller.cid}" class="hover:link text-lg font-semibold"
+                  >{controller.displayName}</a
+                >
+                - {controller.hours.thisMonth.toFixed(1)}
+                hours
+                {#if i < 4}
+                  <div class="divider m-0"></div>
+                {/if}
+              </li>
+            {/each}
+          </ul>
+        {:catch}
+          <p class="bg-base-100 max-w-120 rounded px-4 py-3">Unable to load controllers.</p>
+        {/await}
       </div>
       <div>
         <h1 class="mb-3 text-3xl font-semibold">Upcoming Events</h1>
-        <ul class="bg-base-100 max-w-120 rounded px-4 py-3">
-          {#if data.events.length === 0}
-            <p class="w-full text-center">No Upcoming Events</p>
-          {/if}
-          {#each data.events as event}
-            <li>
-              <a href="/events/{event.id}" class="hover:link">
-                <span class="text-lg font-semibold">{event.name}</span>
-                <span class="font-light">
-                  {new Date(event.start).toLocaleString('en-US', {
-                    month: 'short',
-                    day: '2-digit',
-                    timeZone: 'UTC'
-                  })}
-                  {new Date(event.start).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false,
-                    timeZone: 'UTC'
-                  })}z -
-                  {new Date(event.end).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false,
-                    timeZone: 'UTC'
-                  })}z</span
-                >
-              </a>
-            </li>
-          {/each}
-        </ul>
+        {#await homepageData}
+          <p class="bg-base-100 max-w-120 rounded px-4 py-3">Loading events...</p>
+        {:then data}
+          <ul class="bg-base-100 max-w-120 rounded px-4 py-3">
+            {#if data.events.length === 0}
+              <p class="w-full text-center">No Upcoming Events</p>
+            {/if}
+            {#each data.events as event (event.id)}
+              <li>
+                <a href="/events/{event.id}" class="hover:link">
+                  <span class="text-lg font-semibold">{event.name}</span>
+                  <span class="font-light">
+                    {new Date(event.start).toLocaleString('en-US', {
+                      month: 'short',
+                      day: '2-digit',
+                      timeZone: 'UTC'
+                    })}
+                    {new Date(event.start).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false,
+                      timeZone: 'UTC'
+                    })}z -
+                    {new Date(event.end).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false,
+                      timeZone: 'UTC'
+                    })}z</span
+                  >
+                </a>
+              </li>
+            {/each}
+          </ul>
+        {:catch}
+          <p class="bg-base-100 max-w-120 rounded px-4 py-3">Unable to load events.</p>
+        {/await}
       </div>
     </div>
   </div>

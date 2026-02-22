@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
   import type { PageData } from './$types';
   import { Mail } from '@lucide/svelte';
 
@@ -16,7 +15,7 @@
         <div class="card-body">
           <div class="flex w-full flex-row items-end gap-3">
             <h2 class="card-title">
-              <a href="/controller/{staff.cid}" class="hover:link">{getUserDisplayName(staff)}</a>
+              <a href="/controller/{staff.cid}" class="hover:link">{staff.name}</a>
             </h2>
             <p class="italic">{staff.role}</p>
             <a
@@ -45,7 +44,7 @@
     {#each data.trainingTeam as user}
       <div>
         <h2>
-          <a href="/controller/{user.cid}" class="hover:link text-lg">{getUserDisplayName(user)}</a>
+          <a href="/controller/{user.cid}" class="hover:link text-lg">{user.displayName}</a>
         </h2>
         <p class="text-sm text-gray-400">
           {user.flags.some((f) => f.name === 'chief-instructor')

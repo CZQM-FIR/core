@@ -1,88 +1,93 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import type { RosterPositionStatus } from '@czqm/common';
+	import type { UserAdminDetails } from '$lib/remote/user-admin.remote';
 	import type { RosterPosition } from '@czqm/db/schema';
 
-	let { data }: { data: PageData } = $props();
+	let { details }: { details: UserAdminDetails } = $props();
 
-	let localUserData = $state(data.user!);
-	type LocalUserData = typeof localUserData;
+	let localRoster = $state({
+		gnd: 'nothing' as RosterPositionStatus,
+		twr: 'nothing' as RosterPositionStatus,
+		app: 'nothing' as RosterPositionStatus,
+		ctr: 'nothing' as RosterPositionStatus
+	});
 
-	const getRosterStatus = (position: RosterPosition) => {
-		if (
-			localUserData.soloEndorsements.filter((r) => {
-				if (r.position.callsign.toLowerCase().includes(position) && r.expiresAt > new Date()) {
-					return 1;
-				}
-			}).length > 0
-		) {
-			return 1; // solo
-		} else if (
-			localUserData.roster.filter((r) => r.position.toLowerCase() === position.toLowerCase())
-				.length === 0
-		) {
-			return -1; // N/A
-		} else if (localUserData.roster.filter((r) => r.position === position)[0].status === 0) {
-			return 0; // training
-		} else if (localUserData.roster.filter((r) => r.position === position)[0].status === 2) {
-			return 2; // certified
-		} else {
-			return -1; // N/A
+	$effect(() => {
+		localRoster.gnd = details.roster?.gnd ?? 'nothing';
+		localRoster.twr = details.roster?.twr ?? 'nothing';
+		localRoster.app = details.roster?.app ?? 'nothing';
+		localRoster.ctr = details.roster?.ctr ?? 'nothing';
+	});
+
+	const getRosterStatus = (position: RosterPosition): RosterPositionStatus => {
+		return localRoster[position] ?? 'nothing';
+	};
+
+	const rosterStatusToDbStatus = (status: RosterPositionStatus): -1 | 0 | 1 | 2 => {
+		if (status === 'training') {
+			return 0;
 		}
+		if (status === 'certified') {
+			return 2;
+		}
+		if (status === 'solo') {
+			return 1;
+		}
+		return -1;
 	};
 
 	const getRosterButtonColour = (position: RosterPosition) => {
 		const status = getRosterStatus(position);
-
-		console.log(status, position);
-
-		if (status === 1) {
-			console.log('solo', position);
+		if (status === 'solo') {
 			return 'btn-warning cursor-default'; //solo
-		} else if (status === 2) {
+		} else if (status === 'certified') {
 			return 'btn-success'; //certified
-		} else if (status === 0) {
+		} else if (status === 'training') {
 			return 'btn-error'; //training
-		} else if (status === -1) {
+		} else if (status === 'nothing') {
 			return ''; //N/A
 		}
 	};
 
 	const toggleRosterStatus = async (position: RosterPosition): Promise<void> => {
-		console.log('toggling', position);
-		if (getRosterStatus(position) === 1) {
+		const currentStatus = getRosterStatus(position);
+
+		if (currentStatus === 'solo') {
 			alert(
 				'You cannot change the status of a solo endorsement. Please remove the endorsement first.'
 			);
 			return;
 		}
-		let currentIndex = localUserData.roster.findIndex((r) => r.position === position);
-		let currentStatus = currentIndex === -1 ? -1 : localUserData.roster[currentIndex].status;
 
-		if (currentIndex === -1) {
-			localUserData.roster.push({
-				controllerId: Number(data.cid),
-				id: 0,
-				position,
-				status: 0
-			});
-			currentIndex = localUserData.roster.length - 1;
-		} else {
-			localUserData.roster[currentIndex].status =
-				currentStatus === 2 ? -1 : currentStatus + 1 === 1 ? 2 : 0;
-		}
+		const nextStatus: RosterPositionStatus =
+			currentStatus === 'certified'
+				? 'nothing'
+				: currentStatus === 'training'
+					? 'certified'
+					: 'training';
 
-		const res = await fetch(`/a/users/${data.cid}/roster`, {
+		localRoster[position] = nextStatus;
+
+		const res = await fetch(`/a/users/${details.cid}/roster`, {
 			method: 'PATCH',
 			body: JSON.stringify({
 				position: position,
-				status: localUserData.roster[currentIndex].status
+				status: rosterStatusToDbStatus(nextStatus)
 			})
 		});
 
 		if (res.ok) {
-			localUserData = ((await res.json()) as any).user as LocalUserData;
+			const responseData = (await res.json()) as {
+				roster?: UserAdminDetails['roster'];
+			};
+			if (responseData.roster) {
+				localRoster.gnd = responseData.roster.gnd ?? localRoster.gnd;
+				localRoster.twr = responseData.roster.twr ?? localRoster.twr;
+				localRoster.app = responseData.roster.app ?? localRoster.app;
+				localRoster.ctr = responseData.roster.ctr ?? localRoster.ctr;
+			}
 		} else {
-			localUserData.roster[currentIndex].status = currentStatus;
+			localRoster[position] = currentStatus;
 		}
 	};
 </script>
