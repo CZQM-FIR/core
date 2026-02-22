@@ -5,17 +5,15 @@
 
 	// Reactively compute the current status from the user's active field
 	let currentStatus = $derived<-1 | 0 | 1>(
-		details.user.active === 'active' ? 1 :
-		details.user.active === 'loa' ? -1 :
-		0
+		details.user.active === 'active' ? 1 : details.user.active === 'loa' ? -1 : 0
 	);
-	
+
 	// Local state for UI - matches currentStatus unless we're performing an update
 	let localActive = $state<-1 | 0 | 1 | 2>(0);
-	
+
 	// Sync on mount and when currentStatus changes (unless we're in the middle of an update)
 	let isUpdating = $state(false);
-	
+
 	$effect(() => {
 		if (!isUpdating) {
 			localActive = currentStatus;

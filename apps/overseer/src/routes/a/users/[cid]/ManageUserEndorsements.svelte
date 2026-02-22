@@ -56,7 +56,9 @@
 	<h1 class="text-lg font-semibold">Solo Endorsements</h1>
 	<div class="mb-3">
 		{#if activeEndorsements.length > 0}
-			<div class="rounded-box border-base-content/5 bg-base-100 mt-1 overflow-x-auto overflow-y-visible border">
+			<div
+				class="rounded-box border-base-content/5 bg-base-100 mt-1 overflow-x-auto overflow-y-visible border"
+			>
 				<table class="table">
 					<!-- head -->
 					<thead>
