@@ -1,52 +1,35 @@
 import { db } from '$lib/db';
-import { getUserRole } from '$lib/utilities/getUserRole';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { User } from '@czqm/common';
 
 export const load = (async ({ params }) => {
   const { cid } = params;
 
-  const userData = await db.query.users.findFirst({
-    where: { cid: Number(cid) },
-    with: {
-      flags: true,
-      rating: true,
-      roster: true,
-      soloEndorsements: {
-        with: {
-          position: true
-        }
-      },
-      sessions: {
-        with: {
-          position: true
-        }
-      },
-      preferences: true
-    },
-    columns: {
-      cid: true,
-      bio: true,
-      name_first: true,
-      name_last: true,
-      name_full: true
-    }
-  });
+  const user = await User.fromCid(db, Number(cid));
 
-  if (
-    !userData ||
-    !userData.flags.some((f) => [4, 5].includes(f.id)) ||
-    userData.cid !== Number(cid)
-  ) {
+  if (!user || !user.flags.some((f) => [4, 5].includes(f.id)) || user.cid !== Number(cid)) {
     return error(404, {
       message: 'Controller not Found'
     });
   }
 
-  const role = getUserRole(userData.flags);
+  const userData = {
+    cid: user.cid,
+    displayName: user.displayName,
+    rating: user.rating,
+    roster: {
+      gnd: user.getRosterStatus('gnd'),
+      twr: user.getRosterStatus('twr'),
+      app: user.getRosterStatus('app'),
+      ctr: user.getRosterStatus('ctr')
+    },
+    active: user.active,
+    sessions: user.sessions,
+    bio: user.bio
+  };
 
   return {
-    userData,
-    role
+    userData
   };
 }) satisfies PageServerLoad;

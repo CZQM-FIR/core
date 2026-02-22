@@ -4,6 +4,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { type } from 'arktype';
+import { User } from '@czqm/common';
 
 export const load = (async () => {
 	const resources = await db.query.resources.findMany({
@@ -83,14 +84,9 @@ export const actions = {
 			});
 		}
 
-		const user = await db.query.users.findFirst({
-			where: { cid: localUser.cid },
-			with: {
-				flags: true
-			}
-		});
+		const user = await User.fromCid(db, localUser.cid);
 
-		if (!user || !user.flags.some((f) => ['staff', 'admin'].includes(f.name))) {
+		if (!user || !user.hasFlag(['staff', 'admin'])) {
 			return fail(401, {
 				ok: false,
 				status: 401,
@@ -168,14 +164,9 @@ export const actions = {
 			});
 		}
 
-		const user = await db.query.users.findFirst({
-			where: { cid: localUser.cid },
-			with: {
-				flags: true
-			}
-		});
+		const user = await User.fromCid(db, localUser.cid);
 
-		if (!user || !user.flags.some((f) => ['staff', 'admin'].includes(f.name))) {
+		if (!user || !user.hasFlag(['staff', 'admin'])) {
 			return fail(401, {
 				ok: false,
 				status: 401,
@@ -263,14 +254,9 @@ export const actions = {
 			});
 		}
 
-		const user = await db.query.users.findFirst({
-			where: { cid: localUser.cid },
-			with: {
-				flags: true
-			}
-		});
+		const user = await User.fromCid(db, localUser.cid);
 
-		if (!user || !user.flags.some((f) => ['staff', 'admin'].includes(f.name))) {
+		if (!user || !user.hasFlag(['staff', 'admin'])) {
 			return fail(401, {
 				ok: false,
 				status: 401,

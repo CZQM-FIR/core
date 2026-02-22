@@ -103,30 +103,3 @@ export type UserWithRelations = User & {
 		value: string;
 	}>;
 };
-
-export async function getUser(event: RequestEvent): Promise<UserWithRelations | null> {
-	const token = event.cookies.get('session');
-	if (!token) {
-		return null;
-	}
-	const validation = await validateSessionToken(token);
-
-	if (!validation.user) {
-		return null;
-	}
-
-	const user = await db.query.users.findFirst({
-		where: { cid: validation.user!.cid },
-		with: {
-			flags: true,
-			rating: true,
-			preferences: true
-		}
-	});
-
-	if (!user) {
-		return null;
-	}
-
-	return user;
-}

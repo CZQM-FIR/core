@@ -1,27 +1,27 @@
 import { db } from '$lib/db';
 import type { PageServerLoad } from './$types';
+import { SoloEndorsement } from '@czqm/common';
 
 export const load = (async () => {
-  const solos = await db.query.soloEndorsements.findMany({
-    with: {
-      controller: {
-        columns: {
-          cid: true,
-          name_full: true,
-          name_first: true,
-          name_last: true
-        },
-        with: {
-          preferences: true
-        }
+  const solos = await SoloEndorsement.fetchAll(db);
+
+  const solosData = solos.map((s) => {
+    const { callsign, frequency, name } = s.position;
+
+    return {
+      cid: s.cid,
+      position: {
+        callsign,
+        frequency,
+        name
       },
-      position: true
-    }
+      active: s.isActive,
+      displayName: s.controller.displayName,
+      expiresAt: s.expiresAt.toJSON()
+    };
   });
 
   return {
-    solos: solos.filter((s) => {
-      return s.expiresAt.valueOf() > Date.now();
-    })
+    solos: solosData
   };
 }) satisfies PageServerLoad;

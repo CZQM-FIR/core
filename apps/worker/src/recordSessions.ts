@@ -1,7 +1,7 @@
 import * as schema from '@czqm/db/schema';
 import { type } from 'arktype';
 import { eq } from 'drizzle-orm';
-import { DB, Env } from '@czqm/common';
+import { DB, Env, User } from '@czqm/common';
 
 const positionPrefixes = [
   'CZQM',
@@ -45,24 +45,19 @@ const VatsimSessions = type({
 
 export const handleRecordSessions = async (db: DB, env: Env) => {
   // get list of all czqm controllers and visitors
-  const allUsers = await db.query.users.findMany({
-    with: { flags: true }
+  const allControllers = await User.fromFlag(db, ['controller', 'visitor'], {
+    withSessions: false
   });
-  const czqmControllers = allUsers.filter((c) => {
-    return c.flags.some((f) => f.name === 'controller');
-  });
-  const czqmVisitors = allUsers.filter((c) => {
-    return c.flags.some((f) => f.name === 'visitor');
-  });
-  const allControllers = [...czqmControllers, ...czqmVisitors].sort(
+
+  const sortedControllers = allControllers.sort(
     (a, b) => b.hoursLastUpdated.getTime() - a.hoursLastUpdated.getTime()
   );
 
-  console.log(`Found ${allControllers.length} controllers to update sessions for`);
+  console.log(`Found ${sortedControllers.length} controllers to update sessions for`);
 
   const positions = await db.query.positions.findMany({});
 
-  for await (const controller of allControllers) {
+  for await (const controller of sortedControllers) {
     // fetch their sessions from vatsim
     const fetchedSessions = [];
     let count = 1;

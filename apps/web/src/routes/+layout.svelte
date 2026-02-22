@@ -17,7 +17,6 @@
   import { page } from '$app/stores';
 
   import CZQMLogo from '$lib/assets/images/CZQM-White.svg';
-  import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
   import { PUBLIC_VECTOR_URL } from '$env/static/public';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
@@ -133,7 +132,7 @@
         <div class="dropdown dropdown-end">
           <div tabindex="0" role="button" class="btn btn-ghost bg-base-300">
             <User class="mr-1" size="15" />
-            {getUserDisplayName(data.user)}
+            {data.user.displayName}
           </div>
           <ul class="menu dropdown-content rounded-box bg-base-300 z-1 p-2 shadow-sm">
             <li>

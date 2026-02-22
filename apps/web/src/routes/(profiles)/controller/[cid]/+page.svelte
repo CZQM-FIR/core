@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { getRosterStatus } from '$lib/utilities/getRosterStatus';
-  import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
   import RosterStatusIndicator from '../../../roster/RosterStatusIndicator.svelte';
   import type { PageData } from './$types';
 
@@ -95,7 +93,7 @@
 <section>
   <div class="container mx-auto py-6">
     <h1 class="flex flex-row items-baseline gap-3">
-      <span class="text-3xl font-semibold">{getUserDisplayName(user)}</span><span>{data.role}</span>
+      <span class="text-3xl font-semibold">{user.displayName}</span><span>{data.user?.role}</span>
     </h1>
     <div class="divider"></div>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -119,17 +117,17 @@
           {/if}
         </ul>
         <div class="flex flex-row items-center justify-center gap-4">
-          {#if getRosterStatus(user, 'gnd') !== -1}
-            <RosterStatusIndicator position="Ground" div roster={getRosterStatus(user, 'gnd')} />
+          {#if user.roster.gnd !== 'nothing'}
+            <RosterStatusIndicator position="Ground" div roster={user.roster.gnd} />
           {/if}
-          {#if getRosterStatus(user, 'twr') !== -1}
-            <RosterStatusIndicator position="Tower" div roster={getRosterStatus(user, 'twr')} />
+          {#if user.roster.twr !== 'nothing'}
+            <RosterStatusIndicator position="Tower" div roster={user.roster.twr} />
           {/if}
-          {#if getRosterStatus(user, 'app') !== -1}
-            <RosterStatusIndicator position="Terminal" div roster={getRosterStatus(user, 'app')} />
+          {#if user.roster.app !== 'nothing'}
+            <RosterStatusIndicator position="Terminal" div roster={user.roster.app} />
           {/if}
-          {#if getRosterStatus(user, 'ctr') !== -1}
-            <RosterStatusIndicator position="Centre" div roster={getRosterStatus(user, 'ctr')} />
+          {#if user.roster.ctr !== 'nothing'}
+            <RosterStatusIndicator position="Centre" div roster={user.roster.ctr} />
           {/if}
         </div>
         <div class="bg-base-300 rounded-lg p-5">

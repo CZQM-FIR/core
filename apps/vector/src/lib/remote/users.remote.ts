@@ -1,69 +1,47 @@
 import { getRequestEvent, query } from '$app/server';
-import { getUser } from '$lib/auth';
 import { db } from '$lib/db';
+import { User } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 
 export const getHomeControllers = query(async () => {
 	const event = getRequestEvent();
-	const actioner = await getUser(event);
-	if (
-		!actioner ||
-		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.name))
-	) {
+
+	const actioner = await User.fromSessionToken(db, event.cookies.get('session') || '');
+
+	if (!actioner || !actioner.hasFlag(['admin', 'staff', 'instructor', 'mentor'])) {
 		throw error(403, 'Forbidden');
 	}
 
-	const users = await db.query.users.findMany({
-		with: {
-			flags: true
-		}
-	});
-
-	return users.filter((u) => u.flags.some((f) => f.name === 'controller'));
+	return await User.fromFlag(db, 'controller');
 });
 
 export const getVisitingControllers = query(async () => {
 	const event = getRequestEvent();
-	const actioner = await getUser(event);
-	if (
-		!actioner ||
-		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.name))
-	) {
+
+	const actioner = await User.fromSessionToken(db, event.cookies.get('session') || '');
+
+	if (!actioner || !actioner.hasFlag(['admin', 'staff', 'instructor', 'mentor'])) {
 		throw error(403, 'Forbidden');
 	}
 
-	const users = await db.query.users.findMany({
-		with: {
-			flags: true
-		}
-	});
-
-	return users.filter((u) => u.flags.some((f) => f.name === 'visitor'));
+	return await User.fromFlag(db, 'visitor');
 });
 
 export const getAllControllers = query(async () => {
 	const event = getRequestEvent();
-	const actioner = await getUser(event);
-	if (
-		!actioner ||
-		!actioner.flags.some((f) => ['admin', 'staff', 'instructor', 'mentor'].includes(f.name))
-	) {
+
+	const actioner = await User.fromSessionToken(db, event.cookies.get('session') || '');
+
+	if (!actioner || !actioner.hasFlag(['admin', 'staff', 'instructor', 'mentor'])) {
 		throw error(403, 'Forbidden');
 	}
 
-	const users = await db.query.users.findMany({
-		orderBy: (users) => [users.name_last],
-		with: {
-			flags: true
-		}
-	});
-
-	return users.filter((u) => u.flags.some((f) => f.name === 'controller' || f.name === 'visitor'));
+	return await User.fromFlag(db, ['controller', 'visitor'], { withSessions: false });
 });
 
 export const getCurrentUserInfo = query(async () => {
 	const event = getRequestEvent();
-	const user = await getUser(event);
+	const user = await User.fromSessionToken(db, event.cookies.get('session') || '');
 
 	if (!user) {
 		throw error(403, 'Forbidden');

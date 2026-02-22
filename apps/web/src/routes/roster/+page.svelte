@@ -1,20 +1,18 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import RosterStatusIndicator from './RosterStatusIndicator.svelte';
-  import { getRosterStatus } from '$lib/utilities/getRosterStatus';
   import { CircleCheck, CircleMinus, CircleX } from '@lucide/svelte';
-  import { getUserDisplayName } from '$lib/utilities/getUserDisplayName';
 
   let { data }: { data: PageData } = $props();
 
-  let controllers: typeof data.controllers = $state([]);
+  let controllers: typeof data.rosterData = $state([]);
 
   $effect(() => {
-    controllers = data.controllers.filter((controller) => {
+    controllers = data.rosterData.filter((controller) => {
       return (
-        controller.name_full.toLowerCase().includes(search.toLowerCase()) ||
+        controller.displayName.toLowerCase().includes(search.toLowerCase()) ||
         controller.cid.toString().includes(search) ||
-        controller.rating.short.toLowerCase().includes(search.toLowerCase())
+        controller.rating.toLowerCase().includes(search.toLowerCase())
       );
     });
   });
@@ -48,31 +46,31 @@
             <th class="flex flex-col">
               <span class="font-bold"
                 ><a href="/controller/{controller.cid}" class="hover:link"
-                  >{getUserDisplayName(controller)} ({controller.rating.short})</a
+                  >{controller.displayName} ({controller.rating})</a
                 ></span
               >
               <span class="font-normal">{controller.role}</span>
             </th>
             <td>{controller.cid}</td>
             <td>
-              {#if controller.active === 1}
+              {#if controller.active === 'active'}
                 <div class="tooltip" data-tip="Active">
                   <CircleCheck size="18" class="text-success" />
                 </div>
-              {:else if controller.active === 0}
+              {:else if controller.active === 'inactive'}
                 <div class="tooltip" data-tip="Inactive">
                   <CircleX size="18" class="text-error" />
                 </div>
-              {:else if controller.active === -1}
+              {:else if controller.active === 'loa'}
                 <div class="tooltip" data-tip="On Leave">
                   <CircleMinus size="18" class="text-warning" />
                 </div>
               {/if}
             </td>
-            <RosterStatusIndicator roster={getRosterStatus(controller, 'gnd')} />
-            <RosterStatusIndicator roster={getRosterStatus(controller, 'twr')} />
-            <RosterStatusIndicator roster={getRosterStatus(controller, 'app')} />
-            <RosterStatusIndicator roster={getRosterStatus(controller, 'ctr')} />
+            <RosterStatusIndicator roster={controller.rosterStatuses.gnd} />
+            <RosterStatusIndicator roster={controller.rosterStatuses.twr} />
+            <RosterStatusIndicator roster={controller.rosterStatuses.app} />
+            <RosterStatusIndicator roster={controller.rosterStatuses.ctr} />
           </tr>
         {/each}
       </tbody>

@@ -23,5 +23,6 @@
     "VATSIM",
     "waitlist",
     "waitlists"
-  ]
+  ],
+  "chat.agent.maxRequests": 50
 }

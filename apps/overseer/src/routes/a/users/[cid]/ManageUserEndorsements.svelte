@@ -1,21 +1,62 @@
 <script lang="ts">
-	import type { PageData, ActionData } from './$types';
-	import type { RosterUserData } from '@czqm/db/schema';
+	import type { UserAdminDetails } from '$lib/remote/user-admin.remote';
+	import {
+		createSoloEndorsement,
+		deleteSoloEndorsement,
+		extendSoloEndorsement
+	} from '$lib/remote/user-admin.remote';
 
-	let {
-		data,
-		localUserData,
-		form
-	}: { data: PageData; localUserData: RosterUserData; form: ActionData } = $props();
+	let { details }: { details: UserAdminDetails } = $props();
 
-	let activeEndorsements = localUserData.soloEndorsements.filter((e) => e.expiresAt > new Date());
+	let activeEndorsements = $derived(
+		details.user.soloEndorsements.filter((e) => e.expiresAt > new Date())
+	);
+
+	// Track messages and status
+	let message = $state<{ text: string; isError: boolean } | null>(null);
+
+	// Check for results from the create form
+	$effect(() => {
+		if (createSoloEndorsement.result) {
+			message = {
+				text: createSoloEndorsement.result.message,
+				isError: !createSoloEndorsement.result.ok
+			};
+		}
+	});
+
+	// Check for results from keyed forms (extend and delete)
+	$effect(() => {
+		// Check each endorsement's extend/delete form results
+		for (const endorsement of activeEndorsements) {
+			const key = String(endorsement.id);
+			const extendForm = extendSoloEndorsement.for(key);
+			const deleteForm = deleteSoloEndorsement.for(key);
+
+			if (extendForm.result) {
+				message = {
+					text: extendForm.result.message,
+					isError: !extendForm.result.ok
+				};
+				break;
+			}
+
+			if (deleteForm.result) {
+				message = {
+					text: deleteForm.result.message,
+					isError: !deleteForm.result.ok
+				};
+				break;
+			}
+		}
+	});
 </script>
 
 <div class="flex min-w-96 flex-col rounded border border-gray-600 p-4">
 	<h1 class="text-lg font-semibold">Solo Endorsements</h1>
 	<div class="mb-3">
 		{#if activeEndorsements.length > 0}
-			<div class="rounded-box border-base-content/5 bg-base-100 mt-1 overflow-x-auto border">
+			<div class="rounded-box border-base-content/5 bg-base-100 mt-1 overflow-x-auto overflow-y-visible border">
 				<table class="table">
 					<!-- head -->
 					<thead>
@@ -27,6 +68,11 @@
 					</thead>
 					<tbody>
 						{#each activeEndorsements as endorsement (endorsement.id)}
+							{@const now = new Date()}
+							{@const daysUntilExpiry = Math.ceil(
+								(endorsement.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+							)}
+							{@const canExtend = daysUntilExpiry <= 7}
 							<tr>
 								<td>{endorsement.position.callsign}</td>
 								<td
@@ -35,15 +81,32 @@
 									})}
 								</td>
 								<td>
-									<form method="POST">
-										<input type="number" name="cid" value={localUserData.cid} class="hidden" />
+									<div class="flex flex-row gap-2">
+										<input type="number" name="cid" value={details.user.cid} class="hidden" />
 										<input type="number" name="id" value={endorsement.id} class="hidden" />
-										<div class="flex flex-row gap-2">
-											<button formaction="?/deleteSoloEndorsement" class="btn btn-sm">Revoke</button
+										<form {...deleteSoloEndorsement.for(String(endorsement.id))}>
+											<input type="number" name="cid" value={details.user.cid} class="hidden" />
+											<input type="number" name="id" value={endorsement.id} class="hidden" />
+											<button type="submit" class="btn btn-sm">Revoke</button>
+										</form>
+										<form {...extendSoloEndorsement.for(String(endorsement.id))}>
+											<input type="number" name="cid" value={details.user.cid} class="hidden" />
+											<input type="number" name="id" value={endorsement.id} class="hidden" />
+											<button
+												type="button"
+												class="btn btn-sm"
+												onclick={(e) => {
+													if (!canExtend) {
+														alert('Endorsement can only be extended within 7 days of expiration');
+														return;
+													}
+													(e.target as HTMLButtonElement).closest('form')?.requestSubmit();
+												}}
 											>
-											<button formaction="?/extendSoloEndorsement" class="btn btn-sm">30+</button>
-										</div>
-									</form>
+												30+
+											</button>
+										</form>
+									</div>
 								</td>
 							</tr>
 						{/each}
@@ -56,7 +119,7 @@
 	</div>
 
 	<h3 class="mt-auto">New Endorsement</h3>
-	<form class="flex w-full items-baseline gap-3" method="POST" action="?/createSoloEndorsement">
+	<form {...createSoloEndorsement} class="flex w-full items-baseline gap-3">
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Position</legend>
 			<input type="text" class="input w-30" required name="position" placeholder="CXXX_GND" />
@@ -73,12 +136,12 @@
 				name="duration"
 			/>
 		</fieldset>
-		<input name="cid" type="number" value={data.cid} class="hidden" />
+		<input name="cid" type="number" value={details.cid} class="hidden" />
 		<button class="btn btn-primary">Save</button>
 	</form>
-	{#if form && (form.status?.toString().startsWith('4') || form.status?.toString().startsWith('5'))}
-		<p class="text-error text-sm">Error: {form.statusText}</p>
-	{:else if form && form.status === 200}
-		<p class="text-success text-sm">{form.statusText}</p>
+	{#if message}
+		<p class="{message.isError ? 'text-error' : 'text-success'} mt-2 text-sm">
+			{message.text}
+		</p>
 	{/if}
 </div>

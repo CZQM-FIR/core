@@ -1,23 +1,17 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-
-	let { form }: PageProps = $props();
-
-	onMount(() => {
-		if (form && form.status === 200) {
-			goto('/a/news');
-		}
-	});
+	import { createNewsArticle } from '$lib/remote/news.remote';
+	import { ChevronLeft } from '@lucide/svelte';
 </script>
 
 <section>
 	<div class="container mx-auto">
 		<h1 class="pt-6 text-2xl font-semibold">Create News Article</h1>
+		<a href="/a/news" class="text-primary hover:link flex flex-row items-center gap-1">
+			<ChevronLeft size="15" /> Back to All Articles
+		</a>
 		<div class="divider"></div>
 
-		<form method="POST" enctype="multipart/form-data">
+		<form {...createNewsArticle} enctype="multipart/form-data">
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend">Article Title</legend>
 				<input type="text" class="input" name="title" required />

@@ -27,12 +27,12 @@ export const relations = defineRelations(schema, (r) => ({
     authSessions: r.many.authSessions(),
     integrations: r.many.integrations(),
     preferences: r.many.preferences(),
-    waitlistsViaEnrolledUsers: r.many.waitlists({
+    enrolledList: r.many.waitlists({
       from: r.users.cid.through(r.enrolledUsers.cid),
       to: r.waitlists.id.through(r.enrolledUsers.waitlistId),
       alias: "waitlists_id_users_cid_via_enrolledUsers",
     }),
-    waitlistsViaWaitingUsers: r.many.waitlists({
+    waitingList: r.many.waitlists({
       from: r.users.cid.through(r.waitingUsers.cid),
       to: r.waitlists.id.through(r.waitingUsers.waitlistId),
       alias: "waitlists_id_users_cid_via_waitingUsers",
@@ -42,6 +42,14 @@ export const relations = defineRelations(schema, (r) => ({
     soloEndorsements: r.many.soloEndorsements({
       from: r.users.cid,
       to: r.soloEndorsements.controllerId,
+    }),
+    waitingPositions: r.many.waitingUsers({
+      from: r.users.cid,
+      to: r.waitingUsers.cid,
+    }),
+    enrolledPositions: r.many.enrolledUsers({
+      from: r.users.cid,
+      to: r.enrolledUsers.cid,
     }),
   },
   flags: {

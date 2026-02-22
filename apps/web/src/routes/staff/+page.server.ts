@@ -1,53 +1,11 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
-import { type } from 'arktype';
-import { error } from '@sveltejs/kit';
-
-const StaffUser = type({
-  cid: 'number',
-  name_full: 'string',
-  name_first: 'string',
-  name_last: 'string',
-  bio: 'string | null',
-  flags: type({
-    name: 'string'
-  }).array(),
-  preferences: type({
-    key: 'string',
-    value: 'string'
-  }).array(),
-  'role?': 'string',
-  'email?': 'string.email'
-});
-
-const StaffUsers = StaffUser.array();
+import { User } from '@czqm/common';
 
 export const load = (async () => {
-  const users = StaffUsers(
-    await db.query.users.findMany({
-      columns: {
-        cid: true,
-        name_full: true,
-        name_first: true,
-        name_last: true,
-        bio: true
-      },
-      with: {
-        preferences: true,
-        flags: {
-          columns: {
-            name: true
-          }
-        }
-      }
-    })
-  );
-
-  if (users instanceof type.errors) {
-    return error(500, { message: users.issues.toString() });
-  }
-
-  const staff = users.filter((user) => user.flags.some((flag) => flag.name === 'staff'));
+  const staffUsers = await User.fromFlag(db, 'staff', { withSessions: false });
+  const instructorUsers = await User.fromFlag(db, 'instructor', { withSessions: false });
+  const mentorUsers = await User.fromFlag(db, 'mentor', { withSessions: false });
 
   const sorting = {
     chief: 5,
@@ -58,7 +16,7 @@ export const load = (async () => {
     web: 0
   };
 
-  staff.sort((a, b) => {
+  staffUsers.sort((a, b) => {
     let aScore = 0;
     let bScore = 0;
 
@@ -75,46 +33,55 @@ export const load = (async () => {
     return bScore - aScore;
   });
 
-  staff.map((staff) => {
+  const staff: {
+    name: string;
+    role: string;
+    email: string;
+    cid: number;
+    bio: string;
+  }[] = [];
+
+  staffUsers.forEach((user) => {
     const roles = [];
     let email: string | undefined;
 
-    if (staff.flags.some((flag) => flag.name === 'chief')) {
+    if (user.hasFlag('chief')) {
       roles.push('FIR Chief');
       email = email ?? 'chief@czqm.ca';
     }
-    if (staff.flags.some((flag) => flag.name === 'deputy')) {
+    if (user.hasFlag('deputy')) {
       roles.push('Deputy FIR Chief');
       email = email ?? 'deputy@czqm.ca';
     }
-    if (staff.flags.some((flag) => flag.name === 'chief-instructor')) {
+    if (user.hasFlag('chief-instructor')) {
       roles.push('Chief Instructor');
       email = email ?? 'instructor@czqm.ca';
     }
-    if (staff.flags.some((flag) => flag.name === 'web')) {
+    if (user.hasFlag('web')) {
       roles.push('Webmaster');
       email = email ?? 'webmaster@czqm.ca';
     }
-    if (staff.flags.some((flag) => flag.name === 'events')) {
+    if (user.hasFlag('events')) {
       roles.push('Events Coordinator');
       email = email ?? 'events@czqm.ca';
     }
-    if (staff.flags.some((flag) => flag.name === 'sector')) {
+    if (user.hasFlag('sector')) {
       roles.push('Facility Engineer');
       email = email ?? 'engineer@czqm.ca';
     }
 
-    staff.role = roles.join(' & ');
-    staff.email = email;
+    staff.push({
+      email: email ?? user.email,
+      name: user.displayName,
+      role: roles.join(' & '),
+      cid: user.cid,
+      bio: user.bio || ''
+    });
   });
 
-  const trainingTeam = users.filter((u) => {
-    return u.flags.some((f) => ['mentor', 'instructor', 'chief-instructor'].includes(f.name));
-  });
+  const trainingTeam = [...instructorUsers, ...mentorUsers];
 
-  const chiefInstructor = trainingTeam.find((u) =>
-    u.flags.some((f) => f.name === 'chief-instructor')
-  );
+  const chiefInstructor = (await User.fromFlag(db, 'chief-instructor', { withSessions: false }))[0];
 
   return {
     staff,

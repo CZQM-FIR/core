@@ -4,11 +4,20 @@
   import Toggle from '$lib/components/Toggle.svelte';
   import { onMount } from 'svelte';
 
-  let { data, form }: { data: PageData; form: ActionData } = $props();
+  let { data, form }: { data: PageData; form?: ActionData } = $props();
 
   let hideToast = $state(false);
 
   const reqNotifTooltip = 'Required notification - cannot be disabled';
+
+  const notificationKeys = [
+    'policyChanges',
+    'urgentFirUpdates',
+    'trainingUpdates',
+    'unauthorizedConnection',
+    'newEventPosted',
+    'newNewsArticlePosted'
+  ] as const;
 
   let notifications = $state({
     policyChanges: true,
@@ -19,7 +28,7 @@
     newNewsArticlePosted: true
   });
 
-  let privacy = $state({
+  let privacy = $state<{ name: 'full' | 'initial' | 'cid' }>({
     name: 'full'
   });
 
@@ -31,15 +40,27 @@
 
   $effect(() => {
     // Use form result preferences if available (after successful submission), otherwise use initial data
-    const preferences = form?.preferences || data.preferences;
+    const preferences = form?.preferences ?? data.preferences;
 
-    for (const key in notifications) {
-      const pref = preferences?.find((p) => p.key === key);
-      notifications[key as keyof typeof notifications] = pref ? pref.value === 'true' : true;
+    const getPreferenceValue = (key: string): string | boolean | undefined => {
+      if (Array.isArray(preferences)) {
+        const preference = preferences.find(
+          (entry: { key: string; value: string }) => entry.key === key
+        );
+        return preference?.value;
+      }
+
+      return preferences[key as keyof typeof preferences];
+    };
+
+    for (const key of notificationKeys) {
+      const value = getPreferenceValue(key);
+      notifications[key] = value === true || value === 'true';
     }
 
-    const namePref = preferences?.find((p) => p.key === 'displayName');
-    privacy.name = namePref ? (namePref.value as string) : 'full';
+    const nameValue = getPreferenceValue('displayName');
+    privacy.name =
+      nameValue === 'full' || nameValue === 'initial' || nameValue === 'cid' ? nameValue : 'full';
   });
 </script>
 

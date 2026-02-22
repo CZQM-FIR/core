@@ -1,16 +1,12 @@
 import type { LayoutServerLoad } from './$types';
 import { db } from '$lib/db';
+import { User } from '@czqm/common';
 
 export const load = (async ({ locals }) => {
   let user;
 
   if (locals.user) {
-    user = await db.query.users.findFirst({
-      where: { cid: locals.user!.cid },
-      with: {
-        preferences: true
-      }
-    });
+    user = await User.fromCid(db, locals.user.cid);
   }
 
   return {

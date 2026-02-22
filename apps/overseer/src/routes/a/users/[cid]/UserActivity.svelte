@@ -1,115 +1,15 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import type { UserAdminDetails } from '$lib/remote/user-admin.remote';
 
-	let { data, showExternal = false }: { data: PageData; showExternal?: boolean } = $props();
+	let { details, showExternal = false }: { details: UserAdminDetails; showExternal?: boolean } =
+		$props();
 
-	const month = $state(
-		(
-			data
-				.user!.sessions.filter(
-					(s) => s.logonTime.getMonth() === new Date().getMonth() && s.positionId !== 0
-				)
-				.reduce((a, b) => a + b.duration, 0) / 3600
-		).toFixed(2)
-	);
-	const now = new Date();
-	const currentQuarter = Math.floor(now.getMonth() / 3);
-	const currentYear = now.getFullYear();
-	const lastQuarterNum = currentQuarter === 0 ? 3 : currentQuarter - 1;
-	const lastQuarterYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
-
-	const activity = $state(
-		(
-			data
-				.user!.sessions.filter((s) => {
-					const sessionDate = new Date(s.logonTime);
-					const sessionQuarter = Math.floor(sessionDate.getMonth() / 3);
-					const sessionYear = sessionDate.getFullYear();
-					return (
-						sessionQuarter === currentQuarter && sessionYear === currentYear && s.positionId !== 0
-					);
-				})
-				.filter((s) =>
-					(data.user!.ratingID >= 5 ? ['APP', 'CTR'] : ['GND', 'TWR', 'APP', 'CTR']).includes(
-						s.position.callsign.split('_').pop() ?? ''
-					)
-				)
-				.reduce((a, b) => a + b.duration, 0) / 3600
-		).toFixed(2)
-	);
-	const lastActivity = $state(
-		(
-			data
-				.user!.sessions.filter((s) => {
-					const sessionDate = new Date(s.logonTime);
-					const sessionQuarter = Math.floor(sessionDate.getMonth() / 3);
-					const sessionYear = sessionDate.getFullYear();
-					return (
-						sessionQuarter === lastQuarterNum &&
-						sessionYear === lastQuarterYear &&
-						s.positionId !== 0
-					);
-				})
-				.filter((s) =>
-					(data.user!.ratingID >= 5 ? ['APP', 'CTR'] : ['GND', 'TWR', 'APP', 'CTR']).includes(
-						s.position.callsign.split('_').pop() ?? ''
-					)
-				)
-				.reduce((a, b) => a + b.duration, 0) / 3600
-		).toFixed(2)
-	);
-	const year = $state(
-		(
-			data
-				.user!.sessions.filter(
-					(s) => s.logonTime.getFullYear() === new Date().getFullYear() && s.positionId !== 0
-				)
-				.reduce((a, b) => a + b.duration, 0) / 3600
-		).toFixed(2)
-	);
-	const externalQuarter = $state(
-		(
-			data
-				.user!.sessions.filter((s) => {
-					const sessionDate = new Date(s.logonTime);
-					const sessionQuarter = Math.floor(sessionDate.getMonth() / 3);
-					const sessionYear = sessionDate.getFullYear();
-					return (
-						sessionQuarter === currentQuarter && sessionYear === currentYear && s.positionId === 0
-					);
-				})
-				.reduce((a, b) => a + b.duration, 0) / 3600
-		).toFixed(2)
-	);
-	const externalLastQuarter = $state(
-		(
-			data
-				.user!.sessions.filter((s) => {
-					const sessionDate = new Date(s.logonTime);
-					const sessionQuarter = Math.floor(sessionDate.getMonth() / 3);
-					const sessionYear = sessionDate.getFullYear();
-					return (
-						sessionQuarter === lastQuarterNum &&
-						sessionYear === lastQuarterYear &&
-						s.positionId === 0
-					);
-				})
-				.reduce((a, b) => a + b.duration, 0) / 3600
-		).toFixed(2)
-	);
-
-	const last10Sessions = $state(
-		data
-			.user!.sessions.filter((s) => {
-				if (showExternal) {
-					return true;
-				} else {
-					return s.positionId !== 0;
-				}
-			})
-			.sort((a, b) => b.logonTime.getTime() - a.logonTime.getTime())
-			.slice(0, 10)
-	);
+	let month = $derived((details.user?.hours.thisMonth ?? 0).toFixed(2));
+	let activity = $derived((details.user?.hours.thisActivityHours ?? 0).toFixed(2));
+	let lastMonth = $derived((details.user?.hours.lastMonth ?? 0).toFixed(2));
+	let total = $derived((details.user?.hours.total ?? 0).toFixed(2));
+	let thisQuarter = $derived((details.user?.hours.thisQuarter ?? 0).toFixed(2));
+	let lastQuarter = $derived((details.user?.hours.lastQuarter ?? 0).toFixed(2));
 </script>
 
 <div class="flex flex-col rounded border border-gray-600 p-4">
@@ -125,29 +25,29 @@
 			<p class={Number(activity) < 3 ? 'text-warning' : ''}>{activity}h / 3:00h</p>
 		</div>
 		<div class="flex flex-col items-center justify-center gap-1">
-			<p class="font-semibold">Last Activity</p>
-			<p class={Number(lastActivity) < 3 ? 'text-warning' : ''}>{lastActivity}h / 3:00h</p>
-		</div>
-		<div class="flex flex-col items-center justify-center gap-1">
 			<p class="font-semibold">Month</p>
 			<p>{month}h</p>
 		</div>
 		<div class="flex flex-col items-center justify-center gap-1">
-			<p class="font-semibold">Year</p>
-			<p>{year}h</p>
+			<p class="font-semibold">Last Month</p>
+			<p>{lastMonth}h</p>
+		</div>
+		<div class="flex flex-col items-center justify-center gap-1">
+			<p class="font-semibold">Total</p>
+			<p>{total}h</p>
 		</div>
 		{#if showExternal}
 			<div class="flex flex-col items-center justify-center gap-1">
-				<p class="font-semibold">External Quarter</p>
-				<p>{externalQuarter}h</p>
+				<p class="font-semibold">This Quarter</p>
+				<p>{thisQuarter}h</p>
 			</div>
 			<div class="flex flex-col items-center justify-center gap-1">
-				<p class="font-semibold">External Last Quarter</p>
-				<p>{externalLastQuarter}h</p>
+				<p class="font-semibold">Last Quarter</p>
+				<p>{lastQuarter}h</p>
 			</div>
 		{/if}
 	</div>
-	<h2 class="mt-4 mb-2 font-semibold">Last 20 Sessions</h2>
+	<h2 class="mt-4 mb-2 font-semibold">Last 10 Sessions</h2>
 	<div class="rounded-box border-base-content/5 bg-base-100 mb-4 overflow-x-auto border">
 		<table class="table-zebra table">
 			<thead>
@@ -159,7 +59,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each last10Sessions as session, i (session.id)}
+				{#each details.last10Sessions as session, i (session.id)}
 					<tr>
 						<td>{i + 1}</td>
 						<td>{session.position.callsign}</td>
@@ -167,7 +67,7 @@
 						<td>{(session.duration / 3600).toFixed(2)}h</td>
 					</tr>
 				{/each}
-				{#if last10Sessions.length === 0}
+				{#if details.last10Sessions.length === 0}
 					<tr>
 						<td colspan="4" class="text-center"> No sessions found </td>
 					</tr>

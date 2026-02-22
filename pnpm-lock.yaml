@@ -39,6 +39,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.787.0
         version: 3.828.0
+      '@czqm/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@czqm/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -154,6 +157,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.787.0
         version: 3.828.0
+      '@czqm/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@czqm/db':
         specifier: workspace:*
         version: link:../../packages/db

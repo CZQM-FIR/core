@@ -8,81 +8,17 @@
   let externalModal: HTMLDialogElement | null | undefined = $state();
 
   let user = $state(data.user!);
+  let bio = $state(user.bio ?? '');
 
-  let thisYear =
-    user.sessions
-      .filter((session) => {
-        return new Date(session.logonTime).getFullYear() === new Date().getFullYear();
-      })
-      .map((s) => s.duration)
-      .reduce((a, b) => a + b, 0) / 3600;
-  let thisMonth =
-    user.sessions
-      .filter((session) => {
-        const now = new Date();
-        const sessionDate = new Date(session.logonTime);
-        return (
-          sessionDate.getMonth() === now.getMonth() &&
-          sessionDate.getFullYear() === now.getFullYear()
-        );
-      })
-      .map((s) => s.duration)
-      .reduce((a, b) => a + b, 0) / 3600;
-  let thisQuarter =
-    user.sessions
-      .filter((session) => {
-        const now = new Date();
-        const sessionDate = new Date(session.logonTime);
-        const currentMonth = now.getMonth();
-        const sessionMonth = sessionDate.getMonth();
-        const quarterStartMonth = currentMonth - (currentMonth % 3);
+  $effect(() => {
+    if (form && typeof form.bio === 'string') {
+      bio = form.bio;
 
-        return (
-          sessionDate.getFullYear() === now.getFullYear() &&
-          sessionMonth >= quarterStartMonth &&
-          sessionMonth <= quarterStartMonth + 2
-        );
-      })
-      .map((s) => s.duration)
-      .reduce((a, b) => a + b, 0) / 3600;
-
-  let activityHours =
-    user.sessions
-      .filter((session) => {
-        const now = new Date();
-        const sessionDate = new Date(session.logonTime);
-        const currentMonth = now.getMonth();
-        const sessionMonth = sessionDate.getMonth();
-        const quarterStartMonth = currentMonth - (currentMonth % 3);
-
-        return (
-          sessionDate.getFullYear() === now.getFullYear() &&
-          sessionMonth >= quarterStartMonth &&
-          sessionMonth <= quarterStartMonth + 2
-        );
-      })
-      .filter((session) => {
-        if ([-1, 0].includes(session.positionId)) return false;
-        if (user.ratingID >= 5)
-          return ['APP', 'CTR'].includes(session.position.callsign.split('_').pop() || '');
-        return ['GND', 'TWR', 'APP', 'CTR'].includes(
-          session.position.callsign.split('_').pop() || ''
-        );
-      })
-      .map((s) => s.duration)
-      .reduce((a, b) => a + b, 0) / 3600;
-
-  let externalHours =
-    user.sessions
-      .filter((session) => session.positionId === -1)
-      .map((s) => s.duration)
-      .reduce((a, b) => a + b, 0) / 3600;
-
-  let allTime =
-    user.sessions
-      .filter((session) => session.positionId !== -1)
-      .map((s) => s.duration)
-      .reduce((a, b) => a + b, 0) / 3600;
+      if (form.ok) {
+        user.bio = form.bio;
+      }
+    }
+  });
 </script>
 
 <div class="flex flex-row flex-wrap gap-3">
@@ -121,7 +57,7 @@
     <h4 class="text-md font-semibold">Controller Bio</h4>
     <p>This bio will appear on your public profile page</p>
     <form action="?/updateBio" method="post" use:enhance>
-      <textarea class="textarea" name="bio" value={form?.bio || user.bio || ''}></textarea>
+      <textarea class="textarea" name="bio" bind:value={bio}></textarea>
       <div class="flex flex-row items-center gap-3">
         <button type="submit" class="btn btn-primary btn-outline mt-2">Save</button>
         {#if form}
@@ -152,22 +88,23 @@
           <tbody>
             <tr>
               <td>This Month</td>
-              <td>{thisMonth.toFixed(2)}</td>
+              <td>{user.hours.thisMonth.toFixed(2)}</td>
             </tr><tr>
               <td>This Quarter</td>
-              <td>{thisQuarter.toFixed(2)}</td>
+              <td>{user.hours.thisQuarter.toFixed(2)}</td>
             </tr>
             <tr>
               <td>This Year</td>
-              <td>{thisYear.toFixed(2)}</td>
+              <td>{user.hours.thisYear.toFixed(2)}</td>
             </tr>
             <tr>
               <td
                 onclickcapture={() => activityModal?.showModal()}
                 class="hover:link flex items-baseline gap-2">Activity Hours <Info size="15" /></td
               >
-              <td class={activityHours < 3 ? 'text-warning' : ''}
-                >{activityHours.toFixed(2)} {activityHours <= 3 ? '/ 3' : ''}</td
+              <td class={user.hours.meetingActivityRequirement ? 'text-warning' : ''}
+                >{user.hours.thisActivityHours.toFixed(2)}
+                {user.hours.meetingActivityRequirement ? '/ 3' : ''}</td
               >
             </tr>
             <tr>
@@ -176,14 +113,15 @@
                 class="hover:link flex items-baseline gap-2">External Hours <Info size="15" /></td
               >
               <td
-                class={user.flags.some((f) => f.id === 5) && externalHours >= activityHours
+                class={user.flags.some((f) => f.id === 5) &&
+                user.hours.thisQuarterExternal >= user.hours.thisActivityHours
                   ? 'text-error'
-                  : ''}>{externalHours.toFixed(2)}</td
+                  : ''}>{user.hours.thisQuarterExternal.toFixed(2)}</td
               >
             </tr>
             <tr>
               <td>All Time</td>
-              <td>{allTime.toFixed(2)}</td>
+              <td>{user.hours.allTime.toFixed(2)}</td>
             </tr>
           </tbody>
         </table>

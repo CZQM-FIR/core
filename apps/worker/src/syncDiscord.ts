@@ -1,6 +1,6 @@
 import { type } from 'arktype';
 import { eq } from 'drizzle-orm';
-import type { DB, Env } from '@czqm/common';
+import { type DB, type Env, User } from '@czqm/common';
 import * as schema from '@czqm/db/schema';
 
 const managedRoles = [
@@ -98,23 +98,19 @@ export const syncDiscord = async (db: DB, env: Env) => {
     return;
   }
 
-  let integrations = await db.query.integrations.findMany({
-    with: {
-      user: {
-        with: {
-          rating: true,
-          flags: true,
-          preferences: true
-        }
-      }
-    }
-  });
+  let integrations = await db.query.integrations.findMany({});
 
   integrations = integrations.sort(
     (a, b) =>
       (a.lastSyncedAt ? new Date(a.lastSyncedAt).getTime() : 0) -
       (b.lastSyncedAt ? new Date(b.lastSyncedAt).getTime() : 0)
   );
+
+  const users = await User.fromCids(
+    db,
+    integrations.map((i) => i.cid)
+  );
+  const usersByCid = new Map(users.map((u) => [u.cid, u]));
 
   for (const integration of integrations) {
     console.log(integration.cid, integration.lastSyncedAt);
@@ -153,7 +149,17 @@ export const syncDiscord = async (db: DB, env: Env) => {
           `[DEV] Syncing Discord member: ${member.user.id} (${member.nick || member.user.id})`
         );
 
-      const user = integrations.find((i) => i.integrationUserId === member.user.id)!.user;
+      const integration = integrations.find((i) => i.integrationUserId === member.user.id);
+
+      if (!integration) {
+        continue;
+      }
+
+      const user = usersByCid.get(integration.cid);
+
+      if (!user) {
+        continue;
+      }
 
       const roles: string[] = [];
 
@@ -172,7 +178,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
         SUP: 'Supervisor',
         ADM: 'Admin'
       };
-      const roleName = user?.rating.short && ratingRoleMap[user.rating.short];
+      const roleName = ratingRoleMap[user.rating.short];
       if (roleName) {
         const role = guildRoles.find((r) => r.name === roleName);
         if (role) {
@@ -180,22 +186,14 @@ export const syncDiscord = async (db: DB, env: Env) => {
         }
       }
 
-      // flags
-      const flagRoleMap: Record<string, string> = {
+      // base controller/visitor/staff roles
+      const baseRoleMap: Record<string, string> = {
         controller: 'Home Controller',
         visitor: 'Visitor',
-        staff: 'Staff',
-        chief: 'FIR Chief',
-        deputy: 'Deputy Chief',
-        'chief-instructor': 'Chief Instructor',
-        events: 'Events Coordinator',
-        web: 'Webmaster',
-        sector: 'Facility Engineer',
-        instructor: 'Instructor',
-        mentor: 'Mentor'
+        staff: 'Staff'
       };
-      for (const flag of user!.flags) {
-        const roleName = flagRoleMap[flag.name];
+      for (const flag of user.flags) {
+        const roleName = baseRoleMap[flag.name];
         if (roleName) {
           const role = guildRoles.find((r) => r.name === roleName);
           if (role) {
@@ -204,13 +202,27 @@ export const syncDiscord = async (db: DB, env: Env) => {
         }
       }
 
+      // hybrid: staff label from User.role
+      const staffRoleMap: Record<string, string> = {
+        'FIR Chief': 'FIR Chief',
+        'Deputy FIR Chief': 'Deputy Chief',
+        'Chief Instructor': 'Chief Instructor',
+        Webmaster: 'Webmaster',
+        'Events Coordinator': 'Events Coordinator',
+        'Facility Engineer': 'Facility Engineer',
+        Instructor: 'Instructor',
+        Mentor: 'Mentor'
+      };
+      const staffRoleName = staffRoleMap[user.role];
+      if (staffRoleName) {
+        const role = guildRoles.find((r) => r.name === staffRoleName);
+        if (role) {
+          roles.push(role.id);
+        }
+      }
+
       // student role
-      if (
-        user &&
-        user.flags.some((f) => f.name === 'controller') &&
-        user.ratingID >= 2 &&
-        user.ratingID <= 4
-      ) {
+      if (user.hasFlag('controller') && user.rating.id >= 2 && user.rating.id <= 4) {
         const role = guildRoles.find((r) => r.name === 'Student');
         if (role) {
           roles.push(role.id);
@@ -218,25 +230,11 @@ export const syncDiscord = async (db: DB, env: Env) => {
       }
 
       // if user is not a controller or visitor, add the 'Guest' role
-      if (!user?.flags.some((f) => ['controller', 'visitor'].includes(f.name))) {
+      if (!user.hasFlag(['controller', 'visitor'])) {
         const guestRole = guildRoles.find((r) => r.name === 'Guest');
         if (guestRole) {
           roles.push(guestRole.id);
         }
-      }
-
-      let nick: string;
-
-      switch (user?.preferences.find((p) => p.key === 'displayName')?.value) {
-        case 'cid':
-          nick = user.cid.toString();
-          break;
-        case 'initial':
-          nick = `${user.name_first} ${user.name_last[0]}.`;
-          break;
-        case 'full':
-        default:
-          nick = `${user.name_first} ${user.name_last}`;
       }
 
       const additionalRoles = member.roles.filter(
@@ -252,7 +250,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
         endpoint: `/guilds/${env.DISCORD_GUILD_ID}/members/${member.user.id}`,
         body: JSON.stringify({
           roles,
-          nick
+          nick: user.displayName
         }),
         headers: {
           'X-Audit-Log-Reason': 'Linked Member'
@@ -263,7 +261,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
       await db
         .update(schema.integrations)
         .set({ lastSyncedAt: new Date() })
-        .where(eq(schema.integrations.integrationUserId, member.user.id));
+        .where(eq(schema.integrations.id, integration.id));
     }
   }
 

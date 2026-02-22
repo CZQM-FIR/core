@@ -15,7 +15,7 @@ export const recurringEvents = async (db: DB) => {
   for (const event of eventsData) {
     if (event.start.getTime() > Date.now()) {
       console.log('Recurring event is in the future, no updates needed.');
-      return;
+      continue;
     }
 
     const updatedEvent = {

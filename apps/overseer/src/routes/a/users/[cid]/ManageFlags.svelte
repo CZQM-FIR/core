@@ -1,28 +1,28 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import type { PageData } from './$types';
+	import type { UserAdminDetails } from '$lib/remote/user-admin.remote';
+	import { addUserFlag, removeUserFlag } from '$lib/remote/user-admin.remote';
 
-	let { data }: { data: PageData } = $props();
+	let { details }: { details: UserAdminDetails } = $props();
 </script>
 
 <div class="flex min-w-96 flex-col rounded border border-gray-600 p-4">
 	<h1 class="mb-3 text-lg font-semibold">User Flags</h1>
-	<form method="POST" action="?/addFlag" class="flex flex-row gap-3" use:enhance>
+	<form {...addUserFlag} class="flex flex-row gap-3">
 		<select name="flag" class="select">
-			{#each data.flags as flag (flag.id)}
+			{#each details.flags as flag (flag.id)}
 				<option value={flag.id}>{flag.name}</option>
 			{/each}
 		</select>
-		<input type="text" name="cid" value={data.cid} hidden required />
+		<input type="text" name="cid" value={details.cid} hidden required />
 		<button type="submit" class="btn btn-success btn-outline">Add Flag</button>
 	</form>
-	{#if data.user!.flags.length > 0}
+	{#if details.user.flags.length > 0}
 		<div class="divider mb-0">Current Flags</div>
 		<ul class="">
-			{#each data.user!.flags as flag (flag.id)}
+			{#each details.user.flags as flag (flag.id)}
 				<li>
-					<form action="?/removeFlag" method="post" use:enhance>
-						<input type="text" name="cid" required hidden value={data.cid} />
+					<form {...removeUserFlag.for(String(flag.id))}>
+						<input type="text" name="cid" required hidden value={details.cid} />
 						<input type="text" name="flag" required hidden value={flag.id} />
 						<button type="submit" class="hover:text-error hover:line-through">- {flag.name}</button>
 					</form>

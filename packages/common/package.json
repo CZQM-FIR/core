@@ -3,7 +3,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./notifications": "./src/notifications/index.ts"
+    "./notifications": "./src/notifications/index.ts",
+    "./models": "./src/models/index.ts"
   },
   "dependencies": {
     "@czqm/db": "workspace:*",

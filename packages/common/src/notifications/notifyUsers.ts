@@ -5,7 +5,6 @@ import type {
   UserWithRelations,
 } from "./types";
 import { requiredNotifications } from "./types";
-import type { LibSQLDatabase } from "drizzle-orm/libsql";
 
 /**
  * Queue notifications to be sent to users via Discord DM.
