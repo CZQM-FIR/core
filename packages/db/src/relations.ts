@@ -4,8 +4,8 @@ import * as schema from "./schema";
 export const relations = defineRelations(schema, (r) => ({
   dmsGroups: {
     documents: r.many.dmsDocuments({
-      from: r.dmsDocuments.groupId,
-      to: r.dmsGroups.id,
+      from: r.dmsGroups.id,
+      to: r.dmsDocuments.groupId,
     }),
   },
   dmsAssets: {
@@ -21,8 +21,8 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.dmsGroups.id,
     }),
     assets: r.many.dmsAssets({
-      from: r.dmsAssets.documentId,
-      to: r.dmsDocuments.id,
+      from: r.dmsDocuments.id,
+      to: r.dmsAssets.documentId,
     }),
   },
   users: {
