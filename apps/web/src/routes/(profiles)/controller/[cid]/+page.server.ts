@@ -1,35 +1,6 @@
-import { db } from '$lib/db';
-import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { User, USER_FETCH_FULL } from '@czqm/common';
 
 export const load = (async ({ params }) => {
-  const { cid } = params;
-
-  const user = await User.fromCid(db, Number(cid), USER_FETCH_FULL);
-
-  if (!user || !user.flags.some((f) => [4, 5].includes(f.id)) || user.cid !== Number(cid)) {
-    return error(404, {
-      message: 'Controller not Found'
-    });
-  }
-
-  const userData = {
-    cid: user.cid,
-    displayName: user.displayName,
-    rating: user.rating,
-    roster: {
-      gnd: user.getRosterStatus('gnd'),
-      twr: user.getRosterStatus('twr'),
-      app: user.getRosterStatus('app'),
-      ctr: user.getRosterStatus('ctr')
-    },
-    active: user.active,
-    sessions: user.sessions,
-    bio: user.bio
-  };
-
-  return {
-    userData
-  };
+  const cid = Number(params.cid);
+  return { cid: isNaN(cid) ? 0 : cid };
 }) satisfies PageServerLoad;

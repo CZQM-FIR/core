@@ -754,6 +754,43 @@ export class User {
     }));
   }
 
+  /**
+   * Public controller profile by cid. Returns null if user not found or not controller/visitor.
+   */
+  static async fetchControllerProfileForPublic(
+    db: DB,
+    cid: number,
+  ): Promise<{
+    cid: number;
+    displayName: string;
+    rating: User["rating"];
+    roster: { gnd: RosterPositionStatus; twr: RosterPositionStatus; app: RosterPositionStatus; ctr: RosterPositionStatus };
+    active: User["active"];
+    sessions: SessionWithPosition[];
+    bio: string | null;
+    role: string;
+  } | null> {
+    const user = await User.fromCid(db, cid, USER_FETCH_FULL);
+    if (!user || !user.hasFlag(["controller", "visitor"])) {
+      return null;
+    }
+    return {
+      cid: user.cid,
+      displayName: user.displayName,
+      rating: user.rating,
+      roster: {
+        gnd: user.getRosterStatus("gnd"),
+        twr: user.getRosterStatus("twr"),
+        app: user.getRosterStatus("app"),
+        ctr: user.getRosterStatus("ctr"),
+      },
+      active: user.active,
+      sessions: user.sessionsList as SessionWithPosition[],
+      bio: user.bio,
+      role: user.role,
+    };
+  }
+
   static async fromSessionToken(
     db: DB,
     token: string,
@@ -971,13 +1008,15 @@ export class User {
   getRosterStatus(
     position: "gnd" | "twr" | "app" | "ctr",
   ): RosterPositionStatus {
+    const roster = this.roster ?? [];
+    const soloEndorsementsList = this.soloEndorsementsList ?? [];
     if (
-      this.roster.filter((r: RosterStatus) => r.position === position)
+      roster.filter((r: RosterStatus) => r.position === position)
         .length === 0
     ) {
       return "nothing"; // N/A
     } else if (
-      this.soloEndorsementsList.filter((r: any) => {
+      soloEndorsementsList.filter((r: any) => {
         if (
           r.position?.callsign.toLowerCase().includes(position) &&
           r.expiresAt > new Date().getTime()
@@ -988,12 +1027,12 @@ export class User {
     ) {
       return "solo"; // solo
     } else if (
-      this.roster.filter((r: RosterStatus) => r.position === position)[0]
+      roster.filter((r: RosterStatus) => r.position === position)[0]
         .status === 0
     ) {
       return "training"; // training
     } else if (
-      this.roster.filter((r: RosterStatus) => r.position === position)[0]
+      roster.filter((r: RosterStatus) => r.position === position)[0]
         .status === 2
     ) {
       return "certified"; // certified

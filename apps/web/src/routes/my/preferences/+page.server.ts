@@ -1,75 +1,62 @@
-import { db } from '$lib/db';
 import type { Actions, PageServerLoad } from './$types';
+import { auth } from '$lib/auth';
+import { db } from '$lib/db';
 import { User } from '@czqm/common';
 
-export const load = (async ({ locals }) => {
-  const user = await User.fromCid(db, locals.user.cid);
-
-  if (!user) {
-    throw new Error('User not found');
-  }
-
-  return {
-    preferences: user.getAllPreferences()
-  };
+export const load = (async () => {
+  return {};
 }) satisfies PageServerLoad;
 
-export const actions = {
-  savePreferences: async ({ request, locals }) => {
-    const formData = await request.formData();
-    const cid = locals.user.cid;
-    const user = await User.fromCid(db, cid);
+const validDisplayNames = ['full', 'initial', 'cid'] as const;
+const preferenceKeys = [
+  'policyChanges',
+  'urgentFirUpdates',
+  'trainingUpdates',
+  'unauthorizedConnection',
+  'newEventPosted',
+  'newNewsArticlePosted'
+] as const;
 
+export const actions: Actions = {
+  savePreferences: async (event) => {
+    const { user } = await auth(event);
     if (!user) {
-      throw new Error('User not found');
+      return { success: false, error: 'Unauthorized', preferences: null, savedType: null };
     }
+    const userObj = await User.fromCid(db, user.cid);
+    if (!userObj) {
+      return { success: false, error: 'User not found', preferences: null, savedType: null };
+    }
+    const data = await event.request.formData();
+    const typeVal = (data.get('type') ?? '').toString();
 
-    const type = formData.get('type');
-
-    // List of all preference keys from the form
-    const preferenceKeys =
-      type === 'notification'
-        ? ([
-            'policyChanges',
-            'urgentFirUpdates',
-            'trainingUpdates',
-            'unauthorizedConnection',
-            'newEventPosted',
-            'newNewsArticlePosted'
-          ] as const)
-        : type === 'privacy'
-          ? []
-          : [];
-
-    // Process each preference
-    if (type === 'notification') {
+    if (typeVal === 'notification') {
       for (const key of preferenceKeys) {
-        const value = formData.get(key) === 'on';
-        await user.setPreference(key, value);
+        const value = data.get(key) === 'on';
+        await userObj.setPreference(key, value);
       }
-    } else if (type === 'privacy') {
-      const name = formData.get('name') as string;
-
-      // Validate the value
-      const validValues = ['full', 'initial', 'cid'] as const;
-      if (!validValues.includes(name as (typeof validValues)[number])) {
+    } else if (typeVal === 'privacy') {
+      const name = (data.get('name') ?? 'full').toString();
+      if (!validDisplayNames.includes(name as (typeof validDisplayNames)[number])) {
         return {
           success: false,
-          error: 'Invalid value for display name preference.'
+          error: 'Invalid value for display name preference.',
+          preferences: null,
+          savedType: null
         };
       }
-
-      await user.setPreference('displayName', name as (typeof validValues)[number]);
+      await userObj.setPreference('displayName', name as (typeof validDisplayNames)[number]);
+    } else {
+      return { success: false, error: 'Invalid request', preferences: null, savedType: null };
     }
 
-    // Fetch and return the updated preferences
     const updatedPreferences = await db.query.preferences.findMany({
-      where: { cid }
+      where: { cid: user.cid }
     });
-
     return {
       success: true,
-      preferences: updatedPreferences
+      preferences: updatedPreferences,
+      savedType: typeVal as 'notification' | 'privacy'
     };
   }
-} satisfies Actions;
+};

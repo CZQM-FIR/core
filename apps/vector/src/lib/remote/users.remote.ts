@@ -3,6 +3,15 @@ import { db } from '$lib/db';
 import { User } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 
+export const getSessionUser = query(async () => {
+	const event = getRequestEvent();
+	const user = event.locals.user == null ? null : await User.fromCid(db, event.locals.user.cid);
+	return {
+		user,
+		session: event.locals.session
+	};
+});
+
 export const getHomeControllers = query(async () => {
 	const event = getRequestEvent();
 

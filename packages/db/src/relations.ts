@@ -17,6 +17,11 @@ export const relations = defineRelations(schema, (r) => ({
     tickets: r.many.tickets({
       from: r.users.cid.through(r.ticketMessages.authorId),
       to: r.tickets.id.through(r.ticketMessages.ticketId),
+      alias: "tickets_users_via_ticketMessages",
+    }),
+    authoredTickets: r.many.tickets({
+      from: r.users.cid,
+      to: r.tickets.authorId,
     }),
     ticketTypes: r.many.ticketType({
       from: r.users.cid.through(r.tickets.authorId),
@@ -89,7 +94,37 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
   tickets: {
-    users: r.many.users(),
+    author: r.one.users({
+      from: r.tickets.authorId,
+      to: r.users.cid,
+      optional: false,
+    }),
+    users: r.many.users({
+      from: r.tickets.id.through(r.ticketMessages.ticketId),
+      to: r.users.cid.through(r.ticketMessages.authorId),
+      alias: "tickets_users_via_ticketMessages",
+    }),
+    type: r.one.ticketType({
+      from: r.tickets.typeId,
+      to: r.ticketType.id,
+      optional: false,
+    }),
+    messages: r.many.ticketMessages({
+      from: r.tickets.id,
+      to: r.ticketMessages.ticketId,
+    }),
+  },
+  ticketMessages: {
+    ticket: r.one.tickets({
+      from: r.ticketMessages.ticketId,
+      to: r.tickets.id,
+      optional: false,
+    }),
+    author: r.one.users({
+      from: r.ticketMessages.authorId,
+      to: r.users.cid,
+      optional: false,
+    }),
   },
   ticketTypes: {
     users: r.many.users({

@@ -21,6 +21,15 @@ const getAuthorizedActioner = async () => {
 	return actioner;
 };
 
+export const getSessionUser = query(async () => {
+	const event = getRequestEvent();
+	const user = event.locals.user == null ? null : await User.fromCid(db, event.locals.user.cid);
+	return {
+		user,
+		session: event.locals.session
+	};
+});
+
 export const getUsers = query(async () => {
 	await getAuthorizedActioner();
 

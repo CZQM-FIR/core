@@ -1,21 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { db } from '$lib/db';
 
 export const load = (async () => {
-  const pilotResources = await db.query.resources.findMany({
-    where: {
-      OR: [{ type: 'pilot' }, { type: 'both' }],
-      public: true
-    },
-    columns: {
-      public: false,
-      type: false
-    }
-  });
-
-  return {
-    resources: pilotResources.sort((a, b) => {
-      return a.name.localeCompare(b.name);
-    })
-  };
+  return {};
 }) satisfies PageServerLoad;
