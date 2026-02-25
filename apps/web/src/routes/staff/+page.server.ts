@@ -3,9 +3,9 @@ import { db } from '$lib/db';
 import { User } from '@czqm/common';
 
 export const load = (async () => {
-  const staffUsers = await User.fromFlag(db, 'staff', { withSessions: false });
-  const instructorUsers = await User.fromFlag(db, 'instructor', { withSessions: false });
-  const mentorUsers = await User.fromFlag(db, 'mentor', { withSessions: false });
+  const staffUsers = await User.fromFlag(db, 'staff', { withData: false });
+  const instructorUsers = await User.fromFlag(db, 'instructor', { withData: false });
+  const mentorUsers = await User.fromFlag(db, 'mentor', { withData: false });
 
   const sorting = {
     chief: 5,
@@ -81,7 +81,7 @@ export const load = (async () => {
 
   const trainingTeam = [...instructorUsers, ...mentorUsers];
 
-  const chiefInstructor = (await User.fromFlag(db, 'chief-instructor', { withSessions: false }))[0];
+  const chiefInstructor = (await User.fromFlag(db, 'chief-instructor', { withData: false }))[0];
 
   return {
     staff,

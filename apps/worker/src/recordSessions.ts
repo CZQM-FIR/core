@@ -46,7 +46,7 @@ const VatsimSessions = type({
 export const handleRecordSessions = async (db: DB, env: Env) => {
   // get list of all czqm controllers and visitors
   const allControllers = await User.fromFlag(db, ['controller', 'visitor'], {
-    withSessions: false
+    withData: false
   });
 
   const sortedControllers = allControllers.sort(

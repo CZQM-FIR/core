@@ -149,7 +149,7 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
   console.log(`Fetched ${onlineControllers.length} online controllers from VATSIM.`);
 
   const czqmUsers = await User.fromFlag(db, ['controller', 'visitor'], {
-    withSessions: false
+    withData: false
   });
 
   const czqmControllers = czqmUsers.map((user) => user.cid);

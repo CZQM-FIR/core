@@ -580,13 +580,13 @@ export class User {
     db: DB,
     flag: FlagName | FlagName[],
     options?: {
-      withSessions?: boolean;
+      withData?: boolean;
       sessionLimit?: number;
       sessionsSince?: Date;
     },
   ): Promise<User[]> {
     const flagsToCheck = Array.isArray(flag) ? flag : [flag];
-    const withSessions = options?.withSessions ?? true;
+    const withData = options?.withData ?? false;
     const sessionLimit = options?.sessionLimit;
     const sessionsSince = options?.sessionsSince;
 
@@ -595,7 +595,7 @@ export class User {
         rating: true,
         flags: true,
         preferences: true,
-        sessions: withSessions
+        sessions: withData
           ? {
               with: {
                 position: true,
@@ -606,22 +606,28 @@ export class User {
               limit: sessionLimit,
               orderBy: (sessions, { desc }) => [desc(sessions.logonTime)],
             }
-          : undefined,
-        waitingPositions: {
-          with: {
-            waitlist: true,
-          },
-        },
-        enrolledPositions: {
-          with: {
-            waitlist: true,
-          },
-        },
-        soloEndorsements: {
-          with: {
-            position: true,
-          },
-        },
+          : false,
+        waitingPositions: withData
+          ? {
+              with: {
+                waitlist: true,
+              },
+            }
+          : false,
+        enrolledPositions: withData
+          ? {
+              with: {
+                waitlist: true,
+              },
+            }
+          : false,
+        soloEndorsements: withData
+          ? {
+              with: {
+                position: true,
+              },
+            }
+          : false,
         roster: true,
       },
       where: {
@@ -659,7 +665,7 @@ export class User {
     const sessionsSince = new Date(lastQuarterYear, lastQuarter * 3, 1);
 
     const users = await User.fromFlag(db, ["controller", "visitor"], {
-      withSessions: true,
+      withData: true,
       sessionsSince,
     });
 
