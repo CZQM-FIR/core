@@ -1,7 +1,7 @@
 import { command, form, getRequestEvent, query } from '$app/server';
 import { db } from '$lib/db';
 import { soloEndorsements, users, usersToFlags } from '@czqm/db/schema';
-import { type FlagName, User, type RosterPositionStatus } from '@czqm/common';
+import { type FlagName, User, type RosterPositionStatus, USER_FETCH_FULL } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
@@ -25,7 +25,7 @@ const getAuthorizedActioner = async () => {
 };
 
 const toUserAdminDetails = async (cid: number) => {
-	const user = await User.fromCid(db, cid);
+	const user = await User.fromCid(db, cid, USER_FETCH_FULL);
 
 	if (!user) {
 		throw error(404, 'User not found');
@@ -78,7 +78,7 @@ const FlagFormSchema = type({
 export const addUserFlag = form(FlagFormSchema, async ({ cid, flag: flagId }) => {
 	await getAuthorizedActioner();
 
-	const user = await User.fromCid(db, cid);
+	const user = await User.fromCid(db, cid, USER_FETCH_FULL);
 
 	if (!user) {
 		throw error(404, 'User not found');
@@ -113,7 +113,7 @@ export const addUserFlag = form(FlagFormSchema, async ({ cid, flag: flagId }) =>
 export const removeUserFlag = form(FlagFormSchema, async ({ cid, flag: flagId }) => {
 	await getAuthorizedActioner();
 
-	const user = await User.fromCid(db, cid);
+	const user = await User.fromCid(db, cid, USER_FETCH_FULL);
 
 	if (!user) {
 		throw error(404, 'User not found');
@@ -157,7 +157,7 @@ export const extendSoloEndorsement = form(SoloEndorsementActionSchema, async ({ 
 	try {
 		await getAuthorizedActioner();
 
-		const user = await User.fromCid(db, cid);
+		const user = await User.fromCid(db, cid, USER_FETCH_FULL);
 
 		if (!user) {
 			return { message: 'User not found', ok: false };
@@ -196,7 +196,7 @@ export const renewSoloEndorsement = form(SoloEndorsementActionSchema, async ({ c
 	try {
 		await getAuthorizedActioner();
 
-		const user = await User.fromCid(db, cid);
+		const user = await User.fromCid(db, cid, USER_FETCH_FULL);
 
 		if (!user) {
 			return { message: 'User not found', ok: false };
@@ -225,7 +225,7 @@ export const deleteSoloEndorsement = form(SoloEndorsementActionSchema, async ({ 
 	try {
 		await getAuthorizedActioner();
 
-		const user = await User.fromCid(db, cid);
+		const user = await User.fromCid(db, cid, USER_FETCH_FULL);
 
 		if (!user) {
 			return { message: 'User not found', ok: false };
@@ -264,7 +264,7 @@ export const createSoloEndorsement = form(
 		try {
 			await getAuthorizedActioner();
 
-			const user = await User.fromCid(db, cid);
+			const user = await User.fromCid(db, cid, USER_FETCH_FULL);
 
 			if (!user) {
 				return { message: 'User not found', ok: false };
@@ -325,7 +325,7 @@ const SetActiveStatusSchema = type({
 export const setUserActiveStatus = command(SetActiveStatusSchema, async ({ cid, status }) => {
 	await getAuthorizedActioner();
 
-	const user = await User.fromCid(db, cid);
+	const user = await User.fromCid(db, cid, USER_FETCH_FULL);
 
 	if (!user) {
 		throw error(404, 'User not found');

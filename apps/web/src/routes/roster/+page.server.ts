@@ -3,7 +3,7 @@ import { db } from '$lib/db';
 import { User } from '@czqm/common';
 
 export const load = (async () => {
-  const users = await User.fromFlag(db, ['controller', 'visitor'], { withData: false });
+  const users = await User.fromFlag(db, ['controller', 'visitor']);
 
   const rosterData = users.map((u) => {
     return {

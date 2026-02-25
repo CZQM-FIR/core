@@ -2,7 +2,7 @@ import { db } from '$lib/db';
 import { and, eq } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 import { roster } from '@czqm/db/schema';
-import { User } from '@czqm/common';
+import { User, USER_FETCH_FULL } from '@czqm/common';
 
 export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	if (!locals.user) return new Response(null, { status: 401 });
@@ -17,7 +17,7 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 		status: -1 | 0 | 1 | 2;
 	};
 
-	const user = await User.fromCid(db, cid);
+	const user = await User.fromCid(db, cid, USER_FETCH_FULL);
 	if (!user) return new Response(null, { status: 404 });
 
 	if (user.roster.some((r) => r.status === 1 && r.position === position))
@@ -43,7 +43,7 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 		});
 	}
 
-	const newData = await User.fromCid(db, Number(params.cid));
+	const newData = await User.fromCid(db, Number(params.cid), USER_FETCH_FULL);
 
 	return new Response(JSON.stringify({ user: newData }), { status: 200 });
 };

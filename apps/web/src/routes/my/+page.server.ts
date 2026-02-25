@@ -2,11 +2,11 @@ import { db } from '$lib/db';
 import { eq } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import * as schema from '@czqm/db/schema';
-import { User } from '@czqm/common';
+import { User, USER_FETCH_FULL } from '@czqm/common';
 import { redirect } from '@sveltejs/kit';
 
 export const load = (async ({ locals }) => {
-  const user = await User.fromCid(db, locals.user!.cid);
+  const user = await User.fromCid(db, locals.user!.cid, USER_FETCH_FULL);
 
   if (!user) {
     throw redirect(303, '/auth?redirect=/my');

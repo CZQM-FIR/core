@@ -81,6 +81,122 @@ export type SoloEndorsementWithPosition = SoloEndorsement & {
   position: Position;
 };
 
+/** Options for limiting which relations are loaded. Omitted options use per-method defaults (see each method). */
+export type UserFetchOptions = {
+  /** Include sessions (for hours). When true, can optionally limit or filter by date. */
+  sessions?: boolean | { limit?: number; since?: Date };
+  /** Include roster status per position. */
+  roster?: boolean;
+  /** Include waiting list positions (with waitlist). */
+  waitingPositions?: boolean;
+  /** Include enrolled positions (with waitlist). */
+  enrolledPositions?: boolean;
+  /** Include solo endorsements (with position). */
+  soloEndorsements?: boolean;
+};
+
+/** Defaults for fromFlag: minimal load (roster only). */
+const FROM_FLAG_DEFAULTS: Required<UserFetchOptions> = {
+  sessions: false,
+  roster: true,
+  waitingPositions: false,
+  enrolledPositions: false,
+  soloEndorsements: false,
+};
+
+/** Defaults for fromCid/fromCids/fromSessionToken/resolve*: minimal load. Request additional relations explicitly. */
+const FROM_CID_DEFAULTS: Required<UserFetchOptions> = {
+  sessions: false,
+  roster: false,
+  waitingPositions: false,
+  enrolledPositions: false,
+  soloEndorsements: false,
+};
+
+/** Fetch only core profile + flags + preferences (no sessions, roster, waitlists, solo endorsements). This is the default for fromCid/fromCids/fromSessionToken/resolve*. */
+export const USER_FETCH_MINIMAL: UserFetchOptions = {
+  sessions: false,
+  roster: false,
+  waitingPositions: false,
+  enrolledPositions: false,
+  soloEndorsements: false,
+};
+
+/** Fetch full user including sessions, roster, waitlists, solo endorsements. Use when the caller needs hours, roster status, waitlist positions, or solo endorsements. */
+export const USER_FETCH_FULL: UserFetchOptions = {
+  sessions: true,
+  roster: true,
+  waitingPositions: true,
+  enrolledPositions: true,
+  soloEndorsements: true,
+};
+
+type ResolvedFetchOptions = {
+  sessions: false | true | { limit?: number; since?: Date };
+  roster: boolean;
+  waitingPositions: boolean;
+  enrolledPositions: boolean;
+  soloEndorsements: boolean;
+};
+
+function resolveFetchOptions(
+  options: UserFetchOptions | undefined,
+  defaults: Required<UserFetchOptions>,
+): ResolvedFetchOptions {
+  return {
+    sessions: options?.sessions ?? defaults.sessions,
+    roster: options?.roster ?? defaults.roster,
+    waitingPositions: options?.waitingPositions ?? defaults.waitingPositions,
+    enrolledPositions: options?.enrolledPositions ?? defaults.enrolledPositions,
+    soloEndorsements: options?.soloEndorsements ?? defaults.soloEndorsements,
+  };
+}
+
+function buildUserWithClause(
+  options: UserFetchOptions | undefined,
+  defaults: Required<UserFetchOptions>,
+) {
+  const r = resolveFetchOptions(options, defaults);
+  const sessionsInclude =
+    r.sessions !== false
+      ? {
+          with: { position: true as const },
+          where:
+            r.sessions &&
+            typeof r.sessions === "object" &&
+            r.sessions.since != null
+              ? { logonTime: { gte: r.sessions.since } }
+              : undefined,
+          limit:
+            r.sessions &&
+            typeof r.sessions === "object" &&
+            r.sessions.limit != null
+              ? r.sessions.limit
+              : undefined,
+          orderBy: (
+            sessions: { logonTime: Date },
+            { desc }: { desc: (c: unknown) => unknown },
+          ) => [desc(sessions.logonTime)],
+        }
+      : false;
+  return {
+    rating: true,
+    flags: true,
+    preferences: true,
+    sessions: sessionsInclude,
+    waitingPositions: r.waitingPositions
+      ? { with: { waitlist: true as const } }
+      : false,
+    enrolledPositions: r.enrolledPositions
+      ? { with: { waitlist: true as const } }
+      : false,
+    soloEndorsements: r.soloEndorsements
+      ? { with: { position: true as const } }
+      : false,
+    roster: r.roster,
+  };
+}
+
 export class UserHours {
   private db: DB;
   private cid: number;
@@ -529,117 +645,63 @@ export class User {
     }
   }
 
-  static async fromCid(db: DB, cid: number): Promise<User | null> {
+  static async fromCid(
+    db: DB,
+    cid: number,
+    options?: UserFetchOptions,
+  ): Promise<User | null> {
+    const withClause = buildUserWithClause(options, FROM_CID_DEFAULTS);
     const row = await db.query.users.findFirst({
       where: { cid },
-      with: {
-        rating: true,
-        flags: true,
-        preferences: true,
-        sessions: {
-          with: {
-            position: true,
-          },
-        },
-        waitingPositions: {
-          with: {
-            waitlist: true,
-          },
-        },
-        enrolledPositions: {
-          with: {
-            waitlist: true,
-          },
-        },
-        roster: true,
-        soloEndorsements: {
-          with: {
-            position: true,
-          },
-        },
-      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- with clause built from UserFetchOptions
+      with: withClause as any,
     });
 
-    if (!row || !row.rating) return null;
+    if (!row || !(row as UserData).rating) return null;
 
-    return new User(db, row);
+    return new User(db, row as UserData);
   }
 
-  static async fromCids(db: DB, cids: number[]): Promise<User[]> {
+  static async fromCids(
+    db: DB,
+    cids: number[],
+    options?: UserFetchOptions,
+  ): Promise<User[]> {
     if (cids.length === 0) return [];
 
     const uniqueCids = [...new Set(cids)];
-    const users = await Promise.all(
-      uniqueCids.map((cid) => User.fromCid(db, cid)),
-    );
+    const withClause = buildUserWithClause(options, FROM_CID_DEFAULTS);
+    const data = await db.query.users.findMany({
+      where: { cid: { in: uniqueCids } },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- with clause built from UserFetchOptions
+      with: withClause as any,
+    });
 
-    return users.filter((user): user is User => user !== null);
+    return data
+      .filter((row) => row != null && (row as UserData).rating != null)
+      .map((row) => new User(db, row as UserData));
   }
 
   static async fromFlag(
     db: DB,
     flag: FlagName | FlagName[],
-    options?: {
-      withData?: boolean;
-      sessionLimit?: number;
-      sessionsSince?: Date;
-    },
+    options?: UserFetchOptions,
   ): Promise<User[]> {
     const flagsToCheck = Array.isArray(flag) ? flag : [flag];
-    const withData = options?.withData ?? false;
-    const sessionLimit = options?.sessionLimit;
-    const sessionsSince = options?.sessionsSince;
+    const withClause = buildUserWithClause(options, FROM_FLAG_DEFAULTS);
 
     const data = await db.query.users.findMany({
-      with: {
-        rating: true,
-        flags: true,
-        preferences: true,
-        sessions: withData
-          ? {
-              with: {
-                position: true,
-              },
-              where: sessionsSince
-                ? { logonTime: { gte: sessionsSince } }
-                : undefined,
-              limit: sessionLimit,
-              orderBy: (sessions, { desc }) => [desc(sessions.logonTime)],
-            }
-          : false,
-        waitingPositions: withData
-          ? {
-              with: {
-                waitlist: true,
-              },
-            }
-          : false,
-        enrolledPositions: withData
-          ? {
-              with: {
-                waitlist: true,
-              },
-            }
-          : false,
-        soloEndorsements: withData
-          ? {
-              with: {
-                position: true,
-              },
-            }
-          : false,
-        roster: true,
-      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- with clause built from UserFetchOptions; DB query config type is complex
+      with: withClause as any,
       where: {
         flags: { name: { in: flagsToCheck } },
       },
     });
 
     return data.map((userData) => {
-      // Ensure sessions always has the correct shape for UserData
       const userDataTyped: UserData = {
         ...userData,
-        sessions: userData.sessions ?? [],
+        sessions: (userData as UserData).sessions ?? [],
       } as UserData;
       return new User(db, userDataTyped);
     });
@@ -647,7 +709,7 @@ export class User {
 
   static async fetchTopControllersForCurrentMonth(db: DB, limit = 5) {
     const controllers = await User.fromFlag(db, ["controller", "visitor"], {
-      sessionLimit: 100,
+      sessions: { limit: 100 },
     });
 
     return controllers
@@ -665,8 +727,10 @@ export class User {
     const sessionsSince = new Date(lastQuarterYear, lastQuarter * 3, 1);
 
     const users = await User.fromFlag(db, ["controller", "visitor"], {
-      withData: true,
-      sessionsSince,
+      sessions: { since: sessionsSince },
+      waitingPositions: true,
+      enrolledPositions: true,
+      soloEndorsements: true,
     });
 
     return users.map((u) => ({
@@ -690,10 +754,14 @@ export class User {
     }));
   }
 
-  static async fromSessionToken(db: DB, token: string): Promise<User | null> {
+  static async fromSessionToken(
+    db: DB,
+    token: string,
+    fetchOptions?: UserFetchOptions,
+  ): Promise<User | null> {
     const validation = await validateSessionToken(db, token);
     if (!validation.user) return null;
-    return await User.fromCid(db, validation.user.cid);
+    return await User.fromCid(db, validation.user.cid, fetchOptions);
   }
 
   static async resolveAuthenticatedUser(
@@ -701,14 +769,16 @@ export class User {
     options: {
       cid?: number | null;
       sessionToken?: string | null;
+      fetch?: UserFetchOptions;
     },
   ): Promise<User | null> {
+    const fetchOpts = options.fetch;
     if (typeof options.cid === "number") {
-      return await User.fromCid(db, options.cid);
+      return await User.fromCid(db, options.cid, fetchOpts);
     }
 
     if (options.sessionToken) {
-      return await User.fromSessionToken(db, options.sessionToken);
+      return await User.fromSessionToken(db, options.sessionToken, fetchOpts);
     }
 
     return null;
@@ -720,6 +790,7 @@ export class User {
       cid?: number | null;
       sessionToken?: string | null;
       requiredFlags: FlagName | FlagName[];
+      fetch?: UserFetchOptions;
     },
   ): Promise<User | null> {
     const user = await User.resolveAuthenticatedUser(db, options);

@@ -24,7 +24,7 @@ const getAuthorizedActioner = async () => {
 export const getUsers = query(async () => {
 	await getAuthorizedActioner();
 
-	return await User.fromFlag(db, ['controller', 'visitor'], { withData: false });
+	return await User.fromFlag(db, ['controller', 'visitor']);
 });
 
 export const getActivityUsers = query(async () => {

@@ -1,12 +1,12 @@
 import { db } from '$lib/db';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { User } from '@czqm/common';
+import { User, USER_FETCH_FULL } from '@czqm/common';
 
 export const load = (async ({ params }) => {
   const { cid } = params;
 
-  const user = await User.fromCid(db, Number(cid));
+  const user = await User.fromCid(db, Number(cid), USER_FETCH_FULL);
 
   if (!user || !user.flags.some((f) => [4, 5].includes(f.id)) || user.cid !== Number(cid)) {
     return error(404, {

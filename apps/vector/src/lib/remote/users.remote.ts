@@ -36,7 +36,7 @@ export const getAllControllers = query(async () => {
 		throw error(403, 'Forbidden');
 	}
 
-	return await User.fromFlag(db, ['controller', 'visitor'], { withData: false });
+	return await User.fromFlag(db, ['controller', 'visitor']);
 });
 
 export const getCurrentUserInfo = query(async () => {
