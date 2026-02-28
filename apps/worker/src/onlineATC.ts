@@ -2,10 +2,7 @@ import { eq } from 'drizzle-orm';
 import { Position, positions, users, onlineSessions, notifications } from '@czqm/db/schema';
 import type { DB, Env } from '@czqm/common';
 import { User } from '@czqm/common';
-import {
-  notifyUsersViaDiscord,
-  unauthorizedConnectionEmailTemplate
-} from '@czqm/common/notifications';
+import { unauthorizedConnectionEmailTemplate, unauthorizedConnectionText } from '@czqm/common/notifications';
 
 type OnlineController = {
   cid: number;
@@ -101,18 +98,9 @@ const notifyUnauthorizedSession = async (
 
   console.log('Session notification sent to staff:', message);
 
-  await notifyUsersViaDiscord(
-    {
-      title: 'Unauthorized Connection Detected',
-      message: `Hello ${user.name_full},\n\nOur system has automatically detected that you have connected to ${position.name} (${position.callsign}) without proper authorization. Reason: ${reasonText}. The staff team has been notified and will review the connection. If you believe this is a mistake, please contact the staff team for further assistance.\n\nThank you for your understanding.`,
-      type: 'unauthorizedConnection'
-    },
-    {
-      db,
-      webUrl: env.PUBLIC_WEB_URL
-    },
-    [user.cid]
-  );
+  const discordIntegration = await db.query.integrations.findFirst({
+    where: { cid: session.cid, type: 0 }
+  });
 
   if (userData.length > 0) {
     await db.insert(notifications).values({
@@ -121,6 +109,24 @@ const notifyUnauthorizedSession = async (
       userId: session.cid,
       location: 'email',
       message: unauthorizedConnectionEmailTemplate(session, userData[0], reasonText)
+    });
+  }
+
+  if (discordIntegration) {
+    await db.insert(notifications).values({
+      timestamp: new Date(),
+      type: 'unauthorizedConnection',
+      userId: session.cid,
+      message: `**Unauthorized Connection Detected**\n\n${unauthorizedConnectionText(session, user, reasonText)}`,
+      buttons: [
+        {
+          type: 2,
+          style: 5,
+          label: 'Manage Notifications',
+          url: `${env.PUBLIC_WEB_URL}/my/preferences`
+        }
+      ],
+      location: 'discord'
     });
   }
 };
