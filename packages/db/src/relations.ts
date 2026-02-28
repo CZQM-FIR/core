@@ -2,6 +2,29 @@ import { defineRelations } from "drizzle-orm";
 import * as schema from "./schema";
 
 export const relations = defineRelations(schema, (r) => ({
+  dmsGroups: {
+    documents: r.many.dmsDocuments({
+      from: r.dmsGroups.id,
+      to: r.dmsDocuments.groupId,
+    }),
+  },
+  dmsAssets: {
+    document: r.one.dmsDocuments({
+      from: r.dmsAssets.documentId,
+      to: r.dmsDocuments.id,
+      optional: false,
+    }),
+  },
+  dmsDocuments: {
+    group: r.one.dmsGroups({
+      from: r.dmsDocuments.groupId,
+      to: r.dmsGroups.id,
+    }),
+    assets: r.many.dmsAssets({
+      from: r.dmsDocuments.id,
+      to: r.dmsAssets.documentId,
+    }),
+  },
   users: {
     flags: r.many.flags({
       from: r.users.cid.through(r.usersToFlags.userId),
