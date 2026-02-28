@@ -207,11 +207,11 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
         rating: controller.rating
       };
 
-      if (user.active !== 'active') {
+      if (user.active !== 'active' || controller.rating === -1) {
         await notifyUnauthorizedSession(session, db, env, 'inactive');
       } else if (!discordIntegration) {
         await notifyUnauthorizedSession(session, db, env, 'discord');
-      } else if (controller.rating === 1) {
+      } else if (controller.rating === 0) {
         await notifyUnauthorizedSession(session, db, env, 'suspended');
       } else if (!hasRosterAuthorization && unitType !== 'obs') {
         await notifyUnauthorizedSession(session, db, env, 'roster');
