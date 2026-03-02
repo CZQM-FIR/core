@@ -334,7 +334,7 @@ export class UserHours {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     return (
-      this.sessions.reduce((total, session) => {
+      this.localSessions.reduce((total, session) => {
         const sessionDate = new Date(session.logonTime);
         const sessionMonth = sessionDate.getMonth();
         const sessionYear = sessionDate.getFullYear();
@@ -713,6 +713,7 @@ export class User {
     });
 
     return controllers
+      .filter((c) => c.hours.thisMonth > 0)
       .sort((a, b) => b.hours.thisMonth - a.hours.thisMonth)
       .slice(0, limit)
       .map((controller) => controller.serialize());
