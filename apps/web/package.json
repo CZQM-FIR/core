@@ -50,7 +50,7 @@
   "dependencies": {
     "@czqm/common": "workspace:*",
     "@czqm/db": "workspace:*",
-    "@libsql/client": "^0.15.0",
+    "@libsql/client": "^0.17.0",
     "@lucide/svelte": "^0.511.0",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
