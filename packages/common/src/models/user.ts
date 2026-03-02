@@ -713,6 +713,7 @@ export class User {
     });
 
     return controllers
+      .filter((c) => c.hours.thisMonth > 0)
       .sort((a, b) => b.hours.thisMonth - a.hours.thisMonth)
       .slice(0, limit)
       .map((controller) => controller.serialize());
