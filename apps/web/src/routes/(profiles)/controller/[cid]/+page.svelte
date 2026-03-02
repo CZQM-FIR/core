@@ -27,7 +27,7 @@
 
   let thisMonth = $derived(
     user?.sessions
-      ?.filter((s) => s.positionId !== -1)
+      ?.filter((s) => s.positionId !== -1 && s.position?.callsign !== 'EXTERNAL')
       .filter((s) => {
         let date = new Date(s.logonTime);
         return (
@@ -41,7 +41,7 @@
   );
   let thisYear = $derived(
     user?.sessions
-      ?.filter((s) => s.positionId !== -1)
+      ?.filter((s) => s.positionId !== -1 && s.position?.callsign !== 'EXTERNAL')
       .filter((s) => {
         let date = new Date(s.logonTime);
         return date.getFullYear() === new Date().getFullYear();
@@ -52,7 +52,7 @@
   );
   let allTime = $derived(
     user?.sessions
-      ?.filter((s) => s.positionId !== -1)
+      ?.filter((s) => s.positionId !== -1 && s.position?.callsign !== 'EXTERNAL')
       .reduce((acc, session) => {
         return acc + session.duration;
       }, 0)
