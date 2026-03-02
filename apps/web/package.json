@@ -51,7 +51,7 @@
     "@czqm/common": "workspace:*",
     "@czqm/db": "workspace:*",
     "@libsql/client": "^0.15.0",
-    "@lucide/svelte": "^0.511.0",
+    "@lucide/svelte": "^0.575.0",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
     "@tailwindcss/postcss": "^4.0.13",
