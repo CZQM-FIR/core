@@ -12,7 +12,11 @@
 <section class="container mx-auto">
 	<h1 class="pt-6 text-2xl font-semibold">File Upload</h1>
 	<div class="divider"></div>
-
+	<p class="mb-4">
+		This file upload method should only be used when the <a href="/a/dms" class="link"
+			>Document Management System</a
+		> cannot be used.
+	</p>
 	<form {...uploadFile} method="post" enctype="multipart/form-data" class="flex flex-row gap-3">
 		<input type="file" name="file" required class="file-input" />
 		<button type="submit" class="btn btn-success">Upload File</button>
