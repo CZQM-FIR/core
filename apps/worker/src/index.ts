@@ -12,6 +12,7 @@ import { syncMoodle } from './syncMoodle.js';
 import { notificationsJob } from './notifications.js';
 import { fixWaitlistsJob } from './fixWaitlist.js';
 import { Env } from '@czqm/common';
+import { executeJobs } from './jobs.js';
 
 const app = express();
 let lastRun: string | null = null;
@@ -85,6 +86,12 @@ async function main(): Promise<void> {
 
     app.get('/dev/fixwaitlists', async (req, res) => {
       await fixWaitlistsJob(db);
+
+      res.send('OK');
+    });
+
+    app.get(`/dev/jobs`, async (req, res) => {
+      await executeJobs(db);
 
       res.send('OK');
     });
@@ -168,6 +175,15 @@ async function main(): Promise<void> {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished Fix Waitlists', new Date());
+      }
+
+      try {
+        console.log('Checking for long running jobs', new Date());
+        await executeJobs(db);
+      } catch (err) {
+        console.error('Scheduled job failed:', err);
+      } finally {
+        console.log('Finished long running jobs', new Date());
       }
     });
   }
