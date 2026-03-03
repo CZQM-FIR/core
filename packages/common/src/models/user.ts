@@ -625,6 +625,8 @@ export class User {
     this.flags = data.flags;
     this.preferencesList = data.preferences ?? [];
     this.sessionsList = data.sessions ?? [];
+    this.waitlistPositions = data.waitingPositions ?? [];
+    this.enrolledPositions = data.enrolledPositions ?? [];
     this.roster = data.roster;
     this.soloEndorsementsList = data.soloEndorsements;
 
@@ -765,7 +767,12 @@ export class User {
     cid: number;
     displayName: string;
     rating: User["rating"];
-    roster: { gnd: RosterPositionStatus; twr: RosterPositionStatus; app: RosterPositionStatus; ctr: RosterPositionStatus };
+    roster: {
+      gnd: RosterPositionStatus;
+      twr: RosterPositionStatus;
+      app: RosterPositionStatus;
+      ctr: RosterPositionStatus;
+    };
     active: User["active"];
     sessions: SessionWithPosition[];
     bio: string | null;
@@ -1012,8 +1019,7 @@ export class User {
     const roster = this.roster ?? [];
     const soloEndorsementsList = this.soloEndorsementsList ?? [];
     if (
-      roster.filter((r: RosterStatus) => r.position === position)
-        .length === 0
+      roster.filter((r: RosterStatus) => r.position === position).length === 0
     ) {
       return "nothing"; // N/A
     } else if (
@@ -1028,13 +1034,13 @@ export class User {
     ) {
       return "solo"; // solo
     } else if (
-      roster.filter((r: RosterStatus) => r.position === position)[0]
-        .status === 0
+      roster.filter((r: RosterStatus) => r.position === position)[0].status ===
+      0
     ) {
       return "training"; // training
     } else if (
-      roster.filter((r: RosterStatus) => r.position === position)[0]
-        .status === 2
+      roster.filter((r: RosterStatus) => r.position === position)[0].status ===
+      2
     ) {
       return "certified"; // certified
     } else {
