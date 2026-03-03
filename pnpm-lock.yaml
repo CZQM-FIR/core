@@ -80,8 +80,8 @@ importers:
         specifier: ^9.18.0
         version: 9.29.0
       '@sveltejs/adapter-auto':
-        specifier: ^4.0.0
-        version: 4.0.0(@sveltejs/kit@2.49.4)
+        specifier: ^7.0.0
+        version: 7.0.1(@sveltejs/kit@2.49.4)
       '@sveltejs/adapter-cloudflare':
         specifier: ^5.0.3
         version: 5.1.0(@sveltejs/kit@2.49.4)(wrangler@3.114.9)
@@ -198,8 +198,8 @@ importers:
         specifier: ^9.18.0
         version: 9.29.0
       '@sveltejs/adapter-auto':
-        specifier: ^4.0.0
-        version: 4.0.0(@sveltejs/kit@2.49.4)
+        specifier: ^7.0.0
+        version: 7.0.1(@sveltejs/kit@2.49.4)
       '@sveltejs/adapter-cloudflare':
         specifier: ^5.0.3
         version: 5.1.0(@sveltejs/kit@2.49.4)(wrangler@3.114.9)
@@ -310,8 +310,8 @@ importers:
         specifier: ^4.20241112.0
         version: 4.20250614.0
       '@sveltejs/adapter-auto':
-        specifier: ^4.0.0
-        version: 4.0.0(@sveltejs/kit@2.49.4)
+        specifier: ^7.0.0
+        version: 7.0.1(@sveltejs/kit@2.49.4)
       '@sveltejs/adapter-cloudflare':
         specifier: ^5.0.0
         version: 5.1.0(@sveltejs/kit@2.49.4)(wrangler@3.114.9)
@@ -5011,13 +5011,12 @@ packages:
     dependencies:
       acorn: 8.15.0
 
-  /@sveltejs/adapter-auto@4.0.0(@sveltejs/kit@2.49.4):
-    resolution: {integrity: sha512-kmuYSQdD2AwThymQF0haQhM8rE5rhutQXG4LNbnbShwhMO4qQGnKaaTy+88DuNSuoQDi58+thpq8XpHc1+oEKQ==}
+  /@sveltejs/adapter-auto@7.0.1(@sveltejs/kit@2.49.4):
+    resolution: {integrity: sha512-dvuPm1E7M9NI/+canIQ6KKQDU2AkEefEZ2Dp7cY6uKoPq9Z/PhOXABe526UdW2mN986gjVkuSLkOYIBnS/M2LQ==}
     peerDependencies:
       '@sveltejs/kit': ^2.0.0
     dependencies:
       '@sveltejs/kit': 2.49.4(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.46.1)(typescript@5.8.3)(vite@6.4.1)
-      import-meta-resolve: 4.1.0
     dev: true
 
   /@sveltejs/adapter-cloudflare@5.1.0(@sveltejs/kit@2.49.4)(wrangler@3.114.9):
@@ -6987,10 +6986,6 @@ packages:
     dependencies:
       parent-module: 1.0.1
       resolve-from: 4.0.0
-    dev: true
-
-  /import-meta-resolve@4.1.0:
-    resolution: {integrity: sha512-I6fiaX09Xivtk+THaMfAwnA3MVA5Big1WHF1Dfx9hFuvNIWpXnorlkzhcQf6ehrqQiiZECRt1poOAkPmer3ruw==}
     dev: true
 
   /imurmurhash@0.1.4:
