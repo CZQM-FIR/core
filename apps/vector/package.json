@@ -22,7 +22,7 @@
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20250303.0",
 		"@eslint/compat": "^1.2.5",
-		"@eslint/js": "^9.18.0",
+		"@eslint/js": "^10.0.0",
 		"@sveltejs/adapter-auto": "^4.0.0",
 		"@sveltejs/adapter-cloudflare": "^5.0.3",
 		"@sveltejs/adapter-netlify": "^5.0.2",
@@ -33,7 +33,7 @@
 		"cross-env": "^10.1.0",
 		"daisyui": "^5.0.3",
 		"dotenv-cli": "^8.0.0",
-		"eslint": "^9.18.0",
+		"eslint": "^10.0.0",
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^3.0.0",
 		"globals": "^16.0.0",
