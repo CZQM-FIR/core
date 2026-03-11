@@ -194,10 +194,15 @@
                         <td>{i + 1}</td>
                         <td>{session.position.name} ({session.position.callsign})</td>
                         <td>
-                          {new Date(session.logonTime).toLocaleString('en-CA', {
-                            dateStyle: 'short',
-                            timeStyle: 'short'
+                          {new Date(session.logonTime).toLocaleDateString('en-CA', {
+                            timeZone: 'UTC'
                           })}
+                          {new Date(session.logonTime).toLocaleTimeString('en-CA', {
+                            timeZone: 'UTC',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                          })}z
                         </td>
                         <td>
                           {Math.floor(session.duration / 3600)}:{Math.floor(

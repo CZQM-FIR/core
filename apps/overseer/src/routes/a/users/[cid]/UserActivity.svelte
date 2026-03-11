@@ -63,7 +63,15 @@
 					<tr>
 						<td>{i + 1}</td>
 						<td>{session.position.callsign}</td>
-						<td>{session.logonTime.toLocaleString()}</td>
+						<td
+							>{session.logonTime.toLocaleDateString('en-CA', { timeZone: 'UTC' })}
+							{session.logonTime.toLocaleTimeString('en-CA', {
+								timeZone: 'UTC',
+								hour: '2-digit',
+								minute: '2-digit',
+								hour12: false
+							})}z</td
+						>
 						<td>{(session.duration / 3600).toFixed(2)}h</td>
 					</tr>
 				{/each}
