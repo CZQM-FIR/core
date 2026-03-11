@@ -44,7 +44,10 @@
 							<td>{article.title}</td>
 							<td
 								>{article.date.toLocaleString('en-GB', { timeZone: 'UTC' })}
-								{article.date.getUTCHours()}:{article.date.getUTCMinutes()}z</td
+								{article.date.getUTCHours().toString().padStart(2, '0')}:{article.date
+									.getUTCMinutes()
+									.toString()
+									.padStart(2, '0')}Z</td
 							>
 							<td>{article.author ? article.author.name_full : 'CZQM Staff'}</td>
 							<td class="flex flex-row items-center justify-end gap-3">

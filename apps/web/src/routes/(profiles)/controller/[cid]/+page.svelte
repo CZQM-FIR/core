@@ -196,8 +196,9 @@
                         <td>
                           {new Date(session.logonTime).toLocaleString('en-CA', {
                             dateStyle: 'short',
-                            timeStyle: 'short'
-                          })}
+                            timeStyle: 'short',
+                            timeZone: 'UTC'
+                          })}Z
                         </td>
                         <td>
                           {Math.floor(session.duration / 3600)}:{Math.floor(
