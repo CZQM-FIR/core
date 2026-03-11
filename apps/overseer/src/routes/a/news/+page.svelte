@@ -43,7 +43,7 @@
 						<tr>
 							<td>{article.title}</td>
 							<td
-								>{article.date.toLocaleString('en-GB', { timeZone: 'UTC' })}
+								>{article.date.toLocaleDateString('en-GB', { timeZone: 'UTC' })}
 								{article.date.getUTCHours().toString().padStart(2, '0')}:{article.date
 									.getUTCMinutes()
 									.toString()

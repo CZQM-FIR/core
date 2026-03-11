@@ -85,7 +85,9 @@ const notifyUnauthorizedSession = async (
       reasonText = 'Unknown reason';
   }
 
-  const message = `⚠️⚠️ ${user.name_full} (${user.cid}) has started an UNAUTHORIZED connection to ${position.name} (${position.callsign}) at ${session.logonTime.getUTCHours().toString().padStart(2, '0')}:${session.logonTime.getUTCMinutes().toString().padStart(2, '0')}z (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>). Reason: ${reasonText} ⚠️⚠️`;
+  const hours = session.logonTime.getUTCHours().toString().padStart(2, '0');
+  const minutes = session.logonTime.getUTCMinutes().toString().padStart(2, '0');
+  const message = `⚠️⚠️ ${user.name_full} (${user.cid}) has started an UNAUTHORIZED connection to ${position.name} (${position.callsign}) at ${hours}:${minutes}z (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>). Reason: ${reasonText} ⚠️⚠️`;
 
   await fetch(env.WEBHOOK_UNAUTHORIZED_CONTROLLER!, {
     method: 'POST',
