@@ -198,7 +198,7 @@
                             dateStyle: 'short',
                             timeStyle: 'short',
                             timeZone: 'UTC'
-                          })}Z
+                          })}z
                         </td>
                         <td>
                           {Math.floor(session.duration / 3600)}:{Math.floor(

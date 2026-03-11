@@ -160,7 +160,7 @@
 							</div>
 							<div class="flex-col gap-2">
 								<h2 class="card-title">{student.user.name_full} ({student.cid})</h2>
-								<p>Waiting Since: {student.waitingSince.toUTCString().replace(' GMT', 'Z')}</p>
+								<p>Waiting Since: {student.waitingSince.toUTCString().replace(' GMT', 'z')}</p>
 							</div>
 							<div class="ms-auto flex flex-col gap-2">
 								<button class="tooltip tooltip-left" data-tip="Remove From Wait List">
@@ -229,7 +229,7 @@
 							<div class="card-body flex-row items-center">
 								<h2 class="card-title">{student.user.name_full} ({student.cid})</h2>
 								<p class="ms-auto">
-									Enrolled On: {student.enrolledAt.toUTCString().replace(' GMT', 'Z')}
+									Enrolled On: {student.enrolledAt.toUTCString().replace(' GMT', 'z')}
 								</p>
 								<div class="ms-auto flex flex-col gap-2">
 									<button class="tooltip tooltip-left" data-tip="Unenrol Student">

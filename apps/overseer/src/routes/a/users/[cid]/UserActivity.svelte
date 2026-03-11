@@ -68,7 +68,7 @@
 							timeZone: 'UTC',
 							dateStyle: 'short',
 							timeStyle: 'short'
-						})}Z</td
+						})}z</td
 					>
 						<td>{(session.duration / 3600).toFixed(2)}h</td>
 					</tr>

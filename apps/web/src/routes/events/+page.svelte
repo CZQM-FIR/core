@@ -44,13 +44,13 @@
                       minute: '2-digit',
                       hour12: false,
                       timeZone: 'UTC'
-                    })}Z -
+                    })}z -
                     {new Date(event.end).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
                       hour12: false,
                       timeZone: 'UTC'
-                    })}Z
+                    })}z
                   </div>
                 </div>
                 <p>
@@ -92,13 +92,13 @@
                         minute: '2-digit',
                         hour12: false,
                         timeZone: 'UTC'
-                      })}Z -
+                      })}z -
                       {new Date(event.end).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: false,
                         timeZone: 'UTC'
-                      })}Z
+                      })}z
                     </div>
                   </div>
                   <p>

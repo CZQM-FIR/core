@@ -45,14 +45,14 @@
 								{event.start.getUTCHours().toString().padStart(2, '0')}:{event.start
 									.getUTCMinutes()
 									.toString()
-									.padStart(2, '0')}Z</td
+									.padStart(2, '0')}z</td
 							>
 							<td
 								>{event.end.toLocaleDateString('en-GB', { timeZone: 'UTC' })}
 								{event.end.getUTCHours().toString().padStart(2, '0')}:{event.end
 									.getUTCMinutes()
 									.toString()
-									.padStart(2, '0')}Z</td
+									.padStart(2, '0')}z</td
 							>
 							<td class="flex flex-row items-center justify-end gap-3">
 								<a href={`/a/events/${event.id}`}>
