@@ -194,7 +194,9 @@
                         <td>{i + 1}</td>
                         <td>{session.position.name} ({session.position.callsign})</td>
                         <td>
-                          {new Date(session.logonTime).toLocaleDateString('en-CA', { timeZone: 'UTC' })}
+                          {new Date(session.logonTime).toLocaleDateString('en-CA', {
+                            timeZone: 'UTC'
+                          })}
                           {new Date(session.logonTime).toLocaleTimeString('en-CA', {
                             timeZone: 'UTC',
                             hour: '2-digit',
