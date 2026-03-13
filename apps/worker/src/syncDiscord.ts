@@ -199,22 +199,24 @@ export const syncDiscord = async (db: DB, env: Env) => {
         }
       }
 
-      // hybrid: staff label from User.role
-      const staffRoleMap: Record<string, string> = {
-        'FIR Chief': 'FIR Chief',
-        'Deputy FIR Chief': 'Deputy Chief',
-        'Chief Instructor': 'Chief Instructor',
-        Webmaster: 'Webmaster',
-        'Events Coordinator': 'Events Coordinator',
-        'Facility Engineer': 'Facility Engineer',
-        Instructor: 'Instructor',
-        Mentor: 'Mentor'
+      // staff roles from individual flags (allow multiple staff roles per user)
+      const staffFlagRoleMap: Record<string, string> = {
+        chief: 'FIR Chief',
+        deputy: 'Deputy Chief',
+        'chief-instructor': 'Chief Instructor',
+        web: 'Webmaster',
+        events: 'Events Coordinator',
+        sector: 'Facility Engineer',
+        instructor: 'Instructor',
+        mentor: 'Mentor'
       };
-      const staffRoleName = staffRoleMap[user.role];
-      if (staffRoleName) {
-        const role = guildRoles.find((r) => r.name === staffRoleName);
-        if (role) {
-          roles.push(role.id);
+      for (const flag of user.flags) {
+        const staffRoleName = staffFlagRoleMap[flag.name];
+        if (staffRoleName) {
+          const role = guildRoles.find((r) => r.name === staffRoleName);
+          if (role && !roles.includes(role.id)) {
+            roles.push(role.id);
+          }
         }
       }
 
