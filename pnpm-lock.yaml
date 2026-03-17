@@ -120,7 +120,7 @@ importers:
         version: 3.9.2(eslint@9.39.4)(svelte@5.46.1)
       globals:
         specifier: ^16.0.0
-        version: 16.2.0
+        version: 16.5.0
       prettier:
         specifier: ^3.4.2
         version: 3.5.3
@@ -238,7 +238,7 @@ importers:
         version: 3.9.2(eslint@9.39.4)(svelte@5.46.1)
       globals:
         specifier: ^16.0.0
-        version: 16.2.0
+        version: 16.5.0
       prettier:
         specifier: ^3.4.2
         version: 3.5.3
@@ -353,7 +353,7 @@ importers:
         version: 2.46.1(eslint@9.39.4)(svelte@5.46.1)
       globals:
         specifier: ^15.0.0
-        version: 15.15.0
+        version: 16.5.0
       prettier:
         specifier: ^3.3.2
         version: 3.5.3
@@ -441,7 +441,7 @@ importers:
         version: 10.1.5(eslint@9.39.4)
       globals:
         specifier: ^16.0.0
-        version: 16.2.0
+        version: 16.5.0
       prettier:
         specifier: ^3.5.3
         version: 3.5.3
@@ -6837,7 +6837,7 @@ packages:
       '@jridgewell/sourcemap-codec': 1.5.0
       eslint: 9.39.4
       esutils: 2.0.3
-      globals: 16.2.0
+      globals: 16.5.0
       known-css-properties: 0.36.0
       postcss: 8.5.5
       postcss-load-config: 3.1.4(postcss@8.5.5)
@@ -7262,13 +7262,8 @@ packages:
     engines: {node: '>=18'}
     dev: true
 
-  /globals@15.15.0:
-    resolution: {integrity: sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg==}
-    engines: {node: '>=18'}
-    dev: true
-
-  /globals@16.2.0:
-    resolution: {integrity: sha512-O+7l9tPdHCU320IigZZPj5zmRCFG9xHmx9cU8FqU2Rp+JN714seHV+2S9+JslCpY4gJwU2vOGox0wzgae/MCEg==}
+  /globals@16.5.0:
+    resolution: {integrity: sha512-c/c15i26VrJ4IRt5Z89DnIzCGDn9EcebibhAOjw5ibqEHsE1wLUgkPn9RDmNcUKyU87GeaL633nyJ+pplFR2ZQ==}
     engines: {node: '>=18'}
     dev: true
 
