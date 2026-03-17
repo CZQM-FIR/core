@@ -29,7 +29,7 @@ const notifySession = async (session: Session, db: DB, env: Env) => {
   const hours = String(t.getUTCHours()).padStart(2, '0');
   const minutes = String(t.getUTCMinutes()).padStart(2, '0');
 
-  const message = `📡 ${user.name_full} (${user.cid}) has connected to ${position.name} (${position.callsign}) at ${hours}:${minutes}z (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>).`;
+  const message = `📡 ${user.displayName} (${user.cid}) has connected to ${position.name} (${position.callsign}) at ${hours}:${minutes}z (<t:${Math.floor(session.logonTime.getTime() / 1000)}:R>).`;
 
   await fetch(env.WEBHOOK_ONLINE_CONTROLLERS!, {
     method: 'POST',
