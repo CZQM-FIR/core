@@ -114,7 +114,7 @@ importers:
         version: 9.39.4
       eslint-config-prettier:
         specifier: ^10.0.1
-        version: 10.1.5(eslint@9.39.4)
+        version: 10.1.8(eslint@9.39.4)
       eslint-plugin-svelte:
         specifier: ^3.0.0
         version: 3.9.2(eslint@9.39.4)(svelte@5.46.1)
@@ -232,7 +232,7 @@ importers:
         version: 9.39.4
       eslint-config-prettier:
         specifier: ^10.0.1
-        version: 10.1.5(eslint@9.39.4)
+        version: 10.1.8(eslint@9.39.4)
       eslint-plugin-svelte:
         specifier: ^3.0.0
         version: 3.9.2(eslint@9.39.4)(svelte@5.46.1)
@@ -347,13 +347,13 @@ importers:
         version: 9.39.4
       eslint-config-prettier:
         specifier: ^10.0.0
-        version: 10.1.5(eslint@9.39.4)
+        version: 10.1.8(eslint@9.39.4)
       eslint-plugin-svelte:
         specifier: ^2.36.0
         version: 2.46.1(eslint@9.39.4)(svelte@5.46.1)
       globals:
         specifier: ^15.0.0
-        version: 16.5.0
+        version: 15.15.0
       prettier:
         specifier: ^3.3.2
         version: 3.5.3
@@ -438,7 +438,7 @@ importers:
         version: 9.39.4
       eslint-config-prettier:
         specifier: ^10.0.1
-        version: 10.1.5(eslint@9.39.4)
+        version: 10.1.8(eslint@9.39.4)
       globals:
         specifier: ^16.0.0
         version: 16.5.0
@@ -1627,8 +1627,8 @@ packages:
       '@azure/core-tracing': 1.3.1
       '@azure/core-util': 1.13.1
       '@azure/logger': 1.3.0
-      '@azure/msal-browser': 4.29.1
-      '@azure/msal-node': 3.8.9
+      '@azure/msal-browser': 4.30.0
+      '@azure/msal-node': 3.8.10
       open: 10.2.0
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -1682,23 +1682,23 @@ packages:
       - supports-color
     dev: false
 
-  /@azure/msal-browser@4.29.1:
-    resolution: {integrity: sha512-1Vrt27du1cl4QHkzLc6L4aeXqliPIDIs5l/1I4hWWMXkXccY/EznJT1+pBdoVze0azTAI8sCyq5B4cBVYG1t9w==}
+  /@azure/msal-browser@4.30.0:
+    resolution: {integrity: sha512-HBBKfbZkMVzzF5bofvS1cXuNHFVc+gt4/HOnCmG/0hsHuZRJvJvDg/+7nTwIpoqvJc8BQp5o23rBUfisOLxR+w==}
     engines: {node: '>=0.8.0'}
     dependencies:
-      '@azure/msal-common': 15.16.1
+      '@azure/msal-common': 15.17.0
     dev: false
 
-  /@azure/msal-common@15.16.1:
-    resolution: {integrity: sha512-qxUG9TCl+TVSSX58onVDHDWrvT5CE0+NeeUAbkQqaESpSm79u5IePLnPWMMjCUnUR2zJd4+Bt9vioVRzLmJb2g==}
+  /@azure/msal-common@15.17.0:
+    resolution: {integrity: sha512-VQ5/gTLFADkwue+FohVuCqlzFPUq4xSrX8jeZe+iwZuY6moliNC8xt86qPVNYdtbQfELDf2Nu6LI+demFPHGgw==}
     engines: {node: '>=0.8.0'}
     dev: false
 
-  /@azure/msal-node@3.8.9:
-    resolution: {integrity: sha512-jZ0pw/BbdEUWGhomCaAiVDfXRI/9K56m5hTNqB/CzcbZEYhXm5qpK1cDngN1iXfwSfmUMorOUQ2FC0dyuQ9uRg==}
+  /@azure/msal-node@3.8.10:
+    resolution: {integrity: sha512-0Hz7Kx4hs70KZWep/Rd7aw/qOLUF92wUOhn7ZsOuB5xNR/06NL1E2RAI9+UKH1FtvN8nD6mFjH7UKSjv6vOWvQ==}
     engines: {node: '>=16'}
     dependencies:
-      '@azure/msal-common': 15.16.1
+      '@azure/msal-common': 15.17.0
       jsonwebtoken: 9.0.3
       uuid: 8.3.2
     dev: false
@@ -1848,8 +1848,8 @@ packages:
     resolution: {integrity: sha512-hD3pekGiPg0WPCCGAZmusBBJsDqGUR66Y452YgQsZOnkdQ7ViEPKuyP4huUGEZQefp8g34RRodXYmJ2TbCH+tg==}
     dev: true
 
-  /@emnapi/runtime@1.9.0:
-    resolution: {integrity: sha512-QN75eB0IH2ywSpRpNddCRfQIhmJYBCJ1x5Lb3IscKAL8bMnVAKnRg8dCoXbHzVLLH7P38N2Z3mtulB7W0J0FKw==}
+  /@emnapi/runtime@1.9.1:
+    resolution: {integrity: sha512-VYi5+ZVLhpgK4hQ0TAjiQiZ6ol0oe4mBx7mVv7IflsiEp0OWoVsp/+f9Vc1hOhE0TtkORVrI1GvzyreqpgWtkA==}
     requiresBuild: true
     dependencies:
       tslib: 2.8.1
@@ -3732,7 +3732,7 @@ packages:
     cpu: [wasm32]
     requiresBuild: true
     dependencies:
-      '@emnapi/runtime': 1.9.0
+      '@emnapi/runtime': 1.9.1
     dev: true
     optional: true
 
@@ -6759,8 +6759,8 @@ packages:
       semver: 7.7.2
     dev: true
 
-  /eslint-config-prettier@10.1.5(eslint@9.39.4):
-    resolution: {integrity: sha512-zc1UmCpNltmVY34vuLRV61r1K27sWuX39E+uyUnY8xS2Bex88VV9cugG+UZbRSRGtGyFboj+D8JODyme1plMpw==}
+  /eslint-config-prettier@10.1.8(eslint@9.39.4):
+    resolution: {integrity: sha512-82GZUjRS0p/jganf6q1rEO25VSoHH0hKPCTrgillPjdI/3bgBhAE1QzHrHTizjpRvy6pGAvKjDJtk2pF9NDq8w==}
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
@@ -7231,6 +7231,11 @@ packages:
 
   /globals@14.0.0:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
+    engines: {node: '>=18'}
+    dev: true
+
+  /globals@15.15.0:
+    resolution: {integrity: sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg==}
     engines: {node: '>=18'}
     dev: true
 
