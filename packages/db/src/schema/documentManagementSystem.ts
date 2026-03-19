@@ -12,6 +12,7 @@ export const dmsDocuments = sqliteTable(
     description: text(),
     groupId: text().references(() => dmsGroups.id, { onDelete: "set null" }),
     short: text(),
+    sort: int().notNull().default(99),
   },
   (table) => [index("dms_documents_group_id_idx").on(table.groupId)],
 );
@@ -23,6 +24,7 @@ export const dmsGroups = sqliteTable("dms_groups", {
     .$defaultFn(() => crypto.randomUUID()),
   name: text().notNull(),
   sort: int().notNull().default(99),
+  slug: text().notNull().unique(),
 });
 export type DmsGroup = InferSelectModel<typeof dmsGroups>;
 
