@@ -276,7 +276,7 @@ export class DmsGroup {
       where: { id },
       with: {
         documents: {
-          orderBy: (document) => [asc(document.name)],
+          orderBy: (document) => [asc(document.sort), asc(document.name)],
         },
       },
     });
@@ -305,6 +305,7 @@ export class DmsGroup {
             description: document.description,
             groupId: document.groupId,
             short: document.short,
+            sort: document.sort ?? 99,
             group: dmsGroup,
           },
           db,
@@ -357,6 +358,7 @@ export class DmsGroup {
               description: document.description,
               groupId: document.groupId,
               short: document.short,
+            sort: document.sort ?? 99,
               group: dmsGroup,
             },
             db,
