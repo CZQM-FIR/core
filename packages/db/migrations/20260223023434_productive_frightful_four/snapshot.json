@@ -1,0 +1,3028 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "id": "6965f703-9de8-4a7d-9601-011ae891e145",
+  "prevIds": [
+    "c8798f48-042f-4106-b5b9-cb80175aff9e"
+  ],
+  "ddl": [
+    {
+      "name": "flags",
+      "entityType": "tables"
+    },
+    {
+      "name": "ratings",
+      "entityType": "tables"
+    },
+    {
+      "name": "user_flags",
+      "entityType": "tables"
+    },
+    {
+      "name": "users",
+      "entityType": "tables"
+    },
+    {
+      "name": "events",
+      "entityType": "tables"
+    },
+    {
+      "name": "news",
+      "entityType": "tables"
+    },
+    {
+      "name": "positions",
+      "entityType": "tables"
+    },
+    {
+      "name": "sessions",
+      "entityType": "tables"
+    },
+    {
+      "name": "auth_sessions",
+      "entityType": "tables"
+    },
+    {
+      "name": "ticket_messages",
+      "entityType": "tables"
+    },
+    {
+      "name": "ticket_types",
+      "entityType": "tables"
+    },
+    {
+      "name": "tickets",
+      "entityType": "tables"
+    },
+    {
+      "name": "resources",
+      "entityType": "tables"
+    },
+    {
+      "name": "solo_endorsements",
+      "entityType": "tables"
+    },
+    {
+      "name": "roster",
+      "entityType": "tables"
+    },
+    {
+      "name": "integrations",
+      "entityType": "tables"
+    },
+    {
+      "name": "preferences",
+      "entityType": "tables"
+    },
+    {
+      "name": "online_sessions",
+      "entityType": "tables"
+    },
+    {
+      "name": "enrolled_users",
+      "entityType": "tables"
+    },
+    {
+      "name": "waiting_users",
+      "entityType": "tables"
+    },
+    {
+      "name": "waitlists",
+      "entityType": "tables"
+    },
+    {
+      "name": "moodle_queue",
+      "entityType": "tables"
+    },
+    {
+      "name": "notifications",
+      "entityType": "tables"
+    },
+    {
+      "name": "dms_assets",
+      "entityType": "tables"
+    },
+    {
+      "name": "dms_documents",
+      "entityType": "tables"
+    },
+    {
+      "name": "dms_groups",
+      "entityType": "tables"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "flags"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "flags"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "true",
+      "generated": null,
+      "name": "showInSelect",
+      "entityType": "columns",
+      "table": "flags"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "ratings"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "long",
+      "entityType": "columns",
+      "table": "ratings"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "short",
+      "entityType": "columns",
+      "table": "ratings"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "flag_id",
+      "entityType": "columns",
+      "table": "user_flags"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "user_flags"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "cid",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name_first",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name_last",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name_full",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "email",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "ratingID",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "division",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "region",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "subdivision",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "bio",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "discord_id",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "1",
+      "generated": null,
+      "name": "active",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "hoursLastUpdated",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "events"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "events"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "description",
+      "entityType": "columns",
+      "table": "events"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "start",
+      "entityType": "columns",
+      "table": "events"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "end",
+      "entityType": "columns",
+      "table": "events"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "image",
+      "entityType": "columns",
+      "table": "events"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "name": "recurring",
+      "entityType": "columns",
+      "table": "events"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "news"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "title",
+      "entityType": "columns",
+      "table": "news"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "text",
+      "entityType": "columns",
+      "table": "news"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "date",
+      "entityType": "columns",
+      "table": "news"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "author_id",
+      "entityType": "columns",
+      "table": "news"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "image",
+      "entityType": "columns",
+      "table": "news"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "positions"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "callsign",
+      "entityType": "columns",
+      "table": "positions"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "frequency",
+      "entityType": "columns",
+      "table": "positions"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "positions"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "userId",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "positionId",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "duration",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "logonTime",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "ratingId",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "aircraftTracked",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "aircraftSeen",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "flightsAmended",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "handoffsInitiated",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "handoffsReceived",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "handoffsRefused",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "squawksAssigned",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "cruiseAltsModified",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "tempAltsModified",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "scratchpadMods",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "auth_sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "auth_sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "expires_at",
+      "entityType": "columns",
+      "table": "auth_sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "ticket_messages"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "ticket_id",
+      "entityType": "columns",
+      "table": "ticket_messages"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "author_id",
+      "entityType": "columns",
+      "table": "ticket_messages"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "message",
+      "entityType": "columns",
+      "table": "ticket_messages"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "ticket_messages"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "ticket_types"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "ticket_types"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "tickets"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "subject",
+      "entityType": "columns",
+      "table": "tickets"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "description",
+      "entityType": "columns",
+      "table": "tickets"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "author_id",
+      "entityType": "columns",
+      "table": "tickets"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "type_id",
+      "entityType": "columns",
+      "table": "tickets"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'open'",
+      "generated": null,
+      "name": "status",
+      "entityType": "columns",
+      "table": "tickets"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "tickets"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "resources"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "resources"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "description",
+      "entityType": "columns",
+      "table": "resources"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "url",
+      "entityType": "columns",
+      "table": "resources"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "category",
+      "entityType": "columns",
+      "table": "resources"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "true",
+      "generated": null,
+      "name": "public",
+      "entityType": "columns",
+      "table": "resources"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "type",
+      "entityType": "columns",
+      "table": "resources"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "solo_endorsements"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "controller_id",
+      "entityType": "columns",
+      "table": "solo_endorsements"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "expires_at",
+      "entityType": "columns",
+      "table": "solo_endorsements"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "position_id",
+      "entityType": "columns",
+      "table": "solo_endorsements"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "roster"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "controller_id",
+      "entityType": "columns",
+      "table": "roster"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "position",
+      "entityType": "columns",
+      "table": "roster"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "status",
+      "entityType": "columns",
+      "table": "roster"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "integrations"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "type",
+      "entityType": "columns",
+      "table": "integrations"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "integration_user_id",
+      "entityType": "columns",
+      "table": "integrations"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "cid",
+      "entityType": "columns",
+      "table": "integrations"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "integration_user_name",
+      "entityType": "columns",
+      "table": "integrations"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "last_synced_at",
+      "entityType": "columns",
+      "table": "integrations"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "preferences"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "cid",
+      "entityType": "columns",
+      "table": "preferences"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "key",
+      "entityType": "columns",
+      "table": "preferences"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "value",
+      "entityType": "columns",
+      "table": "preferences"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "online_sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "userId",
+      "entityType": "columns",
+      "table": "online_sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "positionId",
+      "entityType": "columns",
+      "table": "online_sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "start",
+      "entityType": "columns",
+      "table": "online_sessions"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "enrolled_users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "cid",
+      "entityType": "columns",
+      "table": "enrolled_users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "waitlist_id",
+      "entityType": "columns",
+      "table": "enrolled_users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "enrolled_at",
+      "entityType": "columns",
+      "table": "enrolled_users"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "hidden_at",
+      "entityType": "columns",
+      "table": "enrolled_users"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "waiting_users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "cid",
+      "entityType": "columns",
+      "table": "waiting_users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "waitlist_id",
+      "entityType": "columns",
+      "table": "waiting_users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "position",
+      "entityType": "columns",
+      "table": "waiting_users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "waiting_since",
+      "entityType": "columns",
+      "table": "waiting_users"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "waitlists"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "waitlists"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "wait_time",
+      "entityType": "columns",
+      "table": "waitlists"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "waitlist_cohort",
+      "entityType": "columns",
+      "table": "waitlists"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "enrolled_cohort",
+      "entityType": "columns",
+      "table": "waitlists"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "moodle_queue"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "cid",
+      "entityType": "columns",
+      "table": "moodle_queue"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "cohort_id",
+      "entityType": "columns",
+      "table": "moodle_queue"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "timestamp",
+      "entityType": "columns",
+      "table": "moodle_queue"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "true",
+      "generated": null,
+      "name": "add",
+      "entityType": "columns",
+      "table": "moodle_queue"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "notifications"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "timestamp",
+      "entityType": "columns",
+      "table": "notifications"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "userId",
+      "entityType": "columns",
+      "table": "notifications"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "type",
+      "entityType": "columns",
+      "table": "notifications"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "message",
+      "entityType": "columns",
+      "table": "notifications"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "sent",
+      "entityType": "columns",
+      "table": "notifications"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "buttons",
+      "entityType": "columns",
+      "table": "notifications"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'email'",
+      "generated": null,
+      "name": "location",
+      "entityType": "columns",
+      "table": "notifications"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "dms_assets"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "documentId",
+      "entityType": "columns",
+      "table": "dms_assets"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "version",
+      "entityType": "columns",
+      "table": "dms_assets"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "effectiveDate",
+      "entityType": "columns",
+      "table": "dms_assets"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "expiryDate",
+      "entityType": "columns",
+      "table": "dms_assets"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "name": "public",
+      "entityType": "columns",
+      "table": "dms_assets"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "url",
+      "entityType": "columns",
+      "table": "dms_assets"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "dms_documents"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "required",
+      "entityType": "columns",
+      "table": "dms_documents"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "dms_documents"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "description",
+      "entityType": "columns",
+      "table": "dms_documents"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "groupId",
+      "entityType": "columns",
+      "table": "dms_documents"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "short",
+      "entityType": "columns",
+      "table": "dms_documents"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "dms_groups"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "dms_groups"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "99",
+      "generated": null,
+      "name": "sort",
+      "entityType": "columns",
+      "table": "dms_groups"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "slug",
+      "entityType": "columns",
+      "table": "dms_groups"
+    },
+    {
+      "columns": [
+        "flag_id"
+      ],
+      "tableTo": "flags",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "user_flags_flag_id_flags_id_fk",
+      "entityType": "fks",
+      "table": "user_flags"
+    },
+    {
+      "columns": [
+        "user_id"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "user_flags_user_id_users_cid_fk",
+      "entityType": "fks",
+      "table": "user_flags"
+    },
+    {
+      "columns": [
+        "ratingID"
+      ],
+      "tableTo": "ratings",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "users_ratingID_ratings_id_fk",
+      "entityType": "fks",
+      "table": "users"
+    },
+    {
+      "columns": [
+        "author_id"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "SET NULL",
+      "nameExplicit": false,
+      "name": "news_author_id_users_cid_fk",
+      "entityType": "fks",
+      "table": "news"
+    },
+    {
+      "columns": [
+        "userId"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "sessions_userId_users_cid_fk",
+      "entityType": "fks",
+      "table": "sessions"
+    },
+    {
+      "columns": [
+        "positionId"
+      ],
+      "tableTo": "positions",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "sessions_positionId_positions_id_fk",
+      "entityType": "fks",
+      "table": "sessions"
+    },
+    {
+      "columns": [
+        "ratingId"
+      ],
+      "tableTo": "ratings",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "sessions_ratingId_ratings_id_fk",
+      "entityType": "fks",
+      "table": "sessions"
+    },
+    {
+      "columns": [
+        "user_id"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "auth_sessions_user_id_users_cid_fk",
+      "entityType": "fks",
+      "table": "auth_sessions"
+    },
+    {
+      "columns": [
+        "ticket_id"
+      ],
+      "tableTo": "tickets",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "ticket_messages_ticket_id_tickets_id_fk",
+      "entityType": "fks",
+      "table": "ticket_messages"
+    },
+    {
+      "columns": [
+        "author_id"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "ticket_messages_author_id_users_cid_fk",
+      "entityType": "fks",
+      "table": "ticket_messages"
+    },
+    {
+      "columns": [
+        "author_id"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "tickets_author_id_users_cid_fk",
+      "entityType": "fks",
+      "table": "tickets"
+    },
+    {
+      "columns": [
+        "type_id"
+      ],
+      "tableTo": "ticket_types",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "tickets_type_id_ticket_types_id_fk",
+      "entityType": "fks",
+      "table": "tickets"
+    },
+    {
+      "columns": [
+        "controller_id"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "solo_endorsements_controller_id_users_cid_fk",
+      "entityType": "fks",
+      "table": "solo_endorsements"
+    },
+    {
+      "columns": [
+        "position_id"
+      ],
+      "tableTo": "positions",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "solo_endorsements_position_id_positions_id_fk",
+      "entityType": "fks",
+      "table": "solo_endorsements"
+    },
+    {
+      "columns": [
+        "controller_id"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "roster_controller_id_users_cid_fk",
+      "entityType": "fks",
+      "table": "roster"
+    },
+    {
+      "columns": [
+        "cid"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "integrations_cid_users_cid_fk",
+      "entityType": "fks",
+      "table": "integrations"
+    },
+    {
+      "columns": [
+        "cid"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "preferences_cid_users_cid_fk",
+      "entityType": "fks",
+      "table": "preferences"
+    },
+    {
+      "columns": [
+        "cid"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "enrolled_users_cid_users_cid_fk",
+      "entityType": "fks",
+      "table": "enrolled_users"
+    },
+    {
+      "columns": [
+        "waitlist_id"
+      ],
+      "tableTo": "waitlists",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "enrolled_users_waitlist_id_waitlists_id_fk",
+      "entityType": "fks",
+      "table": "enrolled_users"
+    },
+    {
+      "columns": [
+        "cid"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "waiting_users_cid_users_cid_fk",
+      "entityType": "fks",
+      "table": "waiting_users"
+    },
+    {
+      "columns": [
+        "waitlist_id"
+      ],
+      "tableTo": "waitlists",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "waiting_users_waitlist_id_waitlists_id_fk",
+      "entityType": "fks",
+      "table": "waiting_users"
+    },
+    {
+      "columns": [
+        "cid"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "moodle_queue_cid_users_cid_fk",
+      "entityType": "fks",
+      "table": "moodle_queue"
+    },
+    {
+      "columns": [
+        "userId"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "cid"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "notifications_userId_users_cid_fk",
+      "entityType": "fks",
+      "table": "notifications"
+    },
+    {
+      "columns": [
+        "documentId"
+      ],
+      "tableTo": "dms_documents",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "dms_assets_documentId_dms_documents_id_fk",
+      "entityType": "fks",
+      "table": "dms_assets"
+    },
+    {
+      "columns": [
+        "groupId"
+      ],
+      "tableTo": "dms_groups",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "SET NULL",
+      "nameExplicit": false,
+      "name": "dms_documents_groupId_dms_groups_id_fk",
+      "entityType": "fks",
+      "table": "dms_documents"
+    },
+    {
+      "columns": [
+        "user_id",
+        "flag_id"
+      ],
+      "nameExplicit": false,
+      "name": "user_flags_user_id_flag_id_pk",
+      "entityType": "pks",
+      "table": "user_flags"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "flags_pk",
+      "table": "flags",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "ratings_pk",
+      "table": "ratings",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "cid"
+      ],
+      "nameExplicit": false,
+      "name": "users_pk",
+      "table": "users",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "events_pk",
+      "table": "events",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "news_pk",
+      "table": "news",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "positions_pk",
+      "table": "positions",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "sessions_pk",
+      "table": "sessions",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "auth_sessions_pk",
+      "table": "auth_sessions",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "ticket_messages_pk",
+      "table": "ticket_messages",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "ticket_types_pk",
+      "table": "ticket_types",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "tickets_pk",
+      "table": "tickets",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "resources_pk",
+      "table": "resources",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "solo_endorsements_pk",
+      "table": "solo_endorsements",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "roster_pk",
+      "table": "roster",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "integrations_pk",
+      "table": "integrations",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "preferences_pk",
+      "table": "preferences",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "online_sessions_pk",
+      "table": "online_sessions",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "enrolled_users_pk",
+      "table": "enrolled_users",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "waiting_users_pk",
+      "table": "waiting_users",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "waitlists_pk",
+      "table": "waitlists",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "moodle_queue_pk",
+      "table": "moodle_queue",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "notifications_pk",
+      "table": "notifications",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "dms_assets_pk",
+      "table": "dms_assets",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "dms_documents_pk",
+      "table": "dms_documents",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "dms_groups_pk",
+      "table": "dms_groups",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        {
+          "value": "name",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "flags_name_idx",
+      "entityType": "indexes",
+      "table": "flags"
+    },
+    {
+      "columns": [
+        {
+          "value": "long",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "ratings_long_idx",
+      "entityType": "indexes",
+      "table": "ratings"
+    },
+    {
+      "columns": [
+        {
+          "value": "short",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "ratings_short_idx",
+      "entityType": "indexes",
+      "table": "ratings"
+    },
+    {
+      "columns": [
+        {
+          "value": "flag_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "user_flags_flagId_idx",
+      "entityType": "indexes",
+      "table": "user_flags"
+    },
+    {
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "user_flags_userId_idx",
+      "entityType": "indexes",
+      "table": "user_flags"
+    },
+    {
+      "columns": [
+        {
+          "value": "ratingID",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "users_ratingID_idx",
+      "entityType": "indexes",
+      "table": "users"
+    },
+    {
+      "columns": [
+        {
+          "value": "discord_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "users_discord_id_idx",
+      "entityType": "indexes",
+      "table": "users"
+    },
+    {
+      "columns": [
+        {
+          "value": "active",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "users_active_idx",
+      "entityType": "indexes",
+      "table": "users"
+    },
+    {
+      "columns": [
+        {
+          "value": "name",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "events_name_idx",
+      "entityType": "indexes",
+      "table": "events"
+    },
+    {
+      "columns": [
+        {
+          "value": "start",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "events_start_idx",
+      "entityType": "indexes",
+      "table": "events"
+    },
+    {
+      "columns": [
+        {
+          "value": "end",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "events_end_idx",
+      "entityType": "indexes",
+      "table": "events"
+    },
+    {
+      "columns": [
+        {
+          "value": "author_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "news_authorID_idx",
+      "entityType": "indexes",
+      "table": "news"
+    },
+    {
+      "columns": [
+        {
+          "value": "date",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "news_date_idx",
+      "entityType": "indexes",
+      "table": "news"
+    },
+    {
+      "columns": [
+        {
+          "value": "title",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "news_title_idx",
+      "entityType": "indexes",
+      "table": "news"
+    },
+    {
+      "columns": [
+        {
+          "value": "frequency",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "positions_frequency_idx",
+      "entityType": "indexes",
+      "table": "positions"
+    },
+    {
+      "columns": [
+        {
+          "value": "name",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "positions_name_idx",
+      "entityType": "indexes",
+      "table": "positions"
+    },
+    {
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "sessions_userId_idx",
+      "entityType": "indexes",
+      "table": "sessions"
+    },
+    {
+      "columns": [
+        {
+          "value": "positionId",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "sessions_positionId_idx",
+      "entityType": "indexes",
+      "table": "sessions"
+    },
+    {
+      "columns": [
+        {
+          "value": "logonTime",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "sessions_logonTime_idx",
+      "entityType": "indexes",
+      "table": "sessions"
+    },
+    {
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "auth_sessions_userId_idx",
+      "entityType": "indexes",
+      "table": "auth_sessions"
+    },
+    {
+      "columns": [
+        {
+          "value": "expires_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "auth_sessions_expiresAt_idx",
+      "entityType": "indexes",
+      "table": "auth_sessions"
+    },
+    {
+      "columns": [
+        {
+          "value": "ticket_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "ticket_messages_ticketId_idx",
+      "entityType": "indexes",
+      "table": "ticket_messages"
+    },
+    {
+      "columns": [
+        {
+          "value": "author_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "ticket_messages_authorId_idx",
+      "entityType": "indexes",
+      "table": "ticket_messages"
+    },
+    {
+      "columns": [
+        {
+          "value": "created_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "ticket_messages_createdAt_idx",
+      "entityType": "indexes",
+      "table": "ticket_messages"
+    },
+    {
+      "columns": [
+        {
+          "value": "name",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "ticket_types_name_idx",
+      "entityType": "indexes",
+      "table": "ticket_types"
+    },
+    {
+      "columns": [
+        {
+          "value": "author_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "tickets_authorId_idx",
+      "entityType": "indexes",
+      "table": "tickets"
+    },
+    {
+      "columns": [
+        {
+          "value": "type_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "tickets_typeId_idx",
+      "entityType": "indexes",
+      "table": "tickets"
+    },
+    {
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "tickets_status_idx",
+      "entityType": "indexes",
+      "table": "tickets"
+    },
+    {
+      "columns": [
+        {
+          "value": "created_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "tickets_createdAt_idx",
+      "entityType": "indexes",
+      "table": "tickets"
+    },
+    {
+      "columns": [
+        {
+          "value": "name",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "resources_name_idx",
+      "entityType": "indexes",
+      "table": "resources"
+    },
+    {
+      "columns": [
+        {
+          "value": "category",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "resources_category_idx",
+      "entityType": "indexes",
+      "table": "resources"
+    },
+    {
+      "columns": [
+        {
+          "value": "public",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "resources_public_idx",
+      "entityType": "indexes",
+      "table": "resources"
+    },
+    {
+      "columns": [
+        {
+          "value": "type",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "resources_type_idx",
+      "entityType": "indexes",
+      "table": "resources"
+    },
+    {
+      "columns": [
+        {
+          "value": "controller_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "controller_id_idx",
+      "entityType": "indexes",
+      "table": "solo_endorsements"
+    },
+    {
+      "columns": [
+        {
+          "value": "controller_id",
+          "isExpression": false
+        },
+        {
+          "value": "position_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "controller_position_idx",
+      "entityType": "indexes",
+      "table": "solo_endorsements"
+    },
+    {
+      "columns": [
+        {
+          "value": "controller_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "roster_controllerId_idx",
+      "entityType": "indexes",
+      "table": "roster"
+    },
+    {
+      "columns": [
+        {
+          "value": "position",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "roster_position_idx",
+      "entityType": "indexes",
+      "table": "roster"
+    },
+    {
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "roster_status_idx",
+      "entityType": "indexes",
+      "table": "roster"
+    },
+    {
+      "columns": [
+        {
+          "value": "cid",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "integrations_cid_idx",
+      "entityType": "indexes",
+      "table": "integrations"
+    },
+    {
+      "columns": [
+        {
+          "value": "type",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "integrations_type_idx",
+      "entityType": "indexes",
+      "table": "integrations"
+    },
+    {
+      "columns": [
+        {
+          "value": "integration_user_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "integrations_integrationUserId_idx",
+      "entityType": "indexes",
+      "table": "integrations"
+    },
+    {
+      "columns": [
+        {
+          "value": "cid",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "preferences_cid_idx",
+      "entityType": "indexes",
+      "table": "preferences"
+    },
+    {
+      "columns": [
+        {
+          "value": "key",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "preferences_key_idx",
+      "entityType": "indexes",
+      "table": "preferences"
+    },
+    {
+      "columns": [
+        {
+          "value": "cid",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "enrolled_users_cid_idx",
+      "entityType": "indexes",
+      "table": "enrolled_users"
+    },
+    {
+      "columns": [
+        {
+          "value": "waitlist_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "enrolled_users_waitlistId_idx",
+      "entityType": "indexes",
+      "table": "enrolled_users"
+    },
+    {
+      "columns": [
+        {
+          "value": "enrolled_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "enrolled_users_enrolledAt_idx",
+      "entityType": "indexes",
+      "table": "enrolled_users"
+    },
+    {
+      "columns": [
+        {
+          "value": "hidden_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "enrolled_users_hidden_at_idx",
+      "entityType": "indexes",
+      "table": "enrolled_users"
+    },
+    {
+      "columns": [
+        {
+          "value": "cid",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "waiting_users_cid_idx",
+      "entityType": "indexes",
+      "table": "waiting_users"
+    },
+    {
+      "columns": [
+        {
+          "value": "waitlist_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "waiting_users_waitlistId_idx",
+      "entityType": "indexes",
+      "table": "waiting_users"
+    },
+    {
+      "columns": [
+        {
+          "value": "position",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "waiting_users_position_idx",
+      "entityType": "indexes",
+      "table": "waiting_users"
+    },
+    {
+      "columns": [
+        {
+          "value": "waiting_since",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "waiting_users_waitingSince_idx",
+      "entityType": "indexes",
+      "table": "waiting_users"
+    },
+    {
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "notifications_user_id_idx",
+      "entityType": "indexes",
+      "table": "notifications"
+    },
+    {
+      "columns": [
+        {
+          "value": "timestamp",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "notifications_timestamp_idx",
+      "entityType": "indexes",
+      "table": "notifications"
+    },
+    {
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false
+        },
+        {
+          "value": "timestamp",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "notifications_user_timestamp_idx",
+      "entityType": "indexes",
+      "table": "notifications"
+    },
+    {
+      "columns": [
+        {
+          "value": "documentId",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "dms_assets_document_id_idx",
+      "entityType": "indexes",
+      "table": "dms_assets"
+    },
+    {
+      "columns": [
+        {
+          "value": "effectiveDate",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "dms_assets_effective_date_idx",
+      "entityType": "indexes",
+      "table": "dms_assets"
+    },
+    {
+      "columns": [
+        {
+          "value": "groupId",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "dms_documents_group_id_idx",
+      "entityType": "indexes",
+      "table": "dms_documents"
+    },
+    {
+      "columns": [
+        "cid",
+        "type"
+      ],
+      "nameExplicit": false,
+      "name": "integrations_cid_type_unique",
+      "entityType": "uniques",
+      "table": "integrations"
+    },
+    {
+      "columns": [
+        "cid",
+        "key"
+      ],
+      "nameExplicit": true,
+      "name": "preferences_cid_key_unique",
+      "entityType": "uniques",
+      "table": "preferences"
+    },
+    {
+      "columns": [
+        "email"
+      ],
+      "nameExplicit": false,
+      "name": "users_email_unique",
+      "entityType": "uniques",
+      "table": "users"
+    },
+    {
+      "columns": [
+        "callsign"
+      ],
+      "nameExplicit": false,
+      "name": "positions_callsign_unique",
+      "entityType": "uniques",
+      "table": "positions"
+    },
+    {
+      "columns": [
+        "slug"
+      ],
+      "nameExplicit": false,
+      "name": "dms_groups_slug_unique",
+      "entityType": "uniques",
+      "table": "dms_groups"
+    }
+  ],
+  "renames": []
+}

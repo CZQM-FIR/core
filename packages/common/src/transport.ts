@@ -1,4 +1,11 @@
-import { User, UserHours, type SoloEndorsementWithPosition } from "./models";
+import {
+  DmsAsset,
+  DmsDocument,
+  DmsGroup,
+  User,
+  UserHours,
+  type SoloEndorsementWithPosition,
+} from "./models";
 import type { Flag } from "@czqm/db/schema";
 
 const parse = (value: unknown) => JSON.parse(value as string);
@@ -82,6 +89,86 @@ export const sharedTransport = {
         lastQuarterExternal: hours.lastQuarterExternal,
         allTime: hours.allTime,
         meetingActivityRequirement: hours.meetingActivityRequirement,
+      });
+    },
+    decode: parse,
+  },
+
+  DmsDocument: {
+    encode: (document: unknown) => {
+      if (!(document instanceof DmsDocument)) return;
+
+      return JSON.stringify({
+        id: document.id,
+        required: document.required,
+        name: document.name,
+        description: document.description,
+        groupId: document.groupId,
+        short: document.short,
+        assets: document.assets.map((asset) => ({
+          id: asset.id,
+          documentId: asset.documentId,
+          version: asset.version,
+          effectiveDate: asset.effectiveDate,
+          expiryDate: asset.expiryDate,
+          public: asset.public,
+          url: asset.url,
+        })),
+        group: document.group
+          ? {
+              id: document.group.id,
+              name: document.group.name,
+              sort: document.group.sort,
+              slug: document.group.slug,
+            }
+          : null,
+      });
+    },
+    decode: parse,
+  },
+
+  DmsGroup: {
+    encode: (group: unknown) => {
+      if (!(group instanceof DmsGroup)) return;
+
+      return JSON.stringify({
+        id: group.id,
+        name: group.name,
+        sort: group.sort,
+        slug: group.slug,
+        documents: group.documents.map((document) => ({
+          id: document.id,
+          required: document.required,
+          name: document.name,
+          description: document.description,
+          groupId: document.groupId,
+          short: document.short,
+        })),
+      });
+    },
+    decode: parse,
+  },
+
+  DmsAsset: {
+    encode: (asset: unknown) => {
+      if (!(asset instanceof DmsAsset)) return;
+
+      return JSON.stringify({
+        id: asset.id,
+        documentId: asset.documentId,
+        version: asset.version,
+        effectiveDate: asset.effectiveDate,
+        expiryDate: asset.expiryDate,
+        public: asset.public,
+        url: asset.url,
+        document: {
+          id: asset.document.id,
+          required: asset.document.required,
+          name: asset.document.name,
+          description: asset.document.description,
+          groupId: asset.document.groupId,
+          short: asset.document.short,
+        },
       });
     },
     decode: parse,
