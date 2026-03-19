@@ -8,6 +8,7 @@ type CreateDmsDocumentInput = {
   description?: string | null;
   groupId?: string | null;
   short?: string | null;
+  sort?: number;
 };
 
 type UpdateDmsDocumentInput = {
@@ -16,16 +17,19 @@ type UpdateDmsDocumentInput = {
   description?: string | null;
   groupId?: string | null;
   short?: string | null;
+  sort?: number;
 };
 
 type CreateDmsGroupInput = {
   name: string;
   sort?: number;
+  slug: string;
 };
 
 type UpdateDmsGroupInput = {
   name: string;
   sort: number;
+  slug: string;
 };
 
 type CreateDmsAssetInput = {
@@ -55,6 +59,7 @@ export class DmsDocument {
   short: string | null;
   assets: DmsAsset[];
   group: DmsGroup | null;
+  sort: number;
   private db: DB;
 
   constructor(
@@ -67,6 +72,7 @@ export class DmsDocument {
       short: string | null;
       assets?: DmsAsset[];
       group?: DmsGroup | null;
+      sort?: number;
     },
     db: DB,
   ) {
@@ -78,6 +84,7 @@ export class DmsDocument {
     this.short = input.short;
     this.assets = input.assets ?? [];
     this.group = input.group ?? null;
+    this.sort = input.sort ?? 99;
     this.db = db;
   }
 
@@ -104,6 +111,7 @@ export class DmsDocument {
         description: document.description,
         groupId: document.groupId,
         short: document.short,
+        sort: document.sort ?? 99,
       },
       db,
     );
@@ -132,6 +140,7 @@ export class DmsDocument {
           name: document.group.name,
           sort: document.group.sort,
           documents: [dmsDocument],
+          slug: document.group.slug,
         },
         db,
       );
@@ -148,7 +157,7 @@ export class DmsDocument {
         },
         group: true,
       },
-      orderBy: (document) => [asc(document.name)],
+      orderBy: (document) => [asc(document.sort), asc(document.name)],
     });
 
     return documents.map((document) => {
@@ -160,6 +169,7 @@ export class DmsDocument {
           description: document.description,
           groupId: document.groupId,
           short: document.short,
+          sort: document.sort ?? 99,
         },
         db,
       );
@@ -188,6 +198,7 @@ export class DmsDocument {
             name: document.group.name,
             sort: document.group.sort,
             documents: [dmsDocument],
+            slug: document.group.slug,
           },
           db,
         );
@@ -198,13 +209,21 @@ export class DmsDocument {
   }
 
   static async create(db: DB, data: CreateDmsDocumentInput) {
-    return await db.insert(dmsDocuments).values({
-      required: data.required,
-      name: data.name,
-      description: data.description ?? null,
-      groupId: data.groupId ?? null,
-      short: data.short ?? null,
-    });
+    const doc = (
+      await db
+        .insert(dmsDocuments)
+        .values({
+          required: data.required,
+          name: data.name,
+          description: data.description ?? null,
+          groupId: data.groupId ?? null,
+          short: data.short ?? null,
+          sort: data.sort ?? 99,
+        })
+        .returning({ id: dmsDocuments.id })
+    )[0];
+
+    return (await DmsDocument.fromId(db, doc.id)) as DmsDocument;
   }
 
   static async update(db: DB, id: string, data: UpdateDmsDocumentInput) {
@@ -216,6 +235,7 @@ export class DmsDocument {
         description: data.description ?? null,
         groupId: data.groupId ?? null,
         short: data.short ?? null,
+        sort: data.sort ?? 99,
       })
       .where(eq(dmsDocuments.id, id));
   }
@@ -229,6 +249,7 @@ export class DmsGroup {
   id: string;
   name: string;
   sort: number;
+  slug: string;
   documents: DmsDocument[];
   private db: DB;
 
@@ -238,6 +259,7 @@ export class DmsGroup {
       name: string;
       sort: number;
       documents?: DmsDocument[];
+      slug: string;
     },
     db: DB,
   ) {
@@ -245,10 +267,11 @@ export class DmsGroup {
     this.name = input.name;
     this.sort = input.sort;
     this.documents = input.documents ?? [];
+    this.slug = input.slug;
     this.db = db;
   }
 
-  static async fromId(db: DB, id: string): Promise<DmsGroup> {
+  static async fromId(db: DB, id: string): Promise<DmsGroup | null> {
     const group = await db.query.dmsGroups.findFirst({
       where: { id },
       with: {
@@ -259,7 +282,7 @@ export class DmsGroup {
     });
 
     if (!group) {
-      throw new Error("DMS group not found");
+      return null;
     }
 
     const dmsGroup = new DmsGroup(
@@ -267,6 +290,7 @@ export class DmsGroup {
         id: group.id,
         name: group.name,
         sort: group.sort,
+        slug: group.slug,
       },
       db,
     );
@@ -290,14 +314,26 @@ export class DmsGroup {
     return dmsGroup;
   }
 
+  static async fromSlug(db: DB, slug: string): Promise<DmsGroup | null> {
+    const group = await db.query.dmsGroups.findFirst({
+      where: { slug },
+    });
+
+    if (!group) {
+      return null;
+    }
+
+    return DmsGroup.fromId(db, group.id);
+  }
+
   static async fetchAll(db: DB): Promise<DmsGroup[]> {
     const groups = await db.query.dmsGroups.findMany({
       with: {
         documents: {
-          orderBy: (document) => [asc(document.name)],
+          orderBy: (document) => [asc(document.sort), asc(document.name)],
         },
       },
-      orderBy: (group) => [asc(group.sort)],
+      orderBy: (group) => [asc(group.sort), asc(group.name)],
     });
 
     return groups.map((group) => {
@@ -306,6 +342,7 @@ export class DmsGroup {
           id: group.id,
           name: group.name,
           sort: group.sort,
+          slug: group.slug,
         },
         db,
       );
@@ -331,10 +368,18 @@ export class DmsGroup {
   }
 
   static async create(db: DB, data: CreateDmsGroupInput) {
-    return await db.insert(dmsGroups).values({
-      name: data.name,
-      sort: data.sort ?? 99,
-    });
+    const group = (
+      await db
+        .insert(dmsGroups)
+        .values({
+          name: data.name,
+          sort: data.sort ?? 99,
+          slug: data.slug,
+        })
+        .returning({ id: dmsGroups.id })
+    )[0];
+
+    return (await DmsGroup.fromId(db, group.id)) as DmsGroup;
   }
 
   static async update(db: DB, id: string, data: UpdateDmsGroupInput) {
@@ -343,12 +388,17 @@ export class DmsGroup {
       .set({
         name: data.name,
         sort: data.sort,
+        slug: data.slug,
       })
       .where(eq(dmsGroups.id, id));
   }
 
   static async remove(db: DB, id: string) {
     return await db.delete(dmsGroups).where(eq(dmsGroups.id, id));
+  }
+
+  async delete() {
+    return await DmsGroup.remove(this.db, this.id);
   }
 }
 
@@ -480,14 +530,21 @@ export class DmsAsset {
   }
 
   static async create(db: DB, data: CreateDmsAssetInput) {
-    return await db.insert(dmsAssets).values({
-      documentId: data.documentId,
-      version: data.version,
-      effectiveDate: data.effectiveDate ?? new Date(),
-      expiryDate: data.expiryDate ?? null,
-      public: data.public ?? false,
-      url: data.url,
-    });
+    const asset = (
+      await db
+        .insert(dmsAssets)
+        .values({
+          documentId: data.documentId,
+          version: data.version,
+          effectiveDate: data.effectiveDate ?? new Date(),
+          expiryDate: data.expiryDate ?? null,
+          public: data.public ?? false,
+          url: data.url,
+        })
+        .returning({ id: dmsAssets.id })
+    )[0];
+
+    return (await DmsAsset.fromId(db, asset.id)) as DmsAsset;
   }
 
   static async update(db: DB, id: string, data: UpdateDmsAssetInput) {
@@ -506,5 +563,39 @@ export class DmsAsset {
 
   static async remove(db: DB, id: string) {
     return await db.delete(dmsAssets).where(eq(dmsAssets.id, id));
+  }
+}
+
+export class DMS {
+  static Document = DmsDocument;
+  static Group = DmsGroup;
+  static Asset = DmsAsset;
+
+  groups: DmsGroup[];
+  documents: DmsDocument[];
+  assets: DmsAsset[];
+
+  private db: DB;
+
+  constructor(
+    db: DB,
+    groups: DmsGroup[],
+    documents: DmsDocument[],
+    assets: DmsAsset[],
+  ) {
+    this.groups = groups;
+    this.documents = documents;
+    this.assets = assets;
+    this.db = db;
+  }
+
+  static async fetch(db: DB) {
+    const [groups, documents, assets] = await Promise.all([
+      DmsGroup.fetchAll(db),
+      DmsDocument.fetchAll(db),
+      DmsAsset.fetchAll(db),
+    ]);
+
+    return new DMS(db, groups, documents, assets);
   }
 }
