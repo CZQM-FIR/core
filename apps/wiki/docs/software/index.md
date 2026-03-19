@@ -1,5 +1,4 @@
 ---
-title: Software Guides Part 2
 icon: lucide/laptop
 description: Guides for software available to members of the CZQM FIR
 ---
