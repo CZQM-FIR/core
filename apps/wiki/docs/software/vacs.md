@@ -12,6 +12,10 @@ VACS <u>**_is not_**</u> a replacement for TeamSpeak. As required by policy, CZQ
 
     **VACS in CZQM is still a work in progress**. As such, there may be certain stations that are unreachable by VACS. TeamSpeak shall always be available as a fallback for communication. This guide is also a work in progress and will continue to be updated as our VACS implementation matures. When in doubt, consult the [VACS Documentation](https://docs.vacs.network) or fall back to TeamSpeak.
 
+!!! info "Have a suggestion?"
+
+    We would love to hear what you have to say! Reach out to the CZQM Engineering Team or Web Team. We want to make sure this tool works for you.
+
 ## Installation
 
 VACS is available for all platforms. We recommend following the official VACS installation guide which can be found [here](https://docs.vacs.network/getting-started/installation/). You do not need to install this on the same device as your EuroScope installation.
