@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { createDocument, getDocuments, getGroup } from '$lib/remote/dms.remote';
+	import { createDocument, getDocumentsByGroup, getGroup } from '$lib/remote/dms.remote';
 	import { ChevronLeft } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
@@ -21,13 +21,29 @@
 	);
 
 	onMount(async () => {
-		const documents = await getDocuments();
+		const documents = await getDocumentsByGroup(id);
 		existingDocumentNames = documents.map((document) => normalizeName(document.name));
 	});
 
 	const preventDuplicateNameSubmission = (event: SubmitEvent) => {
 		if (hasDuplicateName) {
 			event.preventDefault();
+		}
+	};
+
+	let short = $state('');
+	const updateShort = () => {
+		short = short.replaceAll(' ', '-');
+		short = short.replaceAll('--', '-');
+		short = short.toLowerCase();
+		if (short.startsWith('-')) {
+			short = short.slice(1);
+		}
+	};
+	const blurShort = () => {
+		updateShort();
+		if (short.endsWith('-')) {
+			short = short.slice(0, -1);
 		}
 	};
 </script>
@@ -51,8 +67,6 @@
 		<div class="divider"></div>
 
 		<form {...createDocument} class="flex flex-col gap-4" onsubmit={preventDuplicateNameSubmission}>
-			<input type="hidden" name="groupId" value={id} />
-
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend">Document Name</legend>
 				<input
@@ -73,15 +87,21 @@
 			</fieldset>
 
 			<fieldset class="fieldset">
-				<legend class="fieldset-legend">Short Name</legend>
-				<input {...createDocument.fields.short.as('text')} class="input" />
+				<legend class="fieldset-legend">Short URL</legend>
+				<input
+					{...createDocument.fields.short.as('text')}
+					class="input"
+					oninput={updateShort}
+					onblur={blurShort}
+					bind:value={short}
+				/>
 				<p class="label text-error text-sm">
 					{createDocument.fields.short
 						.issues()
 						?.map((issue) => issue.message)
 						.join(' ')}
 				</p>
-				<p class="label text-sm">Optional short label used in compact views.</p>
+				<p class="label text-sm">The short identifier for this document used in URLs</p>
 			</fieldset>
 
 			<fieldset class="fieldset">
@@ -110,6 +130,7 @@
 				<p class="label text-sm">Documents are sorted from 0-99 by this value.</p>
 			</fieldset>
 
+			<input type="hidden" name="groupId" value={id} />
 			<p class="label text-error text-sm">
 				{createDocument.fields.groupId
 					.issues()

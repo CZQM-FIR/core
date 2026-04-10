@@ -46,6 +46,7 @@
 							<th>Short</th>
 							<th>Required</th>
 							<th>Sort</th>
+							<th></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -67,6 +68,12 @@
 									{/if}
 									<td>{required ? 'Yes' : 'No'}</td>
 									<td>{sort ?? 99}</td>
+									<td>
+										<a
+											class="btn btn-xs btn-outline btn-secondary"
+											href="/a/dms/document/{documentId}">Manage</a
+										>
+									</td>
 								</tr>
 							{/each}
 						{/if}

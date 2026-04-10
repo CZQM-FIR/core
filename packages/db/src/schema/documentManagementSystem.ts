@@ -11,7 +11,7 @@ export const dmsDocuments = sqliteTable(
     name: text().notNull(),
     description: text(),
     groupId: text().references(() => dmsGroups.id, { onDelete: "set null" }),
-    short: text(),
+    short: text().notNull(),
     sort: int().notNull().default(99),
   },
   (table) => [index("dms_documents_group_id_idx").on(table.groupId)],

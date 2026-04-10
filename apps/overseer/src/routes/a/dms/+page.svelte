@@ -104,7 +104,10 @@
 			<p class="py-2">
 				Are you sure you want to delete <span class="font-semibold">{selectedGroupName}</span>?
 			</p>
-			<p class="text-base-content/70 text-sm">This action cannot be undone.</p>
+			<p class="text-warning text-sm">
+				Warning: deleting this group will also delete all documents within the group. This
+				action cannot be undone.
+			</p>
 			<div class="modal-action">
 				<form method="dialog">
 					<button class="btn">Cancel</button>

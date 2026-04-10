@@ -5,9 +5,9 @@ import type { DB } from "../db";
 type CreateDmsDocumentInput = {
   required: boolean;
   name: string;
+  short: string;
   description?: string | null;
   groupId?: string | null;
-  short?: string | null;
   sort?: number;
 };
 
@@ -16,7 +16,7 @@ type UpdateDmsDocumentInput = {
   name: string;
   description?: string | null;
   groupId?: string | null;
-  short?: string | null;
+  short: string;
   sort?: number;
 };
 
@@ -50,13 +50,72 @@ type UpdateDmsAssetInput = {
   url: string;
 };
 
+type DmsAssetLike = {
+  id: string;
+  effectiveDate: Date | string;
+  expiryDate: Date | string | null;
+  public: boolean;
+};
+
+const toDate = (value: Date | string | null | undefined) => {
+  if (!value) {
+    return null;
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+export const getCurrentDmsAsset = <T extends DmsAssetLike>(
+  assets: T[],
+  nowInput: Date | string = new Date(),
+): T | null => {
+  const now = toDate(nowInput);
+  if (!now) {
+    return null;
+  }
+
+  const eligibleAssets = assets.filter((asset) => {
+    if (!asset.public) {
+      return false;
+    }
+
+    const effectiveDate = toDate(asset.effectiveDate);
+    if (!effectiveDate || effectiveDate > now) {
+      return false;
+    }
+
+    const expiryDate = toDate(asset.expiryDate);
+    if (expiryDate && expiryDate <= now) {
+      return false;
+    }
+
+    return true;
+  });
+
+  if (eligibleAssets.length === 0) {
+    return null;
+  }
+
+  return eligibleAssets.sort((a, b) => {
+    const aEffective = toDate(a.effectiveDate)?.getTime() ?? 0;
+    const bEffective = toDate(b.effectiveDate)?.getTime() ?? 0;
+
+    if (aEffective !== bEffective) {
+      return bEffective - aEffective;
+    }
+
+    return a.id.localeCompare(b.id);
+  })[0];
+};
+
 export class DmsDocument {
   id: string;
   required: boolean;
   name: string;
   description: string | null;
   groupId: string | null;
-  short: string | null;
+  short: string;
   assets: DmsAsset[];
   group: DmsGroup | null;
   sort: number;
@@ -69,7 +128,7 @@ export class DmsDocument {
       name: string;
       description: string | null;
       groupId: string | null;
-      short: string | null;
+      short: string;
       assets?: DmsAsset[];
       group?: DmsGroup | null;
       sort?: number;
@@ -149,6 +208,40 @@ export class DmsDocument {
     return dmsDocument;
   }
 
+  static async fromGroupSlugAndShort(
+    db: DB,
+    groupSlug: string,
+    documentShort: string,
+  ): Promise<DmsDocument | null> {
+    const normalizedGroupSlug = groupSlug.trim().toLowerCase();
+    const normalizedDocumentShort = documentShort.trim().toLowerCase();
+
+    if (!normalizedGroupSlug || !normalizedDocumentShort) {
+      return null;
+    }
+
+    const group = await db.query.dmsGroups.findFirst({
+      where: { slug: normalizedGroupSlug },
+    });
+
+    if (!group) {
+      return null;
+    }
+
+    const document = await db.query.dmsDocuments.findFirst({
+      where: {
+        groupId: group.id,
+        short: normalizedDocumentShort,
+      },
+    });
+
+    if (!document) {
+      return null;
+    }
+
+    return await DmsDocument.fromId(db, document.id);
+  }
+
   static async fetchAll(db: DB): Promise<DmsDocument[]> {
     const documents = await db.query.dmsDocuments.findMany({
       with: {
@@ -215,9 +308,9 @@ export class DmsDocument {
         .values({
           required: data.required,
           name: data.name,
+          short: data.short,
           description: data.description ?? null,
           groupId: data.groupId ?? null,
-          short: data.short ?? null,
           sort: data.sort ?? 99,
         })
         .returning({ id: dmsDocuments.id })
@@ -234,7 +327,7 @@ export class DmsDocument {
         name: data.name,
         description: data.description ?? null,
         groupId: data.groupId ?? null,
-        short: data.short ?? null,
+        short: data.short,
         sort: data.sort ?? 99,
       })
       .where(eq(dmsDocuments.id, id));
@@ -242,6 +335,10 @@ export class DmsDocument {
 
   static async remove(db: DB, id: string) {
     return await db.delete(dmsDocuments).where(eq(dmsDocuments.id, id));
+  }
+
+  getCurrentAsset(now: Date | string = new Date()) {
+    return getCurrentDmsAsset(this.assets, now);
   }
 }
 
@@ -358,7 +455,7 @@ export class DmsGroup {
               description: document.description,
               groupId: document.groupId,
               short: document.short,
-            sort: document.sort ?? 99,
+              sort: document.sort ?? 99,
               group: dmsGroup,
             },
             db,
