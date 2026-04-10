@@ -105,8 +105,8 @@
 				Are you sure you want to delete <span class="font-semibold">{selectedGroupName}</span>?
 			</p>
 			<p class="text-warning text-sm">
-				Warning: deleting this group will also delete all documents within the group. This
-				action cannot be undone.
+				Warning: deleting this group will also delete all documents within the group. This action
+				cannot be undone.
 			</p>
 			<div class="modal-action">
 				<form method="dialog">

@@ -274,7 +274,9 @@
 	}
 
 	const openAssetEditModal = (assetId: string) => {
-		const dialog = document.getElementById(`asset-edit-modal-${assetId}`) as HTMLDialogElement | null;
+		const dialog = document.getElementById(
+			`asset-edit-modal-${assetId}`
+		) as HTMLDialogElement | null;
 		dialog?.showModal();
 	};
 
@@ -432,7 +434,7 @@
 				</div>
 			{/if}
 
-			<h2 class="text-xl mt-6">Upload New Asset</h2>
+			<h2 class="mt-6 text-xl">Upload New Asset</h2>
 			<form {...createDocumentAsset} enctype="multipart/form-data" class="mt-3">
 				<input type="hidden" name="documentId" value={currentDocument.id} />
 				<div class="flex flex-row flex-wrap gap-5">
@@ -484,7 +486,7 @@
 				</p>
 			{/if}
 
-			<div class="overflow-x-auto mt-4 pb-4">
+			<div class="mt-4 overflow-x-auto pb-4">
 				<table class="table">
 					<thead>
 						<tr>
@@ -551,7 +553,7 @@
 			{#each currentDocument.assets as asset (asset.id)}
 				<dialog id={`asset-edit-modal-${asset.id}`} class="modal">
 					<div class="modal-box">
-						<h3 class="font-semibold text-lg">Edit Asset: {asset.version}</h3>
+						<h3 class="text-lg font-semibold">Edit Asset: {asset.version}</h3>
 						<form {...updateDocumentAsset} class="mt-4 space-y-3">
 							<input type="hidden" name="assetId" value={asset.id} />
 							<fieldset class="fieldset">
@@ -602,7 +604,8 @@
 				<div class="modal-box">
 					<h3 class="text-lg font-bold">Delete asset?</h3>
 					<p class="py-2">
-						Are you sure you want to delete <span class="font-semibold">{selectedAssetVersion}</span>?
+						Are you sure you want to delete <span class="font-semibold">{selectedAssetVersion}</span
+						>?
 					</p>
 					<p class="text-warning text-sm">This action cannot be undone.</p>
 					<div class="modal-action">
@@ -629,7 +632,6 @@
 					{deleteAssetMessage.text}
 				</p>
 			{/if}
-
 		{/if}
 	</div>
 </section>

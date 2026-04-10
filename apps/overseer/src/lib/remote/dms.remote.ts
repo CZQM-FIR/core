@@ -187,10 +187,7 @@ export const createDocumentAsset = form('unchecked', async (rawData) => {
 	}
 
 	const expiryDate = parseDateInput(expiryDateInput);
-	if (
-		expiryDate &&
-		expiryDate.getTime() <= effectiveDate.getTime()
-	) {
+	if (expiryDate && expiryDate.getTime() <= effectiveDate.getTime()) {
 		throw error(400, 'Expiry date must be after the effective date');
 	}
 
