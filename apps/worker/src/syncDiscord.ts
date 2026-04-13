@@ -106,7 +106,10 @@ export const syncDiscord = async (db: DB, env: Env) => {
       (b.lastSyncedAt ? new Date(b.lastSyncedAt).getTime() : 0)
   );
 
-  const users = await User.fromCids(db, integrations.map((i) => i.cid));
+  const users = await User.fromCids(
+    db,
+    integrations.map((i) => i.cid)
+  );
   const usersByCid = new Map(users.map((u) => [u.cid, u]));
 
   for (const integration of integrations) {
@@ -221,7 +224,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
       }
 
       // student role
-      if (user.hasFlag('controller') && user.rating.id >= 2 && user.rating.id <= 4) {
+      if (user.hasFlag('controller') && user.rating.id >= 1 && user.rating.id <= 4) {
         const role = guildRoles.find((r) => r.name === 'Student');
         if (role) {
           roles.push(role.id);
