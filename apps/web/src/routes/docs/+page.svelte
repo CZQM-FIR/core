@@ -26,7 +26,9 @@
                           <span>{doc.name}</span>
                           {#await getDocumentAcknowledgement(doc.id) then acknowledgement}
                             {#if acknowledgement.canAcknowledge}
-                              <span class="badge badge-warning badge-sm">Acknowledgement required</span>
+                              <span class="badge badge-warning badge-sm"
+                                >Acknowledgement required</span
+                              >
                             {/if}
                           {/await}
                         </div>

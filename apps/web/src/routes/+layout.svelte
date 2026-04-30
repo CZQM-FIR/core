@@ -62,9 +62,7 @@
                 </li>
                 <li><a href="/join"><UserPlus class="mr-1" size="15" /> Join Us</a></li>
                 <li>
-                  <a href="/docs"
-                    ><ClipboardList class="mr-1" size="15" /> Documents</a
-                  >
+                  <a href="/docs"><ClipboardList class="mr-1" size="15" /> Documents</a>
                 </li>
               </ul>
             </details>
@@ -103,9 +101,7 @@
               </li>
               <li><a href="/join"><UserPlus class="mr-1" size="15" /> Join Us</a></li>
               <li>
-                <a href="/docs"
-                  ><ClipboardList class="mr-1" size="15" /> Documents</a
-                >
+                <a href="/docs"><ClipboardList class="mr-1" size="15" /> Documents</a>
               </li>
             </ul>
           </div>

@@ -60,19 +60,14 @@ export const getDocumentAcknowledgement = query(type('string'), async (documentI
   const canUserAcknowledge = Boolean(user?.hasFlag(['visitor', 'controller']));
 
   const acknowledgedAt =
-    canUserAcknowledge && user
-      ? await document.getAcknowledgementForCurrentAsset(user.cid)
-      : null;
+    canUserAcknowledge && user ? await document.getAcknowledgementForCurrentAsset(user.cid) : null;
 
   return {
     required: document.required,
     currentAssetId: currentAsset?.id ?? null,
     acknowledgedAt: acknowledgedAt ? acknowledgedAt.toISOString() : null,
     canAcknowledge:
-      canUserAcknowledge &&
-      document.required &&
-      Boolean(currentAsset) &&
-      acknowledgedAt === null
+      canUserAcknowledge && document.required && Boolean(currentAsset) && acknowledgedAt === null
   };
 });
 

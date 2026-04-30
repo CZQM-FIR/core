@@ -13,7 +13,11 @@
 	import { resolve } from '$app/paths';
 	import { ChevronLeft, SquarePen, Trash2 } from '@lucide/svelte';
 	import { onMount } from 'svelte';
-	import { getCurrentDmsAsset, type DmsAcknowledgementCandidate, type DmsDocument } from '@czqm/common';
+	import {
+		getCurrentDmsAsset,
+		type DmsAcknowledgementCandidate,
+		type DmsDocument
+	} from '@czqm/common';
 
 	let id = $state<string>(page.params.id!);
 	let name = $state('');
@@ -235,13 +239,13 @@
 			return 'N/A';
 		}
 
-	const day = String(date.getUTCDate()).padStart(2, '0');
-	const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-	const year = date.getUTCFullYear();
-	const hours = String(date.getUTCHours()).padStart(2, '0');
-	const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+		const day = String(date.getUTCDate()).padStart(2, '0');
+		const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+		const year = date.getUTCFullYear();
+		const hours = String(date.getUTCHours()).padStart(2, '0');
+		const minutes = String(date.getUTCMinutes()).padStart(2, '0');
 
-	return `${day}/${month}/${year} ${hours}:${minutes} UTC`;
+		return `${day}/${month}/${year} ${hours}:${minutes} UTC`;
 	}
 
 	function formatDateTimeLocalValue(date: Date) {
@@ -615,7 +619,9 @@
 					<div class="stats stats-vertical md:stats-horizontal shadow">
 						<div class="stat">
 							<div class="stat-title">Acknowledged</div>
-							<div class="stat-value text-success">{acknowledgementSummary.acknowledged.length}</div>
+							<div class="stat-value text-success">
+								{acknowledgementSummary.acknowledged.length}
+							</div>
 						</div>
 						<div class="stat">
 							<div class="stat-title">Pending</div>
@@ -626,7 +632,7 @@
 					<div>
 						<h3 class="text-lg font-semibold">Acknowledged</h3>
 						<div class="mt-2 overflow-x-auto">
-							<table class="table table-zebra">
+							<table class="table-zebra table">
 								<thead>
 									<tr>
 										<th>Name</th>
@@ -662,7 +668,7 @@
 					<div>
 						<h3 class="text-lg font-semibold">Pending acknowledgement</h3>
 						<div class="mt-2 overflow-x-auto pb-2">
-							<table class="table table-zebra">
+							<table class="table-zebra table">
 								<thead>
 									<tr>
 										<th>Name</th>
