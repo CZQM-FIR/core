@@ -1,6 +1,12 @@
-import { dmsAssets, dmsDocuments, dmsGroups } from "@czqm/db/schema";
+import {
+  dmsAcknowledgements,
+  dmsAssets,
+  dmsDocuments,
+  dmsGroups,
+} from "@czqm/db/schema";
 import { asc, desc, eq } from "drizzle-orm";
 import type { DB } from "../db";
+import { User } from "./user";
 
 type CreateDmsDocumentInput = {
   required: boolean;
@@ -57,6 +63,41 @@ type DmsAssetLike = {
   public: boolean;
 };
 
+export type DmsAcknowledgeErrorCode =
+  | "DOCUMENT_NOT_REQUIRED"
+  | "NO_ACTIVE_ASSET"
+  | "ASSET_NOT_ACTIVE"
+  | "ALREADY_ACKNOWLEDGED";
+
+export type DmsAcknowledgementCandidate = {
+  cid: number;
+  name: string;
+  role: string;
+  active: "active" | "inactive" | "loa";
+};
+
+export type DmsAcknowledgedCandidate = DmsAcknowledgementCandidate & {
+  acknowledgedAt: Date;
+};
+
+export type DmsDocumentAcknowledgementSummary = {
+  required: boolean;
+  currentAssetId: string | null;
+  currentAssetVersion: string | null;
+  acknowledged: DmsAcknowledgedCandidate[];
+  pending: DmsAcknowledgementCandidate[];
+};
+
+export class DmsAcknowledgeError extends Error {
+  code: DmsAcknowledgeErrorCode;
+
+  constructor(code: DmsAcknowledgeErrorCode, message: string) {
+    super(message);
+    this.name = "DmsAcknowledgeError";
+    this.code = code;
+  }
+}
+
 const toDate = (value: Date | string | null | undefined) => {
   if (!value) {
     return null;
@@ -103,6 +144,50 @@ export const getCurrentDmsAsset = <T extends DmsAssetLike>(
 
     if (aEffective !== bEffective) {
       return bEffective - aEffective;
+    }
+
+    return a.id.localeCompare(b.id);
+  })[0];
+};
+
+export const isDmsAssetActive = <T extends DmsAssetLike>(
+  asset: T,
+  nowInput: Date | string = new Date(),
+): boolean => getCurrentDmsAsset([asset], nowInput)?.id === asset.id;
+
+/** Public asset whose effective date is in the future (soonest first). */
+export const getNextDmsAsset = <T extends DmsAssetLike>(
+  assets: T[],
+  nowInput: Date | string = new Date(),
+): T | null => {
+  const now = toDate(nowInput);
+  if (!now) {
+    return null;
+  }
+
+  const upcoming = assets.filter((asset) => {
+    if (!asset.public) {
+      return false;
+    }
+
+    const effectiveDate = toDate(asset.effectiveDate);
+    if (!effectiveDate || effectiveDate <= now) {
+      return false;
+    }
+
+    return true;
+  });
+
+  if (upcoming.length === 0) {
+    return null;
+  }
+
+  return upcoming.sort((a, b) => {
+    const aEffective = toDate(a.effectiveDate)?.getTime() ?? 0;
+    const bEffective = toDate(b.effectiveDate)?.getTime() ?? 0;
+
+    if (aEffective !== bEffective) {
+      return aEffective - bEffective;
     }
 
     return a.id.localeCompare(b.id);
@@ -326,9 +411,9 @@ export class DmsDocument {
         required: data.required,
         name: data.name,
         description: data.description ?? null,
-        groupId: data.groupId ?? null,
         short: data.short,
         sort: data.sort ?? 99,
+        ...(data.groupId !== undefined ? { groupId: data.groupId } : {}),
       })
       .where(eq(dmsDocuments.id, id));
   }
@@ -339,6 +424,183 @@ export class DmsDocument {
 
   getCurrentAsset(now: Date | string = new Date()) {
     return getCurrentDmsAsset(this.assets, now);
+  }
+
+  getNextAsset(now: Date | string = new Date()) {
+    return getNextDmsAsset(this.assets, now);
+  }
+
+  private normalizeAcknowledgementUserId(userCid: string | number): string {
+    return String(userCid);
+  }
+
+  async getAcknowledgementForCurrentAsset(
+    userCid: string | number,
+    now: Date | string = new Date(),
+  ): Promise<Date | null> {
+    const currentAsset = this.getCurrentAsset(now);
+    if (!currentAsset) {
+      return null;
+    }
+
+    const acknowledgement = await this.db.query.dmsAcknowledgements.findFirst({
+      where: {
+        assetId: currentAsset.id,
+        userId: this.normalizeAcknowledgementUserId(userCid),
+      },
+      columns: {
+        acknowledgedAt: true,
+      },
+    });
+
+    return acknowledgement?.acknowledgedAt ?? null;
+  }
+
+  async acknowledgeCurrentAsset(
+    userCid: string | number,
+    now: Date | string = new Date(),
+  ): Promise<{ acknowledgedAt: Date; assetId: string }> {
+    if (!this.required) {
+      throw new DmsAcknowledgeError(
+        "DOCUMENT_NOT_REQUIRED",
+        "This document does not require acknowledgement.",
+      );
+    }
+
+    const currentAsset = this.getCurrentAsset(now);
+    if (!currentAsset) {
+      throw new DmsAcknowledgeError(
+        "NO_ACTIVE_ASSET",
+        "This document does not currently have an active asset.",
+      );
+    }
+
+    if (!isDmsAssetActive(currentAsset, now)) {
+      throw new DmsAcknowledgeError(
+        "ASSET_NOT_ACTIVE",
+        "Only active document assets can be acknowledged.",
+      );
+    }
+
+    const normalizedUserId = this.normalizeAcknowledgementUserId(userCid);
+    const existingAcknowledgement =
+      await this.db.query.dmsAcknowledgements.findFirst({
+        where: {
+          assetId: currentAsset.id,
+          userId: normalizedUserId,
+        },
+        columns: {
+          id: true,
+        },
+      });
+
+    if (existingAcknowledgement) {
+      throw new DmsAcknowledgeError(
+        "ALREADY_ACKNOWLEDGED",
+        "You have already acknowledged the current document asset.",
+      );
+    }
+
+    try {
+      const inserted = await this.db
+        .insert(dmsAcknowledgements)
+        .values({
+          assetId: currentAsset.id,
+          userId: normalizedUserId,
+          acknowledgedAt: new Date(),
+        })
+        .returning({
+          acknowledgedAt: dmsAcknowledgements.acknowledgedAt,
+        });
+
+      const acknowledgement = inserted[0];
+      return {
+        acknowledgedAt: acknowledgement?.acknowledgedAt ?? new Date(),
+        assetId: currentAsset.id,
+      };
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("dms_acknowledgements_user_asset_unique_idx")
+      ) {
+        throw new DmsAcknowledgeError(
+          "ALREADY_ACKNOWLEDGED",
+          "You have already acknowledged the current document asset.",
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  async getCurrentAssetAcknowledgementSummary(
+    now: Date | string = new Date(),
+  ): Promise<DmsDocumentAcknowledgementSummary> {
+    const currentAsset = this.getCurrentAsset(now);
+    const candidates = (await User.fromFlag(this.db, ["controller", "visitor"]))
+      .map((user) => ({
+        cid: user.cid,
+        name: user.displayName,
+        role: user.role,
+        active: user.active,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    if (!this.required || !currentAsset) {
+      return {
+        required: this.required,
+        currentAssetId: currentAsset?.id ?? null,
+        currentAssetVersion: currentAsset?.version ?? null,
+        acknowledged: [],
+        pending: [],
+      };
+    }
+
+    const acknowledgements = await this.db.query.dmsAcknowledgements.findMany({
+      where: {
+        assetId: currentAsset.id,
+      },
+      columns: {
+        userId: true,
+        acknowledgedAt: true,
+      },
+    });
+
+    const acknowledgementsByUserId = new Map(
+      acknowledgements.map((acknowledgement) => [
+        acknowledgement.userId,
+        acknowledgement.acknowledgedAt,
+      ]),
+    );
+
+    const acknowledged: DmsAcknowledgedCandidate[] = [];
+    const pending: DmsAcknowledgementCandidate[] = [];
+
+    for (const candidate of candidates) {
+      const acknowledgedAt = acknowledgementsByUserId.get(String(candidate.cid));
+
+      if (acknowledgedAt) {
+        acknowledged.push({
+          ...candidate,
+          acknowledgedAt,
+        });
+        continue;
+      }
+
+      pending.push(candidate);
+    }
+
+    acknowledged.sort(
+      (a, b) => b.acknowledgedAt.getTime() - a.acknowledgedAt.getTime(),
+    );
+
+    return {
+      required: this.required,
+      currentAssetId: currentAsset.id,
+      currentAssetVersion: currentAsset.version,
+      acknowledged,
+      pending,
+    };
   }
 }
 
@@ -429,6 +691,9 @@ export class DmsGroup {
       with: {
         documents: {
           orderBy: (document) => [asc(document.sort), asc(document.name)],
+          with: {
+            assets: true,
+          },
         },
       },
       orderBy: (group) => [asc(group.sort), asc(group.name)],
@@ -457,6 +722,22 @@ export class DmsGroup {
               short: document.short,
               sort: document.sort ?? 99,
               group: dmsGroup,
+              assets: document.assets.map(
+                (asset) =>
+                  new DmsAsset(
+                    {
+                      id: asset.id,
+                      documentId: asset.documentId,
+                      version: asset.version,
+                      effectiveDate: asset.effectiveDate,
+                      expiryDate: asset.expiryDate,
+                      public: asset.public,
+                      url: asset.url,
+                      document: null as any,
+                    },
+                    db,
+                  ),
+              ),
             },
             db,
           ),

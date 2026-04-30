@@ -4,6 +4,7 @@
 		deleteDocumentAsset,
 		editDocument,
 		getDocument,
+		getDocumentAcknowledgementSummary,
 		getDocumentsByGroup,
 		updateDocumentAsset
 	} from '$lib/remote/dms.remote';
@@ -12,7 +13,7 @@
 	import { resolve } from '$app/paths';
 	import { ChevronLeft, SquarePen, Trash2 } from '@lucide/svelte';
 	import { onMount } from 'svelte';
-	import { getCurrentDmsAsset, type DmsDocument } from '@czqm/common';
+	import { getCurrentDmsAsset, type DmsAcknowledgementCandidate, type DmsDocument } from '@czqm/common';
 
 	let id = $state<string>(page.params.id!);
 	let name = $state('');
@@ -22,6 +23,17 @@
 	let existingDocumentNames = $state<string[]>([]);
 	let loadedDocument = $state<DmsDocument | undefined>();
 	let lastLoadedDocument = $state<DmsDocument | undefined>();
+	type DmsAcknowledgedCandidateSummary = DmsAcknowledgementCandidate & {
+		acknowledgedAt: string;
+	};
+	type DmsDocumentAcknowledgementSummaryState = {
+		required: boolean;
+		currentAssetId: string | null;
+		currentAssetVersion: string | null;
+		acknowledged: DmsAcknowledgedCandidateSummary[];
+		pending: DmsAcknowledgementCandidate[];
+	};
+	let acknowledgementSummary = $state<DmsDocumentAcknowledgementSummaryState | null>(null);
 	let loadError = $state<string | null>(null);
 	let isLoading = $state(true);
 
@@ -96,7 +108,7 @@
 	let assetPublic = $state(false);
 	let assetEffectiveDate = $state(formatDateTimeLocalValue(new Date()));
 	let assetExpiryDate = $state('');
-	let deleteAssetModal: HTMLDialogElement | undefined;
+	let deleteAssetModal = $state<HTMLDialogElement | undefined>(undefined);
 	let selectedAssetId = $state<string | null>(null);
 	let selectedAssetVersion = $state('');
 	const filesBaseUrl = env.PUBLIC_FILES_BASE_URL;
@@ -109,9 +121,13 @@
 		loadError = null;
 
 		try {
-			const fetchedDocument = await getDocument(id);
+			const [fetchedDocument, fetchedAcknowledgementSummary] = await Promise.all([
+				getDocument(id),
+				getDocumentAcknowledgementSummary(id)
+			]);
 			loadedDocument = fetchedDocument;
 			lastLoadedDocument = fetchedDocument;
+			acknowledgementSummary = fetchedAcknowledgementSummary;
 			name = fetchedDocument.name;
 			short = fetchedDocument.short ?? '';
 			sort = fetchedDocument.sort ?? 99;
@@ -144,6 +160,14 @@
 	});
 
 	$effect(() => {
+		if (!editDocument.result?.ok) {
+			return;
+		}
+
+		void loadDocumentDetails();
+	});
+
+	$effect(() => {
 		if (!createDocumentAsset.result?.ok) {
 			return;
 		}
@@ -168,8 +192,6 @@
 		}
 
 		deleteAssetModal?.close();
-		selectedAssetId = null;
-		selectedAssetVersion = '';
 		void loadDocumentDetails();
 	});
 
@@ -213,7 +235,13 @@
 			return 'N/A';
 		}
 
-		return `${date.toLocaleString(undefined, { timeZone: 'UTC' })} UTC`;
+	const day = String(date.getUTCDate()).padStart(2, '0');
+	const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+	const year = date.getUTCFullYear();
+	const hours = String(date.getUTCHours()).padStart(2, '0');
+	const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+
+	return `${day}/${month}/${year} ${hours}:${minutes} UTC`;
 	}
 
 	function formatDateTimeLocalValue(date: Date) {
@@ -253,6 +281,17 @@
 		return 'Inactive';
 	}
 
+	function getRosterStatusClass(active: DmsAcknowledgementCandidate['active']) {
+		switch (active) {
+			case 'active':
+				return 'badge-success';
+			case 'loa':
+				return 'badge-warning';
+			default:
+				return 'badge-ghost';
+		}
+	}
+
 	function getDefaultNextVersion(assets: DmsDocument['assets']) {
 		if (assets.length === 0) {
 			return '1.0';
@@ -284,6 +323,17 @@
 		selectedAssetId = assetId;
 		selectedAssetVersion = assetVersion;
 		deleteAssetModal?.showModal();
+	};
+
+	const captureDeleteAssetModal = (node: HTMLDialogElement) => {
+		deleteAssetModal = node;
+		return {
+			destroy() {
+				if (deleteAssetModal === node) {
+					deleteAssetModal = undefined;
+				}
+			}
+		};
 	};
 </script>
 
@@ -550,6 +600,101 @@
 					</tbody>
 				</table>
 			</div>
+
+			<h2 class="mt-6 text-xl">Acknowledgements</h2>
+			{#if !currentDocument.required}
+				<div class="alert alert-info mt-4">
+					<p>Acknowledgement is not required for this document.</p>
+				</div>
+			{:else if !currentAsset}
+				<div class="alert alert-warning mt-4">
+					<p>Acknowledgements are unavailable until a current public asset exists.</p>
+				</div>
+			{:else if acknowledgementSummary}
+				<div class="mt-4 space-y-5">
+					<div class="stats stats-vertical md:stats-horizontal shadow">
+						<div class="stat">
+							<div class="stat-title">Acknowledged</div>
+							<div class="stat-value text-success">{acknowledgementSummary.acknowledged.length}</div>
+						</div>
+						<div class="stat">
+							<div class="stat-title">Pending</div>
+							<div class="stat-value text-warning">{acknowledgementSummary.pending.length}</div>
+						</div>
+					</div>
+
+					<div>
+						<h3 class="text-lg font-semibold">Acknowledged</h3>
+						<div class="mt-2 overflow-x-auto">
+							<table class="table table-zebra">
+								<thead>
+									<tr>
+										<th>Name</th>
+										<th>Role</th>
+										<th>Status</th>
+										<th>Acknowledged</th>
+									</tr>
+								</thead>
+								<tbody>
+									{#if acknowledgementSummary.acknowledged.length === 0}
+										<tr>
+											<td colspan="4" class="text-base-content/70">No acknowledgements yet.</td>
+										</tr>
+									{:else}
+										{#each acknowledgementSummary.acknowledged as entry (entry.cid)}
+											<tr>
+												<td>{entry.name}</td>
+												<td>{entry.role}</td>
+												<td>
+													<span class={`badge ${getRosterStatusClass(entry.active)}`}>
+														{entry.active.toUpperCase()}
+													</span>
+												</td>
+												<td>{formatDate(entry.acknowledgedAt)}</td>
+											</tr>
+										{/each}
+									{/if}
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<div>
+						<h3 class="text-lg font-semibold">Pending acknowledgement</h3>
+						<div class="mt-2 overflow-x-auto pb-2">
+							<table class="table table-zebra">
+								<thead>
+									<tr>
+										<th>Name</th>
+										<th>Role</th>
+										<th>Status</th>
+									</tr>
+								</thead>
+								<tbody>
+									{#if acknowledgementSummary.pending.length === 0}
+										<tr>
+											<td colspan="3" class="text-base-content/70">Everyone has acknowledged.</td>
+										</tr>
+									{:else}
+										{#each acknowledgementSummary.pending as entry (entry.cid)}
+											<tr>
+												<td>{entry.name}</td>
+												<td>{entry.role}</td>
+												<td>
+													<span class={`badge ${getRosterStatusClass(entry.active)}`}>
+														{entry.active.toUpperCase()}
+													</span>
+												</td>
+											</tr>
+										{/each}
+									{/if}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			{/if}
+
 			{#each currentDocument.assets as asset (asset.id)}
 				<dialog id={`asset-edit-modal-${asset.id}`} class="modal">
 					<div class="modal-box">
@@ -600,7 +745,7 @@
 					</div>
 				</dialog>
 			{/each}
-			<dialog class="modal" bind:this={deleteAssetModal}>
+			<dialog class="modal" use:captureDeleteAssetModal>
 				<div class="modal-box">
 					<h3 class="text-lg font-bold">Delete asset?</h3>
 					<p class="py-2">

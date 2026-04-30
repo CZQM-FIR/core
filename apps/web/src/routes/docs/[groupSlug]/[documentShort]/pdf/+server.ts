@@ -47,7 +47,8 @@ export const GET: RequestHandler = async ({ params }) => {
     throw error(404, 'Asset file not found');
   }
 
-  const body = await assetObject.Body.transformToByteArray();
+  const bytes = await assetObject.Body.transformToByteArray();
+  const body = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
   const headers = new Headers({
     'Content-Type': assetObject.ContentType ?? 'application/octet-stream',
     'Cache-Control': 'public, max-age=60'

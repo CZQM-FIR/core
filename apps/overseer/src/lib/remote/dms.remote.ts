@@ -43,6 +43,29 @@ export const getDocument = query(type('string'), async (id: string) => {
 	return document;
 });
 
+export const getDocumentAcknowledgementSummary = query(type('string'), async (id: string) => {
+	const event = getRequestEvent();
+	const user = await User.resolveAuthenticatedUser(db, {
+		cid: event.locals.user?.cid,
+		sessionToken: event.cookies.get('session')
+	});
+
+	if (!user || !user.hasFlag(['admin', 'staff'])) {
+		throw error(401, 'Unauthorized');
+	}
+
+	const document = await DmsDocument.fromId(db, id);
+	const summary = await document.getCurrentAssetAcknowledgementSummary();
+
+	return {
+		...summary,
+		acknowledged: summary.acknowledged.map((entry) => ({
+			...entry,
+			acknowledgedAt: entry.acknowledgedAt.toISOString()
+		}))
+	};
+});
+
 export const editDocument = form(
 	type({
 		id: 'string',

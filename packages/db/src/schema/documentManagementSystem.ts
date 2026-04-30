@@ -1,5 +1,12 @@
 import { type InferSelectModel } from "drizzle-orm";
-import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  int,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
+import { users } from "./users";
 
 export const dmsDocuments = sqliteTable(
   "dms_documents",
@@ -10,7 +17,7 @@ export const dmsDocuments = sqliteTable(
     required: int({ mode: "boolean" }).notNull(),
     name: text().notNull(),
     description: text(),
-    groupId: text().references(() => dmsGroups.id, { onDelete: "set null" }),
+    groupId: text().references(() => dmsGroups.id, { onDelete: "cascade" }),
     short: text().notNull(),
     sort: int().notNull().default(99),
   },
@@ -51,3 +58,29 @@ export const dmsAssets = sqliteTable(
   ],
 );
 export type DmsAsset = InferSelectModel<typeof dmsAssets>;
+
+export const dmsAcknowledgements = sqliteTable(
+  "dms_acknowledgements",
+  {
+    id: text()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    assetId: text()
+      .notNull()
+      .references(() => dmsAssets.id, { onDelete: "cascade" }),
+    userId: text()
+      .notNull()
+      .references(() => users.cid, { onDelete: "cascade" }),
+    acknowledgedAt: int({ mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("dms_acknowledgements_user_asset_unique_idx").on(
+      table.userId,
+      table.assetId,
+    ),
+    index("dms_acknowledgements_asset_id_idx").on(table.assetId),
+    index("dms_acknowledgements_user_id_idx").on(table.userId),
+  ],
+);
