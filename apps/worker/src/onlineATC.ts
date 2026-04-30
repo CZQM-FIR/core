@@ -1,8 +1,12 @@
 import { eq } from 'drizzle-orm';
 import { Position, positions, users, onlineSessions, notifications } from '@czqm/db/schema';
 import type { DB, Env } from '@czqm/common';
-import { User } from '@czqm/common';
-import { unauthorizedConnectionEmailTemplate, unauthorizedConnectionText } from '@czqm/common/notifications';
+import { DmsDocument, User } from '@czqm/common';
+import {
+  pendingDocumentAcknowledgementsText,
+  unauthorizedConnectionEmailTemplate,
+  unauthorizedConnectionText
+} from '@czqm/common/notifications';
 
 type OnlineController = {
   cid: number;
@@ -225,6 +229,29 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
         await notifyUnauthorizedSession(session, db, env, 'roster');
       } else {
         await notifySession(session, db, env);
+
+        const pendingDocs = await DmsDocument.getPendingForUser(db, controller.cid);
+        if (pendingDocs.length > 0) {
+          await db.insert(notifications).values({
+            timestamp: new Date(),
+            type: 'policyChanges',
+            userId: controller.cid,
+            location: 'discord',
+            message: `**Pending Document Acknowledgements**\n\n${pendingDocumentAcknowledgementsText(
+              { name_full: user.displayName, cid: user.cid },
+              pendingDocs,
+              env.PUBLIC_WEB_URL
+            )}`,
+            buttons: [
+              {
+                type: 2,
+                style: 5,
+                label: 'Review Documents',
+                url: `${env.PUBLIC_WEB_URL}/docs`
+              }
+            ]
+          });
+        }
       }
 
       try {

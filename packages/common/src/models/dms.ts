@@ -386,6 +386,49 @@ export class DmsDocument {
     });
   }
 
+  static async getPendingForUser(
+    db: DB,
+    userCid: string | number,
+    now: Date | string = new Date(),
+  ): Promise<
+    Array<{
+      id: string;
+      name: string;
+      short: string;
+      groupSlug: string | null;
+      assetVersion: string;
+      url: string;
+    }>
+  > {
+    const documents = await DmsDocument.fetchAll(db);
+    const pending: Array<{
+      id: string;
+      name: string;
+      short: string;
+      groupSlug: string | null;
+      assetVersion: string;
+      url: string;
+    }> = [];
+
+    for (const doc of documents) {
+      if (!doc.required) continue;
+      const currentAsset = doc.getCurrentAsset(now);
+      if (!currentAsset) continue;
+      const ack = await doc.getAcknowledgementForCurrentAsset(userCid, now);
+      if (ack) continue;
+      pending.push({
+        id: doc.id,
+        name: doc.name,
+        short: doc.short,
+        groupSlug: doc.group?.slug ?? null,
+        assetVersion: currentAsset.version,
+        url: `/docs/${doc.group?.slug}/${doc.short}`,
+      });
+    }
+
+    return pending;
+  }
+
   static async create(db: DB, data: CreateDmsDocumentInput) {
     const doc = (
       await db
