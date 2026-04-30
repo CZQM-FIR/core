@@ -43,4 +43,20 @@ These notifications are mandarotry notifications which cannot be dissabled. In o
 
 ## How to use the DMS as a staff member
 
-_Comming soon..._
+### Creating a new document
+
+Every document must belong to a group. These groups are managed on the main page of the [overseer DMS page](https://overseer.czqm.ca/a/dms). You can either select a group by clicking "Manage Documents" or create a new group by selecting "Create New Group".
+
+Once inside of a group, you can use the blue "Create Document" button to create a new document. In order to create the document, you must provide certain information:
+
+- **Document Name** - The name of the document
+- **Short URL** - The short identifier for this document used in URLs
+- **Description** - A short, optional description of the document
+- **Required** - If this document is required for controllers to acknowledge
+- **Sort Order** - Documents are sorted within their groups first from 0-99 of the sort order value then alphabetically
+
+Once that is completed, you can use the "Create Document" button to finallize the document creation.
+
+Now that the document has been created, you must add an asset. An asset represents each version of the document.
+
+To create an asset, you must add the Version Number, Effective Date, an optional Expiry Date, if the asset should be public, and upload the PDF itself. Once all of that is done, you can click Upload Asset. In the list of assets below, you can look for a list of assets and find which asset is current. The current asset is determined based on the most recent, public, non-expired asset.
