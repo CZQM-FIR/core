@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getActiveGroups, getDocumentAcknowledgement } from '$lib/remote/dms.remote';
+  import { getActiveGroups } from '$lib/remote/dms.remote';
 </script>
 
 <section id="join" class="min-h-screen">
@@ -27,13 +27,11 @@
                       <div class="flex flex-col gap-1">
                         <div class="flex flex-wrap items-center gap-2">
                           <span>{doc.name}</span>
-                          {#await getDocumentAcknowledgement(doc.id) then acknowledgement}
-                            {#if acknowledgement.canAcknowledge}
-                              <span class="badge badge-warning badge-sm"
-                                >Acknowledgement required</span
-                              >
-                            {/if}
-                          {/await}
+                          {#if doc.canAcknowledge}
+                            <span class="badge badge-warning badge-sm"
+                              >Acknowledgement required</span
+                            >
+                          {/if}
                         </div>
                         <span class="text-base-content/60">{doc.description}</span>
                       </div>
