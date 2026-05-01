@@ -401,32 +401,56 @@ export class DmsDocument {
     }>
   > {
     const documents = await DmsDocument.fetchAll(db);
-    const pending: Array<{
-      id: string;
-      name: string;
-      short: string;
-      groupSlug: string | null;
-      assetVersion: string;
-      url: string;
-    }> = [];
 
+    type PendingCandidate = {
+      doc: DmsDocument;
+      currentAsset: DmsAsset;
+      groupSlug: string;
+    };
+
+    const candidates: PendingCandidate[] = [];
     for (const doc of documents) {
       if (!doc.required) continue;
+
+      const groupSlug = doc.group?.slug;
+      if (!groupSlug) continue;
+
       const currentAsset = doc.getCurrentAsset(now);
       if (!currentAsset) continue;
-      const ack = await doc.getAcknowledgementForCurrentAsset(userCid, now);
-      if (ack) continue;
-      pending.push({
-        id: doc.id,
-        name: doc.name,
-        short: doc.short,
-        groupSlug: doc.group?.slug ?? null,
-        assetVersion: currentAsset.version,
-        url: `/docs/${doc.group?.slug}/${doc.short}`,
-      });
+
+      candidates.push({ doc, currentAsset, groupSlug });
     }
 
-    return pending;
+    if (candidates.length === 0) {
+      return [];
+    }
+
+    // Batch a single acknowledgement lookup across every current asset to avoid an
+    // N+1 query per document, which previously ran on every controller connect.
+    const currentAssetIds = Array.from(
+      new Set(candidates.map((candidate) => candidate.currentAsset.id)),
+    );
+    const acknowledgements = await db.query.dmsAcknowledgements.findMany({
+      where: {
+        assetId: { in: currentAssetIds },
+        userId: String(userCid),
+      },
+      columns: { assetId: true },
+    });
+    const acknowledgedAssetIds = new Set(
+      acknowledgements.map((acknowledgement) => acknowledgement.assetId),
+    );
+
+    return candidates
+      .filter((candidate) => !acknowledgedAssetIds.has(candidate.currentAsset.id))
+      .map((candidate) => ({
+        id: candidate.doc.id,
+        name: candidate.doc.name,
+        short: candidate.doc.short,
+        groupSlug: candidate.groupSlug,
+        assetVersion: candidate.currentAsset.version,
+        url: `/docs/${candidate.groupSlug}/${candidate.doc.short}`,
+      }));
   }
 
   static async create(db: DB, data: CreateDmsDocumentInput) {
