@@ -19,8 +19,11 @@
               <h2 class="mb-5 text-lg font-semibold">{group.name}</h2>
               <ul class="flex flex-col gap-3">
                 {#each group.documents as doc (doc.short)}
-                  <a href="/docs/{group.slug}/{doc.short}">
-                    <li class="card bg-base-100 flex flex-row justify-between gap-3 p-3">
+                  <li class="card bg-base-100 p-0">
+                    <a
+                      href="/docs/{group.slug}/{doc.short}"
+                      class="flex flex-row justify-between gap-3 p-3"
+                    >
                       <div class="flex flex-col gap-1">
                         <div class="flex flex-wrap items-center gap-2">
                           <span>{doc.name}</span>
@@ -34,8 +37,8 @@
                         </div>
                         <span class="text-base-content/60">{doc.description}</span>
                       </div>
-                    </li>
-                  </a>
+                    </a>
+                  </li>
                 {/each}
               </ul>
             </li>
