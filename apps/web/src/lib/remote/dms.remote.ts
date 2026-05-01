@@ -66,9 +66,7 @@ export const getActiveGroups = query(async () => {
       .filter((document) => documentToCurrentAssetId.has(document.id))
       .map((document) => {
         const currentAssetId = documentToCurrentAssetId.get(document.id) ?? null;
-        const acknowledged = currentAssetId
-          ? acknowledgedAssetIds.has(currentAssetId)
-          : false;
+        const acknowledged = currentAssetId ? acknowledgedAssetIds.has(currentAssetId) : false;
 
         return {
           id: document.id,
