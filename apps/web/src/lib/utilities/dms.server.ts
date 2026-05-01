@@ -1,25 +1,15 @@
 import { db } from '$lib/db';
 import { DmsDocument } from '@czqm/common';
-import { GetObjectCommand, S3Client, type GetObjectCommandOutput } from '@aws-sdk/client-s3';
-import { env } from '$env/dynamic/private';
-import { error } from '@sveltejs/kit';
-
-const getR2Client = () =>
-  new S3Client({
-    region: 'auto',
-    endpoint: `https://${env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: env.R2_ACCESS_KEY_ID,
-      secretAccessKey: env.R2_ACCESS_KEY
-    }
-  });
+import { error, type RequestEvent } from '@sveltejs/kit';
 
 /**
  * Resolves a DMS document by group slug + short, picks an asset via the supplied
- * selector, fetches it from R2, and returns a streaming Response. Throws SvelteKit
- * errors for missing document, missing asset, or R2 failures.
+ * selector, fetches it from R2 via the Cloudflare binding, and returns a
+ * streaming Response. Throws SvelteKit errors for missing document, missing
+ * asset, or R2 failures.
  */
 export async function streamDmsAsset(
+  event: RequestEvent,
   groupSlug: string,
   documentShort: string,
   selectAsset: (doc: DmsDocument) => { url: string } | null,
@@ -36,49 +26,32 @@ export async function streamDmsAsset(
     throw error(404, missingAssetMessage);
   }
 
-  const s3 = getR2Client();
-  let assetObject: GetObjectCommandOutput;
+  const bucket = event.platform?.env.bucket;
+  if (!bucket) {
+    console.error('[dms] R2 binding `bucket` is not available on platform.env');
+    throw error(500, 'Asset storage is not configured');
+  }
+
+  let object: R2ObjectBody | null;
   try {
-    assetObject = await s3.send(
-      new GetObjectCommand({
-        Bucket: env.R2_BUCKET_NAME,
-        Key: asset.url
-      })
-    );
-  } catch {
+    object = await bucket.get(asset.url);
+  } catch (err) {
+    console.error('[dms] R2 fetch failed', { key: asset.url, err });
     throw error(500, 'Failed to fetch asset from R2');
   }
 
-  if (!assetObject.Body) {
+  if (!object) {
     throw error(404, 'Asset file not found');
   }
 
   const headers = new Headers({
-    'Content-Type': assetObject.ContentType ?? 'application/octet-stream',
-    'Cache-Control': 'public, max-age=60'
+    'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream',
+    'Cache-Control': 'public, max-age=60',
+    'Content-Length': String(object.size),
+    etag: object.httpEtag
   });
 
-  if (typeof assetObject.ContentLength === 'number') {
-    headers.set('Content-Length', String(assetObject.ContentLength));
-  }
-
-  const body = assetObject.Body as unknown as {
-    transformToWebStream?: () => ReadableStream<Uint8Array>;
-    transformToByteArray: () => Promise<Uint8Array>;
-  };
-
-  // Prefer streaming the SDK body directly (web ReadableStream on Cloudflare Workers /
-  // browser-like runtimes) so large PDFs aren't fully buffered into memory. Fall back
-  // to buffering only when the runtime doesn't expose a web stream.
-  if (typeof body.transformToWebStream === 'function') {
-    return new Response(body.transformToWebStream(), {
-      status: 200,
-      headers
-    });
-  }
-
-  const bytes = await body.transformToByteArray();
-  return new Response(bytes, {
+  return new Response(object.body, {
     status: 200,
     headers
   });

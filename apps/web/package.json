@@ -48,7 +48,6 @@
     "wrangler": "^3.99.0"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.916.0",
     "@czqm/common": "workspace:*",
     "@czqm/db": "workspace:*",
     "@libsql/client": "^0.15.0",

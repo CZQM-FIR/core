@@ -1,10 +1,11 @@
 import { streamDmsAsset } from '$lib/utilities/dms.server';
 import { type RequestHandler } from '@sveltejs/kit';
 
-export const GET: RequestHandler = ({ params }) =>
+export const GET: RequestHandler = (event) =>
   streamDmsAsset(
-    params.groupSlug ?? '',
-    params.documentShort ?? '',
+    event,
+    event.params.groupSlug ?? '',
+    event.params.documentShort ?? '',
     (doc) => doc.getCurrentAsset(),
     'No current asset available for this document'
   );
