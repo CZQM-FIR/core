@@ -98,6 +98,48 @@ export class DmsAcknowledgeError extends Error {
   }
 }
 
+/**
+ * Detects a SQLite UNIQUE constraint violation across the libsql driver shapes
+ * we see in practice. Prefers the structured error code/cause exposed by libsql
+ * over string-matching the raw message.
+ */
+const isUniqueConstraintError = (error: unknown): boolean => {
+  const codes = new Set<string>();
+  const messages: string[] = [];
+
+  const collect = (candidate: unknown) => {
+    if (!candidate || typeof candidate !== "object") return;
+    const record = candidate as { code?: unknown; message?: unknown };
+    if (typeof record.code === "string") {
+      codes.add(record.code);
+    }
+    if (typeof record.message === "string") {
+      messages.push(record.message);
+    }
+  };
+
+  collect(error);
+  if (error && typeof error === "object" && "cause" in error) {
+    collect((error as { cause: unknown }).cause);
+  }
+
+  for (const code of codes) {
+    if (
+      code === "SQLITE_CONSTRAINT" ||
+      code === "SQLITE_CONSTRAINT_UNIQUE" ||
+      code === "SQLITE_CONSTRAINT_PRIMARYKEY"
+    ) {
+      return true;
+    }
+  }
+
+  return messages.some(
+    (message) =>
+      message.includes("UNIQUE constraint failed") ||
+      message.includes("dms_acknowledgements_user_asset_unique_idx"),
+  );
+};
+
 const toDate = (value: Date | string | null | undefined) => {
   if (!value) {
     return null;
@@ -586,10 +628,7 @@ export class DmsDocument {
         assetId: currentAsset.id,
       };
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes("dms_acknowledgements_user_asset_unique_idx")
-      ) {
+      if (isUniqueConstraintError(error)) {
         throw new DmsAcknowledgeError(
           "ALREADY_ACKNOWLEDGED",
           "You have already acknowledged the current document asset.",
