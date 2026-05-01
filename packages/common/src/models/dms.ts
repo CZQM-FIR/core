@@ -777,38 +777,40 @@ export class DmsGroup {
         db,
       );
 
-      dmsGroup.documents = group.documents.map(
-        (document) =>
-          new DmsDocument(
-            {
-              id: document.id,
-              required: document.required,
-              name: document.name,
-              description: document.description,
-              groupId: document.groupId,
-              short: document.short,
-              sort: document.sort ?? 99,
-              group: dmsGroup,
-              assets: document.assets.map(
-                (asset) =>
-                  new DmsAsset(
-                    {
-                      id: asset.id,
-                      documentId: asset.documentId,
-                      version: asset.version,
-                      effectiveDate: asset.effectiveDate,
-                      expiryDate: asset.expiryDate,
-                      public: asset.public,
-                      url: asset.url,
-                      document: null as any,
-                    },
-                    db,
-                  ),
-              ),
-            },
-            db,
-          ),
-      );
+      dmsGroup.documents = group.documents.map((document) => {
+        const dmsDocument = new DmsDocument(
+          {
+            id: document.id,
+            required: document.required,
+            name: document.name,
+            description: document.description,
+            groupId: document.groupId,
+            short: document.short,
+            sort: document.sort ?? 99,
+            group: dmsGroup,
+          },
+          db,
+        );
+
+        dmsDocument.assets = document.assets.map(
+          (asset) =>
+            new DmsAsset(
+              {
+                id: asset.id,
+                documentId: asset.documentId,
+                version: asset.version,
+                effectiveDate: asset.effectiveDate,
+                expiryDate: asset.expiryDate,
+                public: asset.public,
+                url: asset.url,
+                document: dmsDocument,
+              },
+              db,
+            ),
+        );
+
+        return dmsDocument;
+      });
 
       return dmsGroup;
     });
