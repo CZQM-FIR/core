@@ -53,7 +53,6 @@ export async function streamDmsAsset(
     throw error(404, 'Asset file not found');
   }
 
-  const bytes = await assetObject.Body.transformToByteArray();
   const headers = new Headers({
     'Content-Type': assetObject.ContentType ?? 'application/octet-stream',
     'Cache-Control': 'public, max-age=60'
@@ -63,6 +62,22 @@ export async function streamDmsAsset(
     headers.set('Content-Length', String(assetObject.ContentLength));
   }
 
+  const body = assetObject.Body as unknown as {
+    transformToWebStream?: () => ReadableStream<Uint8Array>;
+    transformToByteArray: () => Promise<Uint8Array>;
+  };
+
+  // Prefer streaming the SDK body directly (web ReadableStream on Cloudflare Workers /
+  // browser-like runtimes) so large PDFs aren't fully buffered into memory. Fall back
+  // to buffering only when the runtime doesn't expose a web stream.
+  if (typeof body.transformToWebStream === 'function') {
+    return new Response(body.transformToWebStream(), {
+      status: 200,
+      headers
+    });
+  }
+
+  const bytes = await body.transformToByteArray();
   return new Response(bytes, {
     status: 200,
     headers
