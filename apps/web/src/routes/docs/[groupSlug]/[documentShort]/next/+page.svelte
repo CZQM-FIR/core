@@ -34,10 +34,7 @@
             <div class="alert alert-dash alert-warning my-6">
               <span>There is no upcoming version of this document.</span>
             </div>
-            <a
-              href="/docs/{params.groupSlug}/{params.documentShort}"
-              class="btn btn-primary mt-2"
-            >
+            <a href="/docs/{params.groupSlug}/{params.documentShort}" class="btn btn-primary mt-2">
               Return to Current Version
             </a>
           {:else}
