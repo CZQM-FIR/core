@@ -21,7 +21,13 @@ export const dmsDocuments = sqliteTable(
     short: text().notNull(),
     sort: int().notNull().default(99),
   },
-  (table) => [index("dms_documents_group_id_idx").on(table.groupId)],
+  (table) => [
+    index("dms_documents_group_id_idx").on(table.groupId),
+    uniqueIndex("dms_documents_group_id_short_unique_idx").on(
+      table.groupId,
+      table.short,
+    ),
+  ],
 );
 export type DmsDocument = InferSelectModel<typeof dmsDocuments>;
 

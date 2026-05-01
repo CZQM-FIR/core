@@ -98,6 +98,48 @@ export class DmsAcknowledgeError extends Error {
   }
 }
 
+/**
+ * Detects a SQLite UNIQUE constraint violation across the libsql driver shapes
+ * we see in practice. Prefers the structured error code/cause exposed by libsql
+ * over string-matching the raw message.
+ */
+const isUniqueConstraintError = (error: unknown): boolean => {
+  const codes = new Set<string>();
+  const messages: string[] = [];
+
+  const collect = (candidate: unknown) => {
+    if (!candidate || typeof candidate !== "object") return;
+    const record = candidate as { code?: unknown; message?: unknown };
+    if (typeof record.code === "string") {
+      codes.add(record.code);
+    }
+    if (typeof record.message === "string") {
+      messages.push(record.message);
+    }
+  };
+
+  collect(error);
+  if (error && typeof error === "object" && "cause" in error) {
+    collect((error as { cause: unknown }).cause);
+  }
+
+  for (const code of codes) {
+    if (
+      code === "SQLITE_CONSTRAINT" ||
+      code === "SQLITE_CONSTRAINT_UNIQUE" ||
+      code === "SQLITE_CONSTRAINT_PRIMARYKEY"
+    ) {
+      return true;
+    }
+  }
+
+  return messages.some(
+    (message) =>
+      message.includes("UNIQUE constraint failed") ||
+      message.includes("dms_acknowledgements_user_asset_unique_idx"),
+  );
+};
+
 const toDate = (value: Date | string | null | undefined) => {
   if (!value) {
     return null;
@@ -401,32 +443,56 @@ export class DmsDocument {
     }>
   > {
     const documents = await DmsDocument.fetchAll(db);
-    const pending: Array<{
-      id: string;
-      name: string;
-      short: string;
-      groupSlug: string | null;
-      assetVersion: string;
-      url: string;
-    }> = [];
 
+    type PendingCandidate = {
+      doc: DmsDocument;
+      currentAsset: DmsAsset;
+      groupSlug: string;
+    };
+
+    const candidates: PendingCandidate[] = [];
     for (const doc of documents) {
       if (!doc.required) continue;
+
+      const groupSlug = doc.group?.slug;
+      if (!groupSlug) continue;
+
       const currentAsset = doc.getCurrentAsset(now);
       if (!currentAsset) continue;
-      const ack = await doc.getAcknowledgementForCurrentAsset(userCid, now);
-      if (ack) continue;
-      pending.push({
-        id: doc.id,
-        name: doc.name,
-        short: doc.short,
-        groupSlug: doc.group?.slug ?? null,
-        assetVersion: currentAsset.version,
-        url: `/docs/${doc.group?.slug}/${doc.short}`,
-      });
+
+      candidates.push({ doc, currentAsset, groupSlug });
     }
 
-    return pending;
+    if (candidates.length === 0) {
+      return [];
+    }
+
+    // Batch a single acknowledgement lookup across every current asset to avoid an
+    // N+1 query per document, which previously ran on every controller connect.
+    const currentAssetIds = Array.from(
+      new Set(candidates.map((candidate) => candidate.currentAsset.id)),
+    );
+    const acknowledgements = await db.query.dmsAcknowledgements.findMany({
+      where: {
+        assetId: { in: currentAssetIds },
+        userId: String(userCid),
+      },
+      columns: { assetId: true },
+    });
+    const acknowledgedAssetIds = new Set(
+      acknowledgements.map((acknowledgement) => acknowledgement.assetId),
+    );
+
+    return candidates
+      .filter((candidate) => !acknowledgedAssetIds.has(candidate.currentAsset.id))
+      .map((candidate) => ({
+        id: candidate.doc.id,
+        name: candidate.doc.name,
+        short: candidate.doc.short,
+        groupSlug: candidate.groupSlug,
+        assetVersion: candidate.currentAsset.version,
+        url: `/docs/${candidate.groupSlug}/${candidate.doc.short}`,
+      }));
   }
 
   static async create(db: DB, data: CreateDmsDocumentInput) {
@@ -562,10 +628,7 @@ export class DmsDocument {
         assetId: currentAsset.id,
       };
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes("dms_acknowledgements_user_asset_unique_idx")
-      ) {
+      if (isUniqueConstraintError(error)) {
         throw new DmsAcknowledgeError(
           "ALREADY_ACKNOWLEDGED",
           "You have already acknowledged the current document asset.",
@@ -753,38 +816,40 @@ export class DmsGroup {
         db,
       );
 
-      dmsGroup.documents = group.documents.map(
-        (document) =>
-          new DmsDocument(
-            {
-              id: document.id,
-              required: document.required,
-              name: document.name,
-              description: document.description,
-              groupId: document.groupId,
-              short: document.short,
-              sort: document.sort ?? 99,
-              group: dmsGroup,
-              assets: document.assets.map(
-                (asset) =>
-                  new DmsAsset(
-                    {
-                      id: asset.id,
-                      documentId: asset.documentId,
-                      version: asset.version,
-                      effectiveDate: asset.effectiveDate,
-                      expiryDate: asset.expiryDate,
-                      public: asset.public,
-                      url: asset.url,
-                      document: null as any,
-                    },
-                    db,
-                  ),
-              ),
-            },
-            db,
-          ),
-      );
+      dmsGroup.documents = group.documents.map((document) => {
+        const dmsDocument = new DmsDocument(
+          {
+            id: document.id,
+            required: document.required,
+            name: document.name,
+            description: document.description,
+            groupId: document.groupId,
+            short: document.short,
+            sort: document.sort ?? 99,
+            group: dmsGroup,
+          },
+          db,
+        );
+
+        dmsDocument.assets = document.assets.map(
+          (asset) =>
+            new DmsAsset(
+              {
+                id: asset.id,
+                documentId: asset.documentId,
+                version: asset.version,
+                effectiveDate: asset.effectiveDate,
+                expiryDate: asset.expiryDate,
+                public: asset.public,
+                url: asset.url,
+                document: dmsDocument,
+              },
+              db,
+            ),
+        );
+
+        return dmsDocument;
+      });
 
       return dmsGroup;
     });

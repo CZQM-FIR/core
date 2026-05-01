@@ -37,9 +37,9 @@ Once on the document's page, there will be a button available to click which wil
 
 ### Notifications
 
-In order to ensure that controllers review new policy items in a timely fassion, a notification will be sent to controllers via Discord when they connect to the network with an outstanding document. This is there to ensure that documents are reviewed in a timely fassions to ensure that we are able to provide the best of service on the VATSIM network.
+In order to ensure that controllers review new policy items in a timely fashion, a notification will be sent to controllers via Discord when they connect to the network with an outstanding document. This is there to ensure that documents are reviewed in a timely fashion to ensure that we are able to provide the best of service on the VATSIM network.
 
-These notifications are mandarotry notifications which cannot be dissabled. In order to silence them, you must [acknowledge the document](#acknowledging-documents).
+These notifications are mandatory notifications which cannot be disabled. In order to silence them, you must [acknowledge the document](#acknowledging-documents).
 
 ## How to use the DMS as a staff member
 
@@ -55,7 +55,7 @@ Once inside of a group, you can use the blue "Create Document" button to create 
 - **Required** - If this document is required for controllers to acknowledge
 - **Sort Order** - Documents are sorted within their groups first from 0-99 of the sort order value then alphabetically
 
-Once that is completed, you can use the "Create Document" button to finallize the document creation.
+Once that is completed, you can use the "Create Document" button to finalize the document creation.
 
 Now that the document has been created, you must add an asset. An asset represents each version of the document.
 

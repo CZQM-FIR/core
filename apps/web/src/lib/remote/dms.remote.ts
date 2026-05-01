@@ -12,19 +12,81 @@ export const getGroups = query(async () => {
 });
 
 export const getActiveGroups = query(async () => {
-  // get all groups who have at least one document with a current asset
+  const event = getRequestEvent();
+  const sessionToken = event.cookies.get('session') ?? '';
+  const user = sessionToken ? await User.fromSessionToken(db, sessionToken) : null;
+  const canUserAcknowledge = Boolean(user?.hasFlag(['visitor', 'controller']));
+
   const groups = await DmsGroup.fetchAll(db);
-  const activeGroups = [];
 
+  // Collect (documentId -> currentAssetId) for every document that has an active asset,
+  // then look up acknowledgements for the current user in a single query so we don't
+  // fan out one request per document on the client.
+  const documentToCurrentAssetId = new Map<string, string>();
   for (const group of groups) {
-    const documents = await group.documents;
-
-    for (const document of documents) {
+    for (const document of group.documents) {
       const currentAsset = document.getCurrentAsset();
       if (currentAsset) {
-        activeGroups.push(group);
-        break;
+        documentToCurrentAssetId.set(document.id, currentAsset.id);
       }
+    }
+  }
+
+  const acknowledgedAssetIds = new Set<string>();
+  if (canUserAcknowledge && user && documentToCurrentAssetId.size > 0) {
+    const currentAssetIds = Array.from(new Set(documentToCurrentAssetId.values()));
+    const acknowledgements = await db.query.dmsAcknowledgements.findMany({
+      where: {
+        assetId: { in: currentAssetIds },
+        userId: String(user.cid)
+      },
+      columns: { assetId: true }
+    });
+    for (const ack of acknowledgements) {
+      acknowledgedAssetIds.add(ack.assetId);
+    }
+  }
+  const activeGroups: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    sort: number;
+    documents: Array<{
+      id: string;
+      short: string;
+      name: string;
+      description: string | null;
+      required: boolean;
+      canAcknowledge: boolean;
+    }>;
+  }> = [];
+
+  for (const group of groups) {
+    const documents = group.documents
+      .filter((document) => documentToCurrentAssetId.has(document.id))
+      .map((document) => {
+        const currentAssetId = documentToCurrentAssetId.get(document.id) ?? null;
+        const acknowledged = currentAssetId ? acknowledgedAssetIds.has(currentAssetId) : false;
+
+        return {
+          id: document.id,
+          short: document.short,
+          name: document.name,
+          description: document.description,
+          required: document.required,
+          canAcknowledge:
+            canUserAcknowledge && document.required && currentAssetId !== null && !acknowledged
+        };
+      });
+
+    if (documents.length > 0) {
+      activeGroups.push({
+        id: group.id,
+        slug: group.slug,
+        name: group.name,
+        sort: group.sort,
+        documents
+      });
     }
   }
 
@@ -89,6 +151,7 @@ export const acknowledgeDocument = command(type('string'), async (documentId) =>
   try {
     const acknowledgement = await document.acknowledgeCurrentAsset(user.cid);
     getDocumentAcknowledgement(documentId).refresh();
+    getActiveGroups().refresh();
 
     return {
       ok: true,
