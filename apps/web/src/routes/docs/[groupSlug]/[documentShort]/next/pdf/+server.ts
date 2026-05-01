@@ -5,6 +5,6 @@ export const GET: RequestHandler = ({ params }) =>
   streamDmsAsset(
     params.groupSlug ?? '',
     params.documentShort ?? '',
-    (doc) => doc.getCurrentAsset(),
-    'No current asset available for this document'
+    (doc) => doc.getNextAsset(),
+    'No upcoming asset available for this document'
   );

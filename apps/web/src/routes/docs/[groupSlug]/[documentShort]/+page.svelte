@@ -7,20 +7,11 @@
     getDocumentByShort,
     getNextAsset
   } from '$lib/remote/dms.remote';
+  import { formatDmsDateUtc } from '$lib/utilities/dms';
   import { ChevronLeft } from '@lucide/svelte';
   let { params }: PageProps = $props();
   let acknowledgeError = $state<string | null>(null);
   let isAcknowledging = $state(false);
-
-  function formatDmsDateUtc(value: Date | string): string {
-    const d = new Date(value);
-    const dd = String(d.getUTCDate()).padStart(2, '0');
-    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const yyyy = String(d.getUTCFullYear());
-    const hh = String(d.getUTCHours()).padStart(2, '0');
-    const min = String(d.getUTCMinutes()).padStart(2, '0');
-    return `${dd}/${mm}/${yyyy} at ${hh}:${min}z`;
-  }
 
   async function onAcknowledge(documentId: string) {
     acknowledgeError = null;
@@ -64,14 +55,18 @@
               <span>There is no available version of this document.</span>
             </div>
           {:else}
-            <p>
-              Effective {formatDmsDateUtc(asset.effectiveDate)}
-              {#if asset.expiryDate != null}
-                to {formatDmsDateUtc(asset.expiryDate)}
-              {:else}
-                until further notice
-              {/if}
-            </p>
+            {#await getNextAsset(document.id) then nextAsset}
+              <p>
+                Effective {formatDmsDateUtc(asset.effectiveDate)}
+                {#if asset.expiryDate != null}
+                  to {formatDmsDateUtc(asset.expiryDate)}
+                {:else if nextAsset}
+                  until {formatDmsDateUtc(nextAsset.effectiveDate)}
+                {:else}
+                  until further notice
+                {/if}
+              </p>
+            {/await}
           {/if}
         {/await}
 
