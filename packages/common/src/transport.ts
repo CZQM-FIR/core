@@ -105,6 +105,7 @@ export const sharedTransport = {
         description: document.description,
         groupId: document.groupId,
         short: document.short,
+        sort: document.sort,
         assets: document.assets.map((asset) => ({
           id: asset.id,
           documentId: asset.documentId,
@@ -143,6 +144,7 @@ export const sharedTransport = {
           description: document.description,
           groupId: document.groupId,
           short: document.short,
+          sort: document.sort,
         })),
       });
     },
@@ -168,6 +170,7 @@ export const sharedTransport = {
           description: asset.document.description,
           groupId: asset.document.groupId,
           short: asset.document.short,
+          sort: asset.document.sort,
         },
       });
     },
