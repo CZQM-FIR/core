@@ -38,7 +38,7 @@
     "prettier": "^3.3.2",
     "prettier-plugin-svelte": "^3.2.6",
     "prettier-plugin-tailwindcss": "^0.6.11",
-    "svelte": "^5.46.1",
+    "svelte": "^5.55.0",
     "svelte-check": "^4.0.0",
     "tailwindcss": "^4.0.13",
     "tsx": "^4.19.2",
@@ -48,6 +48,7 @@
     "wrangler": "^3.99.0"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.916.0",
     "@czqm/common": "workspace:*",
     "@czqm/db": "workspace:*",
     "@libsql/client": "^0.15.0",

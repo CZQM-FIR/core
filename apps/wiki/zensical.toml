@@ -8,6 +8,7 @@ Copyright &copy; 2026 CZQM FIR. For flight simulation use only.
 """
 nav = [
   { "Welcome to CZQM Wiki" = "index.md" },
+  { "Document Management System" = "dms/index.md"},
   { "Software Guides" = [
     "software/index.md",
     "software/vacs.md"

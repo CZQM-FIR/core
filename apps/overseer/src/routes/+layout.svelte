@@ -38,8 +38,8 @@
 							<li><a href="/a/events">Events</a></li>
 						{/if}
 						<li><a href="/a/news">News</a></li>
-						<li><a href="/a/resources">Resources</a></li>
 						<li><a href="/a/files">File Upload</a></li>
+						<li><a href="/a/dms">Documents</a></li>
 					{/if}
 				</ul>
 			</div>
@@ -56,8 +56,8 @@
 						<li><a href="/a/events">Events</a></li>
 					{/if}
 					<li><a href="/a/news">News</a></li>
-					<li><a href="/a/resources">Resources</a></li>
 					<li><a href="/a/files">File Upload</a></li>
+					<li><a href="/a/dms">Documents</a></li>
 				{/if}
 			</ul>
 		</div>

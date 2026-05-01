@@ -62,9 +62,7 @@
                 </li>
                 <li><a href="/join"><UserPlus class="mr-1" size="15" /> Join Us</a></li>
                 <li>
-                  <a href="/controller-resources"
-                    ><ClipboardList class="mr-1" size="15" /> Resources</a
-                  >
+                  <a href="/docs"><ClipboardList class="mr-1" size="15" /> Documents</a>
                 </li>
               </ul>
             </details>
@@ -74,7 +72,7 @@
               <summary>Pilots</summary>
               <ul class="p-2">
                 <li>
-                  <a href="/pilot-resources"><ClipboardList class="mr-1" size="15" /> Resources</a>
+                  <a href="/docs"><ClipboardList class="mr-1" size="15" /> Documents</a>
                 </li>
                 <li><a href="/charts"><Map class="mr-1" size="15" /> Charts</a></li>
               </ul>
@@ -103,9 +101,7 @@
               </li>
               <li><a href="/join"><UserPlus class="mr-1" size="15" /> Join Us</a></li>
               <li>
-                <a href="/controller-resources"
-                  ><ClipboardList class="mr-1" size="15" /> Resources</a
-                >
+                <a href="/docs"><ClipboardList class="mr-1" size="15" /> Documents</a>
               </li>
             </ul>
           </div>
@@ -115,7 +111,7 @@
             <div tabindex="0" role="button">Pilots</div>
             <ul class="menu dropdown-content rounded-box bg-base-300 z-1 w-52 p-2 shadow-sm">
               <li>
-                <a href="/pilot-resources"><ClipboardList class="mr-1" size="15" /> Resources</a>
+                <a href="/docs"><ClipboardList class="mr-1" size="15" /> Documents</a>
               </li>
               <li><a href="/charts"><Map class="mr-1" size="15" /> Charts</a></li>
             </ul>

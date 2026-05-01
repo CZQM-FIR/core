@@ -10,7 +10,8 @@ export const Env = type({
 	R2_BUCKET_NAME: 'string',
 	TURSO_URL: 'string',
 	TURSO_TOKEN: 'string',
-	PUBLIC_WEB_URL: 'string.url'
+	PUBLIC_WEB_URL: 'string.url',
+	PUBLIC_FILES_BASE_URL: 'string.url'
 });
 
 let parsedEnv: typeof Env.infer | undefined;
@@ -19,7 +20,8 @@ function getEnv(): typeof Env.infer {
 	if (!parsedEnv) {
 		const result = Env({
 			...dynamicPrivateEnv,
-			...dynamicPublicEnv
+			...dynamicPublicEnv,
+			PUBLIC_FILES_BASE_URL: dynamicPublicEnv.PUBLIC_FILES_BASE_URL ?? 'https://files.czqm.ca'
 		});
 
 		if (result instanceof type.errors) {

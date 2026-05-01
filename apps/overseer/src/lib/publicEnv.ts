@@ -2,11 +2,13 @@ import { type } from 'arktype';
 import { env as dynamicPublicEnv } from '$env/dynamic/public';
 
 export const Env = type({
-	PUBLIC_WEB_URL: 'string.url'
+	PUBLIC_WEB_URL: 'string.url',
+	PUBLIC_FILES_BASE_URL: 'string.url'
 });
 
 const parsedEnv = Env({
-	...dynamicPublicEnv
+	...dynamicPublicEnv,
+	PUBLIC_FILES_BASE_URL: dynamicPublicEnv.PUBLIC_FILES_BASE_URL ?? 'https://files.czqm.ca'
 });
 
 if (parsedEnv instanceof type.errors) {

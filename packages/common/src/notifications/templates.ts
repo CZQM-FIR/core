@@ -59,3 +59,20 @@ export const unauthorizedConnectionEmailTemplate = (
     bcc,
   });
 };
+
+export const pendingDocumentAcknowledgementsText = (
+  user: { name_full: string; cid: number },
+  pending: { name: string; assetVersion: string; url: string }[],
+  publicWebUrl: string,
+) => {
+  const list = pending
+    .map((d) => `- [${d.name} (v${d.assetVersion})](${publicWebUrl}${d.url})`)
+    .join("\n");
+  return [
+    `Hello ${user.name_full} (${user.cid}),`,
+    `You just connected to the VATSIM network, but you still have **${pending.length}** required document${pending.length === 1 ? "" : "s"} awaiting your acknowledgement:`,
+    list,
+    `Please review and acknowledge them at your earliest convenience. You can view and acknowledge the documents [here](https://czqm.ca/docs).`,
+    `Best regards,\nCZQM Team`,
+  ].join("\n\n");
+};
