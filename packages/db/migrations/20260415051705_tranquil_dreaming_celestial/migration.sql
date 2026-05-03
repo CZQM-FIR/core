@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX `dms_acknowledgements_user_asset_unique_idx` ON `dms_acknowledgements` (`userId`,`assetId`);

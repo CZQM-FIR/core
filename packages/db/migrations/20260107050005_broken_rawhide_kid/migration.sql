@@ -1,1 +1,0 @@
-ALTER TABLE `notifications` ADD `location` text DEFAULT 'email' NOT NULL;
