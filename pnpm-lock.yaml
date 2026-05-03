@@ -119,8 +119,8 @@ importers:
         specifier: ^3.0.0
         version: 3.9.2(eslint@9.39.4)(svelte@5.55.0)
       globals:
-        specifier: ^16.0.0
-        version: 16.5.0
+        specifier: ^17.0.0
+        version: 17.6.0
       prettier:
         specifier: ^3.4.2
         version: 3.5.3
@@ -237,8 +237,8 @@ importers:
         specifier: ^3.0.0
         version: 3.9.2(eslint@9.39.4)(svelte@5.55.0)
       globals:
-        specifier: ^16.0.0
-        version: 16.5.0
+        specifier: ^17.0.0
+        version: 17.6.0
       prettier:
         specifier: ^3.4.2
         version: 3.5.3
@@ -352,8 +352,8 @@ importers:
         specifier: ^2.36.0
         version: 2.46.1(eslint@9.39.4)(svelte@5.55.0)
       globals:
-        specifier: ^15.0.0
-        version: 15.15.0
+        specifier: ^17.0.0
+        version: 17.6.0
       prettier:
         specifier: ^3.3.2
         version: 3.5.3
@@ -440,8 +440,8 @@ importers:
         specifier: ^10.0.1
         version: 10.1.5(eslint@9.39.4)
       globals:
-        specifier: ^16.0.0
-        version: 16.5.0
+        specifier: ^17.0.0
+        version: 17.6.0
       prettier:
         specifier: ^3.5.3
         version: 3.5.3
@@ -5261,7 +5261,7 @@ packages:
     peerDependencies:
       '@sveltejs/kit': ^2.0.0
     dependencies:
-      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@6.4.1)
+      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@7.3.1)
     dev: true
 
   /@sveltejs/adapter-cloudflare@5.1.0(@sveltejs/kit@2.55.0)(wrangler@3.114.9):
@@ -5271,7 +5271,7 @@ packages:
       wrangler: ^3.87.0 || ^4.0.0
     dependencies:
       '@cloudflare/workers-types': 4.20260313.1
-      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@6.4.1)
+      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@7.3.1)
       esbuild: 0.24.2
       worktop: 0.8.0-next.18
       wrangler: 3.114.9(@cloudflare/workers-types@4.20260313.1)
@@ -5283,7 +5283,7 @@ packages:
       '@sveltejs/kit': ^2.4.0
     dependencies:
       '@iarna/toml': 2.2.5
-      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@6.4.1)
+      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@7.3.1)
       esbuild: 0.25.12
       set-cookie-parser: 2.7.2
     dev: true
@@ -7237,13 +7237,13 @@ packages:
     engines: {node: '>=18'}
     dev: true
 
-  /globals@15.15.0:
-    resolution: {integrity: sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg==}
+  /globals@16.5.0:
+    resolution: {integrity: sha512-c/c15i26VrJ4IRt5Z89DnIzCGDn9EcebibhAOjw5ibqEHsE1wLUgkPn9RDmNcUKyU87GeaL633nyJ+pplFR2ZQ==}
     engines: {node: '>=18'}
     dev: true
 
-  /globals@16.5.0:
-    resolution: {integrity: sha512-c/c15i26VrJ4IRt5Z89DnIzCGDn9EcebibhAOjw5ibqEHsE1wLUgkPn9RDmNcUKyU87GeaL633nyJ+pplFR2ZQ==}
+  /globals@17.6.0:
+    resolution: {integrity: sha512-sepffkT8stwnIYbsMBpoCHJuJM5l98FUF2AnE07hfvE0m/qp3R586hw4jF4uadbhvg1ooIdzuu7CsfD2jzCaNA==}
     engines: {node: '>=18'}
     dev: true
 
