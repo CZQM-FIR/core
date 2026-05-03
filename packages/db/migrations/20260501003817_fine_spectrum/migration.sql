@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX `dms_documents_group_id_short_unique_idx` ON `dms_documents` (`groupId`,`short`);

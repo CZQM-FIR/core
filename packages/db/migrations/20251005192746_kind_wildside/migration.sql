@@ -1,1 +1,0 @@
-ALTER TABLE `integrations` ADD `last_synced_at` integer;

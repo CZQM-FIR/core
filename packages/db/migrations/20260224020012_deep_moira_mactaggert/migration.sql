@@ -1,1 +1,0 @@
-ALTER TABLE `dms_documents` ADD `sort` integer DEFAULT 99 NOT NULL;

@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX `controller_position_idx` ON `solo_endorsements` (`controller_id`,`position_id`);
