@@ -42,22 +42,19 @@
 						<h2 class="text-lg font-semibold">{info.label}</h2>
 						<p class="text-sm text-gray-400">Supports the {info.parentLabel}.</p>
 
-						<div class="divider mb-1 mt-3">Currently Assigned</div>
+						<div class="divider mt-3 mb-1">Currently Assigned</div>
 						{#if list.length === 0}
-							<p class="text-sm italic text-gray-400">No one assigned.</p>
+							<p class="text-sm text-gray-400 italic">No one assigned.</p>
 						{:else}
 							<ul class="flex flex-col gap-2">
 								{#each list as row (row.id)}
-									<li class="flex flex-col gap-1 rounded bg-base-200 p-2">
+									<li class="bg-base-200 flex flex-col gap-1 rounded p-2">
 										<div class="flex flex-row items-center gap-2">
 											<a href={`/a/users/${row.cid}`} class="hover:link font-medium">
 												{row.name}
 											</a>
 											<span class="badge badge-ghost badge-sm">{row.cid}</span>
-											<form
-												{...removeAssistant.for(String(row.id))}
-												class="ml-auto"
-											>
+											<form {...removeAssistant.for(String(row.id))} class="ml-auto">
 												<input type="hidden" name="id" value={row.id} />
 												<button
 													type="submit"
@@ -74,7 +71,7 @@
 							</ul>
 						{/if}
 
-						<div class="divider mb-1 mt-3">Assign</div>
+						<div class="divider mt-3 mb-1">Assign</div>
 						<form {...createAssistant.for(role)} class="flex flex-col gap-2">
 							<input type="hidden" name="role" value={role} />
 							<div class="flex flex-row items-center gap-2">

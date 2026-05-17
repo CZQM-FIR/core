@@ -20,8 +20,7 @@ const authorizeUsersOrActivityList = async () => {
 export const getSessionUser = query(async () => {
 	const event = getRequestEvent();
 	const user = event.locals.user == null ? null : await User.fromCid(db, event.locals.user.cid);
-	const hasOverseerAccess =
-		user != null && (await userCanAccessOverseerArea(db, user));
+	const hasOverseerAccess = user != null && (await userCanAccessOverseerArea(db, user));
 	return {
 		user,
 		session: event.locals.session,

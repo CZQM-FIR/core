@@ -10,12 +10,7 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 
 	if (
 		!actioner ||
-		!(await userHasEffectiveFlag(db, actioner, [
-			'admin',
-			'chief',
-			'deputy',
-			'chief-instructor'
-		]))
+		!(await userHasEffectiveFlag(db, actioner, ['admin', 'chief', 'deputy', 'chief-instructor']))
 	)
 		return new Response(null, { status: 401 });
 
