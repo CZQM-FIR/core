@@ -1,6 +1,6 @@
 import { ASSISTANT_ROLE_INFO } from "./assistants";
 import type { DB } from "./db";
-import { User } from "./models/user";
+import { User, formatUserDisplayName } from "./models/user";
 import type { AssistantRole } from "@czqm/db/schema";
 
 export type StaffAssistant = {
@@ -54,7 +54,13 @@ export async function fetchStaffPageData(db: DB): Promise<{
   });
 
   const assistantRows = await db.query.assistants.findMany({
-    with: { user: true },
+    with: {
+      user: {
+        with: {
+          preferences: true,
+        },
+      },
+    },
   });
 
   const assistantsByFlag = new Map<string, StaffAssistant[]>();
@@ -65,7 +71,7 @@ export async function fetchStaffPageData(db: DB): Promise<{
     const list = assistantsByFlag.get(info.parentFlag) ?? [];
     list.push({
       cid: row.cid,
-      name: row.user.name_full,
+      name: formatUserDisplayName(row.user.preferences, row.user),
       role: info.label,
     });
     list.sort((a, b) => a.name.localeCompare(b.name));

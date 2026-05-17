@@ -78,6 +78,34 @@ type Preference =
 type PreferenceValue<K extends Preference = Preference> =
   K extends "displayName" ? "full" | "cid" | "initial" : boolean;
 
+function resolvedDisplayNamePreferenceValue(
+  preferencesList: PreferenceRow[],
+): PreferenceValue<"displayName"> {
+  const pref = preferencesList.find((p) => p.key === "displayName");
+  if (!pref) return "full";
+  const value = pref.value;
+  return value === "full" || value === "initial" || value === "cid"
+    ? value
+    : "full";
+}
+
+/** Public display name from preference rows + VATSIM profile fields (e.g. assistants nested query). */
+export function formatUserDisplayName(
+  preferencesList: PreferenceRow[] | undefined,
+  profile: Pick<UserSchema, "cid" | "name_first" | "name_last" | "name_full">,
+): string {
+  switch (resolvedDisplayNamePreferenceValue(preferencesList ?? [])) {
+    case "full":
+      return profile.name_full;
+    case "initial":
+      return `${profile.name_first} ${profile.name_last[0]}`;
+    case "cid":
+      return profile.cid.toString();
+    default:
+      return profile.name_full;
+  }
+}
+
 export type SoloEndorsementWithPosition = SoloEndorsement & {
   position: Position;
 };
@@ -939,26 +967,21 @@ export class User {
   }
 
   getPreference<K extends Preference>(key: K): PreferenceValue<K> {
+    if (key === "displayName") {
+      return resolvedDisplayNamePreferenceValue(
+        this.preferencesList,
+      ) as PreferenceValue<K>;
+    }
+
     const pref = this.preferencesList.find((p) => p.key === key);
 
     if (!pref) {
-      if (key === "displayName") {
-        return "full" as PreferenceValue<K>;
-      } else {
-        return (
-          User.defaultOnPreferences.includes(key) ? true : false
-        ) as PreferenceValue<K>;
-      }
-    } else {
-      if (key === "displayName") {
-        const value = pref.value as PreferenceValue<K>;
-        return value === "full" || value === "initial" || value === "cid"
-          ? value
-          : ("full" as PreferenceValue<K>);
-      }
-
-      return (pref.value === "true") as PreferenceValue<K>;
+      return (
+        User.defaultOnPreferences.includes(key) ? true : false
+      ) as PreferenceValue<K>;
     }
+
+    return (pref.value === "true") as PreferenceValue<K>;
   }
 
   getAllPreferences() {
@@ -1072,18 +1095,12 @@ export class User {
   }
 
   get displayName() {
-    const displayPreference = this.getPreference("displayName");
-
-    switch (displayPreference) {
-      case "full":
-        return this.name_full;
-      case "initial":
-        return `${this.name_first} ${this.name_last[0]}`;
-      case "cid":
-        return this.cid.toString();
-      default:
-        return this.name_full;
-    }
+    return formatUserDisplayName(this.preferencesList, {
+      cid: this.cid,
+      name_first: this.name_first,
+      name_last: this.name_last,
+      name_full: this.name_full,
+    });
   }
 
   /**
