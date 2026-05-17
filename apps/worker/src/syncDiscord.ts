@@ -1,15 +1,20 @@
 import { type } from 'arktype';
 import { eq } from 'drizzle-orm';
-import { ASSISTANT_ROLE_INFO, type DB, type Env, User } from '@czqm/common';
+import {
+  ASSISTANT_ROLES_ORDERED,
+  getAssistantDiscordRoleName,
+  getDiscordTeamRoleForStaffParentFlag,
+  type DB,
+  type Env,
+  type FlagName,
+  User
+} from '@czqm/common';
 import * as schema from '@czqm/db/schema';
 import type { AssistantRole } from '@czqm/db/schema';
 
-const assistantRoleNameMap: Record<AssistantRole, string> = {
-  'asst-chief-instructor': ASSISTANT_ROLE_INFO['asst-chief-instructor'].label,
-  'asst-events': ASSISTANT_ROLE_INFO['asst-events'].label,
-  'asst-web': ASSISTANT_ROLE_INFO['asst-web'].label,
-  'asst-sector': ASSISTANT_ROLE_INFO['asst-sector'].label
-};
+const assistantDiscordRoleNames = ASSISTANT_ROLES_ORDERED.map((r) =>
+  getAssistantDiscordRoleName(r)
+);
 
 const managedRoles = [
   'Guest',
@@ -31,13 +36,15 @@ const managedRoles = [
   'Mentor',
   'Instructor',
   'Staff',
+  'Auxiliary Staff',
+  'Senior Staff',
   'FIR Chief',
   'Deputy Chief',
   'Chief Instructor',
   'Events Coordinator',
   'Webmaster',
   'Facility Engineer',
-  ...Object.values(assistantRoleNameMap)
+  ...assistantDiscordRoleNames
 ];
 
 export const syncDiscord = async (db: DB, env: Env) => {
@@ -203,11 +210,10 @@ export const syncDiscord = async (db: DB, env: Env) => {
         }
       }
 
-      // base controller/visitor/staff roles
+      // base controller/visitor roles (staff tiers below)
       const baseRoleMap: Record<string, string> = {
         controller: 'Home Controller',
-        visitor: 'Visitor',
-        staff: 'Staff'
+        visitor: 'Visitor'
       };
       for (const flag of user.flags) {
         const roleName = baseRoleMap[flag.name];
@@ -217,6 +223,22 @@ export const syncDiscord = async (db: DB, env: Env) => {
             roles.push(role.id);
           }
         }
+      }
+
+      const pushRoleByName = (name: string) => {
+        const role = guildRoles.find((r) => r.name === name);
+        if (role && !roles.includes(role.id)) roles.push(role.id);
+      };
+
+      const hasAssistant = (assistantsByCid.get(user.cid)?.length ?? 0) > 0;
+      const hasStaff = user.hasFlag('staff');
+      if (hasStaff) {
+        pushRoleByName('Staff');
+      } else if (hasAssistant) {
+        pushRoleByName('Auxiliary Staff');
+      }
+      if (user.hasFlag(['chief', 'deputy', 'chief-instructor'])) {
+        pushRoleByName('Senior Staff');
       }
 
       // staff roles from individual flags (allow multiple staff roles per user)
@@ -240,10 +262,17 @@ export const syncDiscord = async (db: DB, env: Env) => {
         }
       }
 
+      for (const flag of user.flags) {
+        const teamRoleName = getDiscordTeamRoleForStaffParentFlag(flag.name as FlagName);
+        if (teamRoleName) {
+          pushRoleByName(teamRoleName);
+        }
+      }
+
       // assistant roles (one Discord role per assigned assistant position)
       const userAssistantRoles = assistantsByCid.get(user.cid) ?? [];
       for (const assistantRole of userAssistantRoles) {
-        const assistantRoleName = assistantRoleNameMap[assistantRole];
+        const assistantRoleName = getAssistantDiscordRoleName(assistantRole);
         const role = guildRoles.find((r) => r.name === assistantRoleName);
         if (role && !roles.includes(role.id)) {
           roles.push(role.id);
