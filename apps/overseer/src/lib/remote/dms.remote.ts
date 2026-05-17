@@ -1,7 +1,7 @@
 import { command, form, getRequestEvent, query } from '$app/server';
 import { db } from '$lib/db';
 import env from '$lib/env';
-import { DmsAsset, DmsDocument, DmsGroup, User } from '@czqm/common';
+import { DmsAsset, DmsDocument, DmsGroup, User, userCanUseStaffScopedOverseerTools } from '@czqm/common';
 import { error, invalid, redirect } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { asc } from 'drizzle-orm';
@@ -50,7 +50,10 @@ export const getDocumentAcknowledgementSummary = query(type('string'), async (id
 		sessionToken: event.cookies.get('session')
 	});
 
-	if (!user || !user.hasFlag(['admin', 'staff'])) {
+	if (!user) {
+		throw error(401, 'Unauthorized');
+	}
+	if (!(await userCanUseStaffScopedOverseerTools(db, user))) {
 		throw error(401, 'Unauthorized');
 	}
 
@@ -88,7 +91,10 @@ export const editDocument = form(
 			sessionToken: event.cookies.get('session')
 		});
 
-		if (!user || !user.hasFlag(['admin', 'staff'])) {
+		if (!user) {
+			throw error(401, 'Unauthorized');
+		}
+		if (!(await userCanUseStaffScopedOverseerTools(db, user))) {
 			throw error(401, 'Unauthorized');
 		}
 
@@ -180,7 +186,10 @@ export const createDocumentAsset = form('unchecked', async (rawData) => {
 		sessionToken: event.cookies.get('session')
 	});
 
-	if (!user || !user.hasFlag(['admin', 'staff'])) {
+	if (!user) {
+		throw error(401, 'Unauthorized');
+	}
+	if (!(await userCanUseStaffScopedOverseerTools(db, user))) {
 		throw error(401, 'Unauthorized');
 	}
 
@@ -248,7 +257,10 @@ export const updateDocumentAsset = form('unchecked', async (rawData) => {
 		sessionToken: event.cookies.get('session')
 	});
 
-	if (!user || !user.hasFlag(['admin', 'staff'])) {
+	if (!user) {
+		throw error(401, 'Unauthorized');
+	}
+	if (!(await userCanUseStaffScopedOverseerTools(db, user))) {
 		throw error(401, 'Unauthorized');
 	}
 
@@ -303,7 +315,10 @@ export const deleteDocumentAsset = form('unchecked', async (rawData) => {
 		sessionToken: event.cookies.get('session')
 	});
 
-	if (!user || !user.hasFlag(['admin', 'staff'])) {
+	if (!user) {
+		throw error(401, 'Unauthorized');
+	}
+	if (!(await userCanUseStaffScopedOverseerTools(db, user))) {
 		throw error(401, 'Unauthorized');
 	}
 
@@ -415,7 +430,10 @@ export const createGroup = form(
 			sessionToken: event.cookies.get('session')
 		});
 
-		if (!user || !user.hasFlag(['admin', 'staff'])) {
+		if (!user) {
+			throw error(401, 'Unauthorized');
+		}
+		if (!(await userCanUseStaffScopedOverseerTools(db, user))) {
 			throw error(401, 'Unauthorized');
 		}
 
@@ -465,7 +483,10 @@ export const createDocument = form(
 			sessionToken: event.cookies.get('session')
 		});
 
-		if (!user || !user.hasFlag(['admin', 'staff'])) {
+		if (!user) {
+			throw error(401, 'Unauthorized');
+		}
+		if (!(await userCanUseStaffScopedOverseerTools(db, user))) {
 			throw error(401, 'Unauthorized');
 		}
 
@@ -524,7 +545,10 @@ export const deleteGroup = command(type('string'), async (id) => {
 		sessionToken: event.cookies.get('session')
 	});
 
-	if (!user || !user.hasFlag(['admin', 'staff'])) {
+	if (!user) {
+		throw error(401, 'Unauthorized');
+	}
+	if (!(await userCanUseStaffScopedOverseerTools(db, user))) {
 		throw error(401, 'Unauthorized');
 	}
 
@@ -556,7 +580,10 @@ export const editGroup = form(
 			sessionToken: event.cookies.get('session')
 		});
 
-		if (!user || !user.hasFlag(['admin', 'staff'])) {
+		if (!user) {
+			throw error(401, 'Unauthorized');
+		}
+		if (!(await userCanUseStaffScopedOverseerTools(db, user))) {
 			throw error(401, 'Unauthorized');
 		}
 

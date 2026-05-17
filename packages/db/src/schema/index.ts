@@ -19,3 +19,4 @@ export * from "./moodle";
 export * from "./notifications";
 export * from "./jobs";
 export * from "./documentManagementSystem";
+export * from "./assistants";

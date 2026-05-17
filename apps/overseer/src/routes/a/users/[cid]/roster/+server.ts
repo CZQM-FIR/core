@@ -2,13 +2,21 @@ import { db } from '$lib/db';
 import { and, eq } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 import { roster } from '@czqm/db/schema';
-import { User, USER_FETCH_FULL } from '@czqm/common';
+import { User, USER_FETCH_FULL, userHasEffectiveFlag } from '@czqm/common';
 
 export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	if (!locals.user) return new Response(null, { status: 401 });
 	const actioner = await User.fromCid(db, locals.user!.cid);
 
-	if (!actioner || !actioner.hasFlag(['admin', 'chief', 'deputy', 'chief-instructor']))
+	if (
+		!actioner ||
+		!(await userHasEffectiveFlag(db, actioner, [
+			'admin',
+			'chief',
+			'deputy',
+			'chief-instructor'
+		]))
+	)
 		return new Response(null, { status: 401 });
 
 	const cid = Number(params.cid);

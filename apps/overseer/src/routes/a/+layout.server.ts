@@ -1,7 +1,7 @@
 import type { LayoutServerLoad } from './$types';
 import { db } from '$lib/db';
 import { redirect } from '@sveltejs/kit';
-import { User } from '@czqm/common';
+import { User, userCanAccessOverseerArea } from '@czqm/common';
 
 export const load = (async ({ locals }) => {
 	if (!locals.user) {
@@ -10,7 +10,7 @@ export const load = (async ({ locals }) => {
 
 	const user = await User.fromCid(db, locals.user!.cid);
 
-	if (!user || !user.hasFlag(['staff', 'admin'])) {
+	if (!user || !(await userCanAccessOverseerArea(db, user))) {
 		redirect(303, '/');
 	}
 

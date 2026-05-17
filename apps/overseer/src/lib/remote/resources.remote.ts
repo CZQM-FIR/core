@@ -1,7 +1,7 @@
 import { form, getRequestEvent, query } from '$app/server';
 import { db } from '$lib/db';
 import * as schema from '@czqm/db/schema';
-import { type FlagName, User } from '@czqm/common';
+import { User, userCanUseStaffScopedOverseerTools } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import {
@@ -11,14 +11,15 @@ import {
 	type ResourceType
 } from '@czqm/common';
 
-const staffFlags: FlagName[] = ['staff', 'admin'];
-
 const getSingle = (v: unknown) => (Array.isArray(v) ? v[0] : v);
 
 const getAuthorizedActioner = async () => {
 	const event = getRequestEvent();
 	const actioner = await User.fromCid(db, event.locals.user?.cid ?? 0);
-	if (!actioner || !actioner.hasFlag(staffFlags)) {
+	if (!actioner) {
+		throw error(403, 'Forbidden');
+	}
+	if (!(await userCanUseStaffScopedOverseerTools(db, actioner))) {
 		throw error(403, 'Forbidden');
 	}
 	return actioner;

@@ -15,6 +15,7 @@ import {
 import { createDB, type DB } from "../db";
 import { Env } from "../types";
 import { validateSessionToken } from "../auth";
+import { getAssistantParentFlagsForUser } from "../assistantAccess";
 
 type UserData = UserSchema & {
   rating: Rating;
@@ -836,15 +837,37 @@ export class User {
       sessionToken?: string | null;
       requiredFlags: FlagName | FlagName[];
       fetch?: UserFetchOptions;
+      /**
+       * When true (default), authorize if `hasFlag(requiredFlags)` **or** any assistant
+       * row’s `parentFlag` is in `requiredFlags` (OR semantics for both real flags and
+       * parent parity, consistent with `User.hasFlag`).
+       */
+      assistantParity?: boolean;
     },
   ): Promise<User | null> {
     const user = await User.resolveAuthenticatedUser(db, options);
 
-    if (!user || !user.hasFlag(options.requiredFlags)) {
+    if (!user) {
       return null;
     }
 
-    return user;
+    if (user.hasFlag(options.requiredFlags)) {
+      return user;
+    }
+
+    if (options.assistantParity === false) {
+      return null;
+    }
+
+    const reqList = Array.isArray(options.requiredFlags)
+      ? options.requiredFlags
+      : [options.requiredFlags];
+    const assistantParents = await getAssistantParentFlagsForUser(db, user.cid);
+    if (assistantParents.some((p) => reqList.includes(p))) {
+      return user;
+    }
+
+    return null;
   }
 
   async refresh() {

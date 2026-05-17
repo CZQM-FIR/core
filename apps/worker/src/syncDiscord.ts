@@ -1,7 +1,15 @@
 import { type } from 'arktype';
 import { eq } from 'drizzle-orm';
-import { type DB, type Env, User } from '@czqm/common';
+import { ASSISTANT_ROLE_INFO, type DB, type Env, User } from '@czqm/common';
 import * as schema from '@czqm/db/schema';
+import type { AssistantRole } from '@czqm/db/schema';
+
+const assistantRoleNameMap: Record<AssistantRole, string> = {
+  'asst-chief-instructor': ASSISTANT_ROLE_INFO['asst-chief-instructor'].label,
+  'asst-events': ASSISTANT_ROLE_INFO['asst-events'].label,
+  'asst-web': ASSISTANT_ROLE_INFO['asst-web'].label,
+  'asst-sector': ASSISTANT_ROLE_INFO['asst-sector'].label
+};
 
 const managedRoles = [
   'Guest',
@@ -28,7 +36,8 @@ const managedRoles = [
   'Chief Instructor',
   'Events Coordinator',
   'Webmaster',
-  'Facility Engineer'
+  'Facility Engineer',
+  ...Object.values(assistantRoleNameMap)
 ];
 
 export const syncDiscord = async (db: DB, env: Env) => {
@@ -111,6 +120,14 @@ export const syncDiscord = async (db: DB, env: Env) => {
     integrations.map((i) => i.cid)
   );
   const usersByCid = new Map(users.map((u) => [u.cid, u]));
+
+  const assistantRows = await db.query.assistants.findMany({});
+  const assistantsByCid = new Map<number, AssistantRole[]>();
+  for (const row of assistantRows) {
+    const existing = assistantsByCid.get(row.cid) ?? [];
+    existing.push(row.role);
+    assistantsByCid.set(row.cid, existing);
+  }
 
   for (const integration of integrations) {
     console.log(integration.cid, integration.lastSyncedAt);
@@ -220,6 +237,16 @@ export const syncDiscord = async (db: DB, env: Env) => {
           if (role && !roles.includes(role.id)) {
             roles.push(role.id);
           }
+        }
+      }
+
+      // assistant roles (one Discord role per assigned assistant position)
+      const userAssistantRoles = assistantsByCid.get(user.cid) ?? [];
+      for (const assistantRole of userAssistantRoles) {
+        const assistantRoleName = assistantRoleNameMap[assistantRole];
+        const role = guildRoles.find((r) => r.name === assistantRoleName);
+        if (role && !roles.includes(role.id)) {
+          roles.push(role.id);
         }
       }
 

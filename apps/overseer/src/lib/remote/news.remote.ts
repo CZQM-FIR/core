@@ -2,11 +2,10 @@ import { command, form, getRequestEvent, query } from '$app/server';
 import { db } from '$lib/db';
 import env from '$lib/env';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { NewsArticle, type FlagName, User } from '@czqm/common';
+import { NewsArticle, type FlagName, User, userCanUseStaffScopedOverseerTools } from '@czqm/common';
 import { error, redirect } from '@sveltejs/kit';
 import { type } from 'arktype';
 
-const newsAdminFlags: FlagName[] = ['admin', 'staff'];
 const newsDeleteFlags: FlagName[] = ['admin', 'chief', 'deputy', 'chief-instructor', 'events'];
 
 const getSingleValue = (value: unknown) => {
@@ -17,20 +16,19 @@ const getSingleValue = (value: unknown) => {
 	return value;
 };
 
-const getAuthorizedActioner = async (requiredFlags: FlagName | FlagName[]) => {
+const getNewsWriteActioner = async () => {
 	const event = getRequestEvent();
-
-	const actioner = await User.resolveAuthorizedUser(db, {
+	const user = await User.resolveAuthenticatedUser(db, {
 		cid: event.locals.user?.cid,
-		sessionToken: event.cookies.get('session'),
-		requiredFlags
+		sessionToken: event.cookies.get('session')
 	});
-
-	if (!actioner) {
+	if (!user) {
 		throw error(403, 'Forbidden');
 	}
-
-	return actioner;
+	if (!(await userCanUseStaffScopedOverseerTools(db, user))) {
+		throw error(403, 'Forbidden');
+	}
+	return user;
 };
 
 const uploadNewsImage = async (image: File) => {
@@ -62,13 +60,13 @@ const uploadNewsImage = async (image: File) => {
 };
 
 export const getNewsArticles = query(async () => {
-	await getAuthorizedActioner(newsAdminFlags);
+	await getNewsWriteActioner();
 
 	return await NewsArticle.fetchAllWithAuthor(db);
 });
 
 export const getNewsArticle = query(type('number.integer >= 0'), async (id) => {
-	await getAuthorizedActioner(newsAdminFlags);
+	await getNewsWriteActioner();
 
 	const article = await NewsArticle.fetchByIdWithAuthor(db, id);
 
@@ -80,7 +78,15 @@ export const getNewsArticle = query(type('number.integer >= 0'), async (id) => {
 });
 
 export const deleteNewsArticle = command(type('number.integer >= 0'), async (id) => {
-	await getAuthorizedActioner(newsDeleteFlags);
+	const event = getRequestEvent();
+	const actioner = await User.resolveAuthorizedUser(db, {
+		cid: event.locals.user?.cid,
+		sessionToken: event.cookies.get('session'),
+		requiredFlags: newsDeleteFlags
+	});
+	if (!actioner) {
+		throw error(403, 'Forbidden');
+	}
 
 	const article = await NewsArticle.fetchById(db, id);
 
@@ -102,7 +108,7 @@ export const createNewsArticle = form('unchecked', async (rawData) => {
 		throw error(400, 'Invalid form data');
 	}
 
-	const actioner = await getAuthorizedActioner(newsAdminFlags);
+	const actioner = await getNewsWriteActioner();
 	const image = imageRaw instanceof File ? imageRaw : undefined;
 	const imageName = image && image.name && image.size > 0 ? await uploadNewsImage(image) : null;
 
@@ -131,7 +137,7 @@ export const updateNewsArticle = form('unchecked', async (rawData) => {
 		throw error(400, 'Invalid form data');
 	}
 
-	await getAuthorizedActioner(newsAdminFlags);
+	await getNewsWriteActioner();
 
 	const id = Number(idRaw);
 	const existingArticle = await NewsArticle.fetchById(db, id);

@@ -1,6 +1,6 @@
 import { form, getRequestEvent } from '$app/server';
 import { db } from '$lib/db';
-import { User } from '@czqm/common';
+import { User, userCanUseStaffScopedOverseerTools } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import env from '$lib/env';
@@ -11,7 +11,10 @@ export const uploadFile = form('unchecked', async (raw) => {
 	const file = getSingle(raw.file) as File | undefined;
 	const event = getRequestEvent();
 	const actioner = await User.fromCid(db, event.locals.user?.cid ?? 0);
-	if (!actioner || !actioner.hasFlag(['admin', 'staff'])) {
+	if (!actioner) {
+		throw error(403, 'Forbidden');
+	}
+	if (!(await userCanUseStaffScopedOverseerTools(db, actioner))) {
 		throw error(401, 'Unauthorized');
 	}
 	if (!file || !file.name) {
