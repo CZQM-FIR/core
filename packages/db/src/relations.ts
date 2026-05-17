@@ -71,6 +71,10 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.users.cid,
       to: r.soloEndorsements.controllerId,
     }),
+    assistantPositions: r.many.assistants({
+      from: r.users.cid,
+      to: r.assistants.cid,
+    }),
     waitingPositions: r.many.waitingUsers({
       from: r.users.cid,
       to: r.waitingUsers.cid,
@@ -243,6 +247,13 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     controller: r.one.users({
       from: r.soloEndorsements.controllerId,
+      to: r.users.cid,
+      optional: false,
+    }),
+  },
+  assistants: {
+    user: r.one.users({
+      from: r.assistants.cid,
       to: r.users.cid,
       optional: false,
     }),

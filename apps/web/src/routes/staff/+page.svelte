@@ -21,19 +21,33 @@
                 <a href="/controller/{staff.cid}" class="hover:link">{staff.name}</a>
               </h2>
               <p class="italic">{staff.role}</p>
-              <a
-                href="mailto:{staff.email}"
-                target="_blank"
-                class="hover:link ms-auto flex flex-row items-center justify-end gap-2"
-              >
-                <p class="">Contact</p>
-                <Mail size="15" />
-              </a>
+              {#if staff.email}
+                <a
+                  href="mailto:{staff.email}"
+                  target="_blank"
+                  class="hover:link ms-auto flex flex-row items-center justify-end gap-2"
+                >
+                  <p class="">Contact</p>
+                  <Mail size="15" />
+                </a>
+              {/if}
             </div>
             {#if staff.bio}
               <p>{staff.bio}</p>
             {:else}
               <p></p>
+            {/if}
+            {#if staff.assistants.length > 0}
+              <div class="border-base-content/20 mt-2 flex flex-col gap-1 border-l-2 pl-3">
+                {#each staff.assistants as assistant (assistant.cid)}
+                  <div class="flex flex-row items-center gap-2 text-sm">
+                    <a href="/controller/{assistant.cid}" class="hover:link text-base-content/80">
+                      {assistant.name}
+                    </a>
+                    <span class="text-base-content/60 italic">{assistant.role}</span>
+                  </div>
+                {/each}
+              </div>
             {/if}
           </div>
         </div>

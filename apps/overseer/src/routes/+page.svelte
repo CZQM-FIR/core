@@ -26,7 +26,7 @@
 					</div>
 				</div>
 			</div>
-		{:else if data.user.flags.filter((f) => ['staff', 'admin'].includes(f.name)).length > 0}
+		{:else if data.hasOverseerAccess}
 			<div class="hero bg-base-200 min-h-screen">
 				<div class="hero-content text-center">
 					<div class="max-w-md">

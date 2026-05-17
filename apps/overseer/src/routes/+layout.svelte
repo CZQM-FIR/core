@@ -2,10 +2,35 @@
 	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
+	import { OVERSEER_PARENT_PARITY_GATE_FLAGS, type FlagName } from '@czqm/common';
 
 	import CZQMLogo from '$lib/assets/images/CZQM-White.svg';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
+
+	const trainingNavFlags: FlagName[] = OVERSEER_PARENT_PARITY_GATE_FLAGS;
+	const eventsNavFlags: FlagName[] = ['admin', 'chief', 'deputy', 'events'];
+
+	function showTrainingNav(): boolean {
+		const u = data.user;
+		if (!u) return false;
+		if (trainingNavFlags.some((n) => u.flags.some((f) => f.name === n))) return true;
+		return data.assistantParentFlags.some((p) => trainingNavFlags.includes(p));
+	}
+
+	function showEventsNav(): boolean {
+		const u = data.user;
+		if (!u) return false;
+		if (eventsNavFlags.some((n) => u.flags.some((f) => f.name === n))) return true;
+		return data.assistantParentFlags.includes('events');
+	}
+
+	function showStaffAreaNav(): boolean {
+		const u = data.user;
+		if (!u) return false;
+		if (u.flags.some((f) => ['staff', 'admin'].includes(f.name))) return true;
+		return data.assistantParentFlags.length > 0;
+	}
 </script>
 
 <!-- nav bar -->
@@ -29,12 +54,13 @@
 					>
 				</div>
 				<ul class="menu dropdown-content menu-sm rounded-box bg-base-300 z-50 mt-3 p-2 shadow-sm">
-					{#if data.user?.flags.some((f) => ['staff', 'admin'].includes(f.name))}
-						{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'chief-instructor', 'web'].includes(f.name) )}
+					{#if showStaffAreaNav()}
+						{#if showTrainingNav()}
 							<li><a href="/a/users">Users</a></li>
+							<li><a href="/a/assistants">Staff Roles</a></li>
 							<li><a href="/a/activity">Activity</a></li>
 						{/if}
-						{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'events'].includes(f.name) )}
+						{#if showEventsNav()}
 							<li><a href="/a/events">Events</a></li>
 						{/if}
 						<li><a href="/a/news">News</a></li>
@@ -47,12 +73,13 @@
 		</div>
 		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
-				{#if data.user?.flags.some((f) => ['staff', 'admin'].includes(f.name))}
-					{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'chief-instructor', 'web'].includes(f.name) )}
+				{#if showStaffAreaNav()}
+					{#if showTrainingNav()}
 						<li><a href="/a/users">Users</a></li>
+						<li><a href="/a/assistants">Staff Roles</a></li>
 						<li><a href="/a/activity">Activity</a></li>
 					{/if}
-					{#if data.user?.flags.some( (f) => ['admin', 'chief', 'deputy', 'events'].includes(f.name) )}
+					{#if showEventsNav()}
 						<li><a href="/a/events">Events</a></li>
 					{/if}
 					<li><a href="/a/news">News</a></li>
