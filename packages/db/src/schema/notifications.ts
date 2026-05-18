@@ -2,6 +2,17 @@ import { type InferSelectModel } from "drizzle-orm";
 import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { users } from "./index";
 
+export const notificationTypeEnum = [
+  "policyChanges",
+  "urgentFirUpdates",
+  "trainingUpdates",
+  "unauthorizedConnection",
+  "newEventPosted",
+  "newNewsArticlePosted",
+] as const;
+
+export type NotificationType = (typeof notificationTypeEnum)[number];
+
 export const notifications = sqliteTable(
   "notifications",
   {
@@ -12,7 +23,7 @@ export const notifications = sqliteTable(
     userId: int()
       .notNull()
       .references(() => users.cid),
-    type: text().notNull(),
+    type: text({ enum: notificationTypeEnum }).notNull(),
     message: text().notNull(),
     sent: int({ mode: "timestamp" }),
     buttons: text({ mode: "json" }).$type<

@@ -1,13 +1,8 @@
 import type { DB } from "../db";
 import * as schema from "@czqm/db/schema";
+import type { NotificationType } from "@czqm/db/schema";
 
-export type NotificationType =
-  | "policyChanges"
-  | "urgentFirUpdates"
-  | "trainingUpdates"
-  | "unauthorizedConnection"
-  | "newEventPosted"
-  | "newNewsArticlePosted";
+export type { NotificationType };
 
 export interface NotificationPayload {
   type: NotificationType;

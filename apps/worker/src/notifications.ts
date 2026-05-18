@@ -139,61 +139,70 @@ export const notificationsJob = async (db: DB, env: Env) => {
   for (const notification of notifications) {
     const { user } = notification;
 
-    if (!user.integrations?.length) continue;
-
-    if (
+    const shouldNotify =
       user.preferences.some((pref) => pref.key === notification.type && pref.value === 'true') ||
       (!user.preferences.find((pref) => pref.key === notification.type) &&
-        defaultOnPreferences.includes(notification.type as NotificationType))
-    ) {
-      if (notification.location === 'discord') {
-        discordNotificationQueue.push({
-          id: notification.id,
-          userId: user.integrations.find((i) => i.type === 0)!.integrationUserId,
-          message: notification.message,
-          buttons: notification.buttons,
-          user
-        });
-      } else if (notification.location === 'email') {
-        const MessageJson = type({
-          to: 'string.email?',
-          bcc: 'string.email[]?',
-          subject: 'string',
-          body: 'string',
-          replyto: 'string.email?'
-        });
+        defaultOnPreferences.includes(notification.type as NotificationType));
 
-        const messageJson = MessageJson(JSON.parse(notification.message));
+    if (!shouldNotify) continue;
 
-        if (!(messageJson instanceof type.errors)) {
-          const { to, bcc, subject, body, replyto } = messageJson;
+    if (notification.location === 'discord') {
+      const discordIntegration = user.integrations?.find((i) => i.type === 0);
+      if (!discordIntegration) continue;
 
-          const email = await sendEmail(
-            {
-              id: notification.id,
-              to,
-              bcc,
-              subject,
-              body,
-              user,
-              replyto
-            },
-            env
-          );
+      discordNotificationQueue.push({
+        id: notification.id,
+        userId: discordIntegration.integrationUserId,
+        message: notification.message,
+        buttons: notification.buttons,
+        user
+      });
+    } else if (notification.location === 'email') {
+      if (!user.email) {
+        console.warn(
+          `Skipping email notification ${notification.id}: user ${user.cid} has no email address`
+        );
+        continue;
+      }
 
-          if (email.success) {
-            await db
-              .update(schema.notifications)
-              .set({ sent: new Date() })
-              .where(eq(schema.notifications.id, notification.id));
-          }
-        } else {
-          console.error(
-            'Invalid email message JSON for notification ID:',
-            notification.id,
-            messageJson.summary
-          );
+      const MessageJson = type({
+        to: 'string.email?',
+        bcc: 'string.email[]?',
+        subject: 'string',
+        body: 'string',
+        replyto: 'string.email?'
+      });
+
+      const messageJson = MessageJson(JSON.parse(notification.message));
+
+      if (!(messageJson instanceof type.errors)) {
+        const { to, bcc, subject, body, replyto } = messageJson;
+
+        const email = await sendEmail(
+          {
+            id: notification.id,
+            to,
+            bcc,
+            subject,
+            body,
+            user,
+            replyto
+          },
+          env
+        );
+
+        if (email.success) {
+          await db
+            .update(schema.notifications)
+            .set({ sent: new Date() })
+            .where(eq(schema.notifications.id, notification.id));
         }
+      } else {
+        console.error(
+          'Invalid email message JSON for notification ID:',
+          notification.id,
+          messageJson.summary
+        );
       }
     }
   }

@@ -20,3 +20,4 @@ export * from "./notifications";
 export * from "./jobs";
 export * from "./documentManagementSystem";
 export * from "./assistants";
+export * from "./emailContent";
