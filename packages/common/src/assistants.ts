@@ -28,7 +28,7 @@ export const ASSISTANT_ROLE_INFO: Record<AssistantRole, AssistantRoleInfo> = {
     parentLabel: "Webmaster",
   },
   "asst-chief-instructor": {
-    label: "Assistant Chief Instructor",
+    label: "Deputy Chief Instructor",
     parentFlag: "chief-instructor",
     parentLabel: "Chief Instructor",
   },
