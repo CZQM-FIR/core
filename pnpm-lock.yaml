@@ -67,8 +67,8 @@ importers:
         specifier: ^2.1.20
         version: 2.1.20
       dotenv:
-        specifier: ^16.5.0
-        version: 16.6.1
+        specifier: ^17.0.0
+        version: 17.4.2
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20250303.0
@@ -185,8 +185,8 @@ importers:
         specifier: ^2.1.20
         version: 2.1.20
       dotenv:
-        specifier: ^16.5.0
-        version: 16.6.1
+        specifier: ^17.0.0
+        version: 17.4.2
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20250303.0
@@ -297,8 +297,8 @@ importers:
         specifier: ^2.1.20
         version: 2.1.20
       dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
+        specifier: ^17.0.0
+        version: 17.4.2
       marked:
         specifier: ^15.0.12
         version: 15.0.12
@@ -406,8 +406,8 @@ importers:
         specifier: ^2.1.20
         version: 2.1.20
       dotenv:
-        specifier: ^16.5.0
-        version: 16.6.1
+        specifier: ^17.0.0
+        version: 17.4.2
       express:
         specifier: ^5.1.0
         version: 5.1.0
@@ -487,8 +487,8 @@ importers:
         version: 13.0.0
     devDependencies:
       dotenv:
-        specifier: ^16.5.0
-        version: 16.6.1
+        specifier: ^17.0.0
+        version: 17.4.2
       drizzle-kit:
         specifier: 1.0.0-beta.13-f728631
         version: 1.0.0-beta.13-f728631
@@ -5261,7 +5261,7 @@ packages:
     peerDependencies:
       '@sveltejs/kit': ^2.0.0
     dependencies:
-      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@6.4.1)
+      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@7.3.1)
     dev: true
 
   /@sveltejs/adapter-cloudflare@5.1.0(@sveltejs/kit@2.55.0)(wrangler@3.114.9):
@@ -5271,7 +5271,7 @@ packages:
       wrangler: ^3.87.0 || ^4.0.0
     dependencies:
       '@cloudflare/workers-types': 4.20260313.1
-      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@6.4.1)
+      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@7.3.1)
       esbuild: 0.24.2
       worktop: 0.8.0-next.18
       wrangler: 3.114.9(@cloudflare/workers-types@4.20260313.1)
@@ -5283,7 +5283,7 @@ packages:
       '@sveltejs/kit': ^2.4.0
     dependencies:
       '@iarna/toml': 2.2.5
-      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@6.4.1)
+      '@sveltejs/kit': 2.55.0(@sveltejs/vite-plugin-svelte@6.2.4)(svelte@5.55.0)(typescript@5.8.3)(vite@7.3.1)
       esbuild: 0.25.12
       set-cookie-parser: 2.7.2
     dev: true
@@ -6339,6 +6339,11 @@ packages:
 
   /dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
+    engines: {node: '>=12'}
+    dev: true
+
+  /dotenv@17.4.2:
+    resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
     engines: {node: '>=12'}
 
   /drizzle-kit@1.0.0-beta.13-f728631:
