@@ -1,5 +1,6 @@
 import {
   preferences,
+  type CompletedUser,
   type EnrolledUser,
   type Flag,
   type Position,
@@ -24,6 +25,7 @@ type UserData = UserSchema & {
   sessions: SessionWithPosition[];
   waitingPositions: WaitingUserWithWaitlist[];
   enrolledPositions: EnrolledUserWithWaitlist[];
+  completedPositions: CompletedUserWithWaitlist[];
   roster: RosterStatus[];
   soloEndorsements: SoloEndorsementWithPosition[];
 };
@@ -37,6 +39,10 @@ type WaitingUserWithWaitlist = WaitingUser & {
 };
 
 type EnrolledUserWithWaitlist = EnrolledUser & {
+  waitlist: Waitlist;
+};
+
+type CompletedUserWithWaitlist = CompletedUser & {
   waitlist: Waitlist;
 };
 
@@ -120,6 +126,8 @@ export type UserFetchOptions = {
   waitingPositions?: boolean;
   /** Include enrolled positions (with waitlist). */
   enrolledPositions?: boolean;
+  /** Include completed course positions (with waitlist). */
+  completedPositions?: boolean;
   /** Include solo endorsements (with position). */
   soloEndorsements?: boolean;
 };
@@ -130,6 +138,7 @@ const FROM_FLAG_DEFAULTS: Required<UserFetchOptions> = {
   roster: true,
   waitingPositions: false,
   enrolledPositions: false,
+  completedPositions: false,
   soloEndorsements: false,
 };
 
@@ -139,6 +148,7 @@ const FROM_CID_DEFAULTS: Required<UserFetchOptions> = {
   roster: false,
   waitingPositions: false,
   enrolledPositions: false,
+  completedPositions: false,
   soloEndorsements: false,
 };
 
@@ -148,6 +158,7 @@ export const USER_FETCH_MINIMAL: UserFetchOptions = {
   roster: false,
   waitingPositions: false,
   enrolledPositions: false,
+  completedPositions: false,
   soloEndorsements: false,
 };
 
@@ -157,6 +168,7 @@ export const USER_FETCH_FULL: UserFetchOptions = {
   roster: true,
   waitingPositions: true,
   enrolledPositions: true,
+  completedPositions: true,
   soloEndorsements: true,
 };
 
@@ -165,6 +177,7 @@ type ResolvedFetchOptions = {
   roster: boolean;
   waitingPositions: boolean;
   enrolledPositions: boolean;
+  completedPositions: boolean;
   soloEndorsements: boolean;
 };
 
@@ -177,6 +190,8 @@ function resolveFetchOptions(
     roster: options?.roster ?? defaults.roster,
     waitingPositions: options?.waitingPositions ?? defaults.waitingPositions,
     enrolledPositions: options?.enrolledPositions ?? defaults.enrolledPositions,
+    completedPositions:
+      options?.completedPositions ?? defaults.completedPositions,
     soloEndorsements: options?.soloEndorsements ?? defaults.soloEndorsements,
   };
 }
@@ -217,6 +232,9 @@ function buildUserWithClause(
       ? { with: { waitlist: true as const } }
       : false,
     enrolledPositions: r.enrolledPositions
+      ? { with: { waitlist: true as const } }
+      : false,
+    completedPositions: r.completedPositions
       ? { with: { waitlist: true as const } }
       : false,
     soloEndorsements: r.soloEndorsements
@@ -488,8 +506,7 @@ export class UserHours {
           (wp) => wp.waitlist.name === "Visitors / Transfers",
         ) ||
         this.user.enrolledPositions.some(
-          (ep) =>
-            ep.waitlist.name === "Visitors / Transfers" && ep.hiddenAt === null,
+          (ep) => ep.waitlist.name === "Visitors / Transfers",
         )
       ) {
         // Visitor is currently on the Visitors/Transfers waitlist or in training
@@ -508,9 +525,7 @@ export class UserHours {
     } else if (this.user.hasFlag("controller")) {
       if (
         this.user.waitlistPositions.some((wp) => wp.waitlist.name === "S1") ||
-        this.user.enrolledPositions.some(
-          (ep) => ep.waitlist.name === "S1" && ep.hiddenAt === null,
-        )
+        this.user.enrolledPositions.some((ep) => ep.waitlist.name === "S1")
       ) {
         // Controller is currently on the S1 waitlist or in training
         // Doesn't have the ability to control therefore exempt from activity requirement
@@ -544,9 +559,12 @@ export class UserHours {
           (wp) => wp.waitlist.name === "Visitors / Transfers",
         ) ||
         this.user.enrolledPositions.some(
-          (ep) =>
-            ep.waitlist.name === "Visitors / Transfers" &&
-            (ep.hiddenAt === null || ep.hiddenAt >= lastQuarterStart),
+          (ep) => ep.waitlist.name === "Visitors / Transfers",
+        ) ||
+        this.user.completedPositions.some(
+          (cp) =>
+            cp.waitlist.name === "Visitors / Transfers" &&
+            cp.completedAt >= lastQuarterStart,
         )
       ) {
         // Visitor is currently on the Visitors/Transfers waitlist or in training
@@ -565,10 +583,10 @@ export class UserHours {
     } else if (this.user.hasFlag("controller")) {
       if (
         this.user.waitlistPositions.some((wp) => wp.waitlist.name === "S1") ||
-        this.user.enrolledPositions.some(
-          (ep) =>
-            ep.waitlist.name === "S1" &&
-            (ep.hiddenAt === null || ep.hiddenAt >= lastQuarterStart),
+        this.user.enrolledPositions.some((ep) => ep.waitlist.name === "S1") ||
+        this.user.completedPositions.some(
+          (cp) =>
+            cp.waitlist.name === "S1" && cp.completedAt >= lastQuarterStart,
         )
       ) {
         // Controller is currently on the S1 waitlist or in training
@@ -613,6 +631,7 @@ export class User {
 
   waitlistPositions: WaitingUserWithWaitlist[] = [];
   enrolledPositions: EnrolledUserWithWaitlist[] = [];
+  completedPositions: CompletedUserWithWaitlist[] = [];
 
   hours: UserHours;
   roster: RosterStatus[] = [];
@@ -656,6 +675,7 @@ export class User {
     this.sessionsList = data.sessions ?? [];
     this.waitlistPositions = data.waitingPositions ?? [];
     this.enrolledPositions = data.enrolledPositions ?? [];
+    this.completedPositions = data.completedPositions ?? [];
     this.roster = data.roster;
     this.soloEndorsementsList = data.soloEndorsements;
 
@@ -762,6 +782,7 @@ export class User {
       sessions: { since: sessionsSince },
       waitingPositions: true,
       enrolledPositions: true,
+      completedPositions: true,
       soloEndorsements: true,
     });
 
@@ -918,6 +939,9 @@ export class User {
         enrolledPositions: {
           with: { waitlist: true },
         },
+        completedPositions: {
+          with: { waitlist: true },
+        },
         soloEndorsements: true,
         roster: true,
       },
@@ -948,6 +972,9 @@ export class User {
     this.preferencesList = data.preferences ?? [];
     this.sessionsList = data.sessions ?? [];
     this.hours.sessions = this.sessionsList;
+    this.waitlistPositions = data.waitingPositions ?? [];
+    this.enrolledPositions = data.enrolledPositions ?? [];
+    this.completedPositions = data.completedPositions ?? [];
     this.roster = data.roster;
     this.soloEndorsementsList = data.soloEndorsements;
 

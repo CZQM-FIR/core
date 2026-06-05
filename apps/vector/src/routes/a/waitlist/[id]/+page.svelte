@@ -10,8 +10,9 @@
 		enrolUserFromWaitlist,
 		editWaitlistEstimatedTime,
 		getEnrolledWaitlistEntries,
+		getCompletedWaitlistEntries,
 		removeUserFromEnrolledCourse,
-		hideUserFromEnrolledCourse,
+		graduateUserFromCourse,
 		editWaitlistName
 	} from '$lib/remote/waitlist.remote';
 	import { getAllControllers } from '$lib/remote/users.remote';
@@ -199,8 +200,7 @@
 															cid: student.cid,
 															user: student.user,
 															enrolledAt: new Date(),
-															waitlistId: data.id,
-															hiddenAt: null
+															waitlistId: data.id
 														}
 													];
 												})
@@ -246,21 +246,62 @@
 											class="hover:text-error transition-colors"
 										/>
 									</button>
-									<button class="tooltip tooltip-left" data-tip="Course Completed">
+									<button class="tooltip tooltip-left" data-tip="Graduate Student">
 										<SquareCheck
 											onclickcapture={() =>
-												hideUserFromEnrolledCourse({
+												graduateUserFromCourse({
 													userId: student.cid,
 													waitlistId: data.id
 												}).updates(
 													getEnrolledWaitlistEntries(data.id).withOverride((enrolled) =>
 														enrolled.filter((e) => e.cid !== student.cid)
+													),
+													getCompletedWaitlistEntries(data.id).withOverride(
+														(completed) => {
+															const nextId =
+																completed && completed.length
+																	? Math.max(...completed.map((e) => e.id)) + 1
+																	: 1;
+															return [
+																{
+																	id: nextId,
+																	cid: student.cid,
+																	user: student.user,
+																	waitlistId: data.id,
+																	completedAt: new Date()
+																},
+																...(completed ?? [])
+															];
+														}
 													)
 												)}
 											class="hover:text-success transition-colors"
 										/>
 									</button>
 								</div>
+							</div>
+						</div>
+					{/each}
+				{/if}
+			{/await}
+		</div>
+
+		<div>
+			<h2 class="mt-8 text-xl font-semibold">Completed Students</h2>
+			<div class="divider my-0"></div>
+			{#await getCompletedWaitlistEntries(data.id)}
+				<p>Loading Completed Students...</p>
+			{:then completedEntries}
+				{#if completedEntries.length === 0}
+					<p>No students have completed this course.</p>
+				{:else}
+					{#each completedEntries as student (student.cid)}
+						<div class="card bg-base-200 mb-2 shadow-sm">
+							<div class="card-body flex-row items-center">
+								<h2 class="card-title">{student.user.name_full} ({student.cid})</h2>
+								<p class="ms-auto">
+									Completed On: {student.completedAt.toUTCString().replace(' GMT', 'z')}
+								</p>
 							</div>
 						</div>
 					{/each}
