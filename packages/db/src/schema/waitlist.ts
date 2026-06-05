@@ -61,3 +61,26 @@ export const enrolledUsers = sqliteTable(
 );
 
 export type EnrolledUser = InferSelectModel<typeof enrolledUsers>;
+
+export const completedUsers = sqliteTable(
+  "completed_users",
+  {
+    id: int().primaryKey({ autoIncrement: true }),
+    cid: int("cid")
+      .notNull()
+      .references(() => users.cid, { onDelete: "cascade" }),
+    waitlistId: int("waitlist_id")
+      .notNull()
+      .references(() => waitlists.id, { onDelete: "cascade" }),
+    completedAt: int("completed_at", { mode: "timestamp" })
+      .notNull()
+      .default(new Date(0)),
+  },
+  (t) => [
+    index("completed_users_cid_idx").on(t.cid),
+    index("completed_users_waitlistId_idx").on(t.waitlistId),
+    index("completed_users_completedAt_idx").on(t.completedAt),
+  ],
+);
+
+export type CompletedUser = InferSelectModel<typeof completedUsers>;

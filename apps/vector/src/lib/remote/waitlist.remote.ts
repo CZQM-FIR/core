@@ -5,6 +5,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
 import {
+	Course,
 	User,
 	getAssistantParentFlagsForUser,
 	userHasVectorWaitlistAdminAccess
@@ -393,6 +394,29 @@ export const getEnrolledWaitlistEntries = query(type('number.integer >= 0'), asy
 	return enrolledEntries;
 });
 
+export const getCompletedWaitlistEntries = query(
+	type('number.integer >= 0'),
+	async (waitlistId) => {
+		await authorizeVectorWaitlistAdmin();
+
+		const waitlist = await db.query.waitlists.findFirst({
+			where: { id: waitlistId }
+		});
+
+		if (!waitlist) throw error(404, 'Waitlist not found');
+
+		const completedEntries = await db.query.completedUsers.findMany({
+			where: { waitlistId },
+			with: {
+				user: true
+			},
+			orderBy: (completedUsers, { desc }) => [desc(completedUsers.completedAt)]
+		});
+
+		return completedEntries;
+	}
+);
+
 export const removeUserFromEnrolledCourse = command(
 	type({
 		waitlistId: 'number.integer',
@@ -443,12 +467,12 @@ export const removeUserFromEnrolledCourse = command(
 	}
 );
 
-export const hideUserFromEnrolledCourse = command(
+export const graduateUserFromCourse = command(
 	type({
 		waitlistId: 'number.integer',
 		userId: 'number.integer'
 	}),
-	async ({ waitlistId: waitlistId, userId: userId }) => {
+	async ({ waitlistId, userId }) => {
 		await authorizeVectorWaitlistAdmin();
 
 		const enrolledUser = await db.query.enrolledUsers.findFirst({
@@ -457,12 +481,14 @@ export const hideUserFromEnrolledCourse = command(
 
 		if (!enrolledUser) throw error(404, 'Enrolled user not found');
 
-		await db
-			.update(enrolledUsers)
-			.set({ hiddenAt: new Date() })
-			.where(and(eq(enrolledUsers.waitlistId, waitlistId), eq(enrolledUsers.cid, userId)));
+		const course = await Course.fetchByWaitlistId(waitlistId, db);
+		if (!course) throw error(404, 'Course not found for waitlist');
+
+		const graduated = await course.graduateIfComplete(userId);
+		if (!graduated) throw error(400, 'Course requirements not complete');
 
 		getEnrolledWaitlistEntries(waitlistId).refresh();
+		getCompletedWaitlistEntries(waitlistId).refresh();
 		getWaitlist(waitlistId).refresh();
 
 		return {

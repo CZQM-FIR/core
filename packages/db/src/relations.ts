@@ -2,6 +2,25 @@ import { defineRelations } from "drizzle-orm";
 import * as schema from "./schema";
 
 export const relations = defineRelations(schema, (r) => ({
+  courseTaskCompletions: {
+    course: r.one.courses({
+      from: r.courseTaskCompletions.courseId,
+      to: r.courses.id,
+      optional: false,
+    }),
+    user: r.one.users({
+      from: r.courseTaskCompletions.userId,
+      to: r.users.cid,
+      optional: false,
+    }),
+  },
+  courses: {
+    waitlist: r.one.waitlists({
+      from: r.courses.waitlistId,
+      to: r.waitlists.id,
+      optional: false,
+    }),
+  },
   dmsGroups: {
     documents: r.many.dmsDocuments({
       from: r.dmsGroups.id,
@@ -82,6 +101,10 @@ export const relations = defineRelations(schema, (r) => ({
     enrolledPositions: r.many.enrolledUsers({
       from: r.users.cid,
       to: r.enrolledUsers.cid,
+    }),
+    completedPositions: r.many.completedUsers({
+      from: r.users.cid,
+      to: r.completedUsers.cid,
     }),
   },
   flags: {
@@ -190,6 +213,7 @@ export const relations = defineRelations(schema, (r) => ({
   waitlists: {
     students: r.many.waitingUsers(),
     enrolled: r.many.enrolledUsers(),
+    completed: r.many.completedUsers(),
     usersViaEnrolledUsers: r.many.users({
       from: r.waitlists.id.through(r.enrolledUsers.waitlistId),
       to: r.users.cid.through(r.enrolledUsers.cid),
@@ -221,6 +245,18 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     waitlist: r.one.waitlists({
       from: r.enrolledUsers.waitlistId,
+      to: r.waitlists.id,
+      optional: false,
+    }),
+  },
+  completedUsers: {
+    user: r.one.users({
+      from: r.completedUsers.cid,
+      to: r.users.cid,
+      optional: false,
+    }),
+    waitlist: r.one.waitlists({
+      from: r.completedUsers.waitlistId,
       to: r.waitlists.id,
       optional: false,
     }),
