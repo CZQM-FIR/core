@@ -16,8 +16,9 @@ export const relations = defineRelations(schema, (r) => ({
   },
   courses: {
     waitlist: r.one.waitlists({
-      from: r.courses.waitlist,
+      from: r.courses.waitlistId,
       to: r.waitlists.id,
+      optional: false,
     }),
   },
   dmsGroups: {

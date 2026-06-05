@@ -41,6 +41,10 @@ export class Course {
       return null;
     }
 
+    if (!course.waitlist) {
+      return null;
+    }
+
     const waitlist = Waitlist.fromDBRow(course.waitlist, db);
 
     const tasks = course.tasks.map((task) =>
@@ -63,7 +67,7 @@ export class Course {
   ): Promise<Course | null> {
     const course = await db.query.courses.findFirst({
       where: {
-        waitlist: waitlistId,
+        waitlistId,
       },
       with: {
         waitlist: true,
@@ -71,6 +75,10 @@ export class Course {
     });
 
     if (!course) {
+      return null;
+    }
+
+    if (!course.waitlist) {
       return null;
     }
 

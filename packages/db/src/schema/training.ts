@@ -6,7 +6,7 @@ export const courses = sqliteTable("courses", {
   id: int().primaryKey({ autoIncrement: true }),
   name: text().notNull(),
   description: text(),
-  waitlist: int()
+  waitlistId: int("waitlist_id")
     .notNull()
     .references(() => waitlists.id, { onDelete: "cascade" }),
   tasks: text("tasks", { mode: "json" })
