@@ -1,4 +1,5 @@
 export * from "./user";
+export * from "./training";
 export * from "./position";
 export * from "./soloEndorsements";
 export * from "./event";
