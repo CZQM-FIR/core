@@ -385,7 +385,7 @@ export const getEnrolledWaitlistEntries = query(type('number.integer >= 0'), asy
 	if (!waitlist) throw error(404, 'Waitlist not found');
 
 	const enrolledEntries = await db.query.enrolledUsers.findMany({
-		where: { waitlistId },
+		where: { waitlistId, hiddenAt: { isNull: true } },
 		with: {
 			user: true
 		}

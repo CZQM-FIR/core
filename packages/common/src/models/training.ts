@@ -94,7 +94,7 @@ export class Course {
     const waitlistId = this.waitlist.id;
 
     const enrolled = await this.db.query.enrolledUsers.findFirst({
-      where: { waitlistId, cid: userId },
+      where: { waitlistId, cid: userId, hiddenAt: { isNull: true } },
     });
 
     const alreadyCompleted = await this.db.query.completedUsers.findFirst({

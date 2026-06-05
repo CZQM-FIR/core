@@ -50,11 +50,13 @@ export const enrolledUsers = sqliteTable(
     enrolledAt: int("enrolled_at", { mode: "timestamp" })
       .notNull()
       .default(new Date(0)),
+    hiddenAt: int("hidden_at", { mode: "timestamp" }),
   },
   (t) => [
     index("enrolled_users_cid_idx").on(t.cid),
     index("enrolled_users_waitlistId_idx").on(t.waitlistId),
     index("enrolled_users_enrolledAt_idx").on(t.enrolledAt),
+    index("enrolled_users_hidden_at_idx").on(t.hiddenAt),
   ],
 );
 
