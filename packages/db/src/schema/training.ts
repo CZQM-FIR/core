@@ -1,9 +1,17 @@
 import { type InferSelectModel } from "drizzle-orm";
 import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { customAlphabet } from "nanoid";
 import { waitlists, users } from ".";
 
+const generateCourseId = customAlphabet(
+  "0123456789abcdefghijklmnopqrstuvwxyz",
+  5,
+);
+
 export const courses = sqliteTable("courses", {
-  id: int().primaryKey({ autoIncrement: true }),
+  id: text()
+    .primaryKey()
+    .$defaultFn(() => generateCourseId()),
   name: text().notNull(),
   description: text(),
   waitlistId: int("waitlist_id")
@@ -24,7 +32,7 @@ export const courses = sqliteTable("courses", {
 
 export const courseTaskCompletions = sqliteTable("course_task_completions", {
   id: int().primaryKey({ autoIncrement: true }),
-  courseId: int()
+  courseId: text()
     .notNull()
     .references(() => courses.id, { onDelete: "cascade" }),
   taskId: int().notNull(),

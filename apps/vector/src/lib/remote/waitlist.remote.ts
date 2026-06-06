@@ -4,29 +4,8 @@ import { enrolledUsers, moodleQueue, waitingUsers, waitlists } from '@czqm/db/sc
 import { error, redirect } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
-import {
-	Course,
-	User,
-	getAssistantParentFlagsForUser,
-	userHasVectorWaitlistAdminAccess
-} from '@czqm/common';
-
-async function authorizeVectorWaitlistAdmin() {
-	const event = getRequestEvent();
-	const token = event.cookies.get('session');
-	if (!token) {
-		throw error(403, 'Forbidden');
-	}
-	const actioner = await User.fromSessionToken(db, token);
-	if (!actioner) {
-		throw error(403, 'Forbidden');
-	}
-	const parents = await getAssistantParentFlagsForUser(db, actioner.cid);
-	if (!userHasVectorWaitlistAdminAccess(actioner, parents)) {
-		throw error(403, 'Forbidden');
-	}
-	return actioner;
-}
+import { Course, User } from '@czqm/common';
+import { authorizeVectorAdminAccess } from './auth';
 
 export const editWaitlistName = form(
 	type({
@@ -34,7 +13,7 @@ export const editWaitlistName = form(
 	}),
 	async ({ name }) => {
 		const event = getRequestEvent();
-		await authorizeVectorWaitlistAdmin();
+		await authorizeVectorAdminAccess();
 
 		const id = Number(event.params.id);
 
@@ -56,7 +35,7 @@ export const editWaitlistName = form(
 );
 
 export const deleteWaitlist = command(type('number.integer >= 0'), async (id) => {
-	await authorizeVectorWaitlistAdmin();
+	await authorizeVectorAdminAccess();
 
 	await db.delete(waitlists).where(eq(waitlists.id, id));
 
@@ -70,7 +49,7 @@ export const createWaitlist = form(
 		cohort: 'string'
 	}),
 	async ({ name, wcohort, cohort }) => {
-		await authorizeVectorWaitlistAdmin();
+		await authorizeVectorAdminAccess();
 
 		const waitlist = await db
 			.insert(waitlists)
@@ -90,7 +69,7 @@ export const createWaitlist = form(
 );
 
 export const getWaitlists = query(async () => {
-	await authorizeVectorWaitlistAdmin();
+	await authorizeVectorAdminAccess();
 
 	const allWaitlists = await db.query.waitlists.findMany({
 		with: {
@@ -102,7 +81,7 @@ export const getWaitlists = query(async () => {
 });
 
 export const getWaitlist = query(type('number.integer >= 0'), async (waitlistId) => {
-	await authorizeVectorWaitlistAdmin();
+	await authorizeVectorAdminAccess();
 
 	const waitlist = await db.query.waitlists.findFirst({
 		where: { id: waitlistId },
@@ -127,7 +106,7 @@ const WaitlistUserOptions = type({
 });
 
 export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, userId }) => {
-	await authorizeVectorWaitlistAdmin();
+	await authorizeVectorAdminAccess();
 
 	const waitlist = await db.query.waitlists.findFirst({
 		where: { id: waitlistId },
@@ -162,7 +141,7 @@ export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, user
 });
 
 export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, userId }) => {
-	await authorizeVectorWaitlistAdmin();
+	await authorizeVectorAdminAccess();
 
 	const waitlist = await db.query.waitlists.findFirst({
 		where: { id: waitlistId },
@@ -200,7 +179,7 @@ export const moveUserDown = command(WaitlistUserOptions, async ({ waitlistId, us
 export const removeUserFromWaitlist = command(
 	WaitlistUserOptions,
 	async ({ waitlistId, userId }) => {
-		await authorizeVectorWaitlistAdmin();
+		await authorizeVectorAdminAccess();
 
 		const waitlist = await db.query.waitlists.findFirst({
 			where: { id: waitlistId },
@@ -243,7 +222,7 @@ export const addUserToWaitlist = form(
 		userId: 'string.integer'
 	}),
 	async ({ waitlistId: waitlistIdString, userId: userIdString }) => {
-		await authorizeVectorWaitlistAdmin();
+		await authorizeVectorAdminAccess();
 
 		const waitlistId = Number(waitlistIdString);
 		const userId = Number(userIdString);
@@ -284,7 +263,7 @@ export const addUserToWaitlist = form(
 export const enrolUserFromWaitlist = command(
 	WaitlistUserOptions,
 	async ({ waitlistId, userId }) => {
-		await authorizeVectorWaitlistAdmin();
+		await authorizeVectorAdminAccess();
 
 		const waitlist = await db.query.waitlists.findFirst({
 			where: { id: waitlistId },
@@ -334,7 +313,7 @@ export const editWaitlistEstimatedTime = form(
 		estimatedTime: 'string'
 	}),
 	async ({ waitlistId: waitlistIdString, estimatedTime }) => {
-		await authorizeVectorWaitlistAdmin();
+		await authorizeVectorAdminAccess();
 
 		const waitlistId = Number(waitlistIdString);
 
@@ -376,7 +355,7 @@ export const getIndividualsWaitlistEntries = query(async () => {
 });
 
 export const getEnrolledWaitlistEntries = query(type('number.integer >= 0'), async (waitlistId) => {
-	await authorizeVectorWaitlistAdmin();
+	await authorizeVectorAdminAccess();
 
 	const waitlist = await db.query.waitlists.findFirst({
 		where: { id: waitlistId }
@@ -397,7 +376,7 @@ export const getEnrolledWaitlistEntries = query(type('number.integer >= 0'), asy
 export const getCompletedWaitlistEntries = query(
 	type('number.integer >= 0'),
 	async (waitlistId) => {
-		await authorizeVectorWaitlistAdmin();
+		await authorizeVectorAdminAccess();
 
 		const waitlist = await db.query.waitlists.findFirst({
 			where: { id: waitlistId }
@@ -423,7 +402,7 @@ export const removeUserFromEnrolledCourse = command(
 		userId: 'number.integer'
 	}),
 	async ({ waitlistId: waitlistId, userId: userId }) => {
-		await authorizeVectorWaitlistAdmin();
+		await authorizeVectorAdminAccess();
 
 		const enrolledUser = await db.query.enrolledUsers.findFirst({
 			where: { waitlistId, cid: userId },
@@ -473,7 +452,7 @@ export const graduateUserFromCourse = command(
 		userId: 'number.integer'
 	}),
 	async ({ waitlistId, userId }) => {
-		await authorizeVectorWaitlistAdmin();
+		await authorizeVectorAdminAccess();
 
 		const enrolledUser = await db.query.enrolledUsers.findFirst({
 			where: { waitlistId, cid: userId }
