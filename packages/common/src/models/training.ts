@@ -98,6 +98,33 @@ export class Course {
     );
   }
 
+  static async create(
+    db: DB,
+    data: { name: string; description?: string | null },
+  ): Promise<Course> {
+    const [waitlist] = await db
+      .insert(schema.waitlists)
+      .values({ name: data.name })
+      .returning({ id: schema.waitlists.id });
+
+    const [course] = await db
+      .insert(schema.courses)
+      .values({
+        name: data.name,
+        description: data.description ?? null,
+        waitlistId: waitlist.id,
+      })
+      .returning({ id: schema.courses.id });
+
+    const created = await Course.fetchById(course.id, db);
+
+    if (!created) {
+      throw new Error("Failed to create course");
+    }
+
+    return created;
+  }
+
   async graduateUser(userId: number): Promise<void> {
     const waitlistId = this.waitlist.id;
 
@@ -148,7 +175,11 @@ export class Course {
   }
 
   async delete(): Promise<void> {
-    await this.db.delete(schema.courses).where(eq(schema.courses.id, this.id));
+    // A course and its waitlist are a 1:1 unit. Deleting the waitlist cascades
+    // (onDelete) to remove this course row and its enrolled students.
+    await this.db
+      .delete(schema.waitlists)
+      .where(eq(schema.waitlists.id, this.waitlist.id));
   }
 
   async setDescription(description: string | null): Promise<Course> {

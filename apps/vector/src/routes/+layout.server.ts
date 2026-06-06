@@ -2,7 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/public';
 import { db } from '$lib/db';
 import type { LayoutServerLoad } from './$types';
-import { User, getAssistantParentFlagsForUser } from '@czqm/common';
+import { User, getAssistantParentFlagsForUser, userHasVectorAdminAccess } from '@czqm/common';
 
 export const load = (async ({ locals, url }) => {
 	if (!locals.user || !locals.session) {
@@ -19,6 +19,7 @@ export const load = (async ({ locals, url }) => {
 	return {
 		user,
 		session: locals.session,
-		assistantParentFlags
+		assistantParentFlags,
+		isVectorAdmin: userHasVectorAdminAccess(user, assistantParentFlags)
 	};
 }) satisfies LayoutServerLoad;
