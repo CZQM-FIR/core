@@ -2,20 +2,10 @@
 	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
-	import type { FlagName } from '@czqm/common';
 
 	import CZQMLogo from '$lib/assets/images/CZQM-White.svg';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
-
-	const waitlistMgmtFlags: FlagName[] = ['admin', 'chief', 'deputy', 'chief-instructor'];
-
-	function showWaitlistManagement(): boolean {
-		const u = data.user;
-		if (!u) return false;
-		if (waitlistMgmtFlags.some((n) => u.flags.some((f) => f.name === n))) return true;
-		return data.assistantParentFlags.includes('chief-instructor');
-	}
 </script>
 
 <!-- nav bar -->
@@ -39,9 +29,9 @@
 					>
 				</div>
 				<ul class="menu dropdown-content menu-sm rounded-box bg-base-300 z-50 mt-3 p-2 shadow-sm">
-					<li><a href="/waitlist">Wait List</a></li>
-					{#if showWaitlistManagement()}
+					{#if data.isVectorAdmin}
 						<li><a href="/a/waitlist">Wait List Management</a></li>
+						<li><a href="/a/courses">Course Management</a></li>
 					{/if}
 				</ul>
 			</div>
@@ -49,9 +39,9 @@
 		</div>
 		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
-				<li><a href="/waitlist">Wait List</a></li>
-				{#if showWaitlistManagement()}
+				{#if data.isVectorAdmin}
 					<li><a href="/a/waitlist">Wait List Management</a></li>
+					<li><a href="/a/courses">Course Management</a></li>
 				{/if}
 			</ul>
 		</div>

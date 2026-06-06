@@ -87,7 +87,7 @@ export async function userCanUseStaffScopedOverseerTools(
 }
 
 /** Vector `/a/waitlist`: chief / deputy / FIR staff admin, or assistant to chief instructor */
-export function userHasVectorWaitlistAdminAccess(
+export function userHasVectorAdminAccess(
   user: User,
   assistantParentFlags: FlagName[],
 ): boolean {

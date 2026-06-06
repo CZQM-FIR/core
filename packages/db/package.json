@@ -17,6 +17,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "nanoid": "^5.0.0",
     "uuid": "^13.0.0"
   }
 }
