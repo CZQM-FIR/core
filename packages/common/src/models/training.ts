@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import type { Env } from "../types";
 
 export class Course {
-  id: number;
+  id: string;
   name: string;
   description: string | null;
   waitlist: Waitlist;
@@ -12,7 +12,7 @@ export class Course {
   db: DB;
 
   private constructor(
-    id: number,
+    id: string,
     name: string,
     description: string | null,
     waitlist: Waitlist,
@@ -27,7 +27,7 @@ export class Course {
     this.db = db;
   }
 
-  static async fetchById(id: number, db: DB): Promise<Course | null> {
+  static async fetchById(id: string, db: DB): Promise<Course | null> {
     const course = await db.query.courses.findFirst({
       where: {
         id: id,
@@ -299,7 +299,7 @@ export abstract class CourseTask {
   taskType: TaskType;
   taskValue1: string | null;
   taskValue2: string | null;
-  courseId: number;
+  courseId: string;
   taskId: number;
 
   protected constructor(
@@ -307,7 +307,7 @@ export abstract class CourseTask {
     taskType: TaskType,
     taskValue1: string | null,
     taskValue2: string | null,
-    courseId: number,
+    courseId: string,
     taskId: number,
   ) {
     this.db = db;
@@ -326,7 +326,7 @@ export abstract class CourseTask {
       taskValue1: string | null;
       taskValue2: string | null;
     },
-    courseId: number,
+    courseId: string,
   ): CourseTask {
     const args = [
       db,
@@ -476,7 +476,7 @@ export class ManualCourseTask extends CourseTask {
     db: DB,
     taskValue1: string | null,
     taskValue2: string | null,
-    courseId: number,
+    courseId: string,
     taskId: number,
   ) {
     super(db, "manual", taskValue1, taskValue2, courseId, taskId);
@@ -496,7 +496,7 @@ export class VatcanExamCourseTask extends CourseTask {
     db: DB,
     taskValue1: string | null,
     taskValue2: string | null,
-    courseId: number,
+    courseId: string,
     taskId: number,
   ) {
     super(db, "vatcan_exam", taskValue1, taskValue2, courseId, taskId);
@@ -516,7 +516,7 @@ export class MoodleCourseTask extends CourseTask {
     db: DB,
     taskValue1: string | null,
     taskValue2: string | null,
-    courseId: number,
+    courseId: string,
     taskId: number,
   ) {
     super(db, "moodle", taskValue1, taskValue2, courseId, taskId);
@@ -548,7 +548,7 @@ export class VatcanCbtCourseTask extends CourseTask {
     db: DB,
     taskValue1: string | null,
     taskValue2: string | null,
-    courseId: number,
+    courseId: string,
     taskId: number,
   ) {
     super(db, "vatcan_cbt", taskValue1, taskValue2, courseId, taskId);
@@ -597,7 +597,7 @@ export class TrainingSessionCourseTask extends CourseTask {
     db: DB,
     taskValue1: string | null,
     taskValue2: string | null,
-    courseId: number,
+    courseId: string,
     taskId: number,
   ) {
     super(db, "training_session", taskValue1, taskValue2, courseId, taskId);
@@ -619,7 +619,7 @@ export class DelayCourseTask extends CourseTask {
     db: DB,
     taskValue1: string | null,
     taskValue2: string | null,
-    courseId: number,
+    courseId: string,
     taskId: number,
   ) {
     super(db, "delay", taskValue1, taskValue2, courseId, taskId);
@@ -655,7 +655,7 @@ export class DelayCourseTask extends CourseTask {
 export class CourseTaskCompletion {
   db: DB;
   id: number;
-  courseId: number;
+  courseId: string;
   taskId: number;
   userId: number;
   startedAt: Date;
@@ -664,7 +664,7 @@ export class CourseTaskCompletion {
   constructor(
     db: DB,
     id: number,
-    courseId: number,
+    courseId: string,
     taskId: number,
     userId: number,
     startedAt: Date,

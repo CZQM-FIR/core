@@ -1,7 +1,7 @@
 import { command, form, query } from '$app/server';
 import { db } from '$lib/db';
 import { Course } from '@czqm/common';
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { authorizeVectorAdminAccess } from './auth';
 
@@ -19,7 +19,7 @@ export const getCourses = query(async () => {
 	});
 });
 
-export const getCourse = query(type('number.integer >= 0'), async (id) => {
+export const getCourse = query(type(/^[0-9a-z]{5}$/), async (id) => {
 	await authorizeVectorAdminAccess();
 
 	// Return a plain DB row, not a Course model instance: remote query results
@@ -52,11 +52,11 @@ export const createCourse = form(
 
 		getCourses().refresh();
 
-		redirect(303, '/a/courses');
+		return { ok: true };
 	}
 );
 
-export const deleteCourse = command(type('number.integer >= 0'), async (id) => {
+export const deleteCourse = command(type(/^[0-9a-z]{5}$/), async (id) => {
 	await authorizeVectorAdminAccess();
 
 	const course = await Course.fetchById(id, db);
