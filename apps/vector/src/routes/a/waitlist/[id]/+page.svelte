@@ -256,24 +256,22 @@
 													getEnrolledWaitlistEntries(data.id).withOverride((enrolled) =>
 														enrolled.filter((e) => e.cid !== student.cid)
 													),
-													getCompletedWaitlistEntries(data.id).withOverride(
-														(completed) => {
-															const nextId =
-																completed && completed.length
-																	? Math.max(...completed.map((e) => e.id)) + 1
-																	: 1;
-															return [
-																{
-																	id: nextId,
-																	cid: student.cid,
-																	user: student.user,
-																	waitlistId: data.id,
-																	completedAt: new Date()
-																},
-																...(completed ?? [])
-															];
-														}
-													)
+													getCompletedWaitlistEntries(data.id).withOverride((completed) => {
+														const nextId =
+															completed && completed.length
+																? Math.max(...completed.map((e) => e.id)) + 1
+																: 1;
+														return [
+															{
+																id: nextId,
+																cid: student.cid,
+																user: student.user,
+																waitlistId: data.id,
+																completedAt: new Date()
+															},
+															...(completed ?? [])
+														];
+													})
 												)}
 											class="hover:text-success transition-colors"
 										/>
