@@ -1,7 +1,8 @@
 import { type InferSelectModel } from "drizzle-orm";
 import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { customAlphabet } from "nanoid";
-import { waitlists, users } from ".";
+import { users } from "./users";
+import { waitlists } from "./waitlist";
 
 const generateCourseId = customAlphabet(
   "0123456789abcdefghijklmnopqrstuvwxyz",

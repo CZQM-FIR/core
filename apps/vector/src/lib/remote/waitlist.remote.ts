@@ -1,6 +1,12 @@
 import { command, form, getRequestEvent, query } from '$app/server';
 import { db } from '$lib/db';
-import { enrolledUsers, moodleQueue, waitingUsers, waitlists } from '@czqm/db/schema';
+import {
+	completedUsers,
+	enrolledUsers,
+	moodleQueue,
+	waitingUsers,
+	waitlists
+} from '@czqm/db/schema';
 import { error, redirect } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
@@ -330,6 +336,73 @@ export const editWaitlistEstimatedTime = form(
 	}
 );
 
+export const saveWaitlistEstimatedTime = command(
+	type({
+		waitlistId: 'number.integer >= 0',
+		estimatedTime: 'string'
+	}),
+	async ({ waitlistId, estimatedTime }) => {
+		await authorizeVectorAdminAccess();
+
+		await db
+			.update(waitlists)
+			.set({
+				waitTime: estimatedTime
+			})
+			.where(eq(waitlists.id, waitlistId));
+
+		return { success: true };
+	}
+);
+
+export const editWaitlistCohorts = form(
+	type({
+		waitlistId: 'string.integer',
+		waitlistCohort: 'string',
+		enrolledCohort: 'string'
+	}),
+	async ({ waitlistId: waitlistIdString, waitlistCohort, enrolledCohort }) => {
+		await authorizeVectorAdminAccess();
+
+		const waitlistId = Number(waitlistIdString);
+
+		await db
+			.update(waitlists)
+			.set({
+				waitlistCohort: waitlistCohort || null,
+				enrolledCohort: enrolledCohort || null
+			})
+			.where(eq(waitlists.id, waitlistId));
+
+		getWaitlist(waitlistId).refresh();
+
+		return {
+			success: true
+		};
+	}
+);
+
+export const saveWaitlistCohorts = command(
+	type({
+		waitlistId: 'number.integer >= 0',
+		waitlistCohort: 'string',
+		enrolledCohort: 'string'
+	}),
+	async ({ waitlistId, waitlistCohort, enrolledCohort }) => {
+		await authorizeVectorAdminAccess();
+
+		await db
+			.update(waitlists)
+			.set({
+				waitlistCohort: waitlistCohort || null,
+				enrolledCohort: enrolledCohort || null
+			})
+			.where(eq(waitlists.id, waitlistId));
+
+		return { success: true };
+	}
+);
+
 export const getIndividualsWaitlistEntries = query(async () => {
 	const event = getRequestEvent();
 	const cid = event.locals.user?.cid;
@@ -396,6 +469,66 @@ export const getCompletedWaitlistEntries = query(
 	}
 );
 
+export const returnEnrolledUserToWaitlist = command(
+	WaitlistUserOptions,
+	async ({ waitlistId, userId }) => {
+		await authorizeVectorAdminAccess();
+
+		const enrolledUser = await db.query.enrolledUsers.findFirst({
+			where: { waitlistId, cid: userId },
+			with: {
+				waitlist: {
+					with: {
+						students: true
+					}
+				}
+			}
+		});
+
+		if (!enrolledUser) throw error(404, 'Enrolled user not found');
+
+		const waitlist = enrolledUser.waitlist;
+		if (waitlist.students.some((s) => s.cid === userId)) {
+			throw error(400, 'User already on waitlist');
+		}
+
+		const { enrolledCohort, waitlistCohort } = waitlist;
+
+		if (enrolledCohort) {
+			await db.insert(moodleQueue).values({
+				cid: userId,
+				cohortId: enrolledCohort,
+				add: false,
+				timestamp: new Date()
+			});
+		}
+
+		if (waitlistCohort) {
+			await db.insert(moodleQueue).values({
+				cid: userId,
+				cohortId: waitlistCohort,
+				timestamp: new Date()
+			});
+		}
+
+		await db
+			.delete(enrolledUsers)
+			.where(and(eq(enrolledUsers.waitlistId, waitlistId), eq(enrolledUsers.cid, userId)));
+
+		await db.insert(waitingUsers).values({
+			cid: userId,
+			waitlistId,
+			position: waitlist.students.length,
+			waitingSince: new Date()
+		});
+
+		getEnrolledWaitlistEntries(waitlistId).refresh();
+		getWaitlist(waitlistId).refresh();
+
+		return { success: true };
+	}
+);
+
 export const removeUserFromEnrolledCourse = command(
 	type({
 		waitlistId: 'number.integer',
@@ -446,6 +579,29 @@ export const removeUserFromEnrolledCourse = command(
 	}
 );
 
+export const removeUserFromCompletedCourse = command(
+	WaitlistUserOptions,
+	async ({ waitlistId, userId }) => {
+		await authorizeVectorAdminAccess();
+
+		const course = await Course.fetchByWaitlistId(waitlistId, db);
+		if (!course) throw error(404, 'Course not found for waitlist');
+
+		try {
+			await course.removeUserCompletion(userId);
+		} catch (e) {
+			if (e instanceof Error && e.message.includes('has not completed')) {
+				throw error(404, 'Completed user not found');
+			}
+			throw e;
+		}
+
+		getCompletedWaitlistEntries(waitlistId).refresh();
+
+		return { success: true };
+	}
+);
+
 export const graduateUserFromCourse = command(
 	type({
 		waitlistId: 'number.integer',
@@ -463,8 +619,7 @@ export const graduateUserFromCourse = command(
 		const course = await Course.fetchByWaitlistId(waitlistId, db);
 		if (!course) throw error(404, 'Course not found for waitlist');
 
-		const graduated = await course.graduateIfComplete(userId);
-		if (!graduated) throw error(400, 'Course requirements not complete');
+		await course.graduateUser(userId);
 
 		getEnrolledWaitlistEntries(waitlistId).refresh();
 		getCompletedWaitlistEntries(waitlistId).refresh();

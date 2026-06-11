@@ -101,7 +101,13 @@
 							<option disabled selected>Loading Controllers...</option>
 						{:then enrolledEntries}
 							<option disabled selected>Select a Student</option>
-							{#each controllers.filter((c) => !waitlist.students.some((s) => s.cid === c.cid) && !enrolledEntries.some((e) => e.cid === c.cid)) as controller (controller.cid)}
+							{#each controllers
+								.filter(
+									(c) =>
+										!waitlist.students.some((s) => s.cid === c.cid) &&
+										!enrolledEntries.some((e) => e.cid === c.cid)
+								)
+								.toSorted((a, b) => a.name_first.localeCompare(b.name_first)) as controller (controller.cid)}
 								<option value={controller.cid}>
 									{controller.name_full} ({controller.cid})
 								</option>
@@ -200,7 +206,8 @@
 															cid: student.cid,
 															user: student.user,
 															enrolledAt: new Date(),
-															waitlistId: data.id
+															waitlistId: data.id,
+															hiddenAt: null
 														}
 													];
 												})

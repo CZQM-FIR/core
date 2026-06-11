@@ -163,6 +163,38 @@ export class Course {
       );
   }
 
+  async removeUserCompletion(userId: number): Promise<void> {
+    const waitlistId = this.waitlist.id;
+
+    const completed = await this.db.query.completedUsers.findFirst({
+      where: { waitlistId, cid: userId },
+    });
+
+    if (!completed) {
+      throw new Error(
+        `User ${userId} has not completed waitlist ${waitlistId}`,
+      );
+    }
+
+    await this.db
+      .delete(schema.courseTaskCompletions)
+      .where(
+        and(
+          eq(schema.courseTaskCompletions.courseId, this.id),
+          eq(schema.courseTaskCompletions.userId, userId),
+        ),
+      );
+
+    await this.db
+      .delete(schema.completedUsers)
+      .where(
+        and(
+          eq(schema.completedUsers.waitlistId, waitlistId),
+          eq(schema.completedUsers.cid, userId),
+        ),
+      );
+  }
+
   async graduateIfComplete(
     userId: number,
     env?: Pick<Env, "VATCAN_API_TOKEN">,
@@ -196,7 +228,12 @@ export class Course {
       .update(schema.courses)
       .set({ name })
       .where(eq(schema.courses.id, this.id));
+    await this.db
+      .update(schema.waitlists)
+      .set({ name })
+      .where(eq(schema.waitlists.id, this.waitlist.id));
     this.name = name;
+    this.waitlist.name = name;
     return this;
   }
 
@@ -234,6 +271,77 @@ export class Course {
     await this.setTasks([...this.tasks, task]);
 
     return task;
+  }
+
+  async updateTask(
+    taskId: number,
+    taskType: TaskType,
+    taskValue1: string | null = null,
+    taskValue2: string | null = null,
+  ): Promise<CourseTask> {
+    const index = this.tasks.findIndex((task) => task.taskId === taskId);
+    if (index === -1) {
+      throw new Error(`Task ${taskId} not found on course ${this.id}`);
+    }
+
+    const task = CourseTask.fromRow(
+      this.db,
+      { taskId, taskType, taskValue1, taskValue2 },
+      this.id,
+    );
+
+    const tasks = [...this.tasks];
+    tasks[index] = task;
+    await this.setTasks(tasks);
+
+    return task;
+  }
+
+  async deleteTask(taskId: number): Promise<void> {
+    const index = this.tasks.findIndex((task) => task.taskId === taskId);
+    if (index === -1) {
+      throw new Error(`Task ${taskId} not found on course ${this.id}`);
+    }
+
+    await this.db
+      .delete(schema.courseTaskCompletions)
+      .where(
+        and(
+          eq(schema.courseTaskCompletions.courseId, this.id),
+          eq(schema.courseTaskCompletions.taskId, taskId),
+        ),
+      );
+
+    const tasks = this.tasks.filter((task) => task.taskId !== taskId);
+    await this.setTasks(tasks);
+  }
+
+  async moveTaskUp(taskId: number): Promise<void> {
+    const index = this.tasks.findIndex((task) => task.taskId === taskId);
+    if (index === -1) {
+      throw new Error(`Task ${taskId} not found on course ${this.id}`);
+    }
+    if (index === 0) {
+      throw new Error(`Task ${taskId} is already at the top`);
+    }
+
+    const tasks = [...this.tasks];
+    [tasks[index - 1], tasks[index]] = [tasks[index], tasks[index - 1]];
+    await this.setTasks(tasks);
+  }
+
+  async moveTaskDown(taskId: number): Promise<void> {
+    const index = this.tasks.findIndex((task) => task.taskId === taskId);
+    if (index === -1) {
+      throw new Error(`Task ${taskId} not found on course ${this.id}`);
+    }
+    if (index === this.tasks.length - 1) {
+      throw new Error(`Task ${taskId} is already at the bottom`);
+    }
+
+    const tasks = [...this.tasks];
+    [tasks[index], tasks[index + 1]] = [tasks[index + 1], tasks[index]];
+    await this.setTasks(tasks);
   }
 
   async isComplete(
@@ -293,6 +401,53 @@ export type TaskType =
   | "training_session"
   | "delay"
   | "manual";
+
+export const COURSE_TASK_TYPE_LABELS: Record<TaskType, string> = {
+  manual: "Manual",
+  vatcan_exam: "VATCAN Exam",
+  moodle: "Moodle",
+  vatcan_cbt: "VATCAN CBT",
+  training_session: "Training Session",
+  delay: "Delay",
+};
+
+export function formatCourseTaskType(taskType: string): string {
+  return COURSE_TASK_TYPE_LABELS[taskType as TaskType] ?? taskType;
+}
+
+export function describeCourseTask(task: {
+  taskType: string;
+  taskValue1: string | null;
+  taskValue2: string | null;
+}): string {
+  switch (task.taskType) {
+    case "manual":
+      return task.taskValue1 ?? "Manual task";
+    case "vatcan_exam":
+      return `Complete the ${task.taskValue1 ?? "VATCAN"} exam`;
+    case "moodle":
+      return `Complete the Moodle course "${task.taskValue1 ?? "Unknown"}"`;
+    case "vatcan_cbt": {
+      const blockId = task.taskValue1 ? Number(task.taskValue1) : null;
+      const display =
+        blockId !== null && Number.isFinite(blockId) ? blockId : "Unknown";
+      return `Complete VATCAN CBT block ${display}`;
+    }
+    case "training_session":
+      return `Complete a training session${
+        task.taskValue1 ? ` for ${task.taskValue1}` : ""
+      }`;
+    case "delay": {
+      const unit = task.taskValue1 === "hours" ? "hours" : "days";
+      const amount = Number(task.taskValue2 ?? 0);
+      return unit === "hours"
+        ? `Wait ${amount} controlling hour(s)`
+        : `Wait ${amount} day(s)`;
+    }
+    default:
+      return "Unknown task";
+  }
+}
 
 export abstract class CourseTask {
   db: DB;
