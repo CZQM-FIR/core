@@ -46,7 +46,7 @@
 
 <section>
 	<div class="container mx-auto">
-		<h1 class="pt-6 text-2xl font-semibold">Course Management</h1>
+		<h1 class="pt-6 text-2xl font-semibold">Training Administration</h1>
 		<div class="divider"></div>
 		<div class="flex flex-row items-center justify-between gap-2">
 			<p>

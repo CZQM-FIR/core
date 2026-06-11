@@ -30,8 +30,10 @@
 				</div>
 				<ul class="menu dropdown-content menu-sm rounded-box bg-base-300 z-50 mt-3 p-2 shadow-sm">
 					{#if data.isVectorAdmin}
-						<li><a href="/a/waitlist">Wait List Management</a></li>
-						<li><a href="/a/courses">Course Management</a></li>
+						<li><a href="/a/courses">Training Administration</a></li>
+					{/if}
+					{#if data.isVectorInstructor}
+						<li><a href="/i">Instructor Dashboard</a></li>
 					{/if}
 				</ul>
 			</div>
@@ -40,8 +42,10 @@
 		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
 				{#if data.isVectorAdmin}
-					<li><a href="/a/waitlist">Wait List Management</a></li>
-					<li><a href="/a/courses">Course Management</a></li>
+					<li><a href="/a/courses">Training Administration</a></li>
+				{/if}
+				{#if data.isVectorInstructor}
+					<li><a href="/i">Instructor Dashboard</a></li>
 				{/if}
 			</ul>
 		</div>

@@ -86,7 +86,7 @@ export async function userCanUseStaffScopedOverseerTools(
   return userHasAnyAssistantAssignment(db, user.cid);
 }
 
-/** Vector `/a/waitlist`: chief / deputy / FIR staff admin, or assistant to chief instructor */
+/** Vector `/a/*`: chief / deputy / FIR staff admin, or assistant to chief instructor */
 export function userHasVectorAdminAccess(
   user: User,
   assistantParentFlags: FlagName[],
@@ -94,4 +94,9 @@ export function userHasVectorAdminAccess(
   if (user.hasFlag(["admin", "chief-instructor", "chief", "deputy"]))
     return true;
   return assistantParentFlags.includes("chief-instructor");
+}
+
+/** Vector `/i/*`: instructors, mentors, chief instructor, and admins */
+export function userHasVectorInstructorAccess(user: User): boolean {
+  return user.hasFlag(["instructor", "mentor", "chief-instructor", "admin"]);
 }

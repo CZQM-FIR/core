@@ -1,7 +1,8 @@
 import { type InferSelectModel } from "drizzle-orm";
 import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { customAlphabet } from "nanoid";
-import { waitlists, users } from ".";
+import { users } from "./users";
+import { waitlists } from "./waitlist";
 
 const generateCourseId = customAlphabet(
   "0123456789abcdefghijklmnopqrstuvwxyz",
@@ -25,6 +26,17 @@ export const courses = sqliteTable("courses", {
         taskType: string;
         taskValue1: string | null;
         taskValue2: string | null;
+      }[]
+    >()
+    .default([]),
+  prerequisites: text("prerequisites", { mode: "json" })
+    .notNull()
+    .$type<
+      {
+        prerequisiteId: number;
+        prerequisiteType: string;
+        prerequisiteValue1: string | null;
+        prerequisiteValue2: string | null;
       }[]
     >()
     .default([]),

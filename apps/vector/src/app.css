@@ -7,12 +7,21 @@
 	color-scheme: dark; /* color of browser-provided UI */
 
 	--color-primary: #226dad;
+	--color-primary-content: #ffffff;
 	--color-secondary: #dda01d;
+	--color-secondary-content: #1d232a;
 	--color-accent: #008072;
+	--color-accent-content: #ffffff;
 	--color-neutral: #2a323c;
+	--color-neutral-content: #d1d5db;
 	--color-base-100: #1d232a;
+	--color-base-content: #d1d5db;
 	--color-info: #08d0ff;
+	--color-info-content: #082f49;
 	--color-success: #22c55e;
+	--color-success-content: #052e16;
 	--color-warning: #fbbf24;
+	--color-warning-content: #422006;
 	--color-error: #ef5465;
+	--color-error-content: #ffffff;
 }

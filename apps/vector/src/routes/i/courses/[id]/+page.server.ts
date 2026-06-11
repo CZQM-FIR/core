@@ -2,11 +2,9 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load = (async ({ params }) => {
-	const id = Number(params.id);
-
-	if (isNaN(id)) {
-		return redirect(303, '/a/waitlists');
+	if (!/^[0-9a-z]{5}$/.test(params.id)) {
+		throw redirect(303, '/i/courses');
 	}
 
-	return { id };
+	return { id: params.id };
 }) satisfies PageServerLoad;
