@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { Trash, SquareCheck, ArrowUp, ArrowDown, UserPlus, Undo2 } from '@lucide/svelte';
+	import { Trash, SquareCheck, ArrowUp, ArrowDown, Undo2 } from '@lucide/svelte';
+	import AddUserToWaitlistForm from '$lib/components/AddUserToWaitlistForm.svelte';
+	import StudentCourseLink from '$lib/components/StudentCourseLink.svelte';
 	import {
 		getWaitlist,
 		moveUserUp,
 		moveUserDown,
 		removeUserFromWaitlist,
-		addUserToWaitlist,
 		enrolUserFromWaitlist,
 		getEnrolledWaitlistEntries,
 		getCompletedWaitlistEntries,
@@ -14,12 +15,28 @@
 		returnEnrolledUserToWaitlist,
 		graduateUserFromCourse
 	} from '$lib/remote/waitlist.remote';
-	import { getAllControllers } from '$lib/remote/users.remote';
 
-	let { waitlistId }: { waitlistId: number } = $props();
+	let { courseId, waitlistId }: { courseId: string; waitlistId: number } = $props();
+
+	let waitlistSearch = $state('');
+	let enrolledSearch = $state('');
+	let completedSearch = $state('');
 
 	let deleteCompletionModal: HTMLDialogElement | undefined;
 	let studentToRemoveFromCompleted = $state<{ cid: number; name: string } | null>(null);
+
+	function filterStudents<T extends { user: { name_full: string; cid: number }; cid: number }>(
+		students: T[],
+		query: string
+	): T[] {
+		const q = query.trim().toLowerCase();
+		if (!q) return students;
+
+		return students.filter(
+			(student) =>
+				student.user.name_full.toLowerCase().includes(q) || String(student.cid).includes(q)
+		);
+	}
 
 	function openDeleteCompletionModal(cid: number, name: string) {
 		studentToRemoveFromCompleted = { cid, name };
@@ -54,58 +71,47 @@
 			<div class="card-body flex flex-col">
 				<div class="flex flex-col gap-2">
 					<h2 class="card-title text-lg">Waitlisted</h2>
-					<form class="flex flex-row gap-2" {...addUserToWaitlist}>
-						<input type="text" name="waitlistId" value={waitlistId} hidden />
-						<select class="select select-sm flex-1" required name="userId">
-							{#await getAllControllers()}
-								<option disabled selected>Loading Controllers...</option>
-							{:then controllers}
-								{#await getEnrolledWaitlistEntries(waitlistId)}
-									<option disabled selected>Loading Controllers...</option>
-								{:then enrolledEntries}
-									<option disabled selected>Select a Student</option>
-									{#each controllers
-										.filter(
-											(c) =>
-												!waitlist.students.some((s) => s.cid === c.cid) &&
-												!enrolledEntries.some((e) => e.cid === c.cid)
-										)
-										.toSorted((a, b) => a.name_first.localeCompare(b.name_first)) as controller (controller.cid)}
-										<option value={controller.cid}>
-											{controller.name_full} ({controller.cid})
-										</option>
-									{/each}
-								{/await}
-							{/await}
-						</select>
-						<button class="btn btn-primary btn-sm"><UserPlus size="16" /></button>
-					</form>
+					<AddUserToWaitlistForm
+						{waitlistId}
+						waitlistedCids={waitlist.students.map((student) => student.cid)}
+					/>
+					{#if waitlist.students.length > 0}
+						<input
+							type="search"
+							class="input input-sm input-bordered w-full"
+							placeholder="Search waitlisted..."
+							bind:value={waitlistSearch}
+						/>
+					{/if}
 				</div>
 
 				{#if waitlist.students.length === 0}
 					<p class="text-sm">No students on this waitlist</p>
+				{:else if filterStudents(waitlist.students, waitlistSearch).length === 0}
+					<p class="text-sm">No students match your search.</p>
 				{:else}
 					<div class="flex max-h-96 flex-col gap-2 overflow-y-auto">
-						{#each waitlist.students as student, index (student.cid)}
+						{#each filterStudents(waitlist.students, waitlistSearch) as student (student.cid)}
+							{@const index = waitlist.students.findIndex((s) => s.cid === student.cid)}
 							<div class="card bg-base-100 shadow-sm">
 								<div class="card-body flex flex-col gap-2 p-3">
 									<div class="flex flex-row items-start justify-between gap-2">
 										<div class="min-w-0 flex-1">
-											<p class="truncate text-sm font-semibold">
-												{student.user.name_full} ({student.cid})
-											</p>
+											<StudentCourseLink
+												{courseId}
+												cid={student.cid}
+												nameFull={student.user.name_full}
+											/>
 											<p class="text-xs opacity-70">
-												Waiting since {student.waitingSince
-													.toUTCString()
-													.replace(' GMT', 'z')}
+												Waiting since {student.waitingSince.toUTCString().replace(' GMT', 'z')}
 											</p>
 										</div>
-										<span class="text-sm font-semibold opacity-50">{index + 1}</span>
+										<span class="text-sm font-semibold opacity-50">{student.position + 1}</span>
 									</div>
 
 									<div class="flex flex-row items-center justify-between">
 										<div class="flex flex-row gap-1">
-											{#if index > 0}
+											{#if student.position > 0}
 												<button
 													onclickcapture={() =>
 														moveUserUp({ userId: student.cid, waitlistId }).updates(
@@ -122,7 +128,7 @@
 													<ArrowUp size="14" />
 												</button>
 											{/if}
-											{#if index + 1 < waitlist.students.length}
+											{#if student.position < waitlist.students.length - 1}
 												<button
 													onclickcapture={() =>
 														moveUserDown({ userId: student.cid, waitlistId }).updates(
@@ -202,17 +208,29 @@
 				{#await getEnrolledWaitlistEntries(waitlistId)}
 					<p class="text-sm">Loading enrolled students...</p>
 				{:then enrolledEntries}
+					{#if enrolledEntries.length > 0}
+						<input
+							type="search"
+							class="input input-sm input-bordered w-full"
+							placeholder="Search enrolled..."
+							bind:value={enrolledSearch}
+						/>
+					{/if}
 					{#if enrolledEntries.length === 0}
 						<p class="text-sm">No students currently enrolled in this course.</p>
+					{:else if filterStudents(enrolledEntries, enrolledSearch).length === 0}
+						<p class="text-sm">No students match your search.</p>
 					{:else}
 						<div class="flex max-h-96 flex-col gap-2 overflow-y-auto">
-							{#each enrolledEntries as student (student.cid)}
+							{#each filterStudents(enrolledEntries, enrolledSearch) as student (student.cid)}
 								<div class="card bg-base-100 shadow-sm">
 									<div class="card-body flex flex-col gap-2 p-3">
 										<div class="min-w-0">
-											<p class="truncate text-sm font-semibold">
-												{student.user.name_full} ({student.cid})
-											</p>
+											<StudentCourseLink
+												{courseId}
+												cid={student.cid}
+												nameFull={student.user.name_full}
+											/>
 											<p class="text-xs opacity-70">
 												Enrolled {student.enrolledAt.toUTCString().replace(' GMT', 'z')}
 											</p>
@@ -317,32 +335,38 @@
 				{#await getCompletedWaitlistEntries(waitlistId)}
 					<p class="text-sm">Loading completed students...</p>
 				{:then completedEntries}
+					{#if completedEntries.length > 0}
+						<input
+							type="search"
+							class="input input-sm input-bordered w-full"
+							placeholder="Search completed..."
+							bind:value={completedSearch}
+						/>
+					{/if}
 					{#if completedEntries.length === 0}
 						<p class="text-sm">No students have completed this course.</p>
+					{:else if filterStudents(completedEntries, completedSearch).length === 0}
+						<p class="text-sm">No students match your search.</p>
 					{:else}
 						<div class="flex max-h-96 flex-col gap-2 overflow-y-auto">
-							{#each completedEntries as student (student.cid)}
+							{#each filterStudents(completedEntries, completedSearch) as student (student.cid)}
 								<div class="card bg-base-100 shadow-sm">
 									<div class="card-body flex flex-col gap-2 p-3">
 										<div class="min-w-0">
-											<p class="truncate text-sm font-semibold">
-												{student.user.name_full} ({student.cid})
-											</p>
+											<StudentCourseLink
+												{courseId}
+												cid={student.cid}
+												nameFull={student.user.name_full}
+											/>
 											<p class="text-xs opacity-70">
 												Completed {student.completedAt.toUTCString().replace(' GMT', 'z')}
 											</p>
 										</div>
 										<div class="flex flex-row justify-end">
-											<button
-												class="tooltip tooltip-left"
-												data-tip="Remove completion record"
-											>
+											<button class="tooltip tooltip-left" data-tip="Remove completion record">
 												<Trash
 													onclickcapture={() =>
-														openDeleteCompletionModal(
-															student.cid,
-															student.user.name_full
-														)}
+														openDeleteCompletionModal(student.cid, student.user.name_full)}
 													class="hover:text-error transition-colors"
 													size="16"
 												/>
@@ -376,8 +400,8 @@
 			</p>
 		{/if}
 		<p class="text-warning text-sm">
-			This permanently deletes their completion record and all task progress for this course.
-			This action cannot be undone.
+			This permanently deletes their completion record and all task progress for this course. This
+			action cannot be undone.
 		</p>
 		<div class="modal-action">
 			<form method="dialog">

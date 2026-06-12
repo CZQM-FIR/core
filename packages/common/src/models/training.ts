@@ -2,6 +2,20 @@ import type { DB } from "../db";
 import * as schema from "@czqm/db/schema";
 import { and, eq } from "drizzle-orm";
 import type { Env } from "../types";
+import type { User } from "./user";
+
+type PrerequisiteRow = {
+  prerequisiteId: number;
+  prerequisiteType: string;
+  prerequisiteValue1: string | null;
+  prerequisiteValue2: string | null;
+};
+
+export type CoursePrerequisiteEvaluationResult = {
+  satisfied: boolean;
+  failures: string[];
+  results: { description: string; met: boolean }[];
+};
 
 export class Course {
   id: string;
@@ -9,6 +23,7 @@ export class Course {
   description: string | null;
   waitlist: Waitlist;
   tasks: CourseTask[];
+  prerequisites: CoursePrerequisite[];
   db: DB;
 
   private constructor(
@@ -17,6 +32,7 @@ export class Course {
     description: string | null,
     waitlist: Waitlist,
     tasks: CourseTask[],
+    prerequisites: CoursePrerequisite[],
     db: DB,
   ) {
     this.id = id;
@@ -24,6 +40,7 @@ export class Course {
     this.description = description;
     this.waitlist = waitlist;
     this.tasks = tasks;
+    this.prerequisites = prerequisites;
     this.db = db;
   }
 
@@ -51,12 +68,17 @@ export class Course {
       CourseTask.fromRow(db, task, course.id),
     );
 
+    const prerequisites = (course.prerequisites ?? []).map((prerequisite) =>
+      CoursePrerequisite.fromRow(db, prerequisite, course.id),
+    );
+
     return new Course(
       course.id,
       course.name,
       course.description,
       waitlist,
       tasks,
+      prerequisites,
       db,
     );
   }
@@ -88,12 +110,17 @@ export class Course {
       CourseTask.fromRow(db, task, course.id),
     );
 
+    const prerequisites = (course.prerequisites ?? []).map((prerequisite) =>
+      CoursePrerequisite.fromRow(db, prerequisite, course.id),
+    );
+
     return new Course(
       course.id,
       course.name,
       course.description,
       waitlist,
       tasks,
+      prerequisites,
       db,
     );
   }
@@ -344,6 +371,128 @@ export class Course {
     await this.setTasks(tasks);
   }
 
+  async setPrerequisites(
+    prerequisites: CoursePrerequisite[],
+  ): Promise<Course> {
+    const rows = prerequisites.map((prerequisite) => ({
+      prerequisiteId: prerequisite.prerequisiteId,
+      prerequisiteType: prerequisite.prerequisiteType,
+      prerequisiteValue1: prerequisite.prerequisiteValue1,
+      prerequisiteValue2: prerequisite.prerequisiteValue2,
+    }));
+
+    await this.db
+      .update(schema.courses)
+      .set({ prerequisites: rows })
+      .where(eq(schema.courses.id, this.id));
+
+    this.prerequisites = rows.map((row) =>
+      CoursePrerequisite.fromRow(this.db, row, this.id),
+    );
+    return this;
+  }
+
+  async createPrerequisite(
+    prerequisiteType: PrerequisiteType,
+    prerequisiteValue1: string | null = null,
+    prerequisiteValue2: string | null = null,
+  ): Promise<CoursePrerequisite> {
+    const prerequisiteId =
+      this.prerequisites.reduce(
+        (max, prerequisite) => Math.max(max, prerequisite.prerequisiteId),
+        0,
+      ) + 1;
+
+    const prerequisite = CoursePrerequisite.fromRow(
+      this.db,
+      {
+        prerequisiteId,
+        prerequisiteType,
+        prerequisiteValue1,
+        prerequisiteValue2,
+      },
+      this.id,
+    );
+
+    await this.setPrerequisites([...this.prerequisites, prerequisite]);
+
+    return prerequisite;
+  }
+
+  async updatePrerequisite(
+    prerequisiteId: number,
+    prerequisiteType: PrerequisiteType,
+    prerequisiteValue1: string | null = null,
+    prerequisiteValue2: string | null = null,
+  ): Promise<CoursePrerequisite> {
+    const index = this.prerequisites.findIndex(
+      (prerequisite) => prerequisite.prerequisiteId === prerequisiteId,
+    );
+    if (index === -1) {
+      throw new Error(
+        `Prerequisite ${prerequisiteId} not found on course ${this.id}`,
+      );
+    }
+
+    const prerequisite = CoursePrerequisite.fromRow(
+      this.db,
+      {
+        prerequisiteId,
+        prerequisiteType,
+        prerequisiteValue1,
+        prerequisiteValue2,
+      },
+      this.id,
+    );
+
+    const prerequisites = [...this.prerequisites];
+    prerequisites[index] = prerequisite;
+    await this.setPrerequisites(prerequisites);
+
+    return prerequisite;
+  }
+
+  async deletePrerequisite(prerequisiteId: number): Promise<void> {
+    const index = this.prerequisites.findIndex(
+      (prerequisite) => prerequisite.prerequisiteId === prerequisiteId,
+    );
+    if (index === -1) {
+      throw new Error(
+        `Prerequisite ${prerequisiteId} not found on course ${this.id}`,
+      );
+    }
+
+    const prerequisites = this.prerequisites.filter(
+      (prerequisite) => prerequisite.prerequisiteId !== prerequisiteId,
+    );
+    await this.setPrerequisites(prerequisites);
+  }
+
+  async evaluatePrerequisites(
+    user: User,
+  ): Promise<CoursePrerequisiteEvaluationResult> {
+    if (this.prerequisites.length === 0) {
+      return { satisfied: true, failures: [], results: [] };
+    }
+
+    const evaluated = await Promise.all(
+      this.prerequisites.map(async (prerequisite) => ({
+        description: describeCoursePrerequisite(prerequisite),
+        met: await prerequisite.isMet(user),
+      })),
+    );
+
+    const failures = evaluated
+      .filter((result) => !result.met)
+      .map((result) => result.description);
+
+    return {
+      satisfied: failures.length === 0,
+      failures,
+      results: evaluated,
+    };
+  }
+
   async isComplete(
     userId: number,
     env?: Pick<Env, "VATCAN_API_TOKEN">,
@@ -446,6 +595,236 @@ export function describeCourseTask(task: {
     }
     default:
       return "Unknown task";
+  }
+}
+
+export type PrerequisiteType =
+  | "minimum_rating"
+  | "controlling_hours"
+  | "prior_course"
+  | "earliest_enroll_date";
+
+export const COURSE_PREREQUISITE_TYPE_LABELS: Record<PrerequisiteType, string> =
+  {
+    minimum_rating: "Minimum Rating",
+    controlling_hours: "Controlling Hours",
+    prior_course: "Prior Course",
+    earliest_enroll_date: "Earliest Enroll Date",
+  };
+
+export function formatCoursePrerequisiteType(
+  prerequisiteType: string,
+): string {
+  return (
+    COURSE_PREREQUISITE_TYPE_LABELS[prerequisiteType as PrerequisiteType] ??
+    prerequisiteType
+  );
+}
+
+export function describeCoursePrerequisite(prerequisite: {
+  prerequisiteType: string;
+  prerequisiteValue1: string | null;
+  prerequisiteValue2: string | null;
+}): string {
+  switch (prerequisite.prerequisiteType) {
+    case "minimum_rating":
+      return `Minimum rating ${prerequisite.prerequisiteValue1 ?? "unknown"} or higher`;
+    case "controlling_hours":
+      return `${prerequisite.prerequisiteValue1 ?? "0"} controlling hour(s) at rating ${prerequisite.prerequisiteValue2 ?? "unknown"} or above`;
+    case "prior_course":
+      return `Completed course ${prerequisite.prerequisiteValue1 ?? "unknown"}`;
+    case "earliest_enroll_date":
+      return `Enrollment available from ${prerequisite.prerequisiteValue1 ?? "unknown"}`;
+    default:
+      return "Unknown prerequisite";
+  }
+}
+
+export abstract class CoursePrerequisite {
+  db: DB;
+  prerequisiteType: PrerequisiteType;
+  prerequisiteValue1: string | null;
+  prerequisiteValue2: string | null;
+  courseId: string;
+  prerequisiteId: number;
+
+  protected constructor(
+    db: DB,
+    prerequisiteType: PrerequisiteType,
+    prerequisiteValue1: string | null,
+    prerequisiteValue2: string | null,
+    courseId: string,
+    prerequisiteId: number,
+  ) {
+    this.db = db;
+    this.prerequisiteType = prerequisiteType;
+    this.prerequisiteValue1 = prerequisiteValue1;
+    this.prerequisiteValue2 = prerequisiteValue2;
+    this.courseId = courseId;
+    this.prerequisiteId = prerequisiteId;
+  }
+
+  static fromRow(
+    db: DB,
+    row: PrerequisiteRow,
+    courseId: string,
+  ): CoursePrerequisite {
+    const args = [
+      db,
+      row.prerequisiteValue1,
+      row.prerequisiteValue2,
+      courseId,
+      row.prerequisiteId,
+    ] as const;
+
+    switch (row.prerequisiteType) {
+      case "minimum_rating":
+        return new MinimumRatingCoursePrerequisite(...args);
+      case "controlling_hours":
+        return new ControllingHoursCoursePrerequisite(...args);
+      case "prior_course":
+        return new PriorCourseCoursePrerequisite(...args);
+      case "earliest_enroll_date":
+        return new EarliestEnrollDateCoursePrerequisite(...args);
+      default:
+        throw new Error(`Unknown prerequisite type: ${row.prerequisiteType}`);
+    }
+  }
+
+  abstract isMet(user: User): boolean | Promise<boolean>;
+
+  getDescription(): string {
+    return describeCoursePrerequisite(this);
+  }
+}
+
+export class MinimumRatingCoursePrerequisite extends CoursePrerequisite {
+  constructor(
+    db: DB,
+    prerequisiteValue1: string | null,
+    prerequisiteValue2: string | null,
+    courseId: string,
+    prerequisiteId: number,
+  ) {
+    super(
+      db,
+      "minimum_rating",
+      prerequisiteValue1,
+      prerequisiteValue2,
+      courseId,
+      prerequisiteId,
+    );
+  }
+
+  isMet(user: User): boolean {
+    const requiredRatingId = Number(this.prerequisiteValue1);
+    if (!Number.isFinite(requiredRatingId)) {
+      return false;
+    }
+    return user.rating.id >= requiredRatingId;
+  }
+}
+
+export class ControllingHoursCoursePrerequisite extends CoursePrerequisite {
+  constructor(
+    db: DB,
+    prerequisiteValue1: string | null,
+    prerequisiteValue2: string | null,
+    courseId: string,
+    prerequisiteId: number,
+  ) {
+    super(
+      db,
+      "controlling_hours",
+      prerequisiteValue1,
+      prerequisiteValue2,
+      courseId,
+      prerequisiteId,
+    );
+  }
+
+  isMet(user: User): boolean {
+    const requiredHours = Number(this.prerequisiteValue1);
+    const minimumRatingId = Number(this.prerequisiteValue2);
+    if (!Number.isFinite(requiredHours) || !Number.isFinite(minimumRatingId)) {
+      return false;
+    }
+
+    const totalSeconds = user.hours.localSessions.reduce((total, session) => {
+      if (session.ratingId == null || session.ratingId < minimumRatingId) {
+        return total;
+      }
+      return total + session.duration;
+    }, 0);
+
+    return totalSeconds / 3600 >= requiredHours;
+  }
+}
+
+export class PriorCourseCoursePrerequisite extends CoursePrerequisite {
+  constructor(
+    db: DB,
+    prerequisiteValue1: string | null,
+    prerequisiteValue2: string | null,
+    courseId: string,
+    prerequisiteId: number,
+  ) {
+    super(
+      db,
+      "prior_course",
+      prerequisiteValue1,
+      prerequisiteValue2,
+      courseId,
+      prerequisiteId,
+    );
+  }
+
+  async isMet(user: User): Promise<boolean> {
+    const priorCourseId = this.prerequisiteValue1;
+    if (!priorCourseId) {
+      return false;
+    }
+
+    const priorCourse = await Course.fetchById(priorCourseId, this.db);
+    if (!priorCourse) {
+      return false;
+    }
+
+    return user.completedPositions.some(
+      (completed) => completed.waitlistId === priorCourse.waitlist.id,
+    );
+  }
+}
+
+export class EarliestEnrollDateCoursePrerequisite extends CoursePrerequisite {
+  constructor(
+    db: DB,
+    prerequisiteValue1: string | null,
+    prerequisiteValue2: string | null,
+    courseId: string,
+    prerequisiteId: number,
+  ) {
+    super(
+      db,
+      "earliest_enroll_date",
+      prerequisiteValue1,
+      prerequisiteValue2,
+      courseId,
+      prerequisiteId,
+    );
+  }
+
+  isMet(_user: User): boolean {
+    if (!this.prerequisiteValue1) {
+      return false;
+    }
+
+    const enrollDate = new Date(`${this.prerequisiteValue1}T00:00:00`);
+    if (Number.isNaN(enrollDate.getTime())) {
+      return false;
+    }
+
+    return new Date() >= enrollDate;
   }
 }
 

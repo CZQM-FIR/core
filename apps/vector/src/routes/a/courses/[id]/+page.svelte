@@ -9,11 +9,12 @@
 	import type { PageData } from './$types';
 	import ManageCourseDetails from './ManageCourseDetails.svelte';
 	import ManageCourseTasks from './ManageCourseTasks.svelte';
+	import ManageCoursePrerequisites from './ManageCoursePrerequisites.svelte';
 	import ManageCourseStudents from './ManageCourseStudents.svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	const courseQuery = getCourse(data.id);
+	const courseQuery = $derived.by(() => getCourse(data.id));
 
 	type Course = Awaited<ReturnType<typeof getCourse>>;
 	let course = $state<Course | null>(null);
@@ -57,9 +58,7 @@
 		<div class="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 			<h1 class="text-3xl font-semibold">{loadedCourse.name}</h1>
 			<div class="flex flex-row flex-wrap items-center gap-2">
-				<span class="badge badge-primary"
-					>{loadedCourse.waitlist.students.length} waiting</span
-				>
+				<span class="badge badge-primary">{loadedCourse.waitlist.students.length} waiting</span>
 				{#await getEnrolledWaitlistEntries(loadedCourse.waitlistId)}
 					<span class="badge badge-ghost">...</span>
 				{:then enrolled}
@@ -71,6 +70,9 @@
 					<span class="badge badge-accent">{completed.length} completed</span>
 				{/await}
 				<span class="badge badge-neutral">{loadedCourse.tasks.length} tasks</span>
+				<span class="badge badge-neutral"
+					>{(loadedCourse.prerequisites ?? []).length} prerequisites</span
+				>
 				<button
 					class="tooltip"
 					data-tip="Delete Course"
@@ -89,9 +91,14 @@
 						courseId={data.id}
 						waitlistId={loadedCourse.waitlistId}
 					/>
-					<ManageCourseTasks course={loadedCourse} courseId={data.id} />
+					<div class="flex h-full min-h-0 flex-col gap-4">
+						<div class="min-h-0 flex-1">
+							<ManageCourseTasks course={loadedCourse} courseId={data.id} />
+						</div>
+						<ManageCoursePrerequisites course={loadedCourse} courseId={data.id} />
+					</div>
 				</div>
-				<ManageCourseStudents waitlistId={loadedCourse.waitlistId} />
+				<ManageCourseStudents courseId={data.id} waitlistId={loadedCourse.waitlistId} />
 			</div>
 		{/key}
 	{/if}

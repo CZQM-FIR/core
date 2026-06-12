@@ -1,9 +1,6 @@
 <script lang="ts">
 	import { getCourse, saveCourse } from '$lib/remote/courses.remote';
-	import {
-		saveWaitlistEstimatedTime,
-		saveWaitlistCohorts
-	} from '$lib/remote/waitlist.remote';
+	import { saveWaitlistEstimatedTime, saveWaitlistCohorts } from '$lib/remote/waitlist.remote';
 
 	type CourseData = Awaited<ReturnType<typeof getCourse>>;
 
@@ -17,11 +14,19 @@
 		waitlistId: number;
 	} = $props();
 
-	let name = $state(course.name);
-	let description = $state(course.description ?? '');
-	let estimatedTime = $state(course.waitlist.waitTime ?? '');
-	let waitlistCohort = $state(course.waitlist.waitlistCohort ?? '');
-	let enrolledCohort = $state(course.waitlist.enrolledCohort ?? '');
+	let name = $state('');
+	let description = $state('');
+	let estimatedTime = $state('');
+	let waitlistCohort = $state('');
+	let enrolledCohort = $state('');
+
+	$effect(() => {
+		name = course.name;
+		description = course.description ?? '';
+		estimatedTime = course.waitlist.waitTime ?? '';
+		waitlistCohort = course.waitlist.waitlistCohort ?? '';
+		enrolledCohort = course.waitlist.enrolledCohort ?? '';
+	});
 
 	let courseSaved = $state(false);
 	let waitTimeSaved = $state(false);
@@ -105,13 +110,11 @@
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend">Estimated Wait Time</legend>
 				<div class="flex flex-row gap-3">
-					<input
-						placeholder="Estimated Wait Time..."
-						class="input"
-						bind:value={estimatedTime}
-					/>
+					<input placeholder="Estimated Wait Time..." class="input" bind:value={estimatedTime} />
 					<button
-						class="btn {!saveWaitlistEstimatedTime.pending && waitTimeSaved ? 'btn-success' : 'btn-primary'}"
+						class="btn {!saveWaitlistEstimatedTime.pending && waitTimeSaved
+							? 'btn-success'
+							: 'btn-primary'}"
 						disabled={!!saveWaitlistEstimatedTime.pending}
 						onclickcapture={handleSaveWaitTime}
 					>
@@ -136,7 +139,9 @@
 						<input id="enrolledCohort" type="text" class="input" bind:value={enrolledCohort} />
 					</fieldset>
 					<button
-						class="btn shrink-0 {!saveWaitlistCohorts.pending && cohortsSaved ? 'btn-success' : 'btn-primary'}"
+						class="btn shrink-0 {!saveWaitlistCohorts.pending && cohortsSaved
+							? 'btn-success'
+							: 'btn-primary'}"
 						disabled={!!saveWaitlistCohorts.pending}
 						onclickcapture={handleSaveCohorts}
 					>
@@ -147,7 +152,7 @@
 						{/if}
 					</button>
 				</div>
-				<p class="text-xs mt-2">
+				<p class="mt-2 text-xs">
 					Wait list cohort is used when users join the waitlist; enrolled cohort when they are
 					enrolled in the course.
 				</p>

@@ -33,6 +33,9 @@
 						<li><a href="/a/waitlist">Wait List Management</a></li>
 						<li><a href="/a/courses">Course Management</a></li>
 					{/if}
+					{#if data.isVectorInstructor}
+						<li><a href="/i">Instructor Dashboard</a></li>
+					{/if}
 				</ul>
 			</div>
 			<a href="/" class="btn btn-ghost text-xl">CZQM / QX</a>
@@ -42,6 +45,9 @@
 				{#if data.isVectorAdmin}
 					<li><a href="/a/waitlist">Wait List Management</a></li>
 					<li><a href="/a/courses">Course Management</a></li>
+				{/if}
+				{#if data.isVectorInstructor}
+					<li><a href="/i">Instructor Dashboard</a></li>
 				{/if}
 			</ul>
 		</div>

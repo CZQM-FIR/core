@@ -15,6 +15,10 @@ declare global {
 			session: schema.AuthSession | null;
 			bucket: R2Bucket;
 		}
+		interface Error {
+			message: string;
+			failures?: string[];
+		}
 	}
 }
 

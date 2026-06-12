@@ -1,12 +1,6 @@
 import { command, form, getRequestEvent, query } from '$app/server';
 import { db } from '$lib/db';
-import {
-	completedUsers,
-	enrolledUsers,
-	moodleQueue,
-	waitingUsers,
-	waitlists
-} from '@czqm/db/schema';
+import { enrolledUsers, moodleQueue, waitingUsers, waitlists } from '@czqm/db/schema';
 import { error, redirect } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
@@ -110,6 +104,29 @@ const WaitlistUserOptions = type({
 	waitlistId: 'number.integer >= 0',
 	userId: 'number.integer >= 0'
 });
+
+export const checkWaitlistPrerequisites = query(
+	type({
+		waitlistId: 'number.integer >= 0',
+		userId: 'number.integer >= 0'
+	}),
+	async ({ waitlistId, userId }) => {
+		await authorizeVectorAdminAccess();
+
+		const course = await Course.fetchByWaitlistId(waitlistId, db);
+		if (!course || course.prerequisites.length === 0) {
+			return { satisfied: true, failures: [], results: [] };
+		}
+
+		const user = await User.fromCid(db, userId, {
+			sessions: true,
+			completedPositions: true
+		});
+		if (!user) throw error(404, 'User not found');
+
+		return course.evaluatePrerequisites(user);
+	}
+);
 
 export const moveUserUp = command(WaitlistUserOptions, async ({ waitlistId, userId }) => {
 	await authorizeVectorAdminAccess();
@@ -222,16 +239,16 @@ export const removeUserFromWaitlist = command(
 	}
 );
 
-export const addUserToWaitlist = form(
-	type({
-		waitlistId: 'string.integer',
-		userId: 'string.integer'
-	}),
-	async ({ waitlistId: waitlistIdString, userId: userIdString }) => {
-		await authorizeVectorAdminAccess();
+const AddUserToWaitlistOptions = type({
+	waitlistId: 'number.integer >= 0',
+	userId: 'number.integer >= 0',
+	'overridePrerequisites?': 'boolean'
+});
 
-		const waitlistId = Number(waitlistIdString);
-		const userId = Number(userIdString);
+export const addUserToWaitlist = command(
+	AddUserToWaitlistOptions,
+	async ({ waitlistId, userId, overridePrerequisites }) => {
+		await authorizeVectorAdminAccess();
 
 		const waitlist = await db.query.waitlists.findFirst({
 			where: { id: waitlistId },
@@ -244,8 +261,22 @@ export const addUserToWaitlist = form(
 		const existingUser = waitlist.students.find((s) => s.cid === userId);
 		if (existingUser) throw error(400, 'User already on waitlist');
 
-		const user = await User.fromCid(db, userId);
-		if (!user) throw error(404, 'User not found');
+		const course = await Course.fetchByWaitlistId(waitlistId, db);
+		if (course && course.prerequisites.length > 0 && !overridePrerequisites) {
+			const user = await User.fromCid(db, userId, {
+				sessions: true,
+				completedPositions: true
+			});
+			if (!user) throw error(404, 'User not found');
+
+			const evaluation = await course.evaluatePrerequisites(user);
+			if (!evaluation.satisfied) {
+				throw error(400, {
+					message: 'User does not meet course prerequisites',
+					failures: evaluation.failures
+				});
+			}
+		}
 
 		await db.insert(waitingUsers).values({
 			cid: userId,

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { Trash, SquareCheck, ArrowUp, ArrowDown, UserPlus, SquarePen } from '@lucide/svelte';
+	import { Trash, SquareCheck, ArrowUp, ArrowDown, SquarePen } from '@lucide/svelte';
+	import AddUserToWaitlistForm from '$lib/components/AddUserToWaitlistForm.svelte';
 	import {
 		getWaitlist,
 		moveUserUp,
 		moveUserDown,
 		removeUserFromWaitlist,
-		addUserToWaitlist,
 		enrolUserFromWaitlist,
 		editWaitlistEstimatedTime,
 		getEnrolledWaitlistEntries,
@@ -15,7 +15,6 @@
 		graduateUserFromCourse,
 		editWaitlistName
 	} from '$lib/remote/waitlist.remote';
-	import { getAllControllers } from '$lib/remote/users.remote';
 
 	let { data }: { data: PageData } = $props();
 
@@ -91,32 +90,12 @@
 
 		<div class="flex flex-row items-end justify-between">
 			<h2 class="mt-4 text-xl font-semibold">Wait Listed Students</h2>
-			<form class="my-2 flex flex-row gap-2" {...addUserToWaitlist}>
-				<input type="text" name="waitlistId" value={data.id} hidden />
-				<select class="select" required name="userId">
-					{#await getAllControllers()}
-						<option disabled selected>Loading Controllers...</option>
-					{:then controllers}
-						{#await getEnrolledWaitlistEntries(data.id)}
-							<option disabled selected>Loading Controllers...</option>
-						{:then enrolledEntries}
-							<option disabled selected>Select a Student</option>
-							{#each controllers
-								.filter(
-									(c) =>
-										!waitlist.students.some((s) => s.cid === c.cid) &&
-										!enrolledEntries.some((e) => e.cid === c.cid)
-								)
-								.toSorted((a, b) => a.name_first.localeCompare(b.name_first)) as controller (controller.cid)}
-								<option value={controller.cid}>
-									{controller.name_full} ({controller.cid})
-								</option>
-							{/each}
-						{/await}
-					{/await}
-				</select>
-				<button class="btn btn-primary me-auto"><UserPlus /></button>
-			</form>
+			<AddUserToWaitlistForm
+				waitlistId={data.id}
+				waitlistedCids={waitlist.students.map((student) => student.cid)}
+				selectClass="select"
+				buttonClass="btn btn-primary me-auto"
+			/>
 		</div>
 		<div class="divider my-0"></div>
 		{#if waitlist.students.length === 0}

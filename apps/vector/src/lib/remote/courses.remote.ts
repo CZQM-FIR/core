@@ -1,6 +1,6 @@
 import { command, form, query } from '$app/server';
 import { db } from '$lib/db';
-import { Course, type TaskType } from '@czqm/common';
+import { Course, type PrerequisiteType, type TaskType } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { authorizeVectorAdminAccess } from './auth';
@@ -11,12 +11,24 @@ const TaskTypeSchema = type(
 	"'moodle' | 'vatcan_cbt' | 'vatcan_exam' | 'training_session' | 'delay' | 'manual'"
 );
 
+const PrerequisiteTypeSchema = type(
+	"'minimum_rating' | 'controlling_hours' | 'prior_course' | 'earliest_enroll_date'"
+);
+
 const CourseTaskOptions = type({
 	courseId: CourseId,
 	taskId: 'number.integer > 0',
 	taskType: TaskTypeSchema,
 	'taskValue1?': 'string',
 	'taskValue2?': 'string'
+});
+
+const CoursePrerequisiteOptions = type({
+	courseId: CourseId,
+	prerequisiteId: 'number.integer > 0',
+	prerequisiteType: PrerequisiteTypeSchema,
+	'prerequisiteValue1?': 'string',
+	'prerequisiteValue2?': 'string'
 });
 
 export const getCourses = query(async () => {
@@ -140,11 +152,7 @@ export const createCourseTask = form(
 		const course = await Course.fetchById(courseId, db);
 		if (!course) throw error(404, 'Course not found');
 
-		await course.createTask(
-			taskType as TaskType,
-			taskValue1 ?? null,
-			taskValue2 ?? null
-		);
+		await course.createTask(taskType as TaskType, taskValue1 ?? null, taskValue2 ?? null);
 
 		getCourse(courseId).refresh();
 
@@ -216,6 +224,72 @@ export const moveCourseTaskDown = command(
 		if (!course) throw error(404, 'Course not found');
 
 		await course.moveTaskDown(taskId);
+
+		getCourse(courseId).refresh();
+	}
+);
+
+export const getRatings = query(async () => {
+	await authorizeVectorAdminAccess();
+
+	return db.query.ratings.findMany();
+});
+
+export const createCoursePrerequisite = form(
+	type({
+		courseId: CourseId,
+		prerequisiteType: PrerequisiteTypeSchema,
+		'prerequisiteValue1?': 'string',
+		'prerequisiteValue2?': 'string'
+	}),
+	async ({ courseId, prerequisiteType, prerequisiteValue1, prerequisiteValue2 }) => {
+		await authorizeVectorAdminAccess();
+
+		const course = await Course.fetchById(courseId, db);
+		if (!course) throw error(404, 'Course not found');
+
+		await course.createPrerequisite(
+			prerequisiteType as PrerequisiteType,
+			prerequisiteValue1 ?? null,
+			prerequisiteValue2 ?? null
+		);
+
+		getCourse(courseId).refresh();
+
+		return { ok: true };
+	}
+);
+
+export const updateCoursePrerequisite = form(CoursePrerequisiteOptions, async (data) => {
+	await authorizeVectorAdminAccess();
+
+	const course = await Course.fetchById(data.courseId, db);
+	if (!course) throw error(404, 'Course not found');
+
+	await course.updatePrerequisite(
+		data.prerequisiteId,
+		data.prerequisiteType as PrerequisiteType,
+		data.prerequisiteValue1 ?? null,
+		data.prerequisiteValue2 ?? null
+	);
+
+	getCourse(data.courseId).refresh();
+
+	return { ok: true };
+});
+
+export const deleteCoursePrerequisite = command(
+	type({
+		courseId: CourseId,
+		prerequisiteId: 'number.integer > 0'
+	}),
+	async ({ courseId, prerequisiteId }) => {
+		await authorizeVectorAdminAccess();
+
+		const course = await Course.fetchById(courseId, db);
+		if (!course) throw error(404, 'Course not found');
+
+		await course.deletePrerequisite(prerequisiteId);
 
 		getCourse(courseId).refresh();
 	}

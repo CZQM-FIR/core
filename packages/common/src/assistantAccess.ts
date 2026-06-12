@@ -95,3 +95,8 @@ export function userHasVectorAdminAccess(
     return true;
   return assistantParentFlags.includes("chief-instructor");
 }
+
+/** Vector `/i/*`: instructors, mentors, chief instructor, and admins */
+export function userHasVectorInstructorAccess(user: User): boolean {
+  return user.hasFlag(["instructor", "mentor", "chief-instructor", "admin"]);
+}

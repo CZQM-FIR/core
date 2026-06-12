@@ -163,12 +163,7 @@
 
 					<fieldset class="fieldset">
 						<legend class="fieldset-legend">Task Type</legend>
-						<select
-							class="select"
-							name="taskType"
-							required
-							bind:value={selectedTaskType}
-						>
+						<select class="select" name="taskType" required bind:value={selectedTaskType}>
 							{#each TASK_TYPES as type (type.value)}
 								<option value={type.value}>{type.label}</option>
 							{/each}
@@ -229,7 +224,9 @@
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">Unit</legend>
 							<select class="select" name="taskValue1">
-								<option value="hours" selected={editingTask.taskValue1 === 'hours'}>Controlling Hours</option>
+								<option value="hours" selected={editingTask.taskValue1 === 'hours'}
+									>Controlling Hours</option
+								>
 								<option value="days" selected={editingTask.taskValue1 !== 'hours'}>Days</option>
 							</select>
 						</fieldset>
@@ -246,7 +243,9 @@
 					{/if}
 
 					<div class="modal-action">
-						<button type="button" class="btn" onclickcapture={() => taskModal?.close()}>Cancel</button>
+						<button type="button" class="btn" onclickcapture={() => taskModal?.close()}
+							>Cancel</button
+						>
 						<button class="btn btn-primary" disabled={!!updateCourseTask.pending}>
 							{#if updateCourseTask.pending}
 								<span class="loading loading-spinner loading-sm"></span>
@@ -263,12 +262,7 @@
 
 					<fieldset class="fieldset">
 						<legend class="fieldset-legend">Task Type</legend>
-						<select
-							class="select"
-							name="taskType"
-							required
-							bind:value={selectedTaskType}
-						>
+						<select class="select" name="taskType" required bind:value={selectedTaskType}>
 							{#each TASK_TYPES as type (type.value)}
 								<option value={type.value}>{type.label}</option>
 							{/each}
@@ -315,7 +309,9 @@
 					{/if}
 
 					<div class="modal-action">
-						<button type="button" class="btn" onclickcapture={() => taskModal?.close()}>Cancel</button>
+						<button type="button" class="btn" onclickcapture={() => taskModal?.close()}
+							>Cancel</button
+						>
 						<button class="btn btn-primary" disabled={!!createCourseTask.pending}>
 							{#if createCourseTask.pending}
 								<span class="loading loading-spinner loading-sm"></span>
