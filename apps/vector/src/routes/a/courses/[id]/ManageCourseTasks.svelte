@@ -209,12 +209,7 @@
 					{:else if editingTask.taskType === 'vatcan_cbt'}
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">Block ID</legend>
-							<input
-								type="number"
-								class="input"
-								name="taskValue1"
-								bind:value={editTaskValue1}
-							/>
+							<input type="number" class="input" name="taskValue1" bind:value={editTaskValue1} />
 						</fieldset>
 					{:else if editingTask.taskType === 'training_session'}
 						<fieldset class="fieldset">
@@ -279,52 +274,52 @@
 
 					{#key selectedTaskType}
 						{#if selectedTaskType === 'manual'}
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Label</legend>
-							<input type="text" class="input" name="taskValue1" />
-						</fieldset>
-					{:else if selectedTaskType === 'vatcan_exam'}
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Exam Name</legend>
-							<input type="text" class="input" name="taskValue1" />
-						</fieldset>
-					{:else if selectedTaskType === 'moodle'}
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Moodle Course Name</legend>
-							<input type="text" class="input" name="taskValue1" />
-						</fieldset>
-					{:else if selectedTaskType === 'vatcan_cbt'}
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Block ID</legend>
-							<input type="number" class="input" name="taskValue1" />
-						</fieldset>
-					{:else if selectedTaskType === 'training_session'}
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Session Type</legend>
-							<select class="select" name="taskValue1" required>
-								<option value="" disabled selected>Select session type</option>
-								{#each TRAINING_SESSION_TYPES as sessionType (sessionType.value)}
-									<option value={sessionType.value}>{sessionType.label}</option>
-								{/each}
-							</select>
-						</fieldset>
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Session Name (optional)</legend>
-							<input type="text" class="input" name="taskValue2" />
-						</fieldset>
-					{:else if selectedTaskType === 'delay'}
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Unit</legend>
-							<select class="select" name="taskValue1">
-								<option value="hours">Controlling Hours</option>
-								<option value="days" selected>Days</option>
-							</select>
-						</fieldset>
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Quantity</legend>
-							<input type="number" class="input" name="taskValue2" min="1" />
-						</fieldset>
-					{/if}
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Label</legend>
+								<input type="text" class="input" name="taskValue1" />
+							</fieldset>
+						{:else if selectedTaskType === 'vatcan_exam'}
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Exam Name</legend>
+								<input type="text" class="input" name="taskValue1" />
+							</fieldset>
+						{:else if selectedTaskType === 'moodle'}
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Moodle Course Name</legend>
+								<input type="text" class="input" name="taskValue1" />
+							</fieldset>
+						{:else if selectedTaskType === 'vatcan_cbt'}
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Block ID</legend>
+								<input type="number" class="input" name="taskValue1" />
+							</fieldset>
+						{:else if selectedTaskType === 'training_session'}
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Session Type</legend>
+								<select class="select" name="taskValue1" required>
+									<option value="" disabled selected>Select session type</option>
+									{#each TRAINING_SESSION_TYPES as sessionType (sessionType.value)}
+										<option value={sessionType.value}>{sessionType.label}</option>
+									{/each}
+								</select>
+							</fieldset>
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Session Name (optional)</legend>
+								<input type="text" class="input" name="taskValue2" />
+							</fieldset>
+						{:else if selectedTaskType === 'delay'}
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Unit</legend>
+								<select class="select" name="taskValue1">
+									<option value="hours">Controlling Hours</option>
+									<option value="days" selected>Days</option>
+								</select>
+							</fieldset>
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Quantity</legend>
+								<input type="number" class="input" name="taskValue2" min="1" />
+							</fieldset>
+						{/if}
 					{/key}
 
 					<div class="modal-action">

@@ -1,11 +1,6 @@
 import { command, form, query } from '$app/server';
 import { db } from '$lib/db';
-import {
-	Course,
-	isTrainingSessionType,
-	type PrerequisiteType,
-	type TaskType
-} from '@czqm/common';
+import { Course, isTrainingSessionType, type PrerequisiteType, type TaskType } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { authorizeVectorAdminAccess } from './auth';
@@ -188,11 +183,7 @@ export const createCourseTask = form(
 			resolvedTaskValue2 = validated.taskValue2;
 		}
 
-		await course.createTask(
-			taskType as TaskType,
-			resolvedTaskValue1,
-			resolvedTaskValue2
-		);
+		await course.createTask(taskType as TaskType, resolvedTaskValue1, resolvedTaskValue2);
 
 		getCourse(courseId).refresh();
 

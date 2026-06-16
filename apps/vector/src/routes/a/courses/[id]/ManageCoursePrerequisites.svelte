@@ -269,7 +269,13 @@
 								/>
 							</fieldset>
 						{:else if selectedPrerequisiteType === 'home_controller' || selectedPrerequisiteType === 'visiting_controller' || selectedPrerequisiteType === 'home_or_visiting_controller'}
-							<p class="text-sm opacity-70">{describeCoursePrerequisite({ prerequisiteType: selectedPrerequisiteType, prerequisiteValue1: null, prerequisiteValue2: null })}</p>
+							<p class="text-sm opacity-70">
+								{describeCoursePrerequisite({
+									prerequisiteType: selectedPrerequisiteType,
+									prerequisiteValue1: null,
+									prerequisiteValue2: null
+								})}
+							</p>
 						{/if}
 					{/key}
 
@@ -368,7 +374,13 @@
 								<input type="date" class="input" name="prerequisiteValue1" required />
 							</fieldset>
 						{:else if selectedPrerequisiteType === 'home_controller' || selectedPrerequisiteType === 'visiting_controller' || selectedPrerequisiteType === 'home_or_visiting_controller'}
-							<p class="text-sm opacity-70">{describeCoursePrerequisite({ prerequisiteType: selectedPrerequisiteType, prerequisiteValue1: null, prerequisiteValue2: null })}</p>
+							<p class="text-sm opacity-70">
+								{describeCoursePrerequisite({
+									prerequisiteType: selectedPrerequisiteType,
+									prerequisiteValue1: null,
+									prerequisiteValue2: null
+								})}
+							</p>
 						{/if}
 					{/key}
 
