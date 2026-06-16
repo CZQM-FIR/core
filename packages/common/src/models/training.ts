@@ -564,6 +564,43 @@ export function formatCourseTaskType(taskType: string): string {
   return COURSE_TASK_TYPE_LABELS[taskType as TaskType] ?? taskType;
 }
 
+export const TRAINING_SESSION_TYPE_LABELS = {
+  monitoring: "Monitoring",
+  sweatbox: "Sweatbox",
+  orientation: "Orientation",
+  ots: "OTS",
+  generic: "Generic",
+} as const;
+
+export type TrainingSessionType = keyof typeof TRAINING_SESSION_TYPE_LABELS;
+
+export function formatTrainingSessionType(value: string): string {
+  return TRAINING_SESSION_TYPE_LABELS[value as TrainingSessionType] ?? value;
+}
+
+export function isTrainingSessionType(
+  value: string,
+): value is TrainingSessionType {
+  return value in TRAINING_SESSION_TYPE_LABELS;
+}
+
+function indefiniteArticle(word: string): "a" | "an" {
+  return /^[aeiou]/i.test(word) ? "an" : "a";
+}
+
+function describeTrainingSessionTask(
+  taskValue1: string | null,
+  taskValue2: string | null,
+): string {
+  if (!taskValue1) {
+    return "Complete a training session";
+  }
+
+  const label = formatTrainingSessionType(taskValue1);
+  const base = `Complete ${indefiniteArticle(label)} ${label} session`;
+  return taskValue2 ? `${base}: ${taskValue2}` : base;
+}
+
 export function describeCourseTask(task: {
   taskType: string;
   taskValue1: string | null;
@@ -583,9 +620,7 @@ export function describeCourseTask(task: {
       return `Complete VATCAN CBT block ${display}`;
     }
     case "training_session":
-      return `Complete a training session${
-        task.taskValue1 ? ` for ${task.taskValue1}` : ""
-      }`;
+      return describeTrainingSessionTask(task.taskValue1, task.taskValue2);
     case "delay": {
       const unit = task.taskValue1 === "hours" ? "hours" : "days";
       const amount = Number(task.taskValue2 ?? 0);
@@ -602,7 +637,10 @@ export type PrerequisiteType =
   | "minimum_rating"
   | "controlling_hours"
   | "prior_course"
-  | "earliest_enroll_date";
+  | "earliest_enroll_date"
+  | "home_controller"
+  | "visiting_controller"
+  | "home_or_visiting_controller";
 
 export const COURSE_PREREQUISITE_TYPE_LABELS: Record<PrerequisiteType, string> =
   {
@@ -610,6 +648,9 @@ export const COURSE_PREREQUISITE_TYPE_LABELS: Record<PrerequisiteType, string> =
     controlling_hours: "Controlling Hours",
     prior_course: "Prior Course",
     earliest_enroll_date: "Earliest Enroll Date",
+    home_controller: "Must Be Home Controller",
+    visiting_controller: "Must Be Visiting Controller",
+    home_or_visiting_controller: "Must Be Home or Visiting Controller",
   };
 
 export function formatCoursePrerequisiteType(
@@ -635,6 +676,12 @@ export function describeCoursePrerequisite(prerequisite: {
       return `Completed course ${prerequisite.prerequisiteValue1 ?? "unknown"}`;
     case "earliest_enroll_date":
       return `Enrollment available from ${prerequisite.prerequisiteValue1 ?? "unknown"}`;
+    case "home_controller":
+      return "Must be a home controller";
+    case "visiting_controller":
+      return "Must be a visiting controller";
+    case "home_or_visiting_controller":
+      return "Must be a home or visiting controller";
     default:
       return "Unknown prerequisite";
   }
@@ -686,6 +733,12 @@ export abstract class CoursePrerequisite {
         return new PriorCourseCoursePrerequisite(...args);
       case "earliest_enroll_date":
         return new EarliestEnrollDateCoursePrerequisite(...args);
+      case "home_controller":
+        return new HomeControllerCoursePrerequisite(...args);
+      case "visiting_controller":
+        return new VisitingControllerCoursePrerequisite(...args);
+      case "home_or_visiting_controller":
+        return new HomeOrVisitingControllerCoursePrerequisite(...args);
       default:
         throw new Error(`Unknown prerequisite type: ${row.prerequisiteType}`);
     }
@@ -825,6 +878,75 @@ export class EarliestEnrollDateCoursePrerequisite extends CoursePrerequisite {
     }
 
     return new Date() >= enrollDate;
+  }
+}
+
+export class HomeControllerCoursePrerequisite extends CoursePrerequisite {
+  constructor(
+    db: DB,
+    prerequisiteValue1: string | null,
+    prerequisiteValue2: string | null,
+    courseId: string,
+    prerequisiteId: number,
+  ) {
+    super(
+      db,
+      "home_controller",
+      prerequisiteValue1,
+      prerequisiteValue2,
+      courseId,
+      prerequisiteId,
+    );
+  }
+
+  isMet(user: User): boolean {
+    return user.hasFlag("controller");
+  }
+}
+
+export class VisitingControllerCoursePrerequisite extends CoursePrerequisite {
+  constructor(
+    db: DB,
+    prerequisiteValue1: string | null,
+    prerequisiteValue2: string | null,
+    courseId: string,
+    prerequisiteId: number,
+  ) {
+    super(
+      db,
+      "visiting_controller",
+      prerequisiteValue1,
+      prerequisiteValue2,
+      courseId,
+      prerequisiteId,
+    );
+  }
+
+  isMet(user: User): boolean {
+    return user.hasFlag("visitor");
+  }
+}
+
+export class HomeOrVisitingControllerCoursePrerequisite extends CoursePrerequisite {
+  constructor(
+    db: DB,
+    prerequisiteValue1: string | null,
+    prerequisiteValue2: string | null,
+    courseId: string,
+    prerequisiteId: number,
+  ) {
+    super(
+      db,
+      "home_or_visiting_controller",
+      prerequisiteValue1,
+      prerequisiteValue2,
+      courseId,
+      prerequisiteId,
+    );
+  }
+
+  isMet(user: User): boolean {
+    return user.hasFlag(["controller", "visitor"]);
   }
 }
 
@@ -1141,10 +1263,12 @@ export class TrainingSessionCourseTask extends CourseTask {
     return this.taskValue1;
   }
 
+  get sessionName(): string | null {
+    return this.taskValue2;
+  }
+
   getDescription(): string {
-    return `Complete a training session${
-      this.sessionType ? ` for ${this.sessionType}` : ""
-    }`;
+    return describeTrainingSessionTask(this.sessionType, this.sessionName);
   }
 }
 

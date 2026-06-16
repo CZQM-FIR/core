@@ -54,6 +54,12 @@
 					? `Completed course ${priorCourse.name}`
 					: describeCoursePrerequisite(prerequisite);
 			}
+			case 'home_controller':
+				return 'Must be a home controller';
+			case 'visiting_controller':
+				return 'Must be a visiting controller';
+			case 'home_or_visiting_controller':
+				return 'Must be a home or visiting controller';
 			default:
 				return describeCoursePrerequisite(prerequisite);
 		}
@@ -262,6 +268,8 @@
 									value={editingPrerequisite.prerequisiteValue1 ?? ''}
 								/>
 							</fieldset>
+						{:else if selectedPrerequisiteType === 'home_controller' || selectedPrerequisiteType === 'visiting_controller' || selectedPrerequisiteType === 'home_or_visiting_controller'}
+							<p class="text-sm opacity-70">{describeCoursePrerequisite({ prerequisiteType: selectedPrerequisiteType, prerequisiteValue1: null, prerequisiteValue2: null })}</p>
 						{/if}
 					{/key}
 
@@ -359,6 +367,8 @@
 								<legend class="fieldset-legend">Earliest Enroll Date</legend>
 								<input type="date" class="input" name="prerequisiteValue1" required />
 							</fieldset>
+						{:else if selectedPrerequisiteType === 'home_controller' || selectedPrerequisiteType === 'visiting_controller' || selectedPrerequisiteType === 'home_or_visiting_controller'}
+							<p class="text-sm opacity-70">{describeCoursePrerequisite({ prerequisiteType: selectedPrerequisiteType, prerequisiteValue1: null, prerequisiteValue2: null })}</p>
 						{/if}
 					{/key}
 

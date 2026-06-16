@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { ArrowUp, ArrowDown, Trash, SquarePen } from '@lucide/svelte';
-	import { COURSE_TASK_TYPE_LABELS, describeCourseTask, formatCourseTaskType } from '@czqm/common';
+	import {
+		COURSE_TASK_TYPE_LABELS,
+		TRAINING_SESSION_TYPE_LABELS,
+		describeCourseTask,
+		formatCourseTaskType
+	} from '@czqm/common';
 	import {
 		getCourse,
 		createCourseTask,
@@ -18,6 +23,13 @@
 		label
 	}));
 
+	const TRAINING_SESSION_TYPES = Object.entries(TRAINING_SESSION_TYPE_LABELS).map(
+		([value, label]) => ({
+			value,
+			label
+		})
+	);
+
 	let { course, courseId }: { course: CourseData; courseId: string } = $props();
 
 	let taskModal: HTMLDialogElement | undefined;
@@ -25,11 +37,15 @@
 	let editingTask = $state<TaskRow | null>(null);
 	let taskToDelete = $state<{ taskId: number; label: string } | null>(null);
 	let selectedTaskType = $state<string>('manual');
+	let editTaskValue1 = $state('');
+	let editTaskValue2 = $state('');
 	let formKey = $state(0);
 
 	function openAddModal() {
 		editingTask = null;
 		selectedTaskType = 'manual';
+		editTaskValue1 = '';
+		editTaskValue2 = '';
 		formKey++;
 		taskModal?.showModal();
 	}
@@ -37,6 +53,8 @@
 	function openEditModal(task: TaskRow) {
 		editingTask = task;
 		selectedTaskType = task.taskType;
+		editTaskValue1 = task.taskValue1 ?? '';
+		editTaskValue2 = task.taskValue2 ?? '';
 		formKey++;
 		taskModal?.showModal();
 	}
@@ -79,20 +97,20 @@
 	});
 </script>
 
-<div class="card bg-base-200 h-full shadow-sm">
-	<div class="card-body flex h-full min-h-0 flex-col gap-2">
-		<div class="flex shrink-0 flex-row items-center justify-between">
-			<h2 class="card-title text-lg">Course Tasks</h2>
+<div class="card bg-base-200 h-full min-w-0 overflow-hidden shadow-sm">
+	<div class="card-body flex h-full min-h-0 min-w-0 flex-col gap-2">
+		<div class="flex shrink-0 flex-row items-center justify-between gap-2">
+			<h2 class="card-title min-w-0 truncate text-lg">Course Tasks</h2>
 			<button class="btn btn-primary btn-sm" onclickcapture={openAddModal}>Add Task</button>
 		</div>
 
 		{#if course.tasks.length === 0}
 			<p class="flex-1 text-sm">No tasks defined for this course.</p>
 		{:else}
-			<div class="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
+			<div class="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-x-hidden overflow-y-auto">
 				{#each course.tasks as task, index (task.taskId)}
 					<div
-						class="bg-base-100 flex flex-row items-center gap-2 rounded-lg px-2.5 py-1.5 shadow-sm"
+						class="bg-base-100 flex min-w-0 flex-row items-center gap-2 rounded-lg px-2.5 py-1.5 shadow-sm"
 					>
 						<span class="shrink-0 text-sm font-semibold">Task {index + 1}</span>
 						<span class="badge badge-outline badge-sm shrink-0"
@@ -163,71 +181,61 @@
 
 					<fieldset class="fieldset">
 						<legend class="fieldset-legend">Task Type</legend>
-						<select class="select" name="taskType" required bind:value={selectedTaskType}>
-							{#each TASK_TYPES as type (type.value)}
-								<option value={type.value}>{type.label}</option>
-							{/each}
-						</select>
+						<input type="hidden" name="taskType" value={editingTask.taskType} />
+						<input
+							type="text"
+							class="input"
+							disabled
+							tabindex="-1"
+							value={formatCourseTaskType(editingTask.taskType)}
+						/>
 					</fieldset>
 
-					{#if selectedTaskType === 'manual'}
+					{#if editingTask.taskType === 'manual'}
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">Label</legend>
-							<input
-								type="text"
-								class="input"
-								name="taskValue1"
-								value={editingTask.taskValue1 ?? ''}
-							/>
+							<input type="text" class="input" name="taskValue1" bind:value={editTaskValue1} />
 						</fieldset>
-					{:else if selectedTaskType === 'vatcan_exam'}
+					{:else if editingTask.taskType === 'vatcan_exam'}
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">Exam Name</legend>
-							<input
-								type="text"
-								class="input"
-								name="taskValue1"
-								value={editingTask.taskValue1 ?? ''}
-							/>
+							<input type="text" class="input" name="taskValue1" bind:value={editTaskValue1} />
 						</fieldset>
-					{:else if selectedTaskType === 'moodle'}
+					{:else if editingTask.taskType === 'moodle'}
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">Moodle Course Name</legend>
-							<input
-								type="text"
-								class="input"
-								name="taskValue1"
-								value={editingTask.taskValue1 ?? ''}
-							/>
+							<input type="text" class="input" name="taskValue1" bind:value={editTaskValue1} />
 						</fieldset>
-					{:else if selectedTaskType === 'vatcan_cbt'}
+					{:else if editingTask.taskType === 'vatcan_cbt'}
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">Block ID</legend>
 							<input
 								type="number"
 								class="input"
 								name="taskValue1"
-								value={editingTask.taskValue1 ?? ''}
+								bind:value={editTaskValue1}
 							/>
 						</fieldset>
-					{:else if selectedTaskType === 'training_session'}
+					{:else if editingTask.taskType === 'training_session'}
 						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Session Type (optional)</legend>
-							<input
-								type="text"
-								class="input"
-								name="taskValue1"
-								value={editingTask.taskValue1 ?? ''}
-							/>
+							<legend class="fieldset-legend">Session Type</legend>
+							<select class="select" name="taskValue1" required bind:value={editTaskValue1}>
+								<option value="" disabled>Select session type</option>
+								{#each TRAINING_SESSION_TYPES as sessionType (sessionType.value)}
+									<option value={sessionType.value}>{sessionType.label}</option>
+								{/each}
+							</select>
 						</fieldset>
-					{:else if selectedTaskType === 'delay'}
+						<fieldset class="fieldset">
+							<legend class="fieldset-legend">Session Name (optional)</legend>
+							<input type="text" class="input" name="taskValue2" bind:value={editTaskValue2} />
+						</fieldset>
+					{:else if editingTask.taskType === 'delay'}
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">Unit</legend>
-							<select class="select" name="taskValue1">
-								<option value="hours" selected={editingTask.taskValue1 === 'hours'}
-									>Controlling Hours</option
-								>
-								<option value="days" selected={editingTask.taskValue1 !== 'hours'}>Days</option>
+							<select class="select" name="taskValue1" bind:value={editTaskValue1}>
+								<option value="hours">Controlling Hours</option>
+								<option value="days">Days</option>
 							</select>
 						</fieldset>
 						<fieldset class="fieldset">
@@ -237,7 +245,7 @@
 								class="input"
 								name="taskValue2"
 								min="1"
-								value={editingTask.taskValue2 ?? ''}
+								bind:value={editTaskValue2}
 							/>
 						</fieldset>
 					{/if}
@@ -269,7 +277,8 @@
 						</select>
 					</fieldset>
 
-					{#if selectedTaskType === 'manual'}
+					{#key selectedTaskType}
+						{#if selectedTaskType === 'manual'}
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">Label</legend>
 							<input type="text" class="input" name="taskValue1" />
@@ -291,8 +300,17 @@
 						</fieldset>
 					{:else if selectedTaskType === 'training_session'}
 						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Session Type (optional)</legend>
-							<input type="text" class="input" name="taskValue1" />
+							<legend class="fieldset-legend">Session Type</legend>
+							<select class="select" name="taskValue1" required>
+								<option value="" disabled selected>Select session type</option>
+								{#each TRAINING_SESSION_TYPES as sessionType (sessionType.value)}
+									<option value={sessionType.value}>{sessionType.label}</option>
+								{/each}
+							</select>
+						</fieldset>
+						<fieldset class="fieldset">
+							<legend class="fieldset-legend">Session Name (optional)</legend>
+							<input type="text" class="input" name="taskValue2" />
 						</fieldset>
 					{:else if selectedTaskType === 'delay'}
 						<fieldset class="fieldset">
@@ -307,6 +325,7 @@
 							<input type="number" class="input" name="taskValue2" min="1" />
 						</fieldset>
 					{/if}
+					{/key}
 
 					<div class="modal-action">
 						<button type="button" class="btn" onclickcapture={() => taskModal?.close()}

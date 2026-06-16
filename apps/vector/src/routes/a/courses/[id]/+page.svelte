@@ -85,14 +85,14 @@
 
 		{#key data.id}
 			<div class="mt-6 flex flex-col gap-4">
-				<div class="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+				<div class="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
 					<ManageCourseDetails
 						course={loadedCourse}
 						courseId={data.id}
 						waitlistId={loadedCourse.waitlistId}
 					/>
-					<div class="flex h-full min-h-0 flex-col gap-4">
-						<div class="min-h-0 flex-1">
+					<div class="flex h-full min-h-0 min-w-0 flex-col gap-4">
+						<div class="min-h-0 min-w-0 flex-1">
 							<ManageCourseTasks course={loadedCourse} courseId={data.id} />
 						</div>
 						<ManageCoursePrerequisites course={loadedCourse} courseId={data.id} />

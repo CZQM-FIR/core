@@ -1,6 +1,11 @@
 import { command, form, query } from '$app/server';
 import { db } from '$lib/db';
-import { Course, type PrerequisiteType, type TaskType } from '@czqm/common';
+import {
+	Course,
+	isTrainingSessionType,
+	type PrerequisiteType,
+	type TaskType
+} from '@czqm/common';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { authorizeVectorAdminAccess } from './auth';
@@ -12,12 +17,16 @@ const TaskTypeSchema = type(
 );
 
 const PrerequisiteTypeSchema = type(
-	"'minimum_rating' | 'controlling_hours' | 'prior_course' | 'earliest_enroll_date'"
+	"'minimum_rating' | 'controlling_hours' | 'prior_course' | 'earliest_enroll_date' | 'home_controller' | 'visiting_controller' | 'home_or_visiting_controller'"
 );
+
+const FormId = type('string.integer > 0')
+	.pipe((value) => Number(value))
+	.to('number.integer > 0');
 
 const CourseTaskOptions = type({
 	courseId: CourseId,
-	taskId: 'number.integer > 0',
+	taskId: FormId,
 	taskType: TaskTypeSchema,
 	'taskValue1?': 'string',
 	'taskValue2?': 'string'
@@ -25,11 +34,29 @@ const CourseTaskOptions = type({
 
 const CoursePrerequisiteOptions = type({
 	courseId: CourseId,
-	prerequisiteId: 'number.integer > 0',
+	prerequisiteId: FormId,
 	prerequisiteType: PrerequisiteTypeSchema,
 	'prerequisiteValue1?': 'string',
 	'prerequisiteValue2?': 'string'
 });
+
+function validateTrainingSessionTaskValues(
+	taskValue1: string | undefined,
+	taskValue2: string | undefined
+): { taskValue1: string; taskValue2: string | null } {
+	if (!taskValue1 || !isTrainingSessionType(taskValue1)) {
+		throw error(
+			400,
+			'Training session type is required and must be monitoring, sweatbox, orientation, ots, or generic'
+		);
+	}
+
+	const trimmedName = taskValue2?.trim();
+	return {
+		taskValue1,
+		taskValue2: trimmedName ? trimmedName : null
+	};
+}
 
 export const getCourses = query(async () => {
 	await authorizeVectorAdminAccess();
@@ -152,7 +179,20 @@ export const createCourseTask = form(
 		const course = await Course.fetchById(courseId, db);
 		if (!course) throw error(404, 'Course not found');
 
-		await course.createTask(taskType as TaskType, taskValue1 ?? null, taskValue2 ?? null);
+		let resolvedTaskValue1 = taskValue1 ?? null;
+		let resolvedTaskValue2 = taskValue2 ?? null;
+
+		if (taskType === 'training_session') {
+			const validated = validateTrainingSessionTaskValues(taskValue1, taskValue2);
+			resolvedTaskValue1 = validated.taskValue1;
+			resolvedTaskValue2 = validated.taskValue2;
+		}
+
+		await course.createTask(
+			taskType as TaskType,
+			resolvedTaskValue1,
+			resolvedTaskValue2
+		);
 
 		getCourse(courseId).refresh();
 
@@ -166,11 +206,20 @@ export const updateCourseTask = form(CourseTaskOptions, async (data) => {
 	const course = await Course.fetchById(data.courseId, db);
 	if (!course) throw error(404, 'Course not found');
 
+	let resolvedTaskValue1 = data.taskValue1 ?? null;
+	let resolvedTaskValue2 = data.taskValue2 ?? null;
+
+	if (data.taskType === 'training_session') {
+		const validated = validateTrainingSessionTaskValues(data.taskValue1, data.taskValue2);
+		resolvedTaskValue1 = validated.taskValue1;
+		resolvedTaskValue2 = validated.taskValue2;
+	}
+
 	await course.updateTask(
 		data.taskId,
 		data.taskType as TaskType,
-		data.taskValue1 ?? null,
-		data.taskValue2 ?? null
+		resolvedTaskValue1,
+		resolvedTaskValue2
 	);
 
 	getCourse(data.courseId).refresh();
