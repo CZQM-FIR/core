@@ -1,84 +1,11 @@
-import { command, form, getRequestEvent, query } from '$app/server';
+import { command, getRequestEvent, query } from '$app/server';
 import { db } from '$lib/db';
 import { enrolledUsers, moodleQueue, waitingUsers, waitlists } from '@czqm/db/schema';
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
 import { Course, User } from '@czqm/common';
 import { authorizeVectorAdminAccess } from './auth';
-
-export const editWaitlistName = form(
-	type({
-		name: 'string'
-	}),
-	async ({ name }) => {
-		const event = getRequestEvent();
-		await authorizeVectorAdminAccess();
-
-		const id = Number(event.params.id);
-
-		if (isNaN(id)) throw error(400, 'Missing ID');
-
-		await db
-			.update(waitlists)
-			.set({
-				name
-			})
-			.where(eq(waitlists.id, id));
-
-		getWaitlist(id).refresh();
-
-		return {
-			success: true
-		};
-	}
-);
-
-export const deleteWaitlist = command(type('number.integer >= 0'), async (id) => {
-	await authorizeVectorAdminAccess();
-
-	await db.delete(waitlists).where(eq(waitlists.id, id));
-
-	getWaitlists().refresh();
-});
-
-export const createWaitlist = form(
-	type({
-		name: 'string',
-		wcohort: 'string',
-		cohort: 'string'
-	}),
-	async ({ name, wcohort, cohort }) => {
-		await authorizeVectorAdminAccess();
-
-		const waitlist = await db
-			.insert(waitlists)
-			.values({
-				name,
-				waitlistCohort: wcohort,
-				enrolledCohort: cohort
-			})
-			.returning({
-				id: waitlists.id
-			});
-
-		getWaitlists().refresh();
-
-		redirect(303, `/a/waitlist/${waitlist[0].id}`);
-	}
-);
-
-export const getWaitlists = query(async () => {
-	await authorizeVectorAdminAccess();
-
-	const allWaitlists = await db.query.waitlists.findMany({
-		with: {
-			students: true
-		}
-	});
-
-	return allWaitlists;
-});
 
 export const getWaitlist = query(type('number.integer >= 0'), async (waitlistId) => {
 	await authorizeVectorAdminAccess();
@@ -344,29 +271,6 @@ export const enrolUserFromWaitlist = command(
 	}
 );
 
-export const editWaitlistEstimatedTime = form(
-	type({
-		waitlistId: 'string.integer',
-		estimatedTime: 'string'
-	}),
-	async ({ waitlistId: waitlistIdString, estimatedTime }) => {
-		await authorizeVectorAdminAccess();
-
-		const waitlistId = Number(waitlistIdString);
-
-		await db
-			.update(waitlists)
-			.set({
-				waitTime: estimatedTime
-			})
-			.where(eq(waitlists.id, waitlistId));
-
-		return {
-			success: true
-		};
-	}
-);
-
 export const saveWaitlistEstimatedTime = command(
 	type({
 		waitlistId: 'number.integer >= 0',
@@ -383,33 +287,6 @@ export const saveWaitlistEstimatedTime = command(
 			.where(eq(waitlists.id, waitlistId));
 
 		return { success: true };
-	}
-);
-
-export const editWaitlistCohorts = form(
-	type({
-		waitlistId: 'string.integer',
-		waitlistCohort: 'string',
-		enrolledCohort: 'string'
-	}),
-	async ({ waitlistId: waitlistIdString, waitlistCohort, enrolledCohort }) => {
-		await authorizeVectorAdminAccess();
-
-		const waitlistId = Number(waitlistIdString);
-
-		await db
-			.update(waitlists)
-			.set({
-				waitlistCohort: waitlistCohort || null,
-				enrolledCohort: enrolledCohort || null
-			})
-			.where(eq(waitlists.id, waitlistId));
-
-		getWaitlist(waitlistId).refresh();
-
-		return {
-			success: true
-		};
 	}
 );
 

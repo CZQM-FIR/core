@@ -86,7 +86,7 @@ export async function userCanUseStaffScopedOverseerTools(
   return userHasAnyAssistantAssignment(db, user.cid);
 }
 
-/** Vector `/a/waitlist`: chief / deputy / FIR staff admin, or assistant to chief instructor */
+/** Vector `/a/*`: chief / deputy / FIR staff admin, or assistant to chief instructor */
 export function userHasVectorAdminAccess(
   user: User,
   assistantParentFlags: FlagName[],
