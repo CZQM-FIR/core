@@ -22,6 +22,8 @@ import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
 import { authorizeVectorInstructorAccess } from './auth';
 import { getStudentCourseView } from './student.remote';
+import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
+import { notifyCourseEnrollmentEmail } from '$lib/courseEnrollmentEmails';
 
 const CourseId = type(/^[0-9a-z]{5}$/);
 const WaitlistId = type('number.integer >= 0');
@@ -322,8 +324,9 @@ export const scheduleTrainingSession = command(
 			availabilityRows.map((row) => ({ startsAt: row.startsAt, endsAt: row.endsAt }))
 		);
 
+		let session;
 		try {
-			await TrainingSession.createPending(db, {
+			session = await TrainingSession.createPending(db, {
 				studentCid,
 				courseId,
 				taskId,
@@ -334,6 +337,12 @@ export const scheduleTrainingSession = command(
 			});
 		} catch (err) {
 			throw error(400, err instanceof Error ? err.message : 'Failed to schedule training session');
+		}
+
+		try {
+			await notifyTrainingSessionEmails('scheduled', courseId, session);
+		} catch (err) {
+			console.error('Failed to queue training session emails', err);
 		}
 
 		getInstructorStudentView({ courseId, cid: studentCid }).refresh();
@@ -390,6 +399,12 @@ export const cancelTrainingSession = command(
 			await TrainingSession.cancel(db, sessionId, actioner.cid);
 		} catch (err) {
 			throw error(400, err instanceof Error ? err.message : 'Failed to cancel training session');
+		}
+
+		try {
+			await notifyTrainingSessionEmails('cancelled', courseId, session);
+		} catch (err) {
+			console.error('Failed to queue training session emails', err);
 		}
 
 		getInstructorStudentView({ courseId, cid: studentCid }).refresh();
@@ -471,6 +486,12 @@ export const graduateStudentFromCourse = command(
 		}
 
 		await course.graduateUser(cid);
+
+		try {
+			await notifyCourseEnrollmentEmail('completed', courseId, cid);
+		} catch (err) {
+			console.error('Failed to queue course enrollment email', err);
+		}
 
 		getInstructorStudentView({ courseId, cid }).refresh();
 	}

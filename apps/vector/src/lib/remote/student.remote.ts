@@ -21,6 +21,8 @@ import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
 import { authorizeVectorStudentAccess } from './auth';
+import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
+import { notifyCourseEnrollmentEmail } from '$lib/courseEnrollmentEmails';
 
 const CourseId = type(/^[0-9a-z]{5}$/);
 
@@ -259,6 +261,12 @@ export const joinCourseWaitlist = command(CourseId, async (courseId) => {
 
 	getStudentCourses().refresh();
 	getStudentCourseView(courseId).refresh();
+
+	try {
+		await notifyCourseEnrollmentEmail('waitlisted', courseId, user.cid);
+	} catch (err) {
+		console.error('Failed to queue course enrollment email', err);
+	}
 });
 
 export const syncStudentCourseTasks = command(CourseId, async (courseId) => {
@@ -477,10 +485,17 @@ export const confirmTrainingSession = command(
 		const user = await authorizeVectorStudentAccess();
 		await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
 
+		let updated;
 		try {
-			await TrainingSession.confirm(db, sessionId, user.cid);
+			updated = await TrainingSession.confirm(db, sessionId, user.cid);
 		} catch (err) {
 			throw error(400, err instanceof Error ? err.message : 'Failed to confirm training session');
+		}
+
+		try {
+			await notifyTrainingSessionEmails('confirmed', courseId, updated);
+		} catch (err) {
+			console.error('Failed to queue training session emails', err);
 		}
 
 		getStudentCourseView(courseId).refresh();
@@ -494,10 +509,17 @@ export const declineTrainingSession = command(
 		const user = await authorizeVectorStudentAccess();
 		await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
 
+		let updated;
 		try {
-			await TrainingSession.decline(db, sessionId, user.cid);
+			updated = await TrainingSession.decline(db, sessionId, user.cid);
 		} catch (err) {
 			throw error(400, err instanceof Error ? err.message : 'Failed to decline training session');
+		}
+
+		try {
+			await notifyTrainingSessionEmails('declined', courseId, updated);
+		} catch (err) {
+			console.error('Failed to queue training session emails', err);
 		}
 
 		getStudentCourseView(courseId).refresh();
@@ -511,10 +533,17 @@ export const cancelTrainingSession = command(
 		const user = await authorizeVectorStudentAccess();
 		await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
 
+		let updated;
 		try {
-			await TrainingSession.cancel(db, sessionId, user.cid);
+			updated = await TrainingSession.cancel(db, sessionId, user.cid);
 		} catch (err) {
 			throw error(400, err instanceof Error ? err.message : 'Failed to cancel training session');
+		}
+
+		try {
+			await notifyTrainingSessionEmails('cancelled', courseId, updated);
+		} catch (err) {
+			console.error('Failed to queue training session emails', err);
 		}
 
 		getStudentCourseView(courseId).refresh();
