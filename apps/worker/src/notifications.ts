@@ -120,6 +120,7 @@ const sendDiscordMessage = async (env: Env, notification: DiscordNotificationQue
 };
 
 export const notificationsJob = async (db: DB, env: Env) => {
+  console.log('running notifications job');
   // Fetch notifications that need to be sent
   const notifications = await db.query.notifications.findMany({
     where: { sent: { isNull: true } },
@@ -134,12 +135,14 @@ export const notificationsJob = async (db: DB, env: Env) => {
     }
   });
 
+  console.log(`Found ${notifications.length} notifications to process`);
+
   const discordNotificationQueue = [];
 
   for (const notification of notifications) {
     const { user } = notification;
 
-    if (!user.integrations?.length) continue;
+    if (notification.location === 'discord' && !user.integrations?.length) continue;
 
     if (
       user.preferences.some((pref) => pref.key === notification.type && pref.value === 'true') ||

@@ -10,7 +10,8 @@ export const Env = type({
 	R2_BUCKET_NAME: 'string',
 	TURSO_URL: 'string',
 	TURSO_TOKEN: 'string',
-	PUBLIC_WEB_URL: 'string.url'
+	PUBLIC_WEB_URL: 'string.url',
+	PUBLIC_VECTOR_URL: 'string.url'
 });
 
 let parsedEnv: typeof Env.infer | undefined;

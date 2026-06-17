@@ -2,6 +2,8 @@
 	import { ChevronLeft } from '@lucide/svelte';
 	import CoursePrerequisiteChecklist from '$lib/components/CoursePrerequisiteChecklist.svelte';
 	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
+	import TrainingSessionAvailabilityCalendar from '$lib/components/TrainingSessionAvailabilityCalendar.svelte';
+	import TrainingSessionPendingCard from '$lib/components/TrainingSessionPendingCard.svelte';
 	import {
 		getStudentCourseView,
 		joinCourseWaitlist,
@@ -143,27 +145,69 @@
 					Enrolled {view.enrolledAt.toUTCString().replace(' GMT', 'z')}
 				</p>
 			{/if}
-			<div class="mt-6 flex flex-col gap-3">
-				<div class="flex flex-wrap items-center gap-3">
-					<button
-						class="btn btn-outline btn-sm"
-						disabled={syncing || syncCooldownSeconds > 0}
-						onclick={handleSyncTasks}
-					>
-						{#if syncing}
-							<span class="loading loading-spinner loading-sm"></span>
-							Syncing...
-						{:else if syncCooldownSeconds > 0}
-							Refresh in {syncCooldownSeconds}s
-						{:else}
-							Sync tasks
+			<div class="mt-6 flex flex-col gap-4">
+				<div
+					class="grid grid-cols-1 items-start gap-4 {(view.canSubmitSessionAvailability ||
+						view.activeSession) &&
+					view.nextTask
+						? 'lg:grid-cols-2'
+						: ''}"
+				>
+					<div class="flex min-w-0 flex-col gap-3">
+						<CourseTaskList tasks={view.tasks} linkVatcanTasks highlightNextTask>
+							{#snippet headerActions()}
+								<button
+									class="btn btn-outline btn-sm"
+									disabled={syncing || syncCooldownSeconds > 0}
+									onclick={handleSyncTasks}
+								>
+									{#if syncing}
+										<span class="loading loading-spinner loading-sm"></span>
+										Syncing...
+									{:else if syncCooldownSeconds > 0}
+										Refresh in {syncCooldownSeconds}s
+									{:else}
+										Sync tasks
+									{/if}
+								</button>
+							{/snippet}
+						</CourseTaskList>
+						{#if syncError}
+							<p class="text-error text-sm">{syncError}</p>
 						{/if}
-					</button>
-					{#if syncError}
-						<p class="text-error text-sm">{syncError}</p>
+					</div>
+					{#if view.activeSession?.status === 'pending'}
+						<div class="min-w-0">
+							<TrainingSessionPendingCard
+								courseId={view.course.id}
+								taskId={view.nextTask!.taskId}
+								session={view.activeSession}
+								showStudentActions
+								showCancel={view.canCancelActiveSession}
+							/>
+						</div>
+					{:else if view.canSubmitSessionAvailability && view.nextTask}
+						<div class="flex min-w-0 flex-col gap-4">
+							{#if view.activeSession?.status === 'confirmed'}
+								<TrainingSessionPendingCard
+									courseId={view.course.id}
+									taskId={view.nextTask.taskId}
+									session={view.activeSession}
+									showCancel={view.canCancelActiveSession}
+								/>
+							{/if}
+							<TrainingSessionAvailabilityCalendar
+								mode="edit"
+								courseId={view.course.id}
+								taskId={view.nextTask.taskId}
+								sessionDescription={view.nextTask.description}
+								confirmedSession={view.activeSession?.status === 'confirmed'
+									? view.activeSession
+									: undefined}
+							/>
+						</div>
 					{/if}
 				</div>
-				<CourseTaskList tasks={view.tasks} linkVatcanTasks highlightNextTask />
 			</div>
 		{:else if view.bucket === 'completed'}
 			{#if view.completedAt}

@@ -11,6 +11,7 @@ import express from 'express';
 import { syncMoodle } from './syncMoodle.js';
 import { notificationsJob } from './notifications.js';
 import { fixWaitlistsJob } from './fixWaitlist.js';
+import { cleanupTrainingSessionAvailability } from './cleanupTrainingSessionAvailability.js';
 import { syncCourseTaskCompletions } from './syncCourseTaskCompletions.js';
 import { Env } from '@czqm/common';
 import { executeJobs } from './jobs.js';
@@ -87,6 +88,12 @@ async function main(): Promise<void> {
 
     app.get('/dev/fixwaitlists', async (req, res) => {
       await fixWaitlistsJob(db);
+
+      res.send('OK');
+    });
+
+    app.get('/dev/cleanup-availability', async (req, res) => {
+      await cleanupTrainingSessionAvailability(db);
 
       res.send('OK');
     });
@@ -199,6 +206,15 @@ async function main(): Promise<void> {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished long running jobs', new Date());
+      }
+
+      try {
+        console.log('Running Training Session Availability Cleanup', new Date());
+        await cleanupTrainingSessionAvailability(db);
+      } catch (err) {
+        console.error('Scheduled job failed:', err);
+      } finally {
+        console.log('Finished Training Session Availability Cleanup', new Date());
       }
     });
   }

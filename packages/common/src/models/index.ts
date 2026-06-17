@@ -1,5 +1,6 @@
 export * from "./user";
 export * from "./training";
+export * from "./trainingSession";
 export * from "./position";
 export * from "./soloEndorsements";
 export * from "./event";

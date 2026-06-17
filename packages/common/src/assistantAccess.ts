@@ -1,6 +1,7 @@
 import type { AssistantRole } from "@czqm/db/schema";
 import { ASSISTANT_ROLE_INFO } from "./assistants";
 import type { DB } from "./db";
+import { requiresInstructorToSchedule } from "./models/training";
 import type { User } from "./models/user";
 import type { FlagName } from "./models/user";
 
@@ -103,5 +104,16 @@ export function userHasVectorInstructorAccess(user: User): boolean {
 
 /** Mark a student as graduated from a course on the instructor dashboard */
 export function userCanGraduateVectorStudents(user: User): boolean {
+  return user.hasFlag(["instructor", "chief-instructor", "admin"]);
+}
+
+/** Schedule a training session of this type (mentors blocked for orientation/OTS). */
+export function userCanScheduleTrainingSessionType(
+  user: User,
+  sessionType: string | null,
+): boolean {
+  if (!sessionType || !requiresInstructorToSchedule(sessionType)) {
+    return true;
+  }
   return user.hasFlag(["instructor", "chief-instructor", "admin"]);
 }

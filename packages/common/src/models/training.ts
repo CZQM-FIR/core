@@ -597,6 +597,11 @@ export function isTrainingSessionType(
   return value in TRAINING_SESSION_TYPE_LABELS;
 }
 
+/** Orientation and OTS sessions may only be scheduled by instructors, not mentors. */
+export function requiresInstructorToSchedule(sessionType: string): boolean {
+  return sessionType === "orientation" || sessionType === "ots";
+}
+
 function indefiniteArticle(word: string): "a" | "an" {
   return /^[aeiou]/i.test(word) ? "an" : "a";
 }

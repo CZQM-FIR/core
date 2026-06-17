@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load = (async ({ params }) => {
+export const load = (async ({ params, url }) => {
 	if (!/^[0-9a-z]{5}$/.test(params.courseId)) {
 		throw redirect(303, '/');
 	}
@@ -11,5 +11,9 @@ export const load = (async ({ params }) => {
 		throw redirect(303, '/');
 	}
 
-	return { courseId: params.courseId, cid };
+	return {
+		courseId: params.courseId,
+		cid,
+		fromAvailability: url.searchParams.get('from') === 'availability'
+	};
 }) satisfies PageServerLoad;
