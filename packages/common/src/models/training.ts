@@ -1145,6 +1145,10 @@ export abstract class CourseTask {
     return false;
   }
 
+  isManuallyCompletable(): boolean {
+    return !this.isAutoCompletable();
+  }
+
   async getCompletion(userId: number): Promise<CourseTaskCompletion | null> {
     const row = await this.db.query.courseTaskCompletions.findFirst({
       where: {
@@ -1327,6 +1331,10 @@ export class TrainingSessionCourseTask extends CourseTask {
 
   getDescription(): string {
     return describeTrainingSessionTask(this.sessionType, this.sessionName);
+  }
+
+  isManuallyCompletable(): boolean {
+    return false;
   }
 }
 

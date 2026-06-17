@@ -62,7 +62,7 @@ export async function getCourseTaskProgress(
 				startedAt: completion?.startedAt ?? null,
 				completedAt: completion?.completedAt ?? null,
 				isComplete: completion?.isComplete ?? false,
-				manuallyCompletable: !task.isAutoCompletable()
+				manuallyCompletable: task.isManuallyCompletable()
 			};
 		})
 	);

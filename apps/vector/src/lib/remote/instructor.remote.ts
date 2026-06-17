@@ -147,7 +147,7 @@ async function getInstructorCourseTask(courseId: string, taskId: number) {
 
 	const task = course.tasks.find((entry) => entry.taskId === taskId);
 	if (!task) throw error(404, 'Task not found');
-	if (task.isAutoCompletable()) {
+	if (task.isAutoCompletable() || !task.isManuallyCompletable()) {
 		throw error(400, 'This task cannot be marked complete manually');
 	}
 
