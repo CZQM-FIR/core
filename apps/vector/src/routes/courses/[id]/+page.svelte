@@ -2,7 +2,11 @@
 	import { ChevronLeft } from '@lucide/svelte';
 	import CoursePrerequisiteChecklist from '$lib/components/CoursePrerequisiteChecklist.svelte';
 	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
-	import { getStudentCourseView, joinCourseWaitlist } from '$lib/remote/student.remote';
+	import {
+		getStudentCourseView,
+		joinCourseWaitlist,
+		syncStudentCourseTasks
+	} from '$lib/remote/student.remote';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -11,6 +15,24 @@
 
 	let joining = $state(false);
 	let joinError = $state<string | null>(null);
+
+	let syncing = $state(false);
+	let syncError = $state<string | null>(null);
+	let syncCooldownUntil = $state(0);
+	let syncCooldownSeconds = $state(0);
+
+	$effect(() => {
+		const updateCooldown = () => {
+			const remaining = Math.ceil((syncCooldownUntil - Date.now()) / 1000);
+			syncCooldownSeconds = remaining > 0 ? remaining : 0;
+		};
+
+		updateCooldown();
+		if (syncCooldownUntil <= Date.now()) return;
+
+		const interval = setInterval(updateCooldown, 1000);
+		return () => clearInterval(interval);
+	});
 
 	async function handleJoinWaitlist() {
 		joining = true;
@@ -28,6 +50,26 @@
 			}
 		} finally {
 			joining = false;
+		}
+	}
+
+	async function handleSyncTasks() {
+		syncing = true;
+		syncError = null;
+		try {
+			await syncStudentCourseTasks(data.courseId);
+		} catch (err) {
+			if (err && typeof err === 'object' && 'body' in err) {
+				const body = (err as { body?: { message?: string } }).body;
+				syncError = body?.message ?? 'Failed to sync tasks';
+			} else if (err instanceof Error) {
+				syncError = err.message;
+			} else {
+				syncError = 'Failed to sync tasks';
+			}
+		} finally {
+			syncing = false;
+			syncCooldownUntil = Date.now() + 60_000;
 		}
 	}
 </script>
@@ -101,7 +143,26 @@
 					Enrolled {view.enrolledAt.toUTCString().replace(' GMT', 'z')}
 				</p>
 			{/if}
-			<div class="mt-6">
+			<div class="mt-6 flex flex-col gap-3">
+				<div class="flex flex-wrap items-center gap-3">
+					<button
+						class="btn btn-outline btn-sm"
+						disabled={syncing || syncCooldownSeconds > 0}
+						onclick={handleSyncTasks}
+					>
+						{#if syncing}
+							<span class="loading loading-spinner loading-sm"></span>
+							Syncing...
+						{:else if syncCooldownSeconds > 0}
+							Refresh in {syncCooldownSeconds}s
+						{:else}
+							Sync tasks
+						{/if}
+					</button>
+					{#if syncError}
+						<p class="text-error text-sm">{syncError}</p>
+					{/if}
+				</div>
 				<CourseTaskList tasks={view.tasks} linkVatcanTasks highlightNextTask />
 			</div>
 		{:else if view.bucket === 'completed'}

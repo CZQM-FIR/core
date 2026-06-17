@@ -2,7 +2,7 @@ import type { DB } from "../db";
 import * as schema from "@czqm/db/schema";
 import { and, eq } from "drizzle-orm";
 import type { Env } from "../types";
-import type { User } from "./user";
+import { User } from "./user";
 import {
   decodeVatcanCbtTaskValue2,
   type VatcanCbtBlockMeta,
@@ -506,6 +506,17 @@ export class Course {
     );
 
     return results.every(Boolean);
+  }
+
+  async syncTaskCompletions(
+    userId: number,
+    env?: Pick<Env, "VATCAN_API_TOKEN">,
+  ): Promise<void> {
+    await Promise.all(
+      this.tasks
+        .filter((task) => task.isAutoCompletable())
+        .map((task) => task.isCompleted(userId, env)),
+    );
   }
 }
 
@@ -1349,11 +1360,50 @@ export class DelayCourseTask extends CourseTask {
   }
 
   protected async checkExternalCompletion(
-    _userId: number,
-    _env?: Pick<Env, "VATCAN_API_TOKEN">,
+    userId: number,
+    env?: Pick<Env, "VATCAN_API_TOKEN">,
   ): Promise<boolean> {
-    // TODO: load in-progress completion row and check elapsed time/hours since startedAt
-    return false;
+    const course = await Course.fetchById(this.courseId, this.db);
+    if (!course) return false;
+
+    const taskIndex = course.tasks.findIndex((task) => task.taskId === this.taskId);
+    if (taskIndex === -1) return false;
+
+    const priorTasks = course.tasks.slice(0, taskIndex);
+    for (const priorTask of priorTasks) {
+      if (!(await priorTask.isCompleted(userId, env))) {
+        return false;
+      }
+    }
+
+    const amount = this.amount;
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return false;
+    }
+
+    let completion = await this.getCompletion(userId);
+    if (!completion) {
+      completion = await this.start(userId);
+    }
+
+    const startedAt = completion.startedAt;
+
+    if (this.unit === "days") {
+      const elapsed = Date.now() - startedAt.getTime();
+      return elapsed >= amount * 24 * 60 * 60 * 1000;
+    }
+
+    const user = await User.fromCid(this.db, userId, {
+      sessions: { since: startedAt },
+    });
+    if (!user) return false;
+
+    const totalSeconds = user.hours.localSessions.reduce(
+      (total, session) => total + session.duration,
+      0,
+    );
+
+    return totalSeconds / 3600 >= amount;
   }
 }
 

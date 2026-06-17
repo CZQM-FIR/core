@@ -3,6 +3,7 @@ import { db } from '$lib/db';
 import { getCourseTaskProgress } from '$lib/courseTaskProgress';
 import { moodleQueue, waitingUsers } from '@czqm/db/schema';
 import { Course, User } from '@czqm/common';
+import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { authorizeVectorStudentAccess } from './auth';
@@ -221,4 +222,34 @@ export const joinCourseWaitlist = command(CourseId, async (courseId) => {
 
 	getStudentCourses().refresh();
 	getStudentCourseView(courseId).refresh();
+});
+
+export const syncStudentCourseTasks = command(CourseId, async (courseId) => {
+	const user = await authorizeVectorStudentAccess();
+
+	const course = await Course.fetchById(courseId, db);
+	if (!course) throw error(404, 'Course not found');
+
+	const enrolled = await db.query.enrolledUsers.findFirst({
+		where: {
+			waitlistId: course.waitlist.id,
+			cid: user.cid,
+			hiddenAt: { isNull: true }
+		}
+	});
+	if (!enrolled) {
+		throw error(403, 'You must be actively enrolled in this course');
+	}
+
+	if (!env.VATCAN_API_TOKEN) {
+		throw error(500, 'VATCAN API token is not configured on this server.');
+	}
+
+	await course.syncTaskCompletions(user.cid, {
+		VATCAN_API_TOKEN: env.VATCAN_API_TOKEN
+	});
+
+	getStudentCourseView(courseId).refresh();
+
+	return { ok: true as const };
 });
