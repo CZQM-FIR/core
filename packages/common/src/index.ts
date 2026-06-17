@@ -6,3 +6,4 @@ export * from "./staff";
 export * from "./assistants";
 export * from "./assistantAccess";
 export * from "./transport";
+export * from "./vatcan";

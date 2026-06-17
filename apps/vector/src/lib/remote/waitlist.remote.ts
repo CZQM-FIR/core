@@ -1,4 +1,4 @@
-import { command, getRequestEvent, query } from '$app/server';
+import { command, query } from '$app/server';
 import { db } from '$lib/db';
 import { enrolledUsers, moodleQueue, waitingUsers, waitlists } from '@czqm/db/schema';
 import { error } from '@sveltejs/kit';
@@ -310,30 +310,6 @@ export const saveWaitlistCohorts = command(
 		return { success: true };
 	}
 );
-
-export const getIndividualsWaitlistEntries = query(async () => {
-	const event = getRequestEvent();
-	const cid = event.locals.user?.cid;
-
-	if (!cid) {
-		throw error(403, 'Forbidden');
-	}
-
-	const waitlistEntries = await db.query.waitingUsers.findMany({
-		where: { cid: cid! },
-		with: {
-			waitlist: {
-				columns: {
-					id: true,
-					name: true,
-					waitTime: true
-				}
-			}
-		}
-	});
-
-	return waitlistEntries;
-});
 
 export const getEnrolledWaitlistEntries = query(type('number.integer >= 0'), async (waitlistId) => {
 	await authorizeVectorAdminAccess();

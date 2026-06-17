@@ -11,7 +11,7 @@ import express from 'express';
 import { syncMoodle } from './syncMoodle.js';
 import { notificationsJob } from './notifications.js';
 import { fixWaitlistsJob } from './fixWaitlist.js';
-import { syncCourseGraduations } from './syncCourseGraduations.js';
+import { syncCourseTaskCompletions } from './syncCourseTaskCompletions.js';
 import { Env } from '@czqm/common';
 import { executeJobs } from './jobs.js';
 
@@ -91,8 +91,8 @@ async function main(): Promise<void> {
       res.send('OK');
     });
 
-    app.get('/dev/graduations', async (req, res) => {
-      await syncCourseGraduations(db, env);
+    app.get('/dev/task-completions', async (req, res) => {
+      await syncCourseTaskCompletions(db, env);
 
       res.send('OK');
     });
@@ -153,6 +153,14 @@ async function main(): Promise<void> {
       } catch (err) {
         console.error('Scheduled job failed:', err);
       }
+
+      try {
+        console.log('Running Course Task Completions Sync', new Date());
+        await syncCourseTaskCompletions(db, env);
+        console.log('Finished Course Task Completions Sync', new Date());
+      } catch (err) {
+        console.error('Scheduled job failed:', err);
+      }
     });
 
     cron.schedule('0 * * * *', async () => {
@@ -182,15 +190,6 @@ async function main(): Promise<void> {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished Fix Waitlists', new Date());
-      }
-
-      try {
-        console.log('Running Course Graduations Sync', new Date());
-        await syncCourseGraduations(db, env);
-      } catch (err) {
-        console.error('Scheduled job failed:', err);
-      } finally {
-        console.log('Finished Course Graduations Sync', new Date());
       }
 
       try {

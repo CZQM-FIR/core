@@ -1,10 +1,6 @@
 <script lang="ts">
 	import { ChevronLeft } from '@lucide/svelte';
-	import {
-		getInstructorCourse,
-		getInstructorEnrolledEntries,
-		getInstructorCompletedEntries
-	} from '$lib/remote/instructor.remote';
+	import { getInstructorCourse, getInstructorEnrolledEntries } from '$lib/remote/instructor.remote';
 	import type { PageData } from './$types';
 	import InstructorCourseStudents from './InstructorCourseStudents.svelte';
 
@@ -43,11 +39,6 @@
 					<span class="badge badge-ghost">...</span>
 				{:then enrolled}
 					<span class="badge badge-secondary">{enrolled.length} enrolled</span>
-				{/await}
-				{#await getInstructorCompletedEntries(course.waitlistId)}
-					<span class="badge badge-ghost">...</span>
-				{:then completed}
-					<span class="badge badge-accent">{completed.length} completed</span>
 				{/await}
 				<span class="badge badge-neutral">{course.tasks.length} tasks</span>
 			</div>
