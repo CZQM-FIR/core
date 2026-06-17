@@ -48,9 +48,7 @@ export async function getCourseTaskProgress(
 	cid: number
 ): Promise<CourseTaskProgress[]> {
 	const vatcanCbtMetaByBlockId = await buildVatcanCbtMetaMap(course.tasks);
-	const describeOptions = vatcanCbtMetaByBlockId
-		? { vatcanCbtMetaByBlockId }
-		: undefined;
+	const describeOptions = vatcanCbtMetaByBlockId ? { vatcanCbtMetaByBlockId } : undefined;
 
 	return Promise.all(
 		course.tasks.map(async (task) => {

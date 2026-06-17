@@ -111,8 +111,7 @@ export const getInstructorStudentView = query(
 					: 'none';
 
 		const tasks = await getCourseTaskProgress(course, cid);
-		const allTasksComplete =
-			tasks.length === 0 || tasks.every((task) => task.isComplete);
+		const allTasksComplete = tasks.length === 0 || tasks.every((task) => task.isComplete);
 
 		return {
 			course: {
@@ -155,14 +154,17 @@ async function getInstructorCourseTask(courseId: string, taskId: number) {
 	return task;
 }
 
-export const completeStudentCourseTask = command(StudentTaskOptions, async ({ courseId, cid, taskId }) => {
-	await authorizeVectorInstructorAccess();
+export const completeStudentCourseTask = command(
+	StudentTaskOptions,
+	async ({ courseId, cid, taskId }) => {
+		await authorizeVectorInstructorAccess();
 
-	const task = await getInstructorCourseTask(courseId, taskId);
-	await task.complete(cid);
+		const task = await getInstructorCourseTask(courseId, taskId);
+		await task.complete(cid);
 
-	getInstructorStudentView({ courseId, cid }).refresh();
-});
+		getInstructorStudentView({ courseId, cid }).refresh();
+	}
+);
 
 export const uncompleteStudentCourseTask = command(
 	StudentTaskOptions,

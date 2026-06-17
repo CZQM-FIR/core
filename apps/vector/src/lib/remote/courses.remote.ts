@@ -1,6 +1,14 @@
 import { command, form, query } from '$app/server';
 import { db } from '$lib/db';
-import { Course, encodeVatcanCbtTaskValue2, fetchVatcanCbtBlockOptions, findVatcanCbtBlock, isTrainingSessionType, type PrerequisiteType, type TaskType } from '@czqm/common';
+import {
+	Course,
+	encodeVatcanCbtTaskValue2,
+	fetchVatcanCbtBlockOptions,
+	findVatcanCbtBlock,
+	isTrainingSessionType,
+	type PrerequisiteType,
+	type TaskType
+} from '@czqm/common';
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';

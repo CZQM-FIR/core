@@ -43,7 +43,7 @@
 	}
 </script>
 
-<div class="card bg-base-200 shadow-sm w-full max-w-1/2">
+<div class="card bg-base-200 w-full max-w-1/2 shadow-sm">
 	<div class="card-body">
 		<h2 class="card-title text-lg">Course Tasks</h2>
 		{#if tasks.length === 0}
@@ -54,10 +54,8 @@
 					{@const taskLinkUrl = linkVatcanTasks
 						? getVatcanTaskUrl(task.taskType, task.taskValue2)
 						: undefined}
-					{@const showInstructorControls =
-						instructorContext && task.manuallyCompletable}
-					{@const isDimmed =
-						highlightNextTask && nextTaskIndex !== -1 && index !== nextTaskIndex}
+					{@const showInstructorControls = instructorContext && task.manuallyCompletable}
+					{@const isDimmed = highlightNextTask && nextTaskIndex !== -1 && index !== nextTaskIndex}
 					<svelte:element
 						this={taskLinkUrl ? 'a' : 'div'}
 						href={taskLinkUrl}
@@ -65,12 +63,12 @@
 						rel={taskLinkUrl ? 'noopener noreferrer' : undefined}
 						class="bg-base-100 flex flex-row items-center gap-2 rounded-lg px-3 py-2 shadow-sm transition-opacity {isDimmed
 							? 'opacity-45'
-							: ''} {taskLinkUrl && !isDimmed
-							? 'hover:bg-base-300 transition-colors'
-							: ''}"
+							: ''} {taskLinkUrl && !isDimmed ? 'hover:bg-base-300 transition-colors' : ''}"
 					>
 						<span class="shrink-0 text-sm font-semibold">Task {index + 1}</span>
-						<span class="badge badge-outline badge-sm shrink-0">{task.typeLabel}</span>
+						{#if instructorContext}
+							<span class="badge badge-outline badge-sm shrink-0">{task.typeLabel}</span>
+						{/if}
 						<p class="min-w-0 flex-1 truncate text-sm">{task.description}</p>
 						{#if showInstructorControls}
 							{#if task.isComplete}

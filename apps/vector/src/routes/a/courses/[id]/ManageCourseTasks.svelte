@@ -144,9 +144,14 @@
 		taskToDelete = null;
 	}
 
-	function swapTasks(tasks: TaskRow[], index: number, direction: 'up' | 'down'): TaskRow[] {
-		const next = [...tasks];
+	function swapTasks(tasks: TaskRow[], taskId: number, direction: 'up' | 'down'): TaskRow[] {
+		const index = tasks.findIndex((task) => task.taskId === taskId);
+		if (index === -1) return tasks;
+
 		const otherIndex = direction === 'up' ? index - 1 : index + 1;
+		if (otherIndex < 0 || otherIndex >= tasks.length) return tasks;
+
+		const next = [...tasks];
 		[next[otherIndex], next[index]] = [next[index], next[otherIndex]];
 		return next;
 	}
@@ -198,7 +203,7 @@
 							moveCourseTaskUp({ courseId, taskId: task.taskId }).updates(
 								getCourse(courseId).withOverride((c) => ({
 									...c,
-									tasks: swapTasks(c.tasks, index, 'up')
+									tasks: swapTasks(c.tasks, task.taskId, 'up')
 								}))
 							)}
 					>
@@ -213,18 +218,14 @@
 							moveCourseTaskDown({ courseId, taskId: task.taskId }).updates(
 								getCourse(courseId).withOverride((c) => ({
 									...c,
-									tasks: swapTasks(c.tasks, index, 'down')
+									tasks: swapTasks(c.tasks, task.taskId, 'down')
 								}))
 							)}
 					>
 						<ArrowDown size="16" strokeWidth={2.5} />
 					</button>
 				{/if}
-				<button
-					class="tooltip"
-					data-tip="Edit Task"
-					onclickcapture={() => openEditModal(task)}
-				>
+				<button class="tooltip" data-tip="Edit Task" onclickcapture={() => openEditModal(task)}>
 					<SquarePen class="hover:text-primary transition-colors" size="14" />
 				</button>
 				<button class="tooltip" data-tip="Delete Task">
@@ -394,82 +395,82 @@
 						<input type="hidden" name="taskType" value={selectedTaskType} />
 
 						{#key selectedTaskType}
-						{#if selectedTaskType === 'manual'}
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Label</legend>
-								<input type="text" class="input" name="taskValue1" />
-							</fieldset>
-						{:else if selectedTaskType === 'vatcan_exam'}
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Exam Name</legend>
-								<input type="text" class="input" name="taskValue1" />
-							</fieldset>
-						{:else if selectedTaskType === 'moodle'}
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Moodle Course Name</legend>
-								<input type="text" class="input" name="taskValue1" />
-							</fieldset>
-						{:else if selectedTaskType === 'vatcan_cbt'}
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">CBT Block</legend>
-								{#await getVatcanCbtBlocks()}
-									<p class="text-sm opacity-70">Loading CBT blocks...</p>
-								{:then catalog}
-									{#if catalog.error}
-										<p class="text-error text-sm">{catalog.error}</p>
-									{:else if catalog.blocks.length === 0}
-										<p class="text-warning text-sm">No CBT blocks available.</p>
-									{:else}
-										<select
-											class="select"
-											name="taskValue1"
-											required
-											bind:value={selectedCbtBlockId}
-										>
-											<option value="" disabled selected>Select CBT block</option>
-											{#each groupCbtBlocks(catalog.blocks) as group (group.label)}
-												<optgroup label={group.label}>
-													{#each group.blocks as block (`${block.source}:${block.id}`)}
-														<option value={formatCbtBlockKey(block)}>{block.title}</option>
-													{/each}
-												</optgroup>
-											{/each}
-										</select>
-									{/if}
-								{:catch err}
-									<p class="text-error text-sm">
-										Failed to load CBT blocks{err instanceof Error ? `: ${err.message}` : '.'}
-									</p>
-								{/await}
-							</fieldset>
-						{:else if selectedTaskType === 'training_session'}
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Session Type</legend>
-								<select class="select" name="taskValue1" required>
-									<option value="" disabled selected>Select session type</option>
-									{#each TRAINING_SESSION_TYPES as sessionType (sessionType.value)}
-										<option value={sessionType.value}>{sessionType.label}</option>
-									{/each}
-								</select>
-							</fieldset>
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Session Name (optional)</legend>
-								<input type="text" class="input" name="taskValue2" />
-							</fieldset>
-						{:else if selectedTaskType === 'delay'}
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Unit</legend>
-								<select class="select" name="taskValue1">
-									<option value="hours">Controlling Hours</option>
-									<option value="days" selected>Days</option>
-								</select>
-							</fieldset>
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Quantity</legend>
-								<input type="number" class="input" name="taskValue2" min="1" />
-							</fieldset>
-						{/if}
-					{/key}
+							{#if selectedTaskType === 'manual'}
+								<fieldset class="fieldset">
+									<legend class="fieldset-legend">Label</legend>
+									<input type="text" class="input" name="taskValue1" />
+								</fieldset>
+							{:else if selectedTaskType === 'vatcan_exam'}
+								<fieldset class="fieldset">
+									<legend class="fieldset-legend">Exam Name</legend>
+									<input type="text" class="input" name="taskValue1" />
+								</fieldset>
+							{:else if selectedTaskType === 'moodle'}
+								<fieldset class="fieldset">
+									<legend class="fieldset-legend">Moodle Course Name</legend>
+									<input type="text" class="input" name="taskValue1" />
+								</fieldset>
+							{:else if selectedTaskType === 'vatcan_cbt'}
+								<fieldset class="fieldset">
+									<legend class="fieldset-legend">CBT Block</legend>
+									{#await getVatcanCbtBlocks()}
+										<p class="text-sm opacity-70">Loading CBT blocks...</p>
+									{:then catalog}
+										{#if catalog.error}
+											<p class="text-error text-sm">{catalog.error}</p>
+										{:else if catalog.blocks.length === 0}
+											<p class="text-warning text-sm">No CBT blocks available.</p>
+										{:else}
+											<select
+												class="select"
+												name="taskValue1"
+												required
+												bind:value={selectedCbtBlockId}
+											>
+												<option value="" disabled selected>Select CBT block</option>
+												{#each groupCbtBlocks(catalog.blocks) as group (group.label)}
+													<optgroup label={group.label}>
+														{#each group.blocks as block (`${block.source}:${block.id}`)}
+															<option value={formatCbtBlockKey(block)}>{block.title}</option>
+														{/each}
+													</optgroup>
+												{/each}
+											</select>
+										{/if}
+									{:catch err}
+										<p class="text-error text-sm">
+											Failed to load CBT blocks{err instanceof Error ? `: ${err.message}` : '.'}
+										</p>
+									{/await}
+								</fieldset>
+							{:else if selectedTaskType === 'training_session'}
+								<fieldset class="fieldset">
+									<legend class="fieldset-legend">Session Type</legend>
+									<select class="select" name="taskValue1" required>
+										<option value="" disabled selected>Select session type</option>
+										{#each TRAINING_SESSION_TYPES as sessionType (sessionType.value)}
+											<option value={sessionType.value}>{sessionType.label}</option>
+										{/each}
+									</select>
+								</fieldset>
+								<fieldset class="fieldset">
+									<legend class="fieldset-legend">Session Name (optional)</legend>
+									<input type="text" class="input" name="taskValue2" />
+								</fieldset>
+							{:else if selectedTaskType === 'delay'}
+								<fieldset class="fieldset">
+									<legend class="fieldset-legend">Unit</legend>
+									<select class="select" name="taskValue1">
+										<option value="hours">Controlling Hours</option>
+										<option value="days" selected>Days</option>
+									</select>
+								</fieldset>
+								<fieldset class="fieldset">
+									<legend class="fieldset-legend">Quantity</legend>
+									<input type="number" class="input" name="taskValue2" min="1" />
+								</fieldset>
+							{/if}
+						{/key}
 
 						<div class="modal-action">
 							<button type="button" class="btn" onclickcapture={() => taskModal?.close()}

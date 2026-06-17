@@ -243,7 +243,9 @@
 					{/key}
 
 					<div class="modal-action">
-						<button type="button" class="btn" onclick={() => prerequisiteModal?.close()}>Cancel</button>
+						<button type="button" class="btn" onclick={() => prerequisiteModal?.close()}
+							>Cancel</button
+						>
 						<button class="btn btn-primary" disabled={!!addPrerequisiteForm.pending}>
 							{#if addPrerequisiteForm.pending}
 								<span class="loading loading-spinner loading-sm"></span>

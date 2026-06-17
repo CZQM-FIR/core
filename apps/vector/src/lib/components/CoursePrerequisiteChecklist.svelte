@@ -15,8 +15,13 @@
 			<ul class="flex flex-col gap-2">
 				{#each results as result, index (index)}
 					<li class="bg-base-100 flex items-center gap-2 rounded-lg px-3 py-2 shadow-sm">
-						<span class="badge badge-sm shrink-0 {result.met ? 'badge-success' : 'badge-error'}">
-							{result.met ? 'Met' : 'Unmet'}
+						<span
+							class="badge badge-sm shrink-0 {result.met
+								? 'badge-success'
+								: 'badge-error text-black'}"
+							aria-label={result.met ? 'Prerequisite met' : 'Prerequisite not met'}
+						>
+							{result.met ? '✓' : '×'}
 						</span>
 						<span class="text-sm">{result.description}</span>
 					</li>
