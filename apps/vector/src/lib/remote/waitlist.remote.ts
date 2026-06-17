@@ -6,6 +6,7 @@ import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
 import { Course, User } from '@czqm/common';
 import { authorizeVectorAdminAccess } from './auth';
+import { notifyCourseEnrollmentEmailByWaitlist } from '$lib/courseEnrollmentEmails';
 
 export const getWaitlist = query(type('number.integer >= 0'), async (waitlistId) => {
 	await authorizeVectorAdminAccess();
@@ -221,6 +222,12 @@ export const addUserToWaitlist = command(
 		}
 
 		getWaitlist(waitlistId).refresh();
+
+		try {
+			await notifyCourseEnrollmentEmailByWaitlist('waitlisted', waitlistId, userId);
+		} catch (err) {
+			console.error('Failed to queue course enrollment email', err);
+		}
 	}
 );
 
@@ -268,6 +275,12 @@ export const enrolUserFromWaitlist = command(
 
 		getWaitlist(waitlistId).refresh();
 		getEnrolledWaitlistEntries(waitlistId).refresh();
+
+		try {
+			await notifyCourseEnrollmentEmailByWaitlist('enrolled', waitlistId, userId);
+		} catch (err) {
+			console.error('Failed to queue course enrollment email', err);
+		}
 	}
 );
 
@@ -508,6 +521,12 @@ export const graduateUserFromCourse = command(
 		getEnrolledWaitlistEntries(waitlistId).refresh();
 		getCompletedWaitlistEntries(waitlistId).refresh();
 		getWaitlist(waitlistId).refresh();
+
+		try {
+			await notifyCourseEnrollmentEmailByWaitlist('completed', waitlistId, userId);
+		} catch (err) {
+			console.error('Failed to queue course enrollment email', err);
+		}
 
 		return {
 			success: true

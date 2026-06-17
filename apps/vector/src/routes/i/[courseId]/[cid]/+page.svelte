@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { ChevronLeft } from '@lucide/svelte';
 	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
+	import TrainingSessionAvailabilityCalendar from '$lib/components/TrainingSessionAvailabilityCalendar.svelte';
+	import TrainingSessionPendingCard from '$lib/components/TrainingSessionPendingCard.svelte';
 	import {
 		getInstructorStudentView,
 		graduateStudentFromCourse
@@ -50,10 +52,11 @@
 		<p>Loading student...</p>
 	{:then view}
 		<a
-			href="/i/courses/{view.course.id}"
+			href={data.fromAvailability ? '/i/availability' : `/i/courses/${view.course.id}`}
 			class="text-primary hover:link flex flex-row items-center gap-1"
 		>
-			<ChevronLeft size="15" /> Back to {view.course.name}
+			<ChevronLeft size="15" />
+			{data.fromAvailability ? 'Back to availability' : `Back to ${view.course.name}`}
 		</a>
 
 		<div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -86,6 +89,39 @@
 			<p class="mt-2 text-sm opacity-70">
 				Completed {view.completedAt.toUTCString().replace(' GMT', 'z')}
 			</p>
+		{/if}
+
+		{#if view.activeSession}
+			<div class="mt-6">
+				<TrainingSessionPendingCard
+					courseId={view.course.id}
+					taskId={view.nextTask!.taskId}
+					session={view.activeSession}
+					showCancel={view.canCancelActiveSession}
+					cancelAs="staff"
+					studentCid={view.student.cid}
+				/>
+			</div>
+		{:else if view.canScheduleSession && view.nextTask}
+			<div class="mt-6">
+				<TrainingSessionAvailabilityCalendar
+					mode="schedule"
+					courseId={view.course.id}
+					taskId={view.nextTask.taskId}
+					cid={view.student.cid}
+					sessionDescription={view.nextTask.description}
+				/>
+			</div>
+		{:else if view.canViewSessionAvailability && view.nextTask}
+			<div class="mt-6">
+				<TrainingSessionAvailabilityCalendar
+					mode="view"
+					courseId={view.course.id}
+					taskId={view.nextTask.taskId}
+					cid={view.student.cid}
+					sessionDescription={view.nextTask.description}
+				/>
+			</div>
 		{/if}
 
 		<div class="mt-6">

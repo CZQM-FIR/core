@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import type { CourseTaskProgress } from '$lib/courseTaskProgress';
 	import { getVatcanTaskUrl } from '@czqm/common';
 	import {
@@ -10,12 +11,14 @@
 		tasks,
 		linkVatcanTasks = false,
 		highlightNextTask = false,
-		instructorContext
+		instructorContext,
+		headerActions
 	}: {
 		tasks: CourseTaskProgress[];
 		linkVatcanTasks?: boolean;
 		highlightNextTask?: boolean;
 		instructorContext?: { courseId: string; cid: number };
+		headerActions?: Snippet;
 	} = $props();
 
 	const nextTaskIndex = $derived(
@@ -43,9 +46,14 @@
 	}
 </script>
 
-<div class="card bg-base-200 w-full max-w-1/2 shadow-sm">
+<div class="card bg-base-200 w-full shadow-sm">
 	<div class="card-body">
-		<h2 class="card-title text-lg">Course Tasks</h2>
+		<div class="flex flex-row items-center justify-between gap-2">
+			<h2 class="card-title text-lg">Course Tasks</h2>
+			{#if headerActions}
+				<div class="shrink-0">{@render headerActions()}</div>
+			{/if}
+		</div>
 		{#if tasks.length === 0}
 			<p class="text-sm">No tasks defined for this course.</p>
 		{:else}

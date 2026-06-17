@@ -14,5 +14,13 @@
 				</p>
 			</div>
 		</a>
+		<a href="/i/availability" class="card bg-base-200 shadow-sm transition-shadow hover:shadow-md">
+			<div class="card-body">
+				<h2 class="card-title text-lg">Session availability</h2>
+				<p class="text-sm opacity-80">
+					Find students who submitted session availability and match against your free times.
+				</p>
+			</div>
+		</a>
 	</div>
 </section>
