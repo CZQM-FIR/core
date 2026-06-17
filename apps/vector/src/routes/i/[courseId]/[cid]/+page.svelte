@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ChevronLeft } from '@lucide/svelte';
 	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
+	import TrainingSessionAvailabilityCalendar from '$lib/components/TrainingSessionAvailabilityCalendar.svelte';
 	import {
 		getInstructorStudentView,
 		graduateStudentFromCourse
@@ -86,6 +87,18 @@
 			<p class="mt-2 text-sm opacity-70">
 				Completed {view.completedAt.toUTCString().replace(' GMT', 'z')}
 			</p>
+		{/if}
+
+		{#if view.canViewSessionAvailability && view.nextTask}
+			<div class="mt-6">
+				<TrainingSessionAvailabilityCalendar
+					courseId={view.course.id}
+					taskId={view.nextTask.taskId}
+					cid={view.student.cid}
+					readOnly
+					sessionDescription={view.nextTask.description}
+				/>
+			</div>
 		{/if}
 
 		<div class="mt-6">

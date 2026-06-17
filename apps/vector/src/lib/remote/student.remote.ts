@@ -1,11 +1,19 @@
 import { command, query } from '$app/server';
 import { db } from '$lib/db';
+import {
+	getAvailabilityWindowEndsAt,
+	getNextIncompleteTask,
+	isTrainingSessionNext,
+	toNextTaskSummary,
+	validateAvailabilitySlots
+} from '$lib/trainingSessionAvailability';
 import { getCourseTaskProgress } from '$lib/courseTaskProgress';
-import { moodleQueue, waitingUsers } from '@czqm/db/schema';
+import { moodleQueue, trainingSessionAvailability, waitingUsers } from '@czqm/db/schema';
 import { Course, User } from '@czqm/common';
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
+import { and, eq } from 'drizzle-orm';
 import { authorizeVectorStudentAccess } from './auth';
 
 const CourseId = type(/^[0-9a-z]{5}$/);
@@ -147,6 +155,10 @@ export const getStudentCourseView = query(CourseId, async (courseId) => {
 			? []
 			: await getCourseTaskProgress(course, cid);
 
+	const nextTask = toNextTaskSummary(getNextIncompleteTask(tasks));
+	const canSubmitSessionAvailability =
+		bucket === 'enrolled' && status === 'enrolled' && isTrainingSessionNext(tasks);
+
 	return {
 		course: {
 			id: course.id,
@@ -161,7 +173,9 @@ export const getStudentCourseView = query(CourseId, async (courseId) => {
 		completedAt: completedRow?.completedAt ?? null,
 		waitTime: waitlist?.waitTime ?? null,
 		prerequisiteResults,
-		tasks
+		tasks,
+		nextTask,
+		canSubmitSessionAvailability
 	};
 });
 
@@ -253,3 +267,137 @@ export const syncStudentCourseTasks = command(CourseId, async (courseId) => {
 
 	return { ok: true as const };
 });
+
+const TrainingSessionAvailabilityOptions = type({
+	courseId: CourseId,
+	taskId: 'number.integer >= 0'
+});
+
+async function assertStudentSessionAvailabilityEligible(
+	courseId: string,
+	taskId: number,
+	cid: number
+) {
+	const course = await Course.fetchById(courseId, db);
+	if (!course) throw error(404, 'Course not found');
+
+	const enrolled = await db.query.enrolledUsers.findFirst({
+		where: {
+			waitlistId: course.waitlist.id,
+			cid,
+			hiddenAt: { isNull: true }
+		}
+	});
+	if (!enrolled) {
+		throw error(403, 'You must be actively enrolled in this course');
+	}
+
+	const tasks = await getCourseTaskProgress(course, cid);
+	const next = getNextIncompleteTask(tasks);
+	if (!next || next.taskType !== 'training_session' || next.taskId !== taskId) {
+		throw error(
+			400,
+			'Session availability is only available for your next training session task'
+		);
+	}
+
+	return course;
+}
+
+async function fetchTrainingSessionAvailabilityRows(
+	cid: number,
+	courseId: string,
+	taskId: number
+) {
+	return db
+		.select()
+		.from(trainingSessionAvailability)
+		.where(
+			and(
+				eq(trainingSessionAvailability.cid, cid),
+				eq(trainingSessionAvailability.courseId, courseId),
+				eq(trainingSessionAvailability.taskId, taskId)
+			)
+		)
+		.orderBy(trainingSessionAvailability.startsAt);
+}
+
+export const getTrainingSessionAvailability = query(
+	TrainingSessionAvailabilityOptions,
+	async ({ courseId, taskId }) => {
+		const user = await authorizeVectorStudentAccess();
+		await assertStudentSessionAvailabilityEligible(courseId, taskId, user.cid);
+
+		const rows = await fetchTrainingSessionAvailabilityRows(user.cid, courseId, taskId);
+		const windowEndsAt = getAvailabilityWindowEndsAt();
+
+		return {
+			slots: rows.map((row) => ({
+				id: row.id,
+				startsAt: row.startsAt,
+				endsAt: row.endsAt
+			})),
+			windowEndsAt
+		};
+	}
+);
+
+const SaveTrainingSessionAvailabilityOptions = type({
+	courseId: CourseId,
+	taskId: 'number.integer >= 0',
+	slots: type({
+		startsAt: 'string',
+		endsAt: 'string'
+	}).array()
+});
+
+export const saveTrainingSessionAvailability = command(
+	SaveTrainingSessionAvailabilityOptions,
+	async ({ courseId, taskId, slots }) => {
+		const user = await authorizeVectorStudentAccess();
+		await assertStudentSessionAvailabilityEligible(courseId, taskId, user.cid);
+
+		const windowStart = new Date();
+		const windowEndsAt = getAvailabilityWindowEndsAt(windowStart);
+
+		let mergedSlots: { startsAt: Date; endsAt: Date }[];
+		try {
+			mergedSlots = validateAvailabilitySlots(
+				slots.map((slot) => ({
+					startsAt: new Date(slot.startsAt),
+					endsAt: new Date(slot.endsAt)
+				})),
+				windowStart,
+				windowEndsAt
+			);
+		} catch (err) {
+			throw error(400, err instanceof Error ? err.message : 'Invalid availability slots');
+		}
+
+		await db
+			.delete(trainingSessionAvailability)
+			.where(
+				and(
+					eq(trainingSessionAvailability.cid, user.cid),
+					eq(trainingSessionAvailability.courseId, courseId),
+					eq(trainingSessionAvailability.taskId, taskId)
+				)
+			);
+
+		if (mergedSlots.length > 0) {
+			await db.insert(trainingSessionAvailability).values(
+				mergedSlots.map((slot) => ({
+					cid: user.cid,
+					courseId,
+					taskId,
+					startsAt: slot.startsAt,
+					endsAt: slot.endsAt,
+					updatedAt: new Date()
+				}))
+			);
+		}
+
+		getTrainingSessionAvailability({ courseId, taskId }).refresh();
+		getStudentCourseView(courseId).refresh();
+	}
+);

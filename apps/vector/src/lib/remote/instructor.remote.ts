@@ -1,9 +1,17 @@
 import { command, query } from '$app/server';
 import { db } from '$lib/db';
+import {
+	getAvailabilityWindowEndsAt,
+	getNextIncompleteTask,
+	isTrainingSessionNext,
+	toNextTaskSummary
+} from '$lib/trainingSessionAvailability';
 import { getCourseTaskProgress } from '$lib/courseTaskProgress';
+import { trainingSessionAvailability } from '@czqm/db/schema';
 import { Course, User, userCanGraduateVectorStudents } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
+import { and, eq } from 'drizzle-orm';
 import { authorizeVectorInstructorAccess } from './auth';
 
 const CourseId = type(/^[0-9a-z]{5}$/);
@@ -112,6 +120,9 @@ export const getInstructorStudentView = query(
 
 		const tasks = await getCourseTaskProgress(course, cid);
 		const allTasksComplete = tasks.length === 0 || tasks.every((task) => task.isComplete);
+		const nextTask = toNextTaskSummary(getNextIncompleteTask(tasks));
+		const canViewSessionAvailability =
+			status === 'enrolled' && isTrainingSessionNext(tasks);
 
 		return {
 			course: {
@@ -130,7 +141,55 @@ export const getInstructorStudentView = query(
 			completedAt: completed?.completedAt ?? null,
 			tasks,
 			canGraduateStudent: userCanGraduateVectorStudents(actioner),
-			allTasksComplete
+			allTasksComplete,
+			nextTask,
+			canViewSessionAvailability
+		};
+	}
+);
+
+const InstructorSessionAvailabilityOptions = type({
+	courseId: CourseId,
+	cid: 'number.integer > 0',
+	taskId: 'number.integer >= 0'
+});
+
+export const getInstructorStudentSessionAvailability = query(
+	InstructorSessionAvailabilityOptions,
+	async ({ courseId, cid, taskId }) => {
+		await authorizeVectorInstructorAccess();
+
+		const course = await Course.fetchById(courseId, db);
+		if (!course) throw error(404, 'Course not found');
+
+		const student = await User.fromCid(db, cid);
+		if (!student) throw error(404, 'Student not found');
+
+		const tasks = await getCourseTaskProgress(course, cid);
+		const next = getNextIncompleteTask(tasks);
+		if (!next || next.taskType !== 'training_session' || next.taskId !== taskId) {
+			throw error(400, 'Session availability is not available for this task');
+		}
+
+		const rows = await db
+			.select()
+			.from(trainingSessionAvailability)
+			.where(
+				and(
+					eq(trainingSessionAvailability.cid, cid),
+					eq(trainingSessionAvailability.courseId, courseId),
+					eq(trainingSessionAvailability.taskId, taskId)
+				)
+			)
+			.orderBy(trainingSessionAvailability.startsAt);
+
+		return {
+			slots: rows.map((row) => ({
+				id: row.id,
+				startsAt: row.startsAt,
+				endsAt: row.endsAt
+			})),
+			windowEndsAt: getAvailabilityWindowEndsAt()
 		};
 	}
 );

@@ -1,5 +1,5 @@
 import { type InferSelectModel } from "drizzle-orm";
-import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { customAlphabet } from "nanoid";
 import { users } from "./users";
 import { waitlists } from "./waitlist";
@@ -60,3 +60,29 @@ export const courseTaskCompletions = sqliteTable("course_task_completions", {
 export type CourseTaskCompletionRow = InferSelectModel<
   typeof courseTaskCompletions
 >;
+
+export const trainingSessionAvailability = sqliteTable(
+  "training_session_availability",
+  {
+    id: int().primaryKey({ autoIncrement: true }),
+    cid: int()
+      .notNull()
+      .references(() => users.cid, { onDelete: "cascade" }),
+    courseId: text()
+      .notNull()
+      .references(() => courses.id, { onDelete: "cascade" }),
+    taskId: int().notNull(),
+    startsAt: int({ mode: "timestamp" }).notNull(),
+    endsAt: int({ mode: "timestamp" }).notNull(),
+    updatedAt: int({ mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [
+    index("training_session_availability_lookup_idx").on(
+      t.cid,
+      t.courseId,
+      t.taskId,
+    ),
+  ],
+);
