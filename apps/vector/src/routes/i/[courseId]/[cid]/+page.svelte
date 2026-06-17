@@ -2,6 +2,7 @@
 	import { ChevronLeft } from '@lucide/svelte';
 	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
 	import TrainingSessionAvailabilityCalendar from '$lib/components/TrainingSessionAvailabilityCalendar.svelte';
+	import TrainingSessionPendingCard from '$lib/components/TrainingSessionPendingCard.svelte';
 	import {
 		getInstructorStudentView,
 		graduateStudentFromCourse
@@ -89,13 +90,34 @@
 			</p>
 		{/if}
 
-		{#if view.canViewSessionAvailability && view.nextTask}
+		{#if view.activeSession}
+			<div class="mt-6">
+				<TrainingSessionPendingCard
+					courseId={view.course.id}
+					taskId={view.nextTask!.taskId}
+					session={view.activeSession}
+					showCancel={view.canCancelActiveSession}
+					cancelAs="staff"
+					studentCid={view.student.cid}
+				/>
+			</div>
+		{:else if view.canScheduleSession && view.nextTask}
 			<div class="mt-6">
 				<TrainingSessionAvailabilityCalendar
+					mode="schedule"
 					courseId={view.course.id}
 					taskId={view.nextTask.taskId}
 					cid={view.student.cid}
-					readOnly
+					sessionDescription={view.nextTask.description}
+				/>
+			</div>
+		{:else if view.canViewSessionAvailability && view.nextTask}
+			<div class="mt-6">
+				<TrainingSessionAvailabilityCalendar
+					mode="view"
+					courseId={view.course.id}
+					taskId={view.nextTask.taskId}
+					cid={view.student.cid}
 					sessionDescription={view.nextTask.description}
 				/>
 			</div>

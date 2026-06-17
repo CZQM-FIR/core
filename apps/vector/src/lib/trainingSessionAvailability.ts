@@ -7,9 +7,7 @@ export const DAY_END_HOUR = 24;
 
 export const SLOT_MS = SLOT_MINUTES * 60 * 1000;
 
-export function getNextIncompleteTask(
-	tasks: CourseTaskProgress[]
-): CourseTaskProgress | null {
+export function getNextIncompleteTask(tasks: CourseTaskProgress[]): CourseTaskProgress | null {
 	return tasks.find((task) => !task.isComplete) ?? null;
 }
 
@@ -38,9 +36,7 @@ export function mergeAvailabilitySlots(
 ): { startsAt: Date; endsAt: Date }[] {
 	if (slots.length === 0) return [];
 
-	const sorted = [...slots].sort(
-		(a, b) => a.startsAt.getTime() - b.startsAt.getTime()
-	);
+	const sorted = [...slots].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 	const merged: { startsAt: Date; endsAt: Date }[] = [{ ...sorted[0] }];
 
 	for (let i = 1; i < sorted.length; i++) {
@@ -79,4 +75,55 @@ export function validateAvailabilitySlots(
 	}
 
 	return mergeAvailabilitySlots(slots);
+}
+
+export function isSameCalendarDay(startsAt: Date, endsAt: Date): boolean {
+	return (
+		startsAt.getFullYear() === endsAt.getFullYear() &&
+		startsAt.getMonth() === endsAt.getMonth() &&
+		startsAt.getDate() === endsAt.getDate()
+	);
+}
+
+export function validateSessionTimeRange(
+	startsAt: Date,
+	endsAt: Date,
+	windowStart = new Date(),
+	windowEnd = getAvailabilityWindowEndsAt(windowStart)
+): void {
+	if (startsAt >= endsAt) {
+		throw new Error('Session start must be before end');
+	}
+
+	const durationMs = endsAt.getTime() - startsAt.getTime();
+	if (durationMs % SLOT_MS !== 0) {
+		throw new Error('Session duration must be a multiple of 30 minutes');
+	}
+
+	if (!isSameCalendarDay(startsAt, endsAt)) {
+		throw new Error('Session must start and end on the same calendar day');
+	}
+
+	if (startsAt < windowStart || endsAt > windowEnd) {
+		throw new Error('Session must fall within the availability window');
+	}
+}
+
+export function isRangeWithinAvailability(
+	selectedRange: { startsAt: Date; endsAt: Date },
+	availabilitySlots: { startsAt: Date; endsAt: Date }[]
+): boolean {
+	if (availabilitySlots.length === 0) return false;
+
+	const merged = mergeAvailabilitySlots(availabilitySlots);
+	let current = new Date(selectedRange.startsAt);
+
+	while (current < selectedRange.endsAt) {
+		const chunkEnd = new Date(current.getTime() + SLOT_MS);
+		const covered = merged.some((slot) => current >= slot.startsAt && chunkEnd <= slot.endsAt);
+		if (!covered) return false;
+		current = chunkEnd;
+	}
+
+	return true;
 }

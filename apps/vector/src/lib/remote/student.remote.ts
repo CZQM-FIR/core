@@ -8,8 +8,14 @@ import {
 	validateAvailabilitySlots
 } from '$lib/trainingSessionAvailability';
 import { getCourseTaskProgress } from '$lib/courseTaskProgress';
-import { moodleQueue, trainingSessionAvailability, waitingUsers } from '@czqm/db/schema';
-import { Course, User } from '@czqm/common';
+import {
+	moodleQueue,
+	trainingSessionAvailability,
+	trainingSessions,
+	waitingUsers
+} from '@czqm/db/schema';
+import { getInstructorStudentView } from './instructor.remote';
+import { Course, TrainingSession, User } from '@czqm/common';
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
@@ -156,8 +162,23 @@ export const getStudentCourseView = query(CourseId, async (courseId) => {
 			: await getCourseTaskProgress(course, cid);
 
 	const nextTask = toNextTaskSummary(getNextIncompleteTask(tasks));
-	const canSubmitSessionAvailability =
+	const trainingSessionIsNext =
 		bucket === 'enrolled' && status === 'enrolled' && isTrainingSessionNext(tasks);
+
+	let activeSession = null;
+	if (trainingSessionIsNext && nextTask) {
+		const sessionRow = await TrainingSession.fetchActiveForTask(db, {
+			studentCid: cid,
+			courseId,
+			taskId: nextTask.taskId
+		});
+		activeSession = sessionRow
+			? await TrainingSession.enrichWithScheduler(db, TrainingSession.toSummary(sessionRow))
+			: null;
+	}
+
+	const canSubmitSessionAvailability =
+		trainingSessionIsNext && (activeSession == null || activeSession.status === 'confirmed');
 
 	return {
 		course: {
@@ -175,7 +196,9 @@ export const getStudentCourseView = query(CourseId, async (courseId) => {
 		prerequisiteResults,
 		tasks,
 		nextTask,
-		canSubmitSessionAvailability
+		canSubmitSessionAvailability,
+		activeSession,
+		canCancelActiveSession: activeSession?.status === 'confirmed'
 	};
 });
 
@@ -295,20 +318,39 @@ async function assertStudentSessionAvailabilityEligible(
 	const tasks = await getCourseTaskProgress(course, cid);
 	const next = getNextIncompleteTask(tasks);
 	if (!next || next.taskType !== 'training_session' || next.taskId !== taskId) {
-		throw error(
-			400,
-			'Session availability is only available for your next training session task'
-		);
+		throw error(400, 'Session availability is only available for your next training session task');
 	}
 
 	return course;
 }
 
-async function fetchTrainingSessionAvailabilityRows(
-	cid: number,
+async function assertStudentTrainingSessionAction(
 	courseId: string,
-	taskId: number
+	taskId: number,
+	sessionId: number,
+	cid: number
 ) {
+	await assertStudentSessionAvailabilityEligible(courseId, taskId, cid);
+
+	const [session] = await db
+		.select()
+		.from(trainingSessions)
+		.where(eq(trainingSessions.id, sessionId))
+		.limit(1);
+
+	if (
+		!session ||
+		session.studentCid !== cid ||
+		session.courseId !== courseId ||
+		session.taskId !== taskId
+	) {
+		throw error(404, 'Training session not found');
+	}
+
+	return session;
+}
+
+async function fetchTrainingSessionAvailabilityRows(cid: number, courseId: string, taskId: number) {
 	return db
 		.select()
 		.from(trainingSessionAvailability)
@@ -357,6 +399,18 @@ export const saveTrainingSessionAvailability = command(
 		const user = await authorizeVectorStudentAccess();
 		await assertStudentSessionAvailabilityEligible(courseId, taskId, user.cid);
 
+		const activeSession = await TrainingSession.fetchActiveForTask(db, {
+			studentCid: user.cid,
+			courseId,
+			taskId
+		});
+		if (activeSession?.status === 'pending') {
+			throw error(
+				400,
+				'Cannot edit availability while a training session is awaiting confirmation'
+			);
+		}
+
 		const windowStart = new Date();
 		const windowEndsAt = getAvailabilityWindowEndsAt(windowStart);
 
@@ -372,6 +426,14 @@ export const saveTrainingSessionAvailability = command(
 			);
 		} catch (err) {
 			throw error(400, err instanceof Error ? err.message : 'Invalid availability slots');
+		}
+
+		if (activeSession?.status === 'confirmed') {
+			mergedSlots = validateAvailabilitySlots(
+				[...mergedSlots, { startsAt: activeSession.startsAt, endsAt: activeSession.endsAt }],
+				windowStart,
+				windowEndsAt
+			);
 		}
 
 		await db
@@ -399,5 +461,63 @@ export const saveTrainingSessionAvailability = command(
 
 		getTrainingSessionAvailability({ courseId, taskId }).refresh();
 		getStudentCourseView(courseId).refresh();
+		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
+	}
+);
+
+const TrainingSessionActionOptions = type({
+	courseId: CourseId,
+	taskId: 'number.integer >= 0',
+	sessionId: 'number.integer > 0'
+});
+
+export const confirmTrainingSession = command(
+	TrainingSessionActionOptions,
+	async ({ courseId, taskId, sessionId }) => {
+		const user = await authorizeVectorStudentAccess();
+		await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
+
+		try {
+			await TrainingSession.confirm(db, sessionId, user.cid);
+		} catch (err) {
+			throw error(400, err instanceof Error ? err.message : 'Failed to confirm training session');
+		}
+
+		getStudentCourseView(courseId).refresh();
+		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
+	}
+);
+
+export const declineTrainingSession = command(
+	TrainingSessionActionOptions,
+	async ({ courseId, taskId, sessionId }) => {
+		const user = await authorizeVectorStudentAccess();
+		await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
+
+		try {
+			await TrainingSession.decline(db, sessionId, user.cid);
+		} catch (err) {
+			throw error(400, err instanceof Error ? err.message : 'Failed to decline training session');
+		}
+
+		getStudentCourseView(courseId).refresh();
+		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
+	}
+);
+
+export const cancelTrainingSession = command(
+	TrainingSessionActionOptions,
+	async ({ courseId, taskId, sessionId }) => {
+		const user = await authorizeVectorStudentAccess();
+		await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
+
+		try {
+			await TrainingSession.cancel(db, sessionId, user.cid);
+		} catch (err) {
+			throw error(400, err instanceof Error ? err.message : 'Failed to cancel training session');
+		}
+
+		getStudentCourseView(courseId).refresh();
+		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 	}
 );

@@ -5,29 +5,43 @@
 		DAY_START_HOUR,
 		SLOT_MINUTES,
 		SLOT_MS,
-		getAvailabilityWindowEndsAt
+		getAvailabilityWindowEndsAt,
+		isRangeWithinAvailability
 	} from '$lib/trainingSessionAvailability';
 	import {
-		getInstructorStudentSessionAvailability
+		getInstructorStudentSessionAvailability,
+		scheduleTrainingSession
 	} from '$lib/remote/instructor.remote';
 	import {
 		getTrainingSessionAvailability,
 		saveTrainingSessionAvailability
 	} from '$lib/remote/student.remote';
 
+	type Props =
+		| {
+				courseId: string;
+				taskId: number;
+				mode?: 'edit';
+				cid?: never;
+				sessionDescription?: string;
+				confirmedSession?: { startsAt: Date; endsAt: Date };
+		  }
+		| {
+				courseId: string;
+				taskId: number;
+				mode: 'view' | 'schedule';
+				cid: number;
+				sessionDescription?: string;
+		  };
+
 	let {
 		courseId,
 		taskId,
 		cid,
-		readOnly = false,
-		sessionDescription = ''
-	}: {
-		courseId: string;
-		taskId: number;
-		cid?: number;
-		readOnly?: boolean;
-		sessionDescription?: string;
-	} = $props();
+		mode = 'edit',
+		sessionDescription = '',
+		confirmedSession
+	}: Props = $props();
 
 	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 	const slotsPerDay = ((DAY_END_HOUR - DAY_START_HOUR) * 60) / SLOT_MINUTES;
@@ -35,18 +49,36 @@
 	const pageCount = Math.ceil(AVAILABILITY_WINDOW_DAYS / daysPerPage);
 
 	let weekPage = $state(0);
+	let availabilityKeys = $state<Set<string>>(new Set());
 	let selectedKeys = $state<Set<string>>(new Set());
 	let windowEndsAt = $state<Date>(getAvailabilityWindowEndsAt());
 	let loading = $state(true);
 	let saving = $state(false);
+	let scheduling = $state(false);
 	let saveError = $state<string | null>(null);
+	let scheduleError = $state<string | null>(null);
 	let loadError = $state<string | null>(null);
+	let outsideAvailabilityWarning = $state(false);
+	let confirmDialog = $state<HTMLDialogElement | null>(null);
 	let dragState = $state<{
 		anchor: { dayIndex: number; slotIndex: number };
 		current: { dayIndex: number; slotIndex: number };
 		baseKeys: Set<string>;
 		mode: 'select' | 'deselect';
 	} | null>(null);
+
+	const isInteractive = $derived(mode === 'edit' || mode === 'schedule');
+	const calendarTitle = $derived(
+		mode === 'schedule' ? 'Schedule Training Session' : 'Training Session Availability'
+	);
+
+	function getBlockedKeys(): Set<string> {
+		if (!confirmedSession) return new Set();
+		return loadSlotsToSelected(
+			[{ startsAt: confirmedSession.startsAt, endsAt: confirmedSession.endsAt }],
+			getWindowStartDay()
+		);
+	}
 
 	function getWindowStartDay(): Date {
 		const day = new Date();
@@ -164,9 +196,7 @@
 			}
 		}
 
-		return result.sort(
-			(a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
-		);
+		return result.sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
 	}
 
 	function isSlotEnabled(start: Date): boolean {
@@ -182,8 +212,41 @@
 		return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 	}
 
+	function isHourBoundary(slotIndex: number): boolean {
+		const minutesFromMidnight = DAY_START_HOUR * 60 + slotIndex * SLOT_MINUTES;
+		return minutesFromMidnight % 60 === 0;
+	}
+
+	function formatHourLabel(slotIndex: number): string {
+		const minutesFromMidnight = DAY_START_HOUR * 60 + slotIndex * SLOT_MINUTES;
+		const hour = Math.floor(minutesFromMidnight / 60);
+		return `${String(hour).padStart(2, '0')}:00`;
+	}
+
 	function formatDayHeader(day: Date): string {
 		return day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+	}
+
+	function formatSelectedRange(): string {
+		const slots = selectedKeysToSlots(selectedKeys, getWindowStartDay());
+		if (slots.length === 0) return '';
+
+		const startsAt = new Date(slots[0].startsAt);
+		const endsAt = new Date(slots[slots.length - 1].endsAt);
+		const dateLabel = startsAt.toLocaleDateString(undefined, {
+			weekday: 'long',
+			month: 'long',
+			day: 'numeric'
+		});
+		const startTime = startsAt.toLocaleTimeString(undefined, {
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+		const endTime = endsAt.toLocaleTimeString(undefined, {
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+		return `${dateLabel}, ${startTime} – ${endTime}`;
 	}
 
 	async function loadAvailability() {
@@ -191,11 +254,21 @@
 		loadError = null;
 		try {
 			const data =
-				readOnly && cid != null
+				mode !== 'edit'
 					? await getInstructorStudentSessionAvailability({ courseId, cid, taskId })
 					: await getTrainingSessionAvailability({ courseId, taskId });
 			windowEndsAt = data.windowEndsAt;
-			selectedKeys = loadSlotsToSelected(data.slots, getWindowStartDay());
+
+			if (mode === 'schedule') {
+				availabilityKeys = loadSlotsToSelected(data.slots, getWindowStartDay());
+				selectedKeys = new Set();
+			} else {
+				selectedKeys = loadSlotsToSelected(data.slots, getWindowStartDay());
+				availabilityKeys = new Set();
+				for (const key of getBlockedKeys()) {
+					selectedKeys.add(key);
+				}
+			}
 		} catch (err) {
 			if (err && typeof err === 'object' && 'body' in err) {
 				const body = (err as { body?: { message?: string } }).body;
@@ -215,8 +288,14 @@
 		current: { dayIndex: number; slotIndex: number }
 	): string[] {
 		const windowStartDay = getWindowStartDay();
-		const minDay = Math.min(anchor.dayIndex, current.dayIndex);
-		const maxDay = Math.max(anchor.dayIndex, current.dayIndex);
+		let minDay = Math.min(anchor.dayIndex, current.dayIndex);
+		let maxDay = Math.max(anchor.dayIndex, current.dayIndex);
+
+		if (mode === 'schedule') {
+			minDay = anchor.dayIndex;
+			maxDay = anchor.dayIndex;
+		}
+
 		const minSlot = Math.min(anchor.slotIndex, current.slotIndex);
 		const maxSlot = Math.max(anchor.slotIndex, current.slotIndex);
 		const keys: string[] = [];
@@ -238,13 +317,16 @@
 		baseKeys: Set<string>,
 		anchor: { dayIndex: number; slotIndex: number },
 		current: { dayIndex: number; slotIndex: number },
-		mode: 'select' | 'deselect'
+		dragMode: 'select' | 'deselect'
 	): Set<string> {
 		const next = new Set(baseKeys);
+		const blockedKeys = getBlockedKeys();
 		for (const key of getRangeKeys(anchor, current)) {
-			if (mode === 'select') next.add(key);
+			if (blockedKeys.has(key)) continue;
+			if (dragMode === 'select') next.add(key);
 			else next.delete(key);
 		}
+		for (const key of blockedKeys) next.add(key);
 		return next;
 	}
 
@@ -255,18 +337,20 @@
 	}
 
 	function beginDrag(dayIndex: number, slotIndex: number, day: Date) {
-		if (readOnly) return;
+		if (!isInteractive) return;
 
 		const start = slotStartDate(day, slotIndex);
 		if (!isSlotEnabled(start)) return;
 
 		const key = slotKey(dayIndex, slotIndex);
+		if (getBlockedKeys().has(key)) return;
+
 		const anchor = { dayIndex, slotIndex };
 		const baseKeys = new Set(selectedKeys);
-		const mode = selectedKeys.has(key) ? 'deselect' : 'select';
+		const dragMode = selectedKeys.has(key) ? 'deselect' : 'select';
 
-		dragState = { anchor, current: anchor, baseKeys, mode };
-		selectedKeys = applyDragSelection(baseKeys, anchor, anchor, mode);
+		dragState = { anchor, current: anchor, baseKeys, mode: dragMode };
+		selectedKeys = applyDragSelection(baseKeys, anchor, anchor, dragMode);
 
 		window.addEventListener('pointerup', endDrag);
 		window.addEventListener('pointercancel', endDrag);
@@ -274,10 +358,10 @@
 
 	function updateDrag(dayIndex: number, slotIndex: number) {
 		if (!dragState) return;
-		if (
-			dragState.current.dayIndex === dayIndex &&
-			dragState.current.slotIndex === slotIndex
-		) {
+
+		if (mode === 'schedule' && dayIndex !== dragState.anchor.dayIndex) return;
+
+		if (dragState.current.dayIndex === dayIndex && dragState.current.slotIndex === slotIndex) {
 			return;
 		}
 
@@ -291,16 +375,39 @@
 		);
 	}
 
+	function getSlotClass(dayIndex: number, slotIndex: number, enabled: boolean): string {
+		const key = slotKey(dayIndex, slotIndex);
+		const scheduled = selectedKeys.has(key);
+		const available = availabilityKeys.has(key);
+		const blocked = getBlockedKeys().has(key);
+
+		if (mode === 'schedule') {
+			if (scheduled) return 'bg-accent text-accent-content';
+			if (available) return 'bg-primary/40 hover:bg-primary/50';
+			if (enabled) return 'bg-base-100 hover:bg-base-300 cursor-pointer';
+			return 'bg-base-100 cursor-not-allowed opacity-30';
+		}
+
+		if (blocked) return 'training-session-blocked-slot cursor-not-allowed';
+		if (scheduled) return 'bg-primary text-primary-content';
+		if (enabled) return 'bg-base-100 hover:bg-base-300 cursor-pointer';
+		return 'bg-base-100 cursor-not-allowed opacity-30';
+	}
+
 	async function handleSave() {
-		if (readOnly) return;
+		if (mode !== 'edit') return;
 
 		saving = true;
 		saveError = null;
 		try {
+			const keysToSave = new Set(selectedKeys);
+			for (const key of getBlockedKeys()) {
+				keysToSave.add(key);
+			}
 			await saveTrainingSessionAvailability({
 				courseId,
 				taskId,
-				slots: selectedKeysToSlots(selectedKeys, getWindowStartDay())
+				slots: selectedKeysToSlots(keysToSave, getWindowStartDay())
 			});
 			await loadAvailability();
 		} catch (err) {
@@ -317,28 +424,92 @@
 		}
 	}
 
+	function openScheduleDialog() {
+		if (selectedKeys.size === 0 || mode !== 'schedule') return;
+
+		const slots = selectedKeysToSlots(selectedKeys, getWindowStartDay());
+		if (slots.length === 0) return;
+
+		const availabilitySlots = selectedKeysToSlots(availabilityKeys, getWindowStartDay()).map(
+			(slot) => ({
+				startsAt: new Date(slot.startsAt),
+				endsAt: new Date(slot.endsAt)
+			})
+		);
+
+		outsideAvailabilityWarning = !isRangeWithinAvailability(
+			{
+				startsAt: new Date(slots[0].startsAt),
+				endsAt: new Date(slots[slots.length - 1].endsAt)
+			},
+			availabilitySlots
+		);
+
+		scheduleError = null;
+		confirmDialog?.showModal();
+	}
+
+	async function handleSchedule() {
+		if (mode !== 'schedule') return;
+
+		const slots = selectedKeysToSlots(selectedKeys, getWindowStartDay());
+		if (slots.length === 0) return;
+
+		scheduling = true;
+		scheduleError = null;
+		try {
+			await scheduleTrainingSession({
+				courseId,
+				studentCid: cid,
+				taskId,
+				startsAt: slots[0].startsAt,
+				endsAt: slots[slots.length - 1].endsAt
+			});
+			confirmDialog?.close();
+			await loadAvailability();
+		} catch (err) {
+			if (err && typeof err === 'object' && 'body' in err) {
+				const body = (err as { body?: { message?: string } }).body;
+				scheduleError = body?.message ?? 'Failed to schedule session';
+			} else if (err instanceof Error) {
+				scheduleError = err.message;
+			} else {
+				scheduleError = 'Failed to schedule session';
+			}
+		} finally {
+			scheduling = false;
+		}
+	}
+
 	const visibleDays = $derived(getVisibleDays());
 	const weekRangeLabel = $derived(formatWeekRange(visibleDays));
+	const selectedRangeLabel = $derived(formatSelectedRange());
 
 	$effect(() => {
-		courseId;
-		taskId;
-		cid;
-		readOnly;
+		void (courseId, taskId, mode, cid, confirmedSession);
 		loadAvailability();
 	});
 </script>
 
 <div class="card bg-base-200 w-full shadow-sm">
-	<div class="card-body gap-4">
+	<div class="card-body gap-3">
 		<div>
-			<h2 class="card-title text-lg">Training Session Availability</h2>
+			<h2 class="card-title text-lg">{calendarTitle}</h2>
 			{#if sessionDescription}
 				<p class="text-sm opacity-80">{sessionDescription}</p>
 			{/if}
 			<p class="text-sm opacity-70">
 				Times shown in your local timezone ({timeZone}).
 			</p>
+			{#if mode === 'schedule'}
+				<p class="text-sm opacity-70">
+					Drag on a single day to select a session time. Shaded slots show student availability.
+				</p>
+			{:else if confirmedSession}
+				<p class="text-sm opacity-70">
+					Purple sections are your confirmed training session and cannot be changed.
+				</p>
+			{/if}
 		</div>
 
 		{#if loading}
@@ -366,42 +537,47 @@
 				</button>
 			</div>
 
-			<div class="overflow-x-auto">
+			<div class="overflow-x-auto overflow-y-auto">
 				<div
-					class="grid min-w-max gap-px bg-base-300 touch-none {dragState ? 'select-none' : ''}"
-					style="grid-template-columns: 4rem repeat({visibleDays.length}, minmax(3.5rem, 1fr));"
+					class="bg-base-300 grid min-w-max touch-none gap-px {dragState ? 'select-none' : ''}"
+					style="grid-template-columns: 2.25rem repeat({visibleDays.length}, minmax(2.25rem, 1fr));"
 				>
-					<div class="bg-base-200 sticky left-0 z-10 px-1 py-2 text-xs font-semibold"></div>
+					<div class="bg-base-200 sticky top-0 left-0 z-20"></div>
 					{#each visibleDays as { day, dayIndex } (`${dayIndex}-${day.toISOString()}`)}
-						<div class="bg-base-200 px-1 py-2 text-center text-xs font-semibold">
+						<div
+							class="bg-base-200 sticky top-0 z-10 px-0.5 py-1 text-center text-[10px] leading-tight font-semibold"
+						>
 							{formatDayHeader(day)}
 						</div>
 					{/each}
 
 					{#each Array.from({ length: slotsPerDay }, (_, slotIndex) => slotIndex) as slotIndex (slotIndex)}
 						<div
-							class="bg-base-200 sticky left-0 z-10 px-1 py-0.5 text-right text-[10px] opacity-70"
+							class="bg-base-200 sticky left-0 z-10 px-0.5 text-right text-[9px] leading-none opacity-70"
 						>
-							{formatSlotLabel(slotIndex)}
+							{#if isHourBoundary(slotIndex)}
+								{formatHourLabel(slotIndex)}
+							{/if}
 						</div>
 						{#each visibleDays as { day, dayIndex } (`${dayIndex}-${slotIndex}`)}
 							{@const start = slotStartDate(day, slotIndex)}
 							{@const enabled = isSlotEnabled(start)}
 							{@const selected = selectedKeys.has(slotKey(dayIndex, slotIndex))}
+							{@const blocked = getBlockedKeys().has(slotKey(dayIndex, slotIndex))}
 							<button
 								type="button"
-								class="min-h-4 border-0 px-0 py-0.5 text-[10px] transition-colors {selected
-									? 'bg-primary text-primary-content'
-									: enabled
-										? 'bg-base-100 hover:bg-base-300 cursor-pointer'
-										: 'bg-base-100 opacity-30 cursor-not-allowed'}"
-								disabled={readOnly}
-								tabindex={enabled && !readOnly ? 0 : -1}
-								aria-disabled={readOnly || !enabled}
+								class="h-3 min-h-3 border-0 p-0 transition-colors {getSlotClass(
+									dayIndex,
+									slotIndex,
+									enabled
+								)}"
+								disabled={!isInteractive || blocked}
+								tabindex={enabled && isInteractive && !blocked ? 0 : -1}
+								aria-disabled={!isInteractive || !enabled || blocked}
 								aria-label="{formatDayHeader(day)} {formatSlotLabel(slotIndex)}"
 								aria-pressed={selected}
 								onpointerdown={(event) => {
-									if (readOnly || !enabled) return;
+									if (!isInteractive || !enabled || blocked) return;
 									event.preventDefault();
 									beginDrag(dayIndex, slotIndex, day);
 								}}
@@ -412,7 +588,7 @@
 				</div>
 			</div>
 
-			{#if !readOnly}
+			{#if mode === 'edit'}
 				<div class="flex flex-wrap items-center gap-3">
 					<button
 						type="button"
@@ -431,7 +607,65 @@
 						<p class="text-error text-sm">{saveError}</p>
 					{/if}
 				</div>
+			{:else if mode === 'schedule'}
+				<div class="flex flex-wrap items-center gap-3">
+					<button
+						type="button"
+						class="btn btn-primary btn-sm"
+						disabled={selectedKeys.size === 0}
+						onclick={openScheduleDialog}
+					>
+						Schedule session
+					</button>
+				</div>
 			{/if}
 		{/if}
 	</div>
 </div>
+
+<dialog class="modal" bind:this={confirmDialog}>
+	<div class="modal-box">
+		<h3 class="text-lg font-bold">Schedule training session</h3>
+		{#if selectedRangeLabel}
+			<p class="py-2 text-sm">{selectedRangeLabel}</p>
+		{/if}
+
+		{#if outsideAvailabilityWarning}
+			<p class="text-warning text-sm">This time is outside the student's submitted availability.</p>
+		{/if}
+
+		{#if scheduleError}
+			<p class="text-error mt-2 text-sm">{scheduleError}</p>
+		{/if}
+
+		<div class="modal-action">
+			<form method="dialog">
+				<button class="btn" disabled={scheduling}>Cancel</button>
+			</form>
+			<button type="button" class="btn btn-primary" disabled={scheduling} onclick={handleSchedule}>
+				{#if scheduling}
+					<span class="loading loading-spinner loading-sm"></span>
+					Scheduling...
+				{:else}
+					Confirm
+				{/if}
+			</button>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+
+<style>
+	:global(.training-session-blocked-slot) {
+		background-color: #7c3aed;
+		background-image: repeating-linear-gradient(
+			-45deg,
+			transparent,
+			transparent 2px,
+			rgb(255 255 255 / 0.2) 2px,
+			rgb(255 255 255 / 0.2) 4px
+		);
+	}
+</style>

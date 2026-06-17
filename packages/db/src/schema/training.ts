@@ -86,3 +86,40 @@ export const trainingSessionAvailability = sqliteTable(
     ),
   ],
 );
+
+export const trainingSessions = sqliteTable(
+  "training_sessions",
+  {
+    id: int().primaryKey({ autoIncrement: true }),
+    studentCid: int("student_cid")
+      .notNull()
+      .references(() => users.cid, { onDelete: "cascade" }),
+    courseId: text("course_id")
+      .notNull()
+      .references(() => courses.id, { onDelete: "cascade" }),
+    taskId: int("task_id").notNull(),
+    scheduledByCid: int("scheduled_by_cid")
+      .notNull()
+      .references(() => users.cid),
+    startsAt: int("starts_at", { mode: "timestamp" }).notNull(),
+    endsAt: int("ends_at", { mode: "timestamp" }).notNull(),
+    status: text().notNull(),
+    trainingNote: text("training_note"),
+    createdAt: int("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: int("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [
+    index("training_sessions_lookup_idx").on(
+      t.studentCid,
+      t.courseId,
+      t.taskId,
+    ),
+    index("training_sessions_status_idx").on(t.status),
+  ],
+);
+
+export type TrainingSessionRow = InferSelectModel<typeof trainingSessions>;
