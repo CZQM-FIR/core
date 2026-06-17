@@ -100,3 +100,8 @@ export function userHasVectorAdminAccess(
 export function userHasVectorInstructorAccess(user: User): boolean {
   return user.hasFlag(["instructor", "mentor", "chief-instructor", "admin"]);
 }
+
+/** Mark a student as graduated from a course on the instructor dashboard */
+export function userCanGraduateVectorStudents(user: User): boolean {
+  return user.hasFlag(["instructor", "chief-instructor", "admin"]);
+}

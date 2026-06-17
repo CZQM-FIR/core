@@ -26,7 +26,7 @@
 					<tr>
 						<th>Course</th>
 						<th>Description</th>
-						<th>Waiting</th>
+						<th>Enrolled</th>
 						<th></th>
 					</tr>
 				</thead>
@@ -35,7 +35,7 @@
 						<tr class="hover">
 							<td class="font-medium">{course.name}</td>
 							<td class="max-w-md truncate">{course.description ?? '—'}</td>
-							<td>{course.waitlist.students.length}</td>
+							<td>{course.waitlist.enrolled.length}</td>
 							<td>
 								<a href="/i/courses/{course.id}" class="btn btn-primary btn-sm">View</a>
 							</td>

@@ -26,6 +26,7 @@ export const load = (async ({ locals, url }) => {
 		session: locals.session,
 		assistantParentFlags,
 		isVectorAdmin: userHasVectorAdminAccess(user, assistantParentFlags),
-		isVectorInstructor: userHasVectorInstructorAccess(user)
+		isVectorInstructor: userHasVectorInstructorAccess(user),
+		isVectorStudent: user.hasFlag(['controller', 'visitor', 'admin'])
 	};
 }) satisfies LayoutServerLoad;

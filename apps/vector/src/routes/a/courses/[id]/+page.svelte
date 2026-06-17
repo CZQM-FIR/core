@@ -16,15 +16,6 @@
 
 	const courseQuery = $derived.by(() => getCourse(data.id));
 
-	type Course = Awaited<ReturnType<typeof getCourse>>;
-	let course = $state<Course | null>(null);
-
-	$effect(() => {
-		if (courseQuery.current) {
-			course = courseQuery.current;
-		}
-	});
-
 	let deleteModal: HTMLDialogElement | undefined;
 	let courseName = $state('');
 
@@ -41,16 +32,16 @@
 </script>
 
 <section class="container mx-auto py-5">
-	{#if courseQuery.error && !course}
+	{#if courseQuery.error && !courseQuery.current}
 		<p class="text-error">Error loading course: {courseQuery.error.message}</p>
-	{:else if !course && courseQuery.loading}
+	{:else if !courseQuery.current && courseQuery.loading}
 		<a href="/a/courses" class="text-primary hover:link flex flex-row items-center gap-1">
 			<ChevronLeft size="15" /> Back to Courses
 		</a>
 		<h1 class="text-3xl font-semibold">Course</h1>
 		<p>Loading course...</p>
-	{:else if course}
-		{@const loadedCourse = course}
+	{:else if courseQuery.current}
+		{@const loadedCourse = courseQuery.current}
 		<a href="/a/courses" class="text-primary hover:link flex flex-row items-center gap-1">
 			<ChevronLeft size="15" /> Back to Courses
 		</a>

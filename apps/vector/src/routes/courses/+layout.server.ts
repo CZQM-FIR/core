@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
 import { User } from '@czqm/common';
 import { db } from '$lib/db';
+import type { LayoutServerLoad } from './$types';
 
 export const load = (async (event) => {
 	if (
@@ -12,4 +12,4 @@ export const load = (async (event) => {
 	}
 
 	return {};
-}) satisfies PageServerLoad;
+}) satisfies LayoutServerLoad;
