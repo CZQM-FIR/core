@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { ChevronLeft } from '@lucide/svelte';
-	import { getInstructorStudentView } from '$lib/remote/instructor.remote';
+	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
+	import {
+		getInstructorStudentView,
+		graduateStudentFromCourse
+	} from '$lib/remote/instructor.remote';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -8,6 +12,9 @@
 	const viewQuery = $derived.by(() =>
 		getInstructorStudentView({ courseId: data.courseId, cid: data.cid })
 	);
+
+	let graduating = $state(false);
+	let graduateError = $state<string | null>(null);
 
 	type StudentStatus = 'waitlisted' | 'enrolled' | 'completed' | 'none';
 
@@ -17,6 +24,25 @@
 		completed: 'Completed',
 		none: 'Not on course'
 	};
+
+	async function handleGraduate(courseId: string, cid: number) {
+		graduating = true;
+		graduateError = null;
+		try {
+			await graduateStudentFromCourse({ courseId, cid });
+		} catch (err) {
+			if (err && typeof err === 'object' && 'body' in err) {
+				const body = (err as { body?: { message?: string } }).body;
+				graduateError = body?.message ?? 'Failed to mark course as completed';
+			} else if (err instanceof Error) {
+				graduateError = err.message;
+			} else {
+				graduateError = 'Failed to mark course as completed';
+			}
+		} finally {
+			graduating = false;
+		}
+	}
 </script>
 
 <section class="container mx-auto py-5">
@@ -62,33 +88,35 @@
 			</p>
 		{/if}
 
-		<div class="card bg-base-200 mt-6 shadow-sm">
-			<div class="card-body">
-				<h2 class="card-title text-lg">Course Tasks</h2>
-				{#if view.tasks.length === 0}
-					<p class="text-sm">No tasks defined for this course.</p>
-				{:else}
-					<div class="flex flex-col gap-2">
-						{#each view.tasks as task, index (task.taskId)}
-							<div
-								class="bg-base-100 flex flex-row items-center gap-2 rounded-lg px-3 py-2 shadow-sm"
-							>
-								<span class="shrink-0 text-sm font-semibold">Task {index + 1}</span>
-								<span class="badge badge-outline badge-sm shrink-0">{task.typeLabel}</span>
-								<p class="min-w-0 flex-1 truncate text-sm">{task.description}</p>
-								{#if task.isComplete}
-									<span class="badge badge-success badge-sm shrink-0">Complete</span>
-								{:else if task.startedAt}
-									<span class="badge badge-warning badge-sm shrink-0">In progress</span>
-								{:else}
-									<span class="badge badge-ghost badge-sm shrink-0">Not started</span>
-								{/if}
-							</div>
-						{/each}
-					</div>
-				{/if}
-			</div>
+		<div class="mt-6">
+			<CourseTaskList
+				tasks={view.tasks}
+				instructorContext={{ courseId: view.course.id, cid: view.student.cid }}
+			/>
 		</div>
+
+		{#if view.canGraduateStudent && view.status === 'enrolled' && view.allTasksComplete}
+			<div class="mt-4 flex flex-col gap-2">
+				{#if graduateError}
+					<p class="text-error text-sm">{graduateError}</p>
+				{/if}
+				<div>
+					<button
+						type="button"
+						class="btn btn-accent"
+						disabled={graduating}
+						onclick={() => handleGraduate(view.course.id, view.student.cid)}
+					>
+						{#if graduating}
+							<span class="loading loading-spinner loading-sm"></span>
+							Marking complete...
+						{:else}
+							Mark Course as Completed
+						{/if}
+					</button>
+				</div>
+			</div>
+		{/if}
 	{:catch err}
 		<p class="text-error">Error loading student: {err.message}</p>
 	{/await}

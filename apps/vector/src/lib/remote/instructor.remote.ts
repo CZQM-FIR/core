@@ -1,6 +1,7 @@
-import { query } from '$app/server';
+import { command, query } from '$app/server';
 import { db } from '$lib/db';
-import { Course, User, describeCourseTask, formatCourseTaskType } from '@czqm/common';
+import { getCourseTaskProgress } from '$lib/courseTaskProgress';
+import { Course, User, userCanGraduateVectorStudents } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { authorizeVectorInstructorAccess } from './auth';
@@ -15,7 +16,10 @@ export const getInstructorCourses = query(async () => {
 		with: {
 			waitlist: {
 				with: {
-					students: true
+					enrolled: {
+						where: { hiddenAt: { isNull: true } },
+						columns: { cid: true }
+					}
 				}
 			}
 		},
@@ -82,7 +86,7 @@ export const getInstructorStudentView = query(
 		cid: 'number.integer > 0'
 	}),
 	async ({ courseId, cid }) => {
-		await authorizeVectorInstructorAccess();
+		const actioner = await authorizeVectorInstructorAccess();
 
 		const course = await Course.fetchById(courseId, db);
 		if (!course) throw error(404, 'Course not found');
@@ -106,20 +110,9 @@ export const getInstructorStudentView = query(
 					? 'waitlisted'
 					: 'none';
 
-		const tasks = await Promise.all(
-			course.tasks.map(async (task) => {
-				const completion = await task.getCompletion(cid);
-				return {
-					taskId: task.taskId,
-					taskType: task.taskType,
-					description: describeCourseTask(task),
-					typeLabel: formatCourseTaskType(task.taskType),
-					startedAt: completion?.startedAt ?? null,
-					completedAt: completion?.completedAt ?? null,
-					isComplete: completion?.isComplete ?? false
-				};
-			})
-		);
+		const tasks = await getCourseTaskProgress(course, cid);
+		const allTasksComplete =
+			tasks.length === 0 || tasks.every((task) => task.isComplete);
 
 		return {
 			course: {
@@ -136,7 +129,85 @@ export const getInstructorStudentView = query(
 			waitingSince: waiting?.waitingSince ?? null,
 			enrolledAt: enrolled?.enrolledAt ?? null,
 			completedAt: completed?.completedAt ?? null,
-			tasks
+			tasks,
+			canGraduateStudent: userCanGraduateVectorStudents(actioner),
+			allTasksComplete
 		};
+	}
+);
+
+const StudentTaskOptions = type({
+	courseId: CourseId,
+	cid: 'number.integer > 0',
+	taskId: 'number.integer >= 0'
+});
+
+async function getInstructorCourseTask(courseId: string, taskId: number) {
+	const course = await Course.fetchById(courseId, db);
+	if (!course) throw error(404, 'Course not found');
+
+	const task = course.tasks.find((entry) => entry.taskId === taskId);
+	if (!task) throw error(404, 'Task not found');
+	if (task.isAutoCompletable()) {
+		throw error(400, 'This task cannot be marked complete manually');
+	}
+
+	return task;
+}
+
+export const completeStudentCourseTask = command(StudentTaskOptions, async ({ courseId, cid, taskId }) => {
+	await authorizeVectorInstructorAccess();
+
+	const task = await getInstructorCourseTask(courseId, taskId);
+	await task.complete(cid);
+
+	getInstructorStudentView({ courseId, cid }).refresh();
+});
+
+export const uncompleteStudentCourseTask = command(
+	StudentTaskOptions,
+	async ({ courseId, cid, taskId }) => {
+		await authorizeVectorInstructorAccess();
+
+		const task = await getInstructorCourseTask(courseId, taskId);
+		const completion = await task.getCompletion(cid);
+		if (!completion) throw error(404, 'Task completion not found');
+
+		await completion.uncomplete();
+
+		getInstructorStudentView({ courseId, cid }).refresh();
+	}
+);
+
+export const graduateStudentFromCourse = command(
+	type({
+		courseId: CourseId,
+		cid: 'number.integer > 0'
+	}),
+	async ({ courseId, cid }) => {
+		const actioner = await authorizeVectorInstructorAccess();
+		if (!userCanGraduateVectorStudents(actioner)) {
+			throw error(403, 'Forbidden');
+		}
+
+		const course = await Course.fetchById(courseId, db);
+		if (!course) throw error(404, 'Course not found');
+
+		const enrolled = await db.query.enrolledUsers.findFirst({
+			where: {
+				waitlistId: course.waitlist.id,
+				cid,
+				hiddenAt: { isNull: true }
+			}
+		});
+		if (!enrolled) throw error(400, 'Student is not enrolled in this course');
+
+		if (!(await course.isComplete(cid))) {
+			throw error(400, 'Not all course tasks are complete');
+		}
+
+		await course.graduateUser(cid);
+
+		getInstructorStudentView({ courseId, cid }).refresh();
 	}
 );

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Trash, SquarePen } from '@lucide/svelte';
+	import { Trash } from '@lucide/svelte';
 	import {
 		COURSE_PREREQUISITE_TYPE_LABELS,
 		describeCoursePrerequisite,
@@ -10,7 +10,6 @@
 		getCourses,
 		getRatings,
 		createCoursePrerequisite,
-		updateCoursePrerequisite,
 		deleteCoursePrerequisite
 	} from '$lib/remote/courses.remote';
 
@@ -27,10 +26,12 @@
 
 	let prerequisiteModal: HTMLDialogElement | undefined;
 	let deletePrerequisiteModal: HTMLDialogElement | undefined;
-	let editingPrerequisite = $state<PrerequisiteRow | null>(null);
 	let prerequisiteToDelete = $state<{ prerequisiteId: number; label: string } | null>(null);
 	let selectedPrerequisiteType = $state<string>('minimum_rating');
 	let formKey = $state(0);
+	let handledCreateResult = $state<unknown>(undefined);
+
+	const addPrerequisiteForm = $derived(createCoursePrerequisite.for(formKey));
 
 	function describePrerequisite(
 		prerequisite: PrerequisiteRow,
@@ -66,15 +67,7 @@
 	}
 
 	function openAddModal() {
-		editingPrerequisite = null;
 		selectedPrerequisiteType = 'minimum_rating';
-		formKey++;
-		prerequisiteModal?.showModal();
-	}
-
-	function openEditModal(prerequisite: PrerequisiteRow) {
-		editingPrerequisite = prerequisite;
-		selectedPrerequisiteType = prerequisite.prerequisiteType;
 		formKey++;
 		prerequisiteModal?.showModal();
 	}
@@ -103,11 +96,18 @@
 		prerequisiteToDelete = null;
 	}
 
+	function handlePrerequisiteFormSuccess() {
+		prerequisiteModal?.close();
+		selectedPrerequisiteType = 'minimum_rating';
+		formKey++;
+		void getCourse(courseId).refresh();
+	}
+
 	$effect(() => {
-		if (createCoursePrerequisite.result?.ok || updateCoursePrerequisite.result?.ok) {
-			prerequisiteModal?.close();
-			editingPrerequisite = null;
-			formKey++;
+		const createResult = addPrerequisiteForm.result;
+		if (createResult?.ok && createResult !== handledCreateResult) {
+			handledCreateResult = createResult;
+			handlePrerequisiteFormSuccess();
 		}
 	});
 </script>
@@ -116,7 +116,7 @@
 	<div class="card-body flex flex-col gap-2">
 		<div class="flex flex-row items-center justify-between">
 			<h2 class="card-title text-lg">Enrollment Prerequisites</h2>
-			<button class="btn btn-primary btn-sm" onclickcapture={openAddModal}>Add</button>
+			<button class="btn btn-primary btn-sm" type="button" onclick={openAddModal}>Add</button>
 		</div>
 
 		{#if (course.prerequisites ?? []).length === 0}
@@ -135,22 +135,14 @@
 								{formatCoursePrerequisiteType(prerequisite.prerequisiteType)}
 							</span>
 							<p class="min-w-0 flex-1 truncate text-xs">{label}</p>
-							<div class="flex shrink-0 flex-row items-center gap-1">
-								<button
-									class="tooltip"
-									data-tip="Edit Prerequisite"
-									onclickcapture={() => openEditModal(prerequisite)}
-								>
-									<SquarePen class="hover:text-primary transition-colors" size="14" />
-								</button>
-								<button class="tooltip" data-tip="Delete Prerequisite">
-									<Trash
-										class="hover:text-error transition-colors"
-										size="14"
-										onclickcapture={() => openDeletePrerequisiteModal(prerequisite, label)}
-									/>
-								</button>
-							</div>
+							<button
+								class="tooltip shrink-0"
+								data-tip="Delete Prerequisite"
+								type="button"
+								onclick={() => openDeletePrerequisiteModal(prerequisite, label)}
+							>
+								<Trash class="hover:text-error transition-colors" size="14" />
+							</button>
 						</div>
 					{/each}
 				</div>
@@ -161,155 +153,21 @@
 
 <dialog class="modal" bind:this={prerequisiteModal}>
 	<div class="modal-box max-w-lg">
-		<h3 class="text-lg font-bold">
-			{editingPrerequisite ? 'Edit Prerequisite' : 'Add Prerequisite'}
-		</h3>
+		<h3 class="text-lg font-bold">Add Prerequisite</h3>
 		{#key formKey}
-			{#if editingPrerequisite}
-				<form {...updateCoursePrerequisite} class="mt-4 flex flex-col gap-4">
+			<div class="mt-4 flex flex-col gap-4">
+				<fieldset class="fieldset">
+					<legend class="fieldset-legend">Type</legend>
+					<select class="select" required bind:value={selectedPrerequisiteType}>
+						{#each PREREQUISITE_TYPES as type (type.value)}
+							<option value={type.value}>{type.label}</option>
+						{/each}
+					</select>
+				</fieldset>
+
+				<form {...addPrerequisiteForm} class="flex flex-col gap-4">
 					<input type="hidden" name="courseId" value={courseId} />
-					<input type="hidden" name="prerequisiteId" value={editingPrerequisite.prerequisiteId} />
-
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend">Type</legend>
-						<select
-							class="select"
-							name="prerequisiteType"
-							required
-							bind:value={selectedPrerequisiteType}
-						>
-							{#each PREREQUISITE_TYPES as type (type.value)}
-								<option value={type.value}>{type.label}</option>
-							{/each}
-						</select>
-					</fieldset>
-
-					{#key selectedPrerequisiteType}
-						{#if selectedPrerequisiteType === 'minimum_rating'}
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Minimum Rating</legend>
-								{#await getRatings()}
-									<select class="select" disabled>
-										<option>Loading ratings...</option>
-									</select>
-								{:then ratings}
-									<select
-										class="select"
-										name="prerequisiteValue1"
-										required
-										value={editingPrerequisite.prerequisiteValue1 ?? ''}
-									>
-										{#each ratings as rating (rating.id)}
-											<option value={String(rating.id)}>{rating.short} — {rating.long}</option>
-										{/each}
-									</select>
-								{/await}
-							</fieldset>
-						{:else if selectedPrerequisiteType === 'controlling_hours'}
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Required Hours</legend>
-								<input
-									type="number"
-									class="input"
-									name="prerequisiteValue1"
-									min="0"
-									step="0.1"
-									required
-									value={editingPrerequisite.prerequisiteValue1 ?? ''}
-								/>
-							</fieldset>
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">At Rating or Above</legend>
-								{#await getRatings()}
-									<select class="select" disabled>
-										<option>Loading ratings...</option>
-									</select>
-								{:then ratings}
-									<select
-										class="select"
-										name="prerequisiteValue2"
-										required
-										value={editingPrerequisite.prerequisiteValue2 ?? ''}
-									>
-										{#each ratings as rating (rating.id)}
-											<option value={String(rating.id)}>{rating.short} — {rating.long}</option>
-										{/each}
-									</select>
-								{/await}
-							</fieldset>
-						{:else if selectedPrerequisiteType === 'prior_course'}
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Prior Course</legend>
-								{#await getCourses()}
-									<select class="select" disabled>
-										<option>Loading courses...</option>
-									</select>
-								{:then courses}
-									<select
-										class="select"
-										name="prerequisiteValue1"
-										required
-										value={editingPrerequisite.prerequisiteValue1 ?? ''}
-									>
-										{#each courses.filter((row) => row.id !== courseId) as priorCourse (priorCourse.id)}
-											<option value={priorCourse.id}>{priorCourse.name}</option>
-										{/each}
-									</select>
-								{/await}
-							</fieldset>
-						{:else if selectedPrerequisiteType === 'earliest_enroll_date'}
-							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Earliest Enroll Date</legend>
-								<input
-									type="date"
-									class="input"
-									name="prerequisiteValue1"
-									required
-									value={editingPrerequisite.prerequisiteValue1 ?? ''}
-								/>
-							</fieldset>
-						{:else if selectedPrerequisiteType === 'home_controller' || selectedPrerequisiteType === 'visiting_controller' || selectedPrerequisiteType === 'home_or_visiting_controller'}
-							<p class="text-sm opacity-70">
-								{describeCoursePrerequisite({
-									prerequisiteType: selectedPrerequisiteType,
-									prerequisiteValue1: null,
-									prerequisiteValue2: null
-								})}
-							</p>
-						{/if}
-					{/key}
-
-					<div class="modal-action">
-						<button type="button" class="btn" onclickcapture={() => prerequisiteModal?.close()}>
-							Cancel
-						</button>
-						<button class="btn btn-primary" disabled={!!updateCoursePrerequisite.pending}>
-							{#if updateCoursePrerequisite.pending}
-								<span class="loading loading-spinner loading-sm"></span>
-								Saving...
-							{:else}
-								Save
-							{/if}
-						</button>
-					</div>
-				</form>
-			{:else}
-				<form {...createCoursePrerequisite} class="mt-4 flex flex-col gap-4">
-					<input type="hidden" name="courseId" value={courseId} />
-
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend">Type</legend>
-						<select
-							class="select"
-							name="prerequisiteType"
-							required
-							bind:value={selectedPrerequisiteType}
-						>
-							{#each PREREQUISITE_TYPES as type (type.value)}
-								<option value={type.value}>{type.label}</option>
-							{/each}
-						</select>
-					</fieldset>
+					<input type="hidden" name="prerequisiteType" value={selectedPrerequisiteType} />
 
 					{#key selectedPrerequisiteType}
 						{#if selectedPrerequisiteType === 'minimum_rating'}
@@ -385,11 +243,9 @@
 					{/key}
 
 					<div class="modal-action">
-						<button type="button" class="btn" onclickcapture={() => prerequisiteModal?.close()}>
-							Cancel
-						</button>
-						<button class="btn btn-primary" disabled={!!createCoursePrerequisite.pending}>
-							{#if createCoursePrerequisite.pending}
+						<button type="button" class="btn" onclick={() => prerequisiteModal?.close()}>Cancel</button>
+						<button class="btn btn-primary" disabled={!!addPrerequisiteForm.pending}>
+							{#if addPrerequisiteForm.pending}
 								<span class="loading loading-spinner loading-sm"></span>
 								Adding...
 							{:else}
@@ -398,7 +254,7 @@
 						</button>
 					</div>
 				</form>
-			{/if}
+			</div>
 		{/key}
 	</div>
 	<form method="dialog" class="modal-backdrop">

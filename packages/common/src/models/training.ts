@@ -3,6 +3,10 @@ import * as schema from "@czqm/db/schema";
 import { and, eq } from "drizzle-orm";
 import type { Env } from "../types";
 import type { User } from "./user";
+import {
+  decodeVatcanCbtTaskValue2,
+  type VatcanCbtBlockMeta,
+} from "../vatcan";
 
 type PrerequisiteRow = {
   prerequisiteId: number;
@@ -371,9 +375,7 @@ export class Course {
     await this.setTasks(tasks);
   }
 
-  async setPrerequisites(
-    prerequisites: CoursePrerequisite[],
-  ): Promise<Course> {
+  async setPrerequisites(prerequisites: CoursePrerequisite[]): Promise<Course> {
     const rows = prerequisites.map((prerequisite) => ({
       prerequisiteId: prerequisite.prerequisiteId,
       prerequisiteType: prerequisite.prerequisiteType,
@@ -601,24 +603,71 @@ function describeTrainingSessionTask(
   return taskValue2 ? `${base}: ${taskValue2}` : base;
 }
 
-export function describeCourseTask(task: {
-  taskType: string;
-  taskValue1: string | null;
-  taskValue2: string | null;
-}): string {
+export function describeVatcanCbtTask(
+  taskValue1: string | null,
+  taskValue2: string | null,
+  metaByBlockId?: Map<number, VatcanCbtBlockMeta>,
+): string {
+  const blockId = taskValue1 ? Number(taskValue1) : null;
+  const trimmedValue2 = taskValue2?.trim();
+  const hasExplicitSource = Boolean(
+    trimmedValue2?.match(/^(division|facility):/),
+  );
+  const decoded = decodeVatcanCbtTaskValue2(taskValue2);
+  const catalogMeta =
+    blockId !== null && Number.isFinite(blockId)
+      ? metaByBlockId?.get(blockId)
+      : undefined;
+
+  if (decoded && hasExplicitSource) {
+    const brandName = decoded.source === "facility" ? "CZQM" : "VATCAN";
+    return `Complete ${brandName} CBT block "${decoded.title}"`;
+  }
+
+  if (decoded && catalogMeta) {
+    return `Complete ${catalogMeta.brandName} CBT block "${catalogMeta.title}"`;
+  }
+
+  if (decoded) {
+    return `Complete VATCAN CBT block "${decoded.title}"`;
+  }
+
+  if (catalogMeta) {
+    return `Complete ${catalogMeta.brandName} CBT block "${catalogMeta.title}"`;
+  }
+
+  if (blockId !== null && Number.isFinite(blockId)) {
+    return `Complete VATCAN CBT block ${blockId}`;
+  }
+
+  return "Complete VATCAN CBT block Unknown";
+}
+
+export type DescribeCourseTaskOptions = {
+  vatcanCbtMetaByBlockId?: Map<number, VatcanCbtBlockMeta>;
+};
+
+export function describeCourseTask(
+  task: {
+    taskType: string;
+    taskValue1: string | null;
+    taskValue2: string | null;
+  },
+  options?: DescribeCourseTaskOptions,
+): string {
   switch (task.taskType) {
     case "manual":
       return task.taskValue1 ?? "Manual task";
     case "vatcan_exam":
-      return `Complete the ${task.taskValue1 ?? "VATCAN"} exam`;
+      return `Complete the ${task.taskValue1 ?? "VATCAN"}`;
     case "moodle":
       return `Complete the Moodle course "${task.taskValue1 ?? "Unknown"}"`;
-    case "vatcan_cbt": {
-      const blockId = task.taskValue1 ? Number(task.taskValue1) : null;
-      const display =
-        blockId !== null && Number.isFinite(blockId) ? blockId : "Unknown";
-      return `Complete VATCAN CBT block ${display}`;
-    }
+    case "vatcan_cbt":
+      return describeVatcanCbtTask(
+        task.taskValue1,
+        task.taskValue2,
+        options?.vatcanCbtMetaByBlockId,
+      );
     case "training_session":
       return describeTrainingSessionTask(task.taskValue1, task.taskValue2);
     case "delay": {
@@ -653,9 +702,7 @@ export const COURSE_PREREQUISITE_TYPE_LABELS: Record<PrerequisiteType, string> =
     home_or_visiting_controller: "Must Be Home or Visiting Controller",
   };
 
-export function formatCoursePrerequisiteType(
-  prerequisiteType: string,
-): string {
+export function formatCoursePrerequisiteType(prerequisiteType: string): string {
   return (
     COURSE_PREREQUISITE_TYPE_LABELS[prerequisiteType as PrerequisiteType] ??
     prerequisiteType
@@ -1219,7 +1266,7 @@ export class VatcanCbtCourseTask extends CourseTask {
   }
 
   getDescription(): string {
-    return `Complete VATCAN CBT block ${this.blockId ?? "Unknown"}`;
+    return describeVatcanCbtTask(this.taskValue1, this.taskValue2);
   }
 
   isAutoCompletable(): boolean {
@@ -1417,14 +1464,11 @@ const VatcanApi = {
     env: Pick<Env, "VATCAN_API_TOKEN">,
     cid: number,
   ): Promise<VatcanCbtProgressResponse> {
-    const response = await fetch(
-      `https://vatcan.ca/api/v2/user/${cid}/cbt`,
-      {
-        headers: {
-          Authorization: `Token ${env.VATCAN_API_TOKEN}`,
-        },
+    const response = await fetch(`https://vatcan.ca/api/v2/user/${cid}/cbt`, {
+      headers: {
+        Authorization: `Token ${env.VATCAN_API_TOKEN}`,
       },
-    );
+    });
 
     if (!response.ok) {
       const body = (await response

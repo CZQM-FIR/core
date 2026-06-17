@@ -29,6 +29,9 @@
 					>
 				</div>
 				<ul class="menu dropdown-content menu-sm rounded-box bg-base-300 z-50 mt-3 p-2 shadow-sm">
+					{#if data.isVectorStudent}
+						<li><a href="/">My Courses</a></li>
+					{/if}
 					{#if data.isVectorAdmin}
 						<li><a href="/a/courses">Training Administration</a></li>
 					{/if}
@@ -41,6 +44,9 @@
 		</div>
 		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
+				{#if data.isVectorStudent}
+					<li><a href="/">My Courses</a></li>
+				{/if}
 				{#if data.isVectorAdmin}
 					<li><a href="/a/courses">Training Administration</a></li>
 				{/if}

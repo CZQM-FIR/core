@@ -1,6 +1,7 @@
 import { command, form, query } from '$app/server';
 import { db } from '$lib/db';
-import { Course, isTrainingSessionType, type PrerequisiteType, type TaskType } from '@czqm/common';
+import { Course, encodeVatcanCbtTaskValue2, fetchVatcanCbtBlockOptions, findVatcanCbtBlock, isTrainingSessionType, type PrerequisiteType, type TaskType } from '@czqm/common';
+import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { authorizeVectorAdminAccess } from './auth';
@@ -27,13 +28,27 @@ const CourseTaskOptions = type({
 	'taskValue2?': 'string'
 });
 
-const CoursePrerequisiteOptions = type({
-	courseId: CourseId,
-	prerequisiteId: FormId,
-	prerequisiteType: PrerequisiteTypeSchema,
-	'prerequisiteValue1?': 'string',
-	'prerequisiteValue2?': 'string'
-});
+async function resolveVatcanCbtTaskValues(blockKey: string): Promise<{
+	taskValue1: string;
+	taskValue2: string;
+}> {
+	if (!env.VATCAN_API_TOKEN) {
+		throw error(400, 'VATCAN API token is not configured on this server.');
+	}
+
+	const blocks = await fetchVatcanCbtBlockOptions(
+		{ VATCAN_API_TOKEN: env.VATCAN_API_TOKEN },
+		{ requireFacility: true }
+	);
+	const block = findVatcanCbtBlock(blocks, blockKey);
+	if (!block) {
+		throw error(400, `CBT block ${blockKey} was not found in the VATCAN catalog`);
+	}
+
+	return { taskValue1: String(block.id), taskValue2: encodeVatcanCbtTaskValue2(block) };
+}
+
+const CBT_BLOCK_KEY_PATTERN = /^(?:(?:division|facility):)?\d+$/;
 
 function validateTrainingSessionTaskValues(
 	taskValue1: string | undefined,
@@ -183,6 +198,16 @@ export const createCourseTask = form(
 			resolvedTaskValue2 = validated.taskValue2;
 		}
 
+		if (taskType === 'vatcan_cbt') {
+			const blockKey = taskValue1?.trim();
+			if (!blockKey || !CBT_BLOCK_KEY_PATTERN.test(blockKey)) {
+				throw error(400, 'CBT block is required');
+			}
+			const resolved = await resolveVatcanCbtTaskValues(blockKey);
+			resolvedTaskValue1 = resolved.taskValue1;
+			resolvedTaskValue2 = resolved.taskValue2;
+		}
+
 		await course.createTask(taskType as TaskType, resolvedTaskValue1, resolvedTaskValue2);
 
 		getCourse(courseId).refresh();
@@ -204,6 +229,16 @@ export const updateCourseTask = form(CourseTaskOptions, async (data) => {
 		const validated = validateTrainingSessionTaskValues(data.taskValue1, data.taskValue2);
 		resolvedTaskValue1 = validated.taskValue1;
 		resolvedTaskValue2 = validated.taskValue2;
+	}
+
+	if (data.taskType === 'vatcan_cbt') {
+		const blockKey = data.taskValue1?.trim();
+		if (!blockKey || !CBT_BLOCK_KEY_PATTERN.test(blockKey)) {
+			throw error(400, 'CBT block is required');
+		}
+		const resolved = await resolveVatcanCbtTaskValues(blockKey);
+		resolvedTaskValue1 = resolved.taskValue1;
+		resolvedTaskValue2 = resolved.taskValue2;
 	}
 
 	await course.updateTask(
@@ -275,6 +310,29 @@ export const getRatings = query(async () => {
 	return db.query.ratings.findMany();
 });
 
+export const getVatcanCbtBlocks = query(async () => {
+	await authorizeVectorAdminAccess();
+
+	if (!env.VATCAN_API_TOKEN) {
+		return {
+			blocks: [],
+			error: 'VATCAN API token is not configured on this server.'
+		};
+	}
+
+	try {
+		const blocks = await fetchVatcanCbtBlockOptions({
+			VATCAN_API_TOKEN: env.VATCAN_API_TOKEN
+		});
+		return { blocks, error: null };
+	} catch (err) {
+		return {
+			blocks: [],
+			error: err instanceof Error ? err.message : 'Failed to load CBT blocks from VATCAN.'
+		};
+	}
+});
+
 export const createCoursePrerequisite = form(
 	type({
 		courseId: CourseId,
@@ -299,24 +357,6 @@ export const createCoursePrerequisite = form(
 		return { ok: true };
 	}
 );
-
-export const updateCoursePrerequisite = form(CoursePrerequisiteOptions, async (data) => {
-	await authorizeVectorAdminAccess();
-
-	const course = await Course.fetchById(data.courseId, db);
-	if (!course) throw error(404, 'Course not found');
-
-	await course.updatePrerequisite(
-		data.prerequisiteId,
-		data.prerequisiteType as PrerequisiteType,
-		data.prerequisiteValue1 ?? null,
-		data.prerequisiteValue2 ?? null
-	);
-
-	getCourse(data.courseId).refresh();
-
-	return { ok: true };
-});
 
 export const deleteCoursePrerequisite = command(
 	type({

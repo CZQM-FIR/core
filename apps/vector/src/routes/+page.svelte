@@ -1,74 +1,167 @@
 <script lang="ts">
 	import env from '$lib/publicEnv';
-	import { getSessionUser } from '$lib/remote/users.remote';
+	import { getCurrentUserInfo } from '$lib/remote/users.remote';
+	import { getStudentCourses } from '$lib/remote/student.remote';
+	import type { PageData } from './$types';
 
-	const sessionData = getSessionUser();
+	let { data }: { data: PageData } = $props();
+
+	const coursesQuery = getStudentCourses();
 </script>
 
-<section>
-	{#await sessionData}
-		<div class="hero bg-base-200 min-h-screen">
-			<div class="hero-content text-center"><p>Loading...</p></div>
+{#if !data.isVectorStudent}
+	<div class="hero bg-base-200 min-h-screen">
+		<div class="hero-content text-center">
+			<div class="max-w-md">
+				<h1 class="text-5xl font-bold">Vector</h1>
+				<div class="flex flex-col gap-3 py-6">
+					<p>
+						Welcome to Vector, the CZQM FIR's controller management system. This system is only
+						available to CZQM home controllers and visitors.
+					</p>
+					<p>
+						If you believe you should have access, please contact the webmaster or chief instructor.
+					</p>
+				</div>
+				<a href={env.PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
+			</div>
 		</div>
-	{:then data}
-		{#if !data.user}
-			<div class="hero bg-base-200 min-h-screen">
-				<div class="hero-content text-center">
-					<div class="max-w-md">
-						<h1 class="text-5xl font-bold">Vector</h1>
-						<div class="flex flex-col gap-3 py-6">
-							<p class="">Welcome to Vector, the CZQM FIR's training management system.</p>
-							<p>
-								You must be logged in to access this page. Please return to the main site to login.
-							</p>
-						</div>
-						<a href={env.PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
-					</div>
-				</div>
-			</div>
-		{:else if data.user.flags.filter( (f) => ['staff', 'admin', 'controller', 'visitor'].includes(f.name) ).length > 0}
-			<div class="hero bg-base-200 min-h-screen">
-				<div class="hero-content text-center">
-					<div class="max-w-md">
-						<h1 class="text-5xl font-bold">Welcome to Vector</h1>
-						<div class="flex flex-col gap-3 py-6">
-							<p>
-								Welcome to Vector, the CZQM FIR's training management system. View your position on
-								our wait lists or join a wait list for training.
-							</p>
-						</div>
-						<div class="flex w-full flex-row justify-center gap-3">
-							<a href="/waitlist" class="btn btn-primary">Go To Wait Lists</a>
-							<a href={env.PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
-						</div>
-					</div>
-				</div>
-			</div>
+	</div>
+{:else}
+	<section class="container mx-auto py-5">
+		{#await getCurrentUserInfo()}
+			<p>Loading...</p>
+		{:then user}
+			<h1 class="text-3xl font-semibold">Hey there, {user.name_first}!</h1>
+			<p class="mt-1 text-sm opacity-80">
+				Browse your courses, join waitlists, and track your progress.
+			</p>
+		{:catch}
+			<h1 class="text-3xl font-semibold">My Courses</h1>
+		{/await}
+
+		<div class="divider"></div>
+
+		{#if coursesQuery.error}
+			<p class="text-error">Failed to load courses.</p>
+		{:else if coursesQuery.loading && !coursesQuery.current}
+			<p>Loading courses...</p>
 		{:else}
-			<div class="hero bg-base-200 min-h-screen">
-				<div class="hero-content text-center">
-					<div class="max-w-md">
-						<h1 class="text-5xl font-bold">Vector</h1>
-						<div class="flex flex-col gap-3 py-6">
-							<p class="">
-								Welcome to Vector, the CZQM FIR's controller management system. This system is only
-								available to CZQM home controllers and visitors.
-							</p>
-							<p>
-								If you believe you should have access, please contact the webmaster or chief
-								instructor.
-							</p>
-						</div>
-						<a href={env.PUBLIC_WEB_URL} class="btn btn-outline">Return to Main Site</a>
+			{@const catalog = coursesQuery.current ?? {
+				enrolled: [],
+				completed: [],
+				eligible: [],
+				ineligible: []
+			}}
+
+			{#if catalog.enrolled.length > 0}
+				<section class="mb-8">
+					<h2 class="text-xl font-semibold">Enrolled</h2>
+					<p class="text-sm opacity-70">Courses you are waitlisted for or actively enrolled in.</p>
+					<div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+						{#each catalog.enrolled as course (course.id)}
+							<a
+								href="/courses/{course.id}"
+								class="card bg-base-200 shadow-sm transition-shadow hover:shadow-md"
+							>
+								<div class="card-body gap-3">
+									<div class="flex items-start justify-between gap-2">
+										<h3 class="card-title text-lg">{course.name}</h3>
+										{#if course.status === 'enrolled'}
+											<span class="badge badge-secondary shrink-0">Enrolled</span>
+										{:else}
+											<span class="badge badge-primary shrink-0">
+												Waitlisted
+												{#if course.position != null}
+													#{course.position + 1}
+												{/if}
+											</span>
+										{/if}
+									</div>
+									{#if course.description}
+										<p class="line-clamp-2 text-sm opacity-80">{course.description}</p>
+									{/if}
+								</div>
+							</a>
+						{/each}
 					</div>
-				</div>
-			</div>
+				</section>
+			{/if}
+
+			{#if catalog.eligible.length > 0}
+				<section class="mb-8">
+					<h2 class="text-xl font-semibold">Eligible</h2>
+					<p class="text-sm opacity-70">Courses you can join — prerequisites are met.</p>
+					<div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+						{#each catalog.eligible as course (course.id)}
+							<a
+								href="/courses/{course.id}"
+								class="card bg-base-200 shadow-sm transition-shadow hover:shadow-md"
+							>
+								<div class="card-body gap-2">
+									<h3 class="card-title text-lg">{course.name}</h3>
+									{#if course.description}
+										<p class="line-clamp-2 text-sm opacity-80">{course.description}</p>
+									{/if}
+								</div>
+							</a>
+						{/each}
+					</div>
+				</section>
+			{/if}
+
+			{#if catalog.ineligible.length > 0}
+				<section class="mb-8">
+					<h2 class="text-xl font-semibold">Ineligible</h2>
+					<p class="text-sm opacity-70">Courses with prerequisites you have not yet met.</p>
+					<div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+						{#each catalog.ineligible as course (course.id)}
+							<a
+								href="/courses/{course.id}"
+								class="card bg-base-200 opacity-75 shadow-sm transition-all hover:opacity-100 hover:shadow-md"
+							>
+								<div class="card-body gap-2">
+									<div class="flex items-start justify-between gap-2">
+										<h3 class="card-title text-lg">{course.name}</h3>
+										<span class="badge badge-outline badge-error badge-sm shrink-0">Ineligible</span
+										>
+									</div>
+									{#if course.description}
+										<p class="line-clamp-2 text-sm opacity-70">{course.description}</p>
+									{/if}
+								</div>
+							</a>
+						{/each}
+					</div>
+				</section>
+			{/if}
+
+			{#if catalog.completed.length > 0}
+				<section>
+					<h2 class="text-xl font-semibold">Completed</h2>
+					<p class="text-sm opacity-70">Courses you have finished.</p>
+					<div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+						{#each catalog.completed as course (course.id)}
+							<a
+								href="/courses/{course.id}"
+								class="card bg-base-200 shadow-sm transition-shadow hover:shadow-md"
+							>
+								<div class="card-body gap-2">
+									<h3 class="card-title text-lg">{course.name}</h3>
+									<p class="text-sm opacity-80">
+										Completed
+										{#if course.completedAt}
+											{course.completedAt.toUTCString().replace(' GMT', 'z')}
+										{:else}
+											—
+										{/if}
+									</p>
+								</div>
+							</a>
+						{/each}
+					</div>
+				</section>
+			{/if}
 		{/if}
-	{:catch err}
-		<div class="hero bg-base-200 min-h-screen">
-			<div class="hero-content text-center">
-				<p class="text-error">{err?.message ?? 'Failed to load.'}</p>
-			</div>
-		</div>
-	{/await}
-</section>
+	</section>
+{/if}
