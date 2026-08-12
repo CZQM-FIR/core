@@ -51,6 +51,7 @@
 	let weekPage = $state(0);
 	let availabilityKeys = $state<Set<string>>(new Set());
 	let selectedKeys = $state<Set<string>>(new Set());
+	let savedKeys = $state<Set<string>>(new Set());
 	let windowEndsAt = $state<Date>(getAvailabilityWindowEndsAt());
 	let loading = $state(true);
 	let saving = $state(false);
@@ -268,6 +269,7 @@
 				for (const key of getBlockedKeys()) {
 					selectedKeys.add(key);
 				}
+				savedKeys = new Set(selectedKeys);
 			}
 		} catch (err) {
 			if (err && typeof err === 'object' && 'body' in err) {
@@ -484,6 +486,11 @@
 	const visibleDays = $derived(getVisibleDays());
 	const weekRangeLabel = $derived(formatWeekRange(visibleDays));
 	const selectedRangeLabel = $derived(formatSelectedRange());
+	const hasUnsavedChanges = $derived(
+		mode === 'edit' &&
+			!loading &&
+			[...selectedKeys].sort().join(',') !== [...savedKeys].sort().join(',')
+	);
 
 	$effect(() => {
 		void (courseId, taskId, mode, cid, confirmedSession);
@@ -605,6 +612,8 @@
 					</button>
 					{#if saveError}
 						<p class="text-error text-sm">{saveError}</p>
+					{:else if hasUnsavedChanges}
+						<p class="text-warning text-sm">You have unsaved changes.</p>
 					{/if}
 				</div>
 			{:else if mode === 'schedule'}
