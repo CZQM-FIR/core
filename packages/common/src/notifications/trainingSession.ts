@@ -27,7 +27,7 @@ type QueueTrainingSessionEmailsInput = {
 };
 
 function formatSessionRange(startsAt: Date, endsAt: Date): string {
-  const dateLabel = startsAt.toLocaleDateString(undefined, {
+  const startDateLabel = startsAt.toLocaleDateString(undefined, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -35,12 +35,29 @@ function formatSessionRange(startsAt: Date, endsAt: Date): string {
   const startTime = startsAt.toLocaleTimeString(undefined, {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
   const endTime = endsAt.toLocaleTimeString(undefined, {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
-  return `${dateLabel}, ${startTime} - ${endTime}`;
+
+  const sameDay =
+    startsAt.getFullYear() === endsAt.getFullYear() &&
+    startsAt.getMonth() === endsAt.getMonth() &&
+    startsAt.getDate() === endsAt.getDate();
+
+  if (sameDay) {
+    return `${startDateLabel}, ${startTime} - ${endTime}`;
+  }
+
+  const endDateLabel = endsAt.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+  return `${startDateLabel}, ${startTime} - ${endDateLabel}, ${endTime}`;
 }
 
 function buildEmailPayload(subject: string, paragraphs: string[]): string {

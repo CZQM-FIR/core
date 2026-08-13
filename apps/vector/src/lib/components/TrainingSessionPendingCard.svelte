@@ -47,11 +47,13 @@
 		});
 		const startTime = startsAt.toLocaleTimeString(undefined, {
 			hour: '2-digit',
-			minute: '2-digit'
+			minute: '2-digit',
+			hour12: false
 		});
 		const endTime = endsAt.toLocaleTimeString(undefined, {
 			hour: '2-digit',
-			minute: '2-digit'
+			minute: '2-digit',
+			hour12: false
 		});
 		return `${dateLabel}, ${startTime} – ${endTime}`;
 	}

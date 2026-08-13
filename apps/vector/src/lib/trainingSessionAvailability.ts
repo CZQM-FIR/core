@@ -100,10 +100,6 @@ export function validateSessionTimeRange(
 		throw new Error('Session duration must be a multiple of 30 minutes');
 	}
 
-	if (!isSameCalendarDay(startsAt, endsAt)) {
-		throw new Error('Session must start and end on the same calendar day');
-	}
-
 	if (startsAt < windowStart || endsAt > windowEnd) {
 		throw new Error('Session must fall within the availability window');
 	}

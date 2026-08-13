@@ -6,7 +6,8 @@
 		SLOT_MINUTES,
 		SLOT_MS,
 		getAvailabilityWindowEndsAt,
-		isRangeWithinAvailability
+		isRangeWithinAvailability,
+		isSameCalendarDay
 	} from '$lib/trainingSessionAvailability';
 	import {
 		getInstructorStudentSessionAvailability,
@@ -123,6 +124,117 @@
 		return `${dayIndex}-${slotIndex}`;
 	}
 
+	function parseSlotKey(key: string): { dayIndex: number; slotIndex: number } | null {
+		const [dayStr, slotStr] = key.split('-');
+		const dayIndex = Number(dayStr);
+		const slotIndex = Number(slotStr);
+		if (!Number.isFinite(dayIndex) || !Number.isFinite(slotIndex)) return null;
+		return { dayIndex, slotIndex };
+	}
+
+	function toLinearIndex(dayIndex: number, slotIndex: number): number {
+		return dayIndex * slotsPerDay + slotIndex;
+	}
+
+	function fromLinearIndex(linear: number): { dayIndex: number; slotIndex: number } {
+		return {
+			dayIndex: Math.floor(linear / slotsPerDay),
+			slotIndex: linear % slotsPerDay
+		};
+	}
+
+	function keysToLinearIndices(keys: Set<string>): number[] {
+		const indices: number[] = [];
+		for (const key of keys) {
+			const parsed = parseSlotKey(key);
+			if (!parsed) continue;
+			indices.push(toLinearIndex(parsed.dayIndex, parsed.slotIndex));
+		}
+		return indices;
+	}
+
+	function getLinearBounds(keys: Set<string>): { min: number; max: number } | null {
+		if (keys.size === 0) return null;
+		const indices = keysToLinearIndices(keys);
+		if (indices.length === 0) return null;
+		const min = Math.min(...indices);
+		const max = Math.max(...indices);
+		if (max - min + 1 !== keys.size) return null;
+		return { min, max };
+	}
+
+	function isContiguousWithSelection(
+		dayIndex: number,
+		slotIndex: number,
+		keys: Set<string>
+	): boolean {
+		if (keys.size === 0) return true;
+		if (keys.has(slotKey(dayIndex, slotIndex))) return true;
+
+		const bounds = getLinearBounds(keys);
+		if (!bounds) return false;
+		const linear = toLinearIndex(dayIndex, slotIndex);
+		return linear === bounds.min - 1 || linear === bounds.max + 1;
+	}
+
+	function keepSingleContiguousBlock(keys: Set<string>): Set<string> {
+		if (keys.size === 0 || getLinearBounds(keys)) return keys;
+
+		const indices = keysToLinearIndices(keys).sort((a, b) => a - b);
+		if (indices.length === 0) return new Set();
+
+		let bestStart = indices[0];
+		let bestEnd = indices[0];
+		let bestSize = 1;
+		let rangeStart = indices[0];
+		let rangeEnd = indices[0];
+
+		for (let i = 1; i <= indices.length; i++) {
+			const current = indices[i];
+			if (current === rangeEnd + 1) {
+				rangeEnd = current;
+				continue;
+			}
+
+			const size = rangeEnd - rangeStart + 1;
+			if (size > bestSize) {
+				bestStart = rangeStart;
+				bestEnd = rangeEnd;
+				bestSize = size;
+			}
+
+			if (current !== undefined) {
+				rangeStart = current;
+				rangeEnd = current;
+			}
+		}
+
+		const next = new Set<string>();
+		for (let linear = bestStart; linear <= bestEnd; linear++) {
+			const { dayIndex, slotIndex } = fromLinearIndex(linear);
+			next.add(slotKey(dayIndex, slotIndex));
+		}
+		return next;
+	}
+
+	function getSelectedSessionRange(): { startsAt: Date; endsAt: Date } | null {
+		const bounds = getLinearBounds(selectedKeys);
+		if (!bounds) return null;
+
+		const windowStartDay = getWindowStartDay();
+		const start = fromLinearIndex(bounds.min);
+		const end = fromLinearIndex(bounds.max);
+		const startDay = new Date(windowStartDay);
+		startDay.setDate(startDay.getDate() + start.dayIndex);
+		const endDay = new Date(windowStartDay);
+		endDay.setDate(endDay.getDate() + end.dayIndex);
+
+		return {
+			startsAt: slotStartDate(startDay, start.slotIndex),
+			endsAt: new Date(slotStartDate(endDay, end.slotIndex).getTime() + SLOT_MS)
+		};
+	}
+
 	function dateToSlotKey(date: Date, windowStartDay: Date): string | null {
 		const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 		const dayIndex = Math.round(
@@ -229,25 +341,36 @@
 	}
 
 	function formatSelectedRange(): string {
-		const slots = selectedKeysToSlots(selectedKeys, getWindowStartDay());
-		if (slots.length === 0) return '';
+		const range = getSelectedSessionRange();
+		if (!range) return '';
 
-		const startsAt = new Date(slots[0].startsAt);
-		const endsAt = new Date(slots[slots.length - 1].endsAt);
-		const dateLabel = startsAt.toLocaleDateString(undefined, {
+		const { startsAt, endsAt } = range;
+		const startDateLabel = startsAt.toLocaleDateString(undefined, {
 			weekday: 'long',
 			month: 'long',
 			day: 'numeric'
 		});
 		const startTime = startsAt.toLocaleTimeString(undefined, {
 			hour: '2-digit',
-			minute: '2-digit'
+			minute: '2-digit',
+			hour12: false
 		});
 		const endTime = endsAt.toLocaleTimeString(undefined, {
 			hour: '2-digit',
-			minute: '2-digit'
+			minute: '2-digit',
+			hour12: false
 		});
-		return `${dateLabel}, ${startTime} – ${endTime}`;
+
+		if (isSameCalendarDay(startsAt, endsAt)) {
+			return `${startDateLabel}, ${startTime} – ${endTime}`;
+		}
+
+		const endDateLabel = endsAt.toLocaleDateString(undefined, {
+			weekday: 'long',
+			month: 'long',
+			day: 'numeric'
+		});
+		return `${startDateLabel}, ${startTime} – ${endDateLabel}, ${endTime}`;
 	}
 
 	async function loadAvailability() {
@@ -290,17 +413,35 @@
 		current: { dayIndex: number; slotIndex: number }
 	): string[] {
 		const windowStartDay = getWindowStartDay();
-		let minDay = Math.min(anchor.dayIndex, current.dayIndex);
-		let maxDay = Math.max(anchor.dayIndex, current.dayIndex);
+		const keys: string[] = [];
 
 		if (mode === 'schedule') {
-			minDay = anchor.dayIndex;
-			maxDay = anchor.dayIndex;
+			const minLinear = Math.min(
+				toLinearIndex(anchor.dayIndex, anchor.slotIndex),
+				toLinearIndex(current.dayIndex, current.slotIndex)
+			);
+			const maxLinear = Math.max(
+				toLinearIndex(anchor.dayIndex, anchor.slotIndex),
+				toLinearIndex(current.dayIndex, current.slotIndex)
+			);
+
+			for (let linear = minLinear; linear <= maxLinear; linear++) {
+				const { dayIndex, slotIndex } = fromLinearIndex(linear);
+				if (dayIndex < 0 || dayIndex >= AVAILABILITY_WINDOW_DAYS) continue;
+				const day = new Date(windowStartDay);
+				day.setDate(day.getDate() + dayIndex);
+				if (isSlotEnabled(slotStartDate(day, slotIndex))) {
+					keys.push(slotKey(dayIndex, slotIndex));
+				}
+			}
+
+			return keys;
 		}
 
+		const minDay = Math.min(anchor.dayIndex, current.dayIndex);
+		const maxDay = Math.max(anchor.dayIndex, current.dayIndex);
 		const minSlot = Math.min(anchor.slotIndex, current.slotIndex);
 		const maxSlot = Math.max(anchor.slotIndex, current.slotIndex);
-		const keys: string[] = [];
 
 		for (let dayIndex = minDay; dayIndex <= maxDay; dayIndex++) {
 			const day = new Date(windowStartDay);
@@ -329,7 +470,7 @@
 			else next.delete(key);
 		}
 		for (const key of blockedKeys) next.add(key);
-		return next;
+		return mode === 'schedule' ? keepSingleContiguousBlock(next) : next;
 	}
 
 	function endDrag() {
@@ -348,8 +489,12 @@
 		if (getBlockedKeys().has(key)) return;
 
 		const anchor = { dayIndex, slotIndex };
-		const baseKeys = new Set(selectedKeys);
 		const dragMode = selectedKeys.has(key) ? 'deselect' : 'select';
+		const replaceSelection =
+			mode === 'schedule' &&
+			dragMode === 'select' &&
+			!isContiguousWithSelection(dayIndex, slotIndex, selectedKeys);
+		const baseKeys = replaceSelection ? new Set<string>() : new Set(selectedKeys);
 
 		dragState = { anchor, current: anchor, baseKeys, mode: dragMode };
 		selectedKeys = applyDragSelection(baseKeys, anchor, anchor, dragMode);
@@ -360,8 +505,6 @@
 
 	function updateDrag(dayIndex: number, slotIndex: number) {
 		if (!dragState) return;
-
-		if (mode === 'schedule' && dayIndex !== dragState.anchor.dayIndex) return;
 
 		if (dragState.current.dayIndex === dayIndex && dragState.current.slotIndex === slotIndex) {
 			return;
@@ -429,8 +572,8 @@
 	function openScheduleDialog() {
 		if (selectedKeys.size === 0 || mode !== 'schedule') return;
 
-		const slots = selectedKeysToSlots(selectedKeys, getWindowStartDay());
-		if (slots.length === 0) return;
+		const range = getSelectedSessionRange();
+		if (!range) return;
 
 		const availabilitySlots = selectedKeysToSlots(availabilityKeys, getWindowStartDay()).map(
 			(slot) => ({
@@ -439,13 +582,7 @@
 			})
 		);
 
-		outsideAvailabilityWarning = !isRangeWithinAvailability(
-			{
-				startsAt: new Date(slots[0].startsAt),
-				endsAt: new Date(slots[slots.length - 1].endsAt)
-			},
-			availabilitySlots
-		);
+		outsideAvailabilityWarning = !isRangeWithinAvailability(range, availabilitySlots);
 
 		scheduleError = null;
 		confirmDialog?.showModal();
@@ -454,8 +591,8 @@
 	async function handleSchedule() {
 		if (mode !== 'schedule') return;
 
-		const slots = selectedKeysToSlots(selectedKeys, getWindowStartDay());
-		if (slots.length === 0) return;
+		const range = getSelectedSessionRange();
+		if (!range) return;
 
 		scheduling = true;
 		scheduleError = null;
@@ -464,8 +601,8 @@
 				courseId,
 				studentCid: cid,
 				taskId,
-				startsAt: slots[0].startsAt,
-				endsAt: slots[slots.length - 1].endsAt
+				startsAt: range.startsAt.toISOString(),
+				endsAt: range.endsAt.toISOString()
 			});
 			confirmDialog?.close();
 			await loadAvailability();
@@ -510,7 +647,7 @@
 			</p>
 			{#if mode === 'schedule'}
 				<p class="text-sm opacity-70">
-					Drag on a single day to select a session time. Shaded slots show student availability.
+					Drag to select a continuous session time. Shaded slots show student availability.
 				</p>
 			{:else if confirmedSession}
 				<p class="text-sm opacity-70">
