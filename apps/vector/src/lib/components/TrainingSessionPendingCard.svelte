@@ -14,7 +14,10 @@
 		showStudentActions = false,
 		showCancel = false,
 		cancelAs = 'student',
-		studentCid
+		studentCid,
+		href = null,
+		heading = '',
+		subheading = ''
 	}: {
 		courseId: string;
 		taskId: number;
@@ -23,6 +26,9 @@
 		showCancel?: boolean;
 		cancelAs?: 'student' | 'staff';
 		studentCid?: number;
+		href?: string | null;
+		heading?: string;
+		subheading?: string;
 	} = $props();
 
 	let confirming = $state(false);
@@ -59,6 +65,22 @@
 	}
 
 	const sessionRangeLabel = $derived(formatSessionRange(session.startsAt, session.endsAt));
+	const startsInLabel = $derived(formatStartsIn(session.startsAt));
+
+	function formatStartsIn(startsAt: Date, now = new Date()): string | null {
+		const ms = startsAt.getTime() - now.getTime();
+		if (ms <= 0) return null;
+
+		const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'always' });
+		const minutes = ms / 60_000;
+		if (minutes < 1) return `Starts ${rtf.format(1, 'minute')}`;
+		if (minutes < 60) return `Starts ${rtf.format(Math.round(minutes), 'minute')}`;
+
+		const hours = minutes / 60;
+		if (hours < 24) return `Starts ${rtf.format(Math.max(1, Math.round(hours)), 'hour')}`;
+
+		return `Starts ${rtf.format(Math.max(1, Math.round(hours / 24)), 'day')}`;
+	}
 
 	function statusLabel(status: TrainingSessionSummary['status']): string {
 		switch (status) {
@@ -170,11 +192,25 @@
 	}
 </script>
 
-<div class="card bg-base-200 w-full shadow-sm">
-	<div class="card-body gap-3">
+<div
+	class={[
+		'card card-sm bg-base-200 relative w-full shadow-sm',
+		href && 'hover:bg-base-300 cursor-pointer transition-shadow hover:shadow-md'
+	]}
+>
+	{#if href}
+		<a {href} class="absolute inset-0 z-10" aria-label={heading ? `View ${heading}` : 'View course'}
+		></a>
+	{/if}
+	<div class="card-body gap-2 p-4">
 		<div class="flex flex-wrap items-start justify-between gap-2">
-			<h2 class="card-title text-lg">Training Session</h2>
-			<span class="badge {statusBadgeClass(session.status)}">{statusLabel(session.status)}</span>
+			<div class="min-w-0">
+				<h2 class="card-title text-base">{heading || 'Training Session'}</h2>
+				{#if subheading}
+					<p class="text-sm opacity-70">{subheading}</p>
+				{/if}
+			</div>
+			<span class="badge badge-sm {statusBadgeClass(session.status)}">{statusLabel(session.status)}</span>
 		</div>
 
 		{#if showStudentActions && session.status === 'pending'}
@@ -184,7 +220,12 @@
 			</p>
 		{/if}
 
-		<p class="text-sm">{formatSessionRange(session.startsAt, session.endsAt)}</p>
+		<p class="flex flex-wrap items-baseline gap-x-2 text-sm">
+			<span>{formatSessionRange(session.startsAt, session.endsAt)}</span>
+			{#if startsInLabel}
+				<span class="opacity-70">{startsInLabel}</span>
+			{/if}
+		</p>
 
 		{#if scheduledByLabel}
 			<p class="text-sm opacity-70">{scheduledByLabel}</p>
@@ -201,7 +242,7 @@
 			<div class="flex flex-wrap items-center gap-3">
 				<button
 					type="button"
-					class="btn btn-primary btn-sm"
+					class="btn btn-primary btn-sm relative z-20"
 					disabled={confirming || declining || cancelling}
 					onclick={handleConfirm}
 				>
@@ -214,7 +255,7 @@
 				</button>
 				<button
 					type="button"
-					class="btn btn-outline btn-sm"
+					class="btn btn-outline btn-sm relative z-20"
 					disabled={confirming || declining || cancelling}
 					onclick={handleDecline}
 				>
@@ -232,7 +273,7 @@
 			<div class="flex flex-wrap items-center gap-3">
 				<button
 					type="button"
-					class="btn btn-outline btn-error btn-sm"
+					class="btn btn-outline btn-error btn-sm relative z-20"
 					disabled={confirming || declining || cancelling}
 					onclick={openCancelDialog}
 				>

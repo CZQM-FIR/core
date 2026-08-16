@@ -1,5 +1,5 @@
 import { trainingSessions, type TrainingSessionRow } from "@czqm/db/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import type { DB } from "../db";
 import { User } from "./user";
 
@@ -89,6 +89,25 @@ export class TrainingSession {
       .limit(1);
 
     return row ?? null;
+  }
+
+  static async fetchActiveForUser(
+    db: DB,
+    cid: number,
+  ): Promise<TrainingSessionRow[]> {
+    return db
+      .select()
+      .from(trainingSessions)
+      .where(
+        and(
+          inArray(trainingSessions.status, ACTIVE_STATUSES),
+          or(
+            eq(trainingSessions.studentCid, cid),
+            eq(trainingSessions.scheduledByCid, cid),
+          ),
+        ),
+      )
+      .orderBy(trainingSessions.startsAt);
   }
 
   static async createPending(

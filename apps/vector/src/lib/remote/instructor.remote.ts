@@ -29,6 +29,7 @@ import { type } from 'arktype';
 import { and, eq, gt, inArray } from 'drizzle-orm';
 import { authorizeVectorInstructorAccess } from './auth';
 import { getStudentCourseView } from './student.remote';
+import { getMyTrainingSessions } from './users.remote';
 import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
 import { notifyCourseEnrollmentEmail } from '$lib/courseEnrollmentEmails';
 
@@ -504,6 +505,7 @@ export const scheduleTrainingSession = command(
 		getInstructorStudentView({ courseId, cid: studentCid }).refresh();
 		getStudentCourseView(courseId).refresh();
 		getStudentsWithSessionAvailability().refresh();
+		getMyTrainingSessions().refresh();
 
 		return { outsideAvailability };
 	}
@@ -567,6 +569,7 @@ export const cancelTrainingSession = command(
 		getInstructorStudentView({ courseId, cid: studentCid }).refresh();
 		getStudentCourseView(courseId).refresh();
 		getStudentsWithSessionAvailability().refresh();
+		getMyTrainingSessions().refresh();
 	}
 );
 

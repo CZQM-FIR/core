@@ -1,15 +1,16 @@
 <script lang="ts">
 	import env from '$lib/publicEnv';
+	import MyTrainingSessions from '$lib/components/MyTrainingSessions.svelte';
 	import { getCurrentUserInfo } from '$lib/remote/users.remote';
 	import { getStudentCourses } from '$lib/remote/student.remote';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	const coursesQuery = getStudentCourses();
+	const coursesQuery = $derived(data.isVectorStudent ? getStudentCourses() : null);
 </script>
 
-{#if !data.isVectorStudent}
+{#if !data.isVectorStudent && !data.isVectorInstructor}
 	<div class="hero bg-base-200 min-h-screen">
 		<div class="hero-content text-center">
 			<div class="max-w-md">
@@ -34,7 +35,11 @@
 		{:then user}
 			<h1 class="text-3xl font-semibold">Hey there, {user.name_first}!</h1>
 			<p class="mt-1 text-sm opacity-80">
-				Browse your courses, join waitlists, and track your progress.
+				{#if data.isVectorStudent}
+					Browse your courses, join waitlists, and track your progress.
+				{:else}
+					Sessions you are instructing appear below.
+				{/if}
 			</p>
 		{:catch}
 			<h1 class="text-3xl font-semibold">My Courses</h1>
@@ -42,12 +47,19 @@
 
 		<div class="divider"></div>
 
-		{#if coursesQuery.error}
+		<MyTrainingSessions />
+
+		{#if !data.isVectorStudent}
+			<p class="text-sm opacity-80">
+				<a href="/i" class="link link-primary">Open the instructor dashboard</a> to review courses and
+				student progress.
+			</p>
+		{:else if coursesQuery?.error}
 			<p class="text-error">Failed to load courses.</p>
-		{:else if coursesQuery.loading && !coursesQuery.current}
+		{:else if coursesQuery?.loading && !coursesQuery.current}
 			<p>Loading courses...</p>
 		{:else}
-			{@const catalog = coursesQuery.current ?? {
+			{@const catalog = coursesQuery?.current ?? {
 				enrolled: [],
 				completed: [],
 				eligible: [],

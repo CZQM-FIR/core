@@ -4,6 +4,7 @@
 	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
 	import TrainingSessionAvailabilityCalendar from '$lib/components/TrainingSessionAvailabilityCalendar.svelte';
 	import TrainingSessionPendingCard from '$lib/components/TrainingSessionPendingCard.svelte';
+	import TrainingSessionStudentPrepNote from '$lib/components/TrainingSessionStudentPrepNote.svelte';
 	import {
 		getStudentCourseView,
 		joinCourseWaitlist,
@@ -195,6 +196,7 @@
 									session={view.activeSession}
 									showCancel={view.canCancelActiveSession}
 								/>
+								<TrainingSessionStudentPrepNote />
 							{/if}
 							<TrainingSessionAvailabilityCalendar
 								mode="edit"
