@@ -6,6 +6,121 @@ export const DAY_START_HOUR = 0;
 export const DAY_END_HOUR = 24;
 
 export const SLOT_MS = SLOT_MINUTES * 60 * 1000;
+export const SLOTS_PER_DAY = ((DAY_END_HOUR - DAY_START_HOUR) * 60) / SLOT_MINUTES;
+
+export type AvailabilitySlot = { startsAt: Date; endsAt: Date };
+
+export function getWindowStartDay(from = new Date()): Date {
+	const day = new Date(from);
+	day.setHours(0, 0, 0, 0);
+	return day;
+}
+
+export function slotKey(dayIndex: number, slotIndex: number): string {
+	return `${dayIndex}-${slotIndex}`;
+}
+
+export function parseSlotKey(key: string): { dayIndex: number; slotIndex: number } | null {
+	const [dayStr, slotStr] = key.split('-');
+	const dayIndex = Number(dayStr);
+	const slotIndex = Number(slotStr);
+	if (!Number.isFinite(dayIndex) || !Number.isFinite(slotIndex)) return null;
+	return { dayIndex, slotIndex };
+}
+
+export function slotStartDate(day: Date, slotIndex: number): Date {
+	const minutesFromMidnight = DAY_START_HOUR * 60 + slotIndex * SLOT_MINUTES;
+	const hour = Math.floor(minutesFromMidnight / 60);
+	const minute = minutesFromMidnight % 60;
+	return new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, minute);
+}
+
+export function dateToSlotKey(date: Date, windowStartDay: Date): string | null {
+	const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+	const dayIndex = Math.round(
+		(dayStart.getTime() - windowStartDay.getTime()) / (24 * 60 * 60 * 1000)
+	);
+	if (dayIndex < 0 || dayIndex >= AVAILABILITY_WINDOW_DAYS) return null;
+
+	const slotIndex = (date.getHours() * 60 + date.getMinutes()) / SLOT_MINUTES;
+	if (!Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= SLOTS_PER_DAY) return null;
+
+	return slotKey(dayIndex, slotIndex);
+}
+
+export function slotsToKeys(slots: AvailabilitySlot[], windowStartDay: Date): Set<string> {
+	const selected = new Set<string>();
+	for (const slot of slots) {
+		let current = new Date(slot.startsAt);
+		while (current < slot.endsAt) {
+			const key = dateToSlotKey(current, windowStartDay);
+			if (key) selected.add(key);
+			current = new Date(current.getTime() + SLOT_MS);
+		}
+	}
+	return selected;
+}
+
+export function keysToSlots(selected: Set<string>, windowStartDay: Date): AvailabilitySlot[] {
+	const byDay = new Map<number, number[]>();
+
+	for (const key of selected) {
+		const parsed = parseSlotKey(key);
+		if (!parsed) continue;
+
+		const indices = byDay.get(parsed.dayIndex) ?? [];
+		indices.push(parsed.slotIndex);
+		byDay.set(parsed.dayIndex, indices);
+	}
+
+	const result: AvailabilitySlot[] = [];
+
+	for (const [dayIndex, slotIndices] of byDay) {
+		slotIndices.sort((a, b) => a - b);
+		const day = new Date(windowStartDay);
+		day.setDate(day.getDate() + dayIndex);
+
+		let rangeStart = slotIndices[0];
+		let rangeEnd = slotIndices[0];
+
+		for (let i = 1; i <= slotIndices.length; i++) {
+			const current = slotIndices[i];
+			if (current === rangeEnd + 1) {
+				rangeEnd = current;
+				continue;
+			}
+
+			const startsAt = slotStartDate(day, rangeStart);
+			const endsAt = new Date(slotStartDate(day, rangeEnd).getTime() + SLOT_MS);
+			result.push({ startsAt, endsAt });
+
+			if (current !== undefined) {
+				rangeStart = current;
+				rangeEnd = current;
+			}
+		}
+	}
+
+	return result.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+}
+
+export function isAvailabilitySlotEnabled(
+	start: Date,
+	windowEndsAt: Date,
+	now = new Date()
+): boolean {
+	const end = new Date(start.getTime() + SLOT_MS);
+	return start >= now && end <= windowEndsAt;
+}
+
+export function rangesOverlap(a: AvailabilitySlot, b: AvailabilitySlot): boolean {
+	return a.startsAt < b.endsAt && b.startsAt < a.endsAt;
+}
+
+export function anySlotsOverlap(a: AvailabilitySlot[], b: AvailabilitySlot[]): boolean {
+	if (a.length === 0 || b.length === 0) return false;
+	return a.some((left) => b.some((right) => rangesOverlap(left, right)));
+}
 
 export function getNextIncompleteTask(tasks: CourseTaskProgress[]): CourseTaskProgress | null {
 	return tasks.find((task) => !task.isComplete) ?? null;

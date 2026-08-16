@@ -52,10 +52,11 @@
 		<p>Loading student...</p>
 	{:then view}
 		<a
-			href="/i/courses/{view.course.id}"
+			href={data.fromAvailability ? '/i/availability' : `/i/courses/${view.course.id}`}
 			class="text-primary hover:link flex flex-row items-center gap-1"
 		>
-			<ChevronLeft size="15" /> Back to {view.course.name}
+			<ChevronLeft size="15" />
+			{data.fromAvailability ? 'Back to availability' : `Back to ${view.course.name}`}
 		</a>
 
 		<div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">

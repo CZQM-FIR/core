@@ -5,13 +5,20 @@ import {
 	getNextIncompleteTask,
 	isRangeWithinAvailability,
 	isTrainingSessionNext,
+	mergeAvailabilitySlots,
 	toNextTaskSummary,
 	validateSessionTimeRange
 } from '$lib/trainingSessionAvailability';
 import { getCourseTaskProgress } from '$lib/courseTaskProgress';
-import { trainingSessionAvailability, trainingSessions } from '@czqm/db/schema';
 import {
+	courseTaskCompletions,
+	trainingSessionAvailability,
+	trainingSessions
+} from '@czqm/db/schema';
+import {
+	ACTIVE_STATUSES,
 	Course,
+	describeCourseTask,
 	TrainingSession,
 	User,
 	userCanGraduateVectorStudents,
@@ -19,7 +26,7 @@ import {
 } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, gt, inArray } from 'drizzle-orm';
 import { authorizeVectorInstructorAccess } from './auth';
 import { getStudentCourseView } from './student.remote';
 import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
@@ -245,6 +252,155 @@ export const getInstructorStudentSessionAvailability = query(
 	}
 );
 
+export const getStudentsWithSessionAvailability = query(async () => {
+	const actioner = await authorizeVectorInstructorAccess();
+
+	const now = new Date();
+	const windowEndsAt = getAvailabilityWindowEndsAt(now);
+
+	const availabilityRows = await db
+		.select()
+		.from(trainingSessionAvailability)
+		.where(gt(trainingSessionAvailability.endsAt, now))
+		.orderBy(trainingSessionAvailability.startsAt);
+
+	if (availabilityRows.length === 0) {
+		return { windowEndsAt, students: [] };
+	}
+
+	const courseIds = [...new Set(availabilityRows.map((row) => row.courseId))];
+	const cids = [...new Set(availabilityRows.map((row) => row.cid))];
+
+	const [courseRows, userRows] = await Promise.all([
+		db.query.courses.findMany({
+			where: { id: { in: courseIds } },
+			columns: { id: true, name: true, waitlistId: true, tasks: true }
+		}),
+		db.query.users.findMany({
+			where: { cid: { in: cids } },
+			columns: { cid: true, name_full: true }
+		})
+	]);
+
+	const courseById = new Map(courseRows.map((course) => [course.id, course]));
+	const userByCid = new Map(userRows.map((user) => [user.cid, user]));
+	const waitlistIds = [...new Set(courseRows.map((course) => course.waitlistId))];
+
+	const [enrolledRows, completionRows, activeSessionRows] = await Promise.all([
+		waitlistIds.length === 0
+			? Promise.resolve([])
+			: db.query.enrolledUsers.findMany({
+					where: {
+						cid: { in: cids },
+						waitlistId: { in: waitlistIds },
+						hiddenAt: { isNull: true }
+					},
+					columns: { cid: true, waitlistId: true }
+				}),
+		db
+			.select({
+				userId: courseTaskCompletions.userId,
+				courseId: courseTaskCompletions.courseId,
+				taskId: courseTaskCompletions.taskId,
+				completedAt: courseTaskCompletions.completedAt
+			})
+			.from(courseTaskCompletions)
+			.where(
+				and(
+					inArray(courseTaskCompletions.userId, cids),
+					inArray(courseTaskCompletions.courseId, courseIds)
+				)
+			),
+		db
+			.select({
+				studentCid: trainingSessions.studentCid,
+				courseId: trainingSessions.courseId,
+				taskId: trainingSessions.taskId
+			})
+			.from(trainingSessions)
+			.where(
+				and(
+					inArray(trainingSessions.studentCid, cids),
+					inArray(trainingSessions.courseId, courseIds),
+					inArray(trainingSessions.status, ACTIVE_STATUSES)
+				)
+			)
+	]);
+
+	const enrolledKeys = new Set(enrolledRows.map((row) => `${row.cid}:${row.waitlistId}`));
+	const completedTaskKeys = new Set(
+		completionRows
+			.filter((row) => row.completedAt != null)
+			.map((row) => `${row.userId}:${row.courseId}:${row.taskId}`)
+	);
+	const activeSessionKeys = new Set(
+		activeSessionRows.map((row) => `${row.studentCid}:${row.courseId}:${row.taskId}`)
+	);
+
+	const slotsByStudentTask = new Map<string, { startsAt: Date; endsAt: Date }[]>();
+	for (const row of availabilityRows) {
+		const key = `${row.cid}:${row.courseId}:${row.taskId}`;
+		const slots = slotsByStudentTask.get(key) ?? [];
+		slots.push({ startsAt: row.startsAt, endsAt: row.endsAt });
+		slotsByStudentTask.set(key, slots);
+	}
+
+	const students: {
+		cid: number;
+		name: string;
+		courseId: string;
+		courseName: string;
+		taskId: number;
+		sessionDescription: string;
+		sessionType: string | null;
+		slots: { startsAt: Date; endsAt: Date }[];
+	}[] = [];
+
+	for (const [key, slots] of slotsByStudentTask) {
+		const [cidStr, courseId, taskIdStr] = key.split(':');
+		const cid = Number(cidStr);
+		const taskId = Number(taskIdStr);
+		const course = courseById.get(courseId);
+		const user = userByCid.get(cid);
+		if (!course || !user) continue;
+		if (!enrolledKeys.has(`${cid}:${course.waitlistId}`)) continue;
+
+		const nextIncomplete = course.tasks.find(
+			(task) => !completedTaskKeys.has(`${cid}:${courseId}:${task.taskId}`)
+		);
+		if (
+			!nextIncomplete ||
+			nextIncomplete.taskType !== 'training_session' ||
+			nextIncomplete.taskId !== taskId
+		) {
+			continue;
+		}
+
+		if (activeSessionKeys.has(`${cid}:${courseId}:${taskId}`)) continue;
+
+		const sessionType =
+			nextIncomplete.taskType === 'training_session' ? nextIncomplete.taskValue1 : null;
+		if (!userCanScheduleTrainingSessionType(actioner, sessionType)) continue;
+
+		students.push({
+			cid,
+			name: user.name_full,
+			courseId: course.id,
+			courseName: course.name,
+			taskId,
+			sessionDescription: describeCourseTask(nextIncomplete),
+			sessionType,
+			slots: mergeAvailabilitySlots(slots)
+		});
+	}
+
+	students.sort(
+		(a, b) => a.name.localeCompare(b.name) || a.courseName.localeCompare(b.courseName)
+	);
+
+	return { windowEndsAt, students };
+});
+
 const ScheduleTrainingSessionOptions = type({
 	courseId: CourseId,
 	studentCid: 'number.integer > 0',
@@ -347,6 +503,7 @@ export const scheduleTrainingSession = command(
 
 		getInstructorStudentView({ courseId, cid: studentCid }).refresh();
 		getStudentCourseView(courseId).refresh();
+		getStudentsWithSessionAvailability().refresh();
 
 		return { outsideAvailability };
 	}
@@ -409,6 +566,7 @@ export const cancelTrainingSession = command(
 
 		getInstructorStudentView({ courseId, cid: studentCid }).refresh();
 		getStudentCourseView(courseId).refresh();
+		getStudentsWithSessionAvailability().refresh();
 	}
 );
 
