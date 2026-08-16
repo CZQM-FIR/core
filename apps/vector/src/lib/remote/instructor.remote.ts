@@ -395,9 +395,7 @@ export const getStudentsWithSessionAvailability = query(async () => {
 		});
 	}
 
-	students.sort(
-		(a, b) => a.name.localeCompare(b.name) || a.courseName.localeCompare(b.courseName)
-	);
+	students.sort((a, b) => a.name.localeCompare(b.name) || a.courseName.localeCompare(b.courseName));
 
 	return { windowEndsAt, students };
 });

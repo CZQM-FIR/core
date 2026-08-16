@@ -2,10 +2,7 @@
 	import { ChevronLeft } from '@lucide/svelte';
 	import TrainingSessionAvailabilityMatcher from '$lib/components/TrainingSessionAvailabilityMatcher.svelte';
 	import { getStudentsWithSessionAvailability } from '$lib/remote/instructor.remote';
-	import {
-		anySlotsOverlap,
-		type AvailabilitySlot
-	} from '$lib/trainingSessionAvailability';
+	import { anySlotsOverlap, type AvailabilitySlot } from '$lib/trainingSessionAvailability';
 
 	const availabilityQuery = getStudentsWithSessionAvailability();
 
