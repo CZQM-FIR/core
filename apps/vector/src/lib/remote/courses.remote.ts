@@ -6,6 +6,7 @@ import {
 	fetchVatcanCbtBlockOptions,
 	findVatcanCbtBlock,
 	isTrainingSessionType,
+	requireTrainingSessionObjectives,
 	type PrerequisiteType,
 	type TaskType
 } from '@czqm/common';
@@ -33,7 +34,8 @@ const CourseTaskOptions = type({
 	taskId: FormId,
 	taskType: TaskTypeSchema,
 	'taskValue1?': 'string',
-	'taskValue2?': 'string'
+	'taskValue2?': 'string',
+	'objectivesJson?': 'string'
 });
 
 async function resolveVatcanCbtTaskValues(blockKey: string): Promise<{
@@ -74,6 +76,27 @@ function validateTrainingSessionTaskValues(
 		taskValue1,
 		taskValue2: trimmedName ? trimmedName : null
 	};
+}
+
+function parseTrainingSessionObjectives(objectivesJson: string | undefined): string[] {
+	let parsed: unknown = [];
+	if (objectivesJson?.trim()) {
+		try {
+			parsed = JSON.parse(objectivesJson);
+		} catch {
+			throw error(400, 'Invalid objectives');
+		}
+	}
+
+	if (!Array.isArray(parsed) || parsed.some((item) => typeof item !== 'string')) {
+		throw error(400, 'Invalid objectives');
+	}
+
+	try {
+		return requireTrainingSessionObjectives(parsed);
+	} catch (err) {
+		throw error(400, err instanceof Error ? err.message : 'Invalid objectives');
+	}
 }
 
 export const getCourses = query(async () => {
@@ -189,9 +212,10 @@ export const createCourseTask = form(
 		courseId: CourseId,
 		taskType: TaskTypeSchema,
 		'taskValue1?': 'string',
-		'taskValue2?': 'string'
+		'taskValue2?': 'string',
+		'objectivesJson?': 'string'
 	}),
-	async ({ courseId, taskType, taskValue1, taskValue2 }) => {
+	async ({ courseId, taskType, taskValue1, taskValue2, objectivesJson }) => {
 		await authorizeVectorAdminAccess();
 
 		const course = await Course.fetchById(courseId, db);
@@ -199,11 +223,13 @@ export const createCourseTask = form(
 
 		let resolvedTaskValue1 = taskValue1 ?? null;
 		let resolvedTaskValue2 = taskValue2 ?? null;
+		let resolvedObjectives: string[] = [];
 
 		if (taskType === 'training_session') {
 			const validated = validateTrainingSessionTaskValues(taskValue1, taskValue2);
 			resolvedTaskValue1 = validated.taskValue1;
 			resolvedTaskValue2 = validated.taskValue2;
+			resolvedObjectives = parseTrainingSessionObjectives(objectivesJson);
 		}
 
 		if (taskType === 'vatcan_cbt') {
@@ -216,7 +242,12 @@ export const createCourseTask = form(
 			resolvedTaskValue2 = resolved.taskValue2;
 		}
 
-		await course.createTask(taskType as TaskType, resolvedTaskValue1, resolvedTaskValue2);
+		await course.createTask(
+			taskType as TaskType,
+			resolvedTaskValue1,
+			resolvedTaskValue2,
+			resolvedObjectives
+		);
 
 		getCourse(courseId).refresh();
 
@@ -232,11 +263,13 @@ export const updateCourseTask = form(CourseTaskOptions, async (data) => {
 
 	let resolvedTaskValue1 = data.taskValue1 ?? null;
 	let resolvedTaskValue2 = data.taskValue2 ?? null;
+	let resolvedObjectives: string[] = [];
 
 	if (data.taskType === 'training_session') {
 		const validated = validateTrainingSessionTaskValues(data.taskValue1, data.taskValue2);
 		resolvedTaskValue1 = validated.taskValue1;
 		resolvedTaskValue2 = validated.taskValue2;
+		resolvedObjectives = parseTrainingSessionObjectives(data.objectivesJson);
 	}
 
 	if (data.taskType === 'vatcan_cbt') {
@@ -253,7 +286,8 @@ export const updateCourseTask = form(CourseTaskOptions, async (data) => {
 		data.taskId,
 		data.taskType as TaskType,
 		resolvedTaskValue1,
-		resolvedTaskValue2
+		resolvedTaskValue2,
+		resolvedObjectives
 	);
 
 	getCourse(data.courseId).refresh();

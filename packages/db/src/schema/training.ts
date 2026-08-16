@@ -26,6 +26,7 @@ export const courses = sqliteTable("courses", {
         taskType: string;
         taskValue1: string | null;
         taskValue2: string | null;
+        objectives?: string[];
       }[]
     >()
     .default([]),
@@ -60,6 +61,11 @@ export const courseTaskCompletions = sqliteTable("course_task_completions", {
 export type CourseTaskCompletionRow = InferSelectModel<
   typeof courseTaskCompletions
 >;
+
+export type TrainingSessionObjectiveResult = {
+  text: string;
+  achieved: boolean;
+};
 
 export const trainingSessionAvailability = sqliteTable(
   "training_session_availability",
@@ -105,6 +111,15 @@ export const trainingSessions = sqliteTable(
     endsAt: int("ends_at", { mode: "timestamp" }).notNull(),
     status: text().notNull(),
     trainingNote: text("training_note"),
+    actualStartedAt: int("actual_started_at", { mode: "timestamp" }),
+    actualEndedAt: int("actual_ended_at", { mode: "timestamp" }),
+    instructorNotes: text("instructor_notes"),
+    positionTrained: text("position_trained"),
+    objectiveResults: text("objective_results", { mode: "json" }).$type<
+      TrainingSessionObjectiveResult[]
+    >(),
+    notesSubmittedAt: int("notes_submitted_at", { mode: "timestamp" }),
+    vatcanNoteId: int("vatcan_note_id"),
     createdAt: int("created_at", { mode: "timestamp" })
       .notNull()
       .$defaultFn(() => new Date()),

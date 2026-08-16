@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { ChevronLeft } from '@lucide/svelte';
 	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
+	import SyncCourseTasksButton from '$lib/components/SyncCourseTasksButton.svelte';
 	import TrainingSessionAvailabilityCalendar from '$lib/components/TrainingSessionAvailabilityCalendar.svelte';
 	import TrainingSessionPendingCard from '$lib/components/TrainingSessionPendingCard.svelte';
 	import {
 		getInstructorStudentView,
-		graduateStudentFromCourse
+		graduateStudentFromCourse,
+		syncStudentCourseTasks
 	} from '$lib/remote/instructor.remote';
 	import type { PageData } from './$types';
 
@@ -17,6 +19,7 @@
 
 	let graduating = $state(false);
 	let graduateError = $state<string | null>(null);
+	let syncError = $state<string | null>(null);
 
 	type StudentStatus = 'waitlisted' | 'enrolled' | 'completed' | 'none';
 
@@ -100,6 +103,7 @@
 					showCancel={view.canCancelActiveSession}
 					cancelAs="staff"
 					studentCid={view.student.cid}
+					href={`/i/sessions/${view.activeSession.id}`}
 				/>
 			</div>
 		{:else if view.canScheduleSession && view.nextTask}
@@ -124,11 +128,21 @@
 			</div>
 		{/if}
 
-		<div class="mt-6">
+		<div class="mt-6 flex flex-col gap-3">
+			{#snippet headerActions()}
+				<SyncCourseTasksButton
+					onSync={() => syncStudentCourseTasks({ courseId: view.course.id, cid: view.student.cid })}
+					bind:error={syncError}
+				/>
+			{/snippet}
 			<CourseTaskList
 				tasks={view.tasks}
 				instructorContext={{ courseId: view.course.id, cid: view.student.cid }}
+				headerActions={view.status === 'enrolled' ? headerActions : undefined}
 			/>
+			{#if syncError}
+				<p class="text-error text-sm">{syncError}</p>
+			{/if}
 		</div>
 
 		{#if view.canGraduateStudent && view.status === 'enrolled' && view.allTasksComplete}

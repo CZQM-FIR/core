@@ -1,11 +1,12 @@
 <script lang="ts">
+	import { createSubscriber } from 'svelte/reactivity';
+	import type { TrainingSessionSummary } from '@czqm/common';
 	import {
 		cancelTrainingSession as cancelTrainingSessionAsStudent,
 		confirmTrainingSession,
 		declineTrainingSession
 	} from '$lib/remote/student.remote';
 	import { cancelTrainingSession as cancelTrainingSessionAsStaff } from '$lib/remote/instructor.remote';
-	import type { TrainingSessionSummary } from '@czqm/common';
 
 	let {
 		courseId,
@@ -14,7 +15,10 @@
 		showStudentActions = false,
 		showCancel = false,
 		cancelAs = 'student',
-		studentCid
+		studentCid,
+		href = null,
+		heading = '',
+		subheading = ''
 	}: {
 		courseId: string;
 		taskId: number;
@@ -23,6 +27,9 @@
 		showCancel?: boolean;
 		cancelAs?: 'student' | 'staff';
 		studentCid?: number;
+		href?: string | null;
+		heading?: string;
+		subheading?: string;
 	} = $props();
 
 	let confirming = $state(false);
@@ -60,6 +67,32 @@
 
 	const sessionRangeLabel = $derived(formatSessionRange(session.startsAt, session.endsAt));
 
+	const subscribeToNow = createSubscriber((update) => {
+		const interval = setInterval(update, 1000);
+		return () => clearInterval(interval);
+	});
+
+	const startsInLabel = $derived.by(() => {
+		const label = formatStartsIn(session.startsAt, new Date());
+		if (label) subscribeToNow();
+		return label;
+	});
+
+	function formatStartsIn(startsAt: Date, now: Date): string | null {
+		const ms = startsAt.getTime() - now.getTime();
+		if (ms <= 0) return null;
+
+		const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'always' });
+		const minutes = ms / 60_000;
+		if (minutes < 1) return `Starts ${rtf.format(1, 'minute')}`;
+		if (minutes < 60) return `Starts ${rtf.format(Math.round(minutes), 'minute')}`;
+
+		const hours = minutes / 60;
+		if (hours < 24) return `Starts ${rtf.format(Math.max(1, Math.round(hours)), 'hour')}`;
+
+		return `Starts ${rtf.format(Math.max(1, Math.round(hours / 24)), 'day')}`;
+	}
+
 	function statusLabel(status: TrainingSessionSummary['status']): string {
 		switch (status) {
 			case 'pending':
@@ -70,6 +103,10 @@
 				return 'Declined';
 			case 'cancelled':
 				return 'Cancelled';
+			case 'in_progress':
+				return 'In progress';
+			case 'completed':
+				return 'Completed';
 		}
 	}
 
@@ -91,6 +128,10 @@
 				return 'badge-ghost';
 			case 'cancelled':
 				return 'badge-ghost';
+			case 'in_progress':
+				return 'badge-info';
+			case 'completed':
+				return 'badge-accent';
 		}
 	}
 
@@ -170,11 +211,27 @@
 	}
 </script>
 
-<div class="card bg-base-200 w-full shadow-sm">
-	<div class="card-body gap-3">
+<div
+	class={[
+		'card card-sm bg-base-200 relative w-full shadow-sm',
+		href && 'hover:bg-base-300 cursor-pointer transition-shadow hover:shadow-md'
+	]}
+>
+	{#if href}
+		<a {href} class="absolute inset-0 z-0" aria-label={heading ? `View ${heading}` : 'View session'}
+		></a>
+	{/if}
+	<div class={['card-body relative z-10 gap-2 p-4', href && 'pointer-events-none']}>
 		<div class="flex flex-wrap items-start justify-between gap-2">
-			<h2 class="card-title text-lg">Training Session</h2>
-			<span class="badge {statusBadgeClass(session.status)}">{statusLabel(session.status)}</span>
+			<div class="min-w-0">
+				<h2 class="card-title text-base">{heading || 'Training Session'}</h2>
+				{#if subheading}
+					<p class="text-sm opacity-70">{subheading}</p>
+				{/if}
+			</div>
+			<span class="badge badge-sm {statusBadgeClass(session.status)}"
+				>{statusLabel(session.status)}</span
+			>
 		</div>
 
 		{#if showStudentActions && session.status === 'pending'}
@@ -184,7 +241,12 @@
 			</p>
 		{/if}
 
-		<p class="text-sm">{formatSessionRange(session.startsAt, session.endsAt)}</p>
+		<p class="flex flex-wrap items-baseline gap-x-2 text-sm">
+			<span>{formatSessionRange(session.startsAt, session.endsAt)}</span>
+			{#if startsInLabel}
+				<span class="opacity-70">{startsInLabel}</span>
+			{/if}
+		</p>
 
 		{#if scheduledByLabel}
 			<p class="text-sm opacity-70">{scheduledByLabel}</p>
@@ -198,7 +260,7 @@
 		{/if}
 
 		{#if showStudentActions && session.status === 'pending'}
-			<div class="flex flex-wrap items-center gap-3">
+			<div class="pointer-events-auto flex flex-wrap items-center gap-3">
 				<button
 					type="button"
 					class="btn btn-primary btn-sm"
@@ -229,7 +291,7 @@
 		{/if}
 
 		{#if canCancel}
-			<div class="flex flex-wrap items-center gap-3">
+			<div class="pointer-events-auto flex flex-wrap items-center gap-3">
 				<button
 					type="button"
 					class="btn btn-outline btn-error btn-sm"

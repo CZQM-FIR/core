@@ -32,6 +32,7 @@
 					{#if data.isVectorStudent}
 						<li><a href="/">My Courses</a></li>
 					{/if}
+					<li><a href="/notes">Training Notes</a></li>
 					{#if data.isVectorAdmin}
 						<li><a href="/a/courses">Training Administration</a></li>
 					{/if}
@@ -47,6 +48,7 @@
 				{#if data.isVectorStudent}
 					<li><a href="/">My Courses</a></li>
 				{/if}
+				<li><a href="/notes">Training Notes</a></li>
 				{#if data.isVectorAdmin}
 					<li><a href="/a/courses">Training Administration</a></li>
 				{/if}
