@@ -105,6 +105,12 @@ export const trainingSessions = sqliteTable(
     endsAt: int("ends_at", { mode: "timestamp" }).notNull(),
     status: text().notNull(),
     trainingNote: text("training_note"),
+    actualStartedAt: int("actual_started_at", { mode: "timestamp" }),
+    actualEndedAt: int("actual_ended_at", { mode: "timestamp" }),
+    instructorNotes: text("instructor_notes"),
+    positionTrained: text("position_trained"),
+    notesSubmittedAt: int("notes_submitted_at", { mode: "timestamp" }),
+    vatcanNoteId: int("vatcan_note_id"),
     createdAt: int("created_at", { mode: "timestamp" })
       .notNull()
       .$defaultFn(() => new Date()),

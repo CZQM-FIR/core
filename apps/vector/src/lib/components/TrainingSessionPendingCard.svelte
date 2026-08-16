@@ -1,11 +1,12 @@
 <script lang="ts">
+	import { createSubscriber } from 'svelte/reactivity';
+	import type { TrainingSessionSummary } from '@czqm/common';
 	import {
 		cancelTrainingSession as cancelTrainingSessionAsStudent,
 		confirmTrainingSession,
 		declineTrainingSession
 	} from '$lib/remote/student.remote';
 	import { cancelTrainingSession as cancelTrainingSessionAsStaff } from '$lib/remote/instructor.remote';
-	import type { TrainingSessionSummary } from '@czqm/common';
 
 	let {
 		courseId,
@@ -65,9 +66,19 @@
 	}
 
 	const sessionRangeLabel = $derived(formatSessionRange(session.startsAt, session.endsAt));
-	const startsInLabel = $derived(formatStartsIn(session.startsAt));
 
-	function formatStartsIn(startsAt: Date, now = new Date()): string | null {
+	const subscribeToNow = createSubscriber((update) => {
+		const interval = setInterval(update, 1000);
+		return () => clearInterval(interval);
+	});
+
+	const startsInLabel = $derived.by(() => {
+		const label = formatStartsIn(session.startsAt, new Date());
+		if (label) subscribeToNow();
+		return label;
+	});
+
+	function formatStartsIn(startsAt: Date, now: Date): string | null {
 		const ms = startsAt.getTime() - now.getTime();
 		if (ms <= 0) return null;
 

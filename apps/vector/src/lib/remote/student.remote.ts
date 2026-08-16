@@ -14,7 +14,7 @@ import {
 	trainingSessions,
 	waitingUsers
 } from '@czqm/db/schema';
-import { getInstructorStudentView } from './instructor.remote';
+import { getInstructorStudentView, getInstructorTrainingSession, getUpcomingInstructorSession } from './instructor.remote';
 import { getMyTrainingSessions } from './users.remote';
 import { Course, TrainingSession, User } from '@czqm/common';
 import { env } from '$env/dynamic/private';
@@ -502,6 +502,8 @@ export const confirmTrainingSession = command(
 		getStudentCourseView(courseId).refresh();
 		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 		getMyTrainingSessions().refresh();
+		getUpcomingInstructorSession().refresh();
+		getInstructorTrainingSession(sessionId).refresh();
 	}
 );
 
@@ -527,6 +529,8 @@ export const declineTrainingSession = command(
 		getStudentCourseView(courseId).refresh();
 		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 		getMyTrainingSessions().refresh();
+		getUpcomingInstructorSession().refresh();
+		getInstructorTrainingSession(sessionId).refresh();
 	}
 );
 
@@ -552,5 +556,7 @@ export const cancelTrainingSession = command(
 		getStudentCourseView(courseId).refresh();
 		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 		getMyTrainingSessions().refresh();
+		getUpcomingInstructorSession().refresh();
+		getInstructorTrainingSession(sessionId).refresh();
 	}
 );

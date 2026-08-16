@@ -371,3 +371,166 @@ export async function fetchVatcanCbtBlockOptions(
   blockOptionsInflight.set(token, request);
   return request;
 }
+
+export class VatcanNoteLockedError extends Error {
+  constructor(message = "VATCAN no longer accepts edits to this training note") {
+    super(message);
+    this.name = "VatcanNoteLockedError";
+  }
+}
+
+/** Vector training session type → VATCAN `session_type` integer. */
+export const VATCAN_SESSION_TYPE_BY_VECTOR_TYPE: Record<string, number> = {
+  orientation: 0,
+  generic: 0,
+  sweatbox: 1,
+  monitoring: 2,
+  ots: 3,
+};
+
+export function vatcanSessionTypeFromVector(
+  sessionType: string | null | undefined,
+): number {
+  if (!sessionType) return 0;
+  return VATCAN_SESSION_TYPE_BY_VECTOR_TYPE[sessionType] ?? 0;
+}
+
+export type VatcanTrainingNoteInput = {
+  instructorCid: number;
+  position: string;
+  note: string;
+  sessionType: number;
+};
+
+type VatcanNoteMutationResponse = {
+  success?: string;
+  id?: number;
+  note_id?: number;
+  data?: { id?: number; note_id?: number };
+  note?: { id?: number };
+};
+
+function vatcanNoteHeaders(token: string): HeadersInit {
+  return {
+    Authorization: `Token ${token}`,
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+}
+
+function vatcanNoteBody(input: VatcanTrainingNoteInput): string {
+  return JSON.stringify({
+    instructor_cid: input.instructorCid,
+    position: input.position,
+    note: input.note,
+    session_type: input.sessionType,
+  });
+}
+
+function parseVatcanNoteId(body: VatcanNoteMutationResponse): number | null {
+  const candidates = [
+    body.id,
+    body.note_id,
+    body.data?.id,
+    body.data?.note_id,
+    body.note?.id,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === "number" && Number.isFinite(candidate)) {
+      return candidate;
+    }
+    if (typeof candidate === "string" && /^\d+$/.test(candidate)) {
+      return Number(candidate);
+    }
+  }
+  return null;
+}
+
+async function readVatcanNoteResponse(
+  response: Response,
+): Promise<VatcanNoteMutationResponse | null> {
+  return (await response.json().catch(() => null)) as VatcanNoteMutationResponse | null;
+}
+
+async function throwVatcanNoteError(
+  response: Response,
+  body: VatcanNoteMutationResponse | VatcanApiErrorResponse | null,
+  fallback: string,
+): Promise<never> {
+  const message =
+    (body && "message" in body && typeof body.message === "string"
+      ? body.message
+      : null) ?? fallback;
+
+  if (response.status === 403) {
+    throw new VatcanNoteLockedError(message);
+  }
+
+  throw new Error(message);
+}
+
+export async function createVatcanTrainingNote(
+  env: Pick<Env, "VATCAN_API_TOKEN">,
+  studentCid: number,
+  input: VatcanTrainingNoteInput,
+): Promise<{ id: number }> {
+  const token = env.VATCAN_API_TOKEN;
+  if (!token) {
+    throw new Error("VATCAN_API_TOKEN is not configured");
+  }
+
+  const response = await fetch(
+    `https://vatcan.ca/api/v2/user/${studentCid}/notes/create`,
+    {
+      method: "POST",
+      headers: vatcanNoteHeaders(token),
+      body: vatcanNoteBody(input),
+    },
+  );
+
+  const body = await readVatcanNoteResponse(response);
+  if (!response.ok) {
+    await throwVatcanNoteError(
+      response,
+      body,
+      `Failed to create VATCAN training note: ${response.statusText}`,
+    );
+  }
+
+  const id = body ? parseVatcanNoteId(body) : null;
+  if (id == null) {
+    throw new Error("VATCAN did not return a training note id");
+  }
+
+  return { id };
+}
+
+export async function updateVatcanTrainingNote(
+  env: Pick<Env, "VATCAN_API_TOKEN">,
+  studentCid: number,
+  noteId: number,
+  input: VatcanTrainingNoteInput,
+): Promise<void> {
+  const token = env.VATCAN_API_TOKEN;
+  if (!token) {
+    throw new Error("VATCAN_API_TOKEN is not configured");
+  }
+
+  const response = await fetch(
+    `https://vatcan.ca/api/v2/user/${studentCid}/notes/${noteId}`,
+    {
+      method: "PATCH",
+      headers: vatcanNoteHeaders(token),
+      body: vatcanNoteBody(input),
+    },
+  );
+
+  if (!response.ok) {
+    const body = await readVatcanNoteResponse(response);
+    await throwVatcanNoteError(
+      response,
+      body,
+      `Failed to update VATCAN training note: ${response.statusText}`,
+    );
+  }
+}
