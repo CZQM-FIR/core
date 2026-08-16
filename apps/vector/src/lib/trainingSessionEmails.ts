@@ -7,6 +7,7 @@ import { db } from '$lib/db';
 import env from '$lib/env';
 
 type TrainingSessionEmailContext = {
+	id: number;
 	studentCid: number;
 	scheduledByCid: number;
 	startsAt: Date;
@@ -31,6 +32,7 @@ export async function notifyTrainingSessionEmails(
 		event,
 		courseId,
 		courseName: course.name,
+		sessionId: session.id,
 		studentCid: session.studentCid,
 		scheduledByCid: session.scheduledByCid,
 		startsAt: session.startsAt,

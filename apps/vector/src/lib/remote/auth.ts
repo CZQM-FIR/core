@@ -41,6 +41,23 @@ export async function authorizeVectorInstructorAccess() {
 	return actioner;
 }
 
+export async function authorizeVectorStudentOrInstructorAccess() {
+	const event = getRequestEvent();
+	const token = event.cookies.get('session');
+	if (!token) {
+		throw error(403, 'Forbidden');
+	}
+	const actioner = await User.fromSessionToken(db, token);
+	if (!actioner) {
+		throw error(403, 'Forbidden');
+	}
+	const isStudent = actioner.hasFlag(['controller', 'visitor', 'admin']);
+	if (!isStudent && !userHasVectorInstructorAccess(actioner)) {
+		throw error(403, 'Forbidden');
+	}
+	return actioner;
+}
+
 export async function authorizeVectorStudentAccess() {
 	const event = getRequestEvent();
 	const token = event.cookies.get('session');

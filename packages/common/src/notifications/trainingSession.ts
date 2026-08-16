@@ -5,7 +5,8 @@ export type TrainingSessionEmailEvent =
   | "scheduled"
   | "confirmed"
   | "declined"
-  | "cancelled";
+  | "cancelled"
+  | "rescheduled";
 
 type Participant = {
   cid: number;
@@ -17,6 +18,7 @@ type QueueTrainingSessionEmailsInput = {
   event: TrainingSessionEmailEvent;
   courseId: string;
   courseName: string;
+  sessionId: number;
   studentCid: number;
   scheduledByCid: number;
   startsAt: Date;
@@ -85,7 +87,7 @@ function getStudentCopy(
   input: QueueTrainingSessionEmailsInput,
 ): { subject: string; paragraphs: string[] } {
   const sessionRange = formatSessionRange(input.startsAt, input.endsAt);
-  const courseUrl = `${input.vectorUrl}/courses/${input.courseId}`;
+  const sessionUrl = `${input.vectorUrl}/sessions/${input.sessionId}`;
   const schedulerLabel = input.scheduler.displayName;
 
   switch (event) {
@@ -96,7 +98,7 @@ function getStudentCopy(
           `Hello ${input.student.name_full} (${input.student.cid}),`,
           `${schedulerLabel} has scheduled a training session for you in ${input.courseName}.`,
           `Session time: ${sessionRange}`,
-          `<a href=${courseUrl}>Please confirm or decline this session in Vector</a>`,
+          `<a href=${sessionUrl}>Please confirm or decline this session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],
@@ -108,7 +110,7 @@ function getStudentCopy(
           `Hello ${input.student.name_full} (${input.student.cid}),`,
           `You confirmed your training session in ${input.courseName}.`,
           `Session time: ${sessionRange}`,
-          `<a href=${courseUrl}>View your course in Vector</a>`,
+          `<a href=${sessionUrl}>View your session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],
@@ -120,7 +122,7 @@ function getStudentCopy(
           `Hello ${input.student.name_full} (${input.student.cid}),`,
           `You declined the training session scheduled by ${schedulerLabel} in ${input.courseName}.`,
           `Session time: ${sessionRange}`,
-          `<a href=${courseUrl}>View your course in Vector</a>`,
+          `<a href=${sessionUrl}>View your session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],
@@ -132,7 +134,19 @@ function getStudentCopy(
           `Hello ${input.student.name_full} (${input.student.cid}),`,
           `The training session in ${input.courseName} has been cancelled.`,
           `Session time: ${sessionRange}`,
-          `<a href=${courseUrl}>View your course in Vector</a>`,
+          `<a href=${sessionUrl}>View your session in Vector</a>`,
+          "Best regards,",
+          "CZQM Training Team",
+        ],
+      };
+    case "rescheduled":
+      return {
+        subject: "CZQM - [ACTION REQUIRED] Training session rescheduled",
+        paragraphs: [
+          `Hello ${input.student.name_full} (${input.student.cid}),`,
+          `${schedulerLabel} has rescheduled your training session in ${input.courseName}.`,
+          `New session time: ${sessionRange}`,
+          `<a href=${sessionUrl}>Please confirm or decline this session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],
@@ -145,7 +159,7 @@ function getSchedulerCopy(
   input: QueueTrainingSessionEmailsInput,
 ): { subject: string; paragraphs: string[] } {
   const sessionRange = formatSessionRange(input.startsAt, input.endsAt);
-  const studentUrl = `${input.vectorUrl}/i/${input.courseId}/${input.studentCid}`;
+  const sessionUrl = `${input.vectorUrl}/i/sessions/${input.sessionId}`;
   const studentLabel = input.student.displayName;
 
   switch (event) {
@@ -157,7 +171,7 @@ function getSchedulerCopy(
           `You scheduled a training session with ${studentLabel} in ${input.courseName}.`,
           `Session time: ${sessionRange}`,
           `The student has been asked to confirm or decline.`,
-          `<a href=${studentUrl} > View student in Vector </a>`,
+          `<a href=${sessionUrl}>View session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],
@@ -169,7 +183,7 @@ function getSchedulerCopy(
           `Hello ${input.scheduler.name_full} (${input.scheduler.cid}),`,
           `${studentLabel} confirmed the training session you scheduled in ${input.courseName}.`,
           `Session time: ${sessionRange}`,
-          `<a href=${studentUrl}>View student in Vector</a>`,
+          `<a href=${sessionUrl}>View session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],
@@ -181,7 +195,7 @@ function getSchedulerCopy(
           `Hello ${input.scheduler.name_full} (${input.scheduler.cid}),`,
           `${studentLabel} declined the training session you scheduled in ${input.courseName}.`,
           `Session time: ${sessionRange}`,
-          `<a href=${studentUrl}>View student in Vector</a>`,
+          `<a href=${sessionUrl}>View session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],
@@ -193,7 +207,20 @@ function getSchedulerCopy(
           `Hello ${input.scheduler.name_full} (${input.scheduler.cid}),`,
           `The training session with ${studentLabel} in ${input.courseName} has been cancelled.`,
           `Session time: ${sessionRange}`,
-          `<a href=${studentUrl}>View student in Vector</a>`,
+          `<a href=${sessionUrl}>View session in Vector</a>`,
+          "Best regards,",
+          "CZQM Training Team",
+        ],
+      };
+    case "rescheduled":
+      return {
+        subject: `CZQM - Training session with ${studentLabel} rescheduled`,
+        paragraphs: [
+          `Hello ${input.scheduler.name_full} (${input.scheduler.cid}),`,
+          `You rescheduled the training session with ${studentLabel} in ${input.courseName}.`,
+          `New session time: ${sessionRange}`,
+          `The student has been asked to confirm or decline the new time.`,
+          `<a href=${sessionUrl}>View session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],

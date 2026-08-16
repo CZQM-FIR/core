@@ -1,5 +1,9 @@
-import { trainingSessions, type TrainingSessionRow } from "@czqm/db/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import {
+  trainingSessions,
+  type TrainingSessionObjectiveResult,
+  type TrainingSessionRow,
+} from "@czqm/db/schema";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import type { DB } from "../db";
 import { User } from "./user";
 
@@ -8,11 +12,25 @@ export const TRAINING_SESSION_STATUSES = [
   "confirmed",
   "declined",
   "cancelled",
+  "in_progress",
+  "completed",
 ] as const;
 
 export type TrainingSessionStatus = (typeof TRAINING_SESSION_STATUSES)[number];
 
-export const ACTIVE_STATUSES: TrainingSessionStatus[] = ["pending", "confirmed"];
+/** Statuses that always block another booking for the same task. */
+export const ACTIVE_STATUSES: TrainingSessionStatus[] = [
+  "pending",
+  "confirmed",
+  "in_progress",
+];
+
+export const NOTES_UNSUBMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+export const INSTRUCTOR_NOTES_MIN_LENGTH = 3;
+export const INSTRUCTOR_NOTES_MAX_LENGTH = 5000;
+export const POSITION_TRAINED_MAX_LENGTH = 10;
+
+export type { TrainingSessionObjectiveResult };
 
 export type TrainingSessionSummary = {
   id: number;
@@ -37,6 +55,150 @@ type CreatePendingInput = TaskLookup & {
   endsAt: Date;
   trainingNote?: string | null;
 };
+
+type SaveNotesInput = {
+  instructorNotes?: string | null;
+  positionTrained?: string | null;
+  objectiveResults?: TrainingSessionObjectiveResult[] | null;
+};
+
+export function alignObjectiveResults(
+  objectives: string[],
+  existing: TrainingSessionObjectiveResult[] | null | undefined,
+): TrainingSessionObjectiveResult[] {
+  const achievedByText = new Map<string, boolean>();
+  for (const result of existing ?? []) {
+    const text = result.text.trim();
+    if (!text || achievedByText.has(text)) continue;
+    achievedByText.set(text, result.achieved === true);
+  }
+
+  return objectives.map((text) => ({
+    text,
+    achieved: achievedByText.get(text) ?? false,
+  }));
+}
+
+export function allObjectivesAchieved(
+  results: TrainingSessionObjectiveResult[],
+): boolean {
+  return results.length > 0 && results.every((result) => result.achieved);
+}
+
+function assertScheduler(row: TrainingSessionRow, actorCid: number): void {
+  if (row.scheduledByCid !== actorCid) {
+    throw new Error(
+      "Only the person who scheduled this session can manage it",
+    );
+  }
+}
+
+function normalizeInstructorNotes(
+  value: string | null | undefined,
+): string | null {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (trimmed.length > INSTRUCTOR_NOTES_MAX_LENGTH) {
+    throw new Error(
+      `Instructor notes must be ${INSTRUCTOR_NOTES_MAX_LENGTH} characters or fewer`,
+    );
+  }
+  return value;
+}
+
+function normalizePositionTrained(
+  value: string | null | undefined,
+): string | null {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (trimmed.length > POSITION_TRAINED_MAX_LENGTH) {
+    throw new Error(
+      `Position must be ${POSITION_TRAINED_MAX_LENGTH} characters or fewer`,
+    );
+  }
+  return trimmed;
+}
+
+export function notesUnsubmitDeadline(notesSubmittedAt: Date): Date {
+  return new Date(notesSubmittedAt.getTime() + NOTES_UNSUBMIT_WINDOW_MS);
+}
+
+export function canUnsubmitTrainingSessionNotes(
+  notesSubmittedAt: Date | null,
+  now = new Date(),
+): boolean {
+  if (!notesSubmittedAt) return false;
+  return now.getTime() < notesUnsubmitDeadline(notesSubmittedAt).getTime();
+}
+
+export function trainingNotesSentToVatcan(row: {
+  notesSubmittedAt: Date | null;
+  vatcanNoteId: number | null;
+}): boolean {
+  return row.notesSubmittedAt != null || row.vatcanNoteId != null;
+}
+
+export function canSubmitTrainingNotesToVatcan(
+  status: TrainingSessionStatus,
+): boolean {
+  return status === "completed";
+}
+
+export function canCancelTrainingSession(
+  status: TrainingSessionStatus,
+  actor: "student" | "scheduler",
+  notesSentToVatcan: boolean,
+): boolean {
+  if (notesSentToVatcan) return false;
+  if (actor === "student") {
+    return status === "pending" || status === "confirmed";
+  }
+  return (
+    status === "pending" ||
+    status === "confirmed" ||
+    status === "in_progress" ||
+    status === "completed"
+  );
+}
+
+export function validateSubmittedInstructorNotes(value: string): string {
+  const trimmed = value.trim();
+  if (
+    trimmed.length < INSTRUCTOR_NOTES_MIN_LENGTH ||
+    trimmed.length > INSTRUCTOR_NOTES_MAX_LENGTH
+  ) {
+    throw new Error(
+      `Training note must be between ${INSTRUCTOR_NOTES_MIN_LENGTH} and ${INSTRUCTOR_NOTES_MAX_LENGTH} characters`,
+    );
+  }
+  return trimmed;
+}
+
+export function validateSubmittedPositionTrained(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error("Position trained is required");
+  }
+  if (trimmed.length > POSITION_TRAINED_MAX_LENGTH) {
+    throw new Error(
+      `Position must be ${POSITION_TRAINED_MAX_LENGTH} characters or fewer`,
+    );
+  }
+  return trimmed;
+}
+
+/** pending, confirmed, in_progress, and completed-but-unsubmitted block another booking. */
+export function trainingSessionBlocksBookingSql() {
+  return or(
+    inArray(trainingSessions.status, ACTIVE_STATUSES),
+    and(
+      eq(trainingSessions.status, "completed"),
+      isNull(trainingSessions.notesSubmittedAt),
+    ),
+  );
+}
 
 export class TrainingSession {
   static toSummary(row: TrainingSessionRow): TrainingSessionSummary {
@@ -71,6 +233,19 @@ export class TrainingSession {
     };
   }
 
+  static async fetchById(
+    db: DB,
+    sessionId: number,
+  ): Promise<TrainingSessionRow | null> {
+    const [row] = await db
+      .select()
+      .from(trainingSessions)
+      .where(eq(trainingSessions.id, sessionId))
+      .limit(1);
+
+    return row ?? null;
+  }
+
   static async fetchActiveForTask(
     db: DB,
     { studentCid, courseId, taskId }: TaskLookup,
@@ -83,12 +258,31 @@ export class TrainingSession {
           eq(trainingSessions.studentCid, studentCid),
           eq(trainingSessions.courseId, courseId),
           eq(trainingSessions.taskId, taskId),
-          inArray(trainingSessions.status, ACTIVE_STATUSES),
+          trainingSessionBlocksBookingSql(),
         ),
       )
       .limit(1);
 
     return row ?? null;
+  }
+
+  static async fetchActiveForUser(
+    db: DB,
+    cid: number,
+  ): Promise<TrainingSessionRow[]> {
+    return db
+      .select()
+      .from(trainingSessions)
+      .where(
+        and(
+          trainingSessionBlocksBookingSql(),
+          or(
+            eq(trainingSessions.studentCid, cid),
+            eq(trainingSessions.scheduledByCid, cid),
+          ),
+        ),
+      )
+      .orderBy(trainingSessions.startsAt);
   }
 
   static async createPending(
@@ -193,13 +387,208 @@ export class TrainingSession {
         "Only the student or the person who scheduled this session can cancel it",
       );
     }
-    if (row.status !== "pending" && row.status !== "confirmed") {
-      throw new Error("Only pending or confirmed training sessions can be cancelled");
+    if (trainingNotesSentToVatcan(row)) {
+      throw new Error(
+        "Sessions with training notes submitted to VATCAN cannot be cancelled",
+      );
+    }
+    const actor =
+      row.scheduledByCid === actorCid ? "scheduler" : "student";
+    if (
+      !canCancelTrainingSession(
+        row.status as TrainingSessionStatus,
+        actor,
+        false,
+      )
+    ) {
+      throw new Error(
+        actor === "scheduler"
+          ? "This training session cannot be cancelled"
+          : "Only pending or confirmed training sessions can be cancelled",
+      );
     }
 
     const [updated] = await db
       .update(trainingSessions)
       .set({ status: "cancelled", updatedAt: new Date() })
+      .where(eq(trainingSessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  static async start(
+    db: DB,
+    sessionId: number,
+    actorCid: number,
+  ): Promise<TrainingSessionRow> {
+    const row = await TrainingSession.fetchById(db, sessionId);
+    if (!row) throw new Error("Training session not found");
+    assertScheduler(row, actorCid);
+    if (row.status !== "confirmed") {
+      throw new Error("Only confirmed training sessions can be started");
+    }
+
+    const now = new Date();
+    const [updated] = await db
+      .update(trainingSessions)
+      .set({
+        status: "in_progress",
+        actualStartedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(trainingSessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  static async end(
+    db: DB,
+    sessionId: number,
+    actorCid: number,
+  ): Promise<TrainingSessionRow> {
+    const row = await TrainingSession.fetchById(db, sessionId);
+    if (!row) throw new Error("Training session not found");
+    assertScheduler(row, actorCid);
+    if (row.status !== "in_progress") {
+      throw new Error("Only in-progress training sessions can be ended");
+    }
+
+    const now = new Date();
+    const [updated] = await db
+      .update(trainingSessions)
+      .set({
+        status: "completed",
+        actualEndedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(trainingSessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  static async reschedule(
+    db: DB,
+    sessionId: number,
+    actorCid: number,
+    startsAt: Date,
+    endsAt: Date,
+  ): Promise<TrainingSessionRow> {
+    const row = await TrainingSession.fetchById(db, sessionId);
+    if (!row) throw new Error("Training session not found");
+    assertScheduler(row, actorCid);
+    if (row.status !== "pending" && row.status !== "confirmed") {
+      throw new Error(
+        "Only pending or confirmed training sessions can be rescheduled",
+      );
+    }
+
+    const now = new Date();
+    const [updated] = await db
+      .update(trainingSessions)
+      .set({
+        startsAt,
+        endsAt,
+        status: "pending",
+        updatedAt: now,
+      })
+      .where(eq(trainingSessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  static async saveNotes(
+    db: DB,
+    sessionId: number,
+    actorCid: number,
+    input: SaveNotesInput,
+  ): Promise<TrainingSessionRow> {
+    const row = await TrainingSession.fetchById(db, sessionId);
+    if (!row) throw new Error("Training session not found");
+    assertScheduler(row, actorCid);
+    if (row.status === "cancelled" || row.status === "declined") {
+      throw new Error("Cannot edit training notes for a cancelled session");
+    }
+    if (row.notesSubmittedAt) {
+      throw new Error("Training notes are locked and cannot be edited");
+    }
+
+    const now = new Date();
+    const [updated] = await db
+      .update(trainingSessions)
+      .set({
+        instructorNotes: normalizeInstructorNotes(input.instructorNotes),
+        positionTrained: normalizePositionTrained(input.positionTrained),
+        ...(input.objectiveResults !== undefined
+          ? { objectiveResults: input.objectiveResults }
+          : {}),
+        updatedAt: now,
+      })
+      .where(eq(trainingSessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  static async submitNotes(
+    db: DB,
+    sessionId: number,
+    actorCid: number,
+    vatcanNoteId: number,
+    submittedAt = new Date(),
+  ): Promise<TrainingSessionRow> {
+    const row = await TrainingSession.fetchById(db, sessionId);
+    if (!row) throw new Error("Training session not found");
+    assertScheduler(row, actorCid);
+    if (row.status === "cancelled" || row.status === "declined") {
+      throw new Error(
+        "Cancelled sessions cannot have training notes submitted to VATCAN",
+      );
+    }
+    if (!canSubmitTrainingNotesToVatcan(row.status as TrainingSessionStatus)) {
+      throw new Error("Notes can only be submitted after the session has ended");
+    }
+
+    const [updated] = await db
+      .update(trainingSessions)
+      .set({
+        vatcanNoteId,
+        notesSubmittedAt: submittedAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(trainingSessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  static async unsubmitNotes(
+    db: DB,
+    sessionId: number,
+    actorCid: number,
+    now = new Date(),
+  ): Promise<TrainingSessionRow> {
+    const row = await TrainingSession.fetchById(db, sessionId);
+    if (!row) throw new Error("Training session not found");
+    assertScheduler(row, actorCid);
+    if (!row.notesSubmittedAt) {
+      throw new Error("Training notes are not submitted");
+    }
+    if (!canUnsubmitTrainingSessionNotes(row.notesSubmittedAt, now)) {
+      throw new Error(
+        "Training notes can only be unsubmitted within 24 hours of submission",
+      );
+    }
+
+    const [updated] = await db
+      .update(trainingSessions)
+      .set({
+        notesSubmittedAt: null,
+        updatedAt: now,
+      })
       .where(eq(trainingSessions.id, sessionId))
       .returning();
 

@@ -11,6 +11,7 @@
 	} from '$lib/trainingSessionAvailability';
 	import {
 		getInstructorStudentSessionAvailability,
+		rescheduleTrainingSession,
 		scheduleTrainingSession
 	} from '$lib/remote/instructor.remote';
 	import {
@@ -33,6 +34,16 @@
 				mode: 'view' | 'schedule';
 				cid: number;
 				sessionDescription?: string;
+				onComplete?: () => void;
+		  }
+		| {
+				courseId: string;
+				taskId: number;
+				mode: 'reschedule';
+				cid: number;
+				sessionId: number;
+				sessionDescription?: string;
+				onComplete?: () => void;
 		  };
 
 	let {
@@ -41,8 +52,10 @@
 		cid,
 		mode = 'edit',
 		sessionDescription = '',
-		confirmedSession
-	}: Props = $props();
+		confirmedSession,
+		sessionId,
+		onComplete
+	}: Props & { sessionId?: number; onComplete?: () => void } = $props();
 
 	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 	const slotsPerDay = ((DAY_END_HOUR - DAY_START_HOUR) * 60) / SLOT_MINUTES;
@@ -69,9 +82,14 @@
 		mode: 'select' | 'deselect';
 	} | null>(null);
 
-	const isInteractive = $derived(mode === 'edit' || mode === 'schedule');
+	const isScheduling = $derived(mode === 'schedule' || mode === 'reschedule');
+	const isInteractive = $derived(mode === 'edit' || isScheduling);
 	const calendarTitle = $derived(
-		mode === 'schedule' ? 'Schedule Training Session' : 'Training Session Availability'
+		mode === 'reschedule'
+			? 'Reschedule Training Session'
+			: mode === 'schedule'
+				? 'Schedule Training Session'
+				: 'Training Session Availability'
 	);
 
 	function getBlockedKeys(): Set<string> {
@@ -383,7 +401,7 @@
 					: await getTrainingSessionAvailability({ courseId, taskId });
 			windowEndsAt = data.windowEndsAt;
 
-			if (mode === 'schedule') {
+			if (isScheduling) {
 				availabilityKeys = loadSlotsToSelected(data.slots, getWindowStartDay());
 				selectedKeys = new Set();
 			} else {
@@ -415,7 +433,7 @@
 		const windowStartDay = getWindowStartDay();
 		const keys: string[] = [];
 
-		if (mode === 'schedule') {
+		if (isScheduling) {
 			const minLinear = Math.min(
 				toLinearIndex(anchor.dayIndex, anchor.slotIndex),
 				toLinearIndex(current.dayIndex, current.slotIndex)
@@ -470,7 +488,7 @@
 			else next.delete(key);
 		}
 		for (const key of blockedKeys) next.add(key);
-		return mode === 'schedule' ? keepSingleContiguousBlock(next) : next;
+		return isScheduling ? keepSingleContiguousBlock(next) : next;
 	}
 
 	function endDrag() {
@@ -491,7 +509,7 @@
 		const anchor = { dayIndex, slotIndex };
 		const dragMode = selectedKeys.has(key) ? 'deselect' : 'select';
 		const replaceSelection =
-			mode === 'schedule' &&
+			isScheduling &&
 			dragMode === 'select' &&
 			!isContiguousWithSelection(dayIndex, slotIndex, selectedKeys);
 		const baseKeys = replaceSelection ? new Set<string>() : new Set(selectedKeys);
@@ -526,7 +544,7 @@
 		const available = availabilityKeys.has(key);
 		const blocked = getBlockedKeys().has(key);
 
-		if (mode === 'schedule') {
+		if (isScheduling) {
 			if (scheduled) return 'bg-accent text-accent-content';
 			if (available) return 'bg-primary/40 hover:bg-primary/50';
 			if (enabled) return 'bg-base-100 hover:bg-base-300 cursor-pointer';
@@ -570,7 +588,7 @@
 	}
 
 	function openScheduleDialog() {
-		if (selectedKeys.size === 0 || mode !== 'schedule') return;
+		if (selectedKeys.size === 0 || !isScheduling) return;
 
 		const range = getSelectedSessionRange();
 		if (!range) return;
@@ -589,31 +607,48 @@
 	}
 
 	async function handleSchedule() {
-		if (mode !== 'schedule') return;
+		if (!isScheduling) return;
 
 		const range = getSelectedSessionRange();
 		if (!range) return;
 
 		scheduling = true;
 		scheduleError = null;
+		const fallback =
+			mode === 'reschedule' ? 'Failed to reschedule session' : 'Failed to schedule session';
 		try {
-			await scheduleTrainingSession({
-				courseId,
-				studentCid: cid,
-				taskId,
-				startsAt: range.startsAt.toISOString(),
-				endsAt: range.endsAt.toISOString()
-			});
+			if (mode === 'reschedule') {
+				if (sessionId == null) {
+					throw new Error('Session is required to reschedule');
+				}
+				await rescheduleTrainingSession({
+					sessionId,
+					startsAt: range.startsAt.toISOString(),
+					endsAt: range.endsAt.toISOString()
+				});
+			} else {
+				if (cid == null) {
+					throw new Error('Student is required to schedule a session');
+				}
+				await scheduleTrainingSession({
+					courseId,
+					studentCid: cid,
+					taskId,
+					startsAt: range.startsAt.toISOString(),
+					endsAt: range.endsAt.toISOString()
+				});
+			}
 			confirmDialog?.close();
 			await loadAvailability();
+			onComplete?.();
 		} catch (err) {
 			if (err && typeof err === 'object' && 'body' in err) {
 				const body = (err as { body?: { message?: string } }).body;
-				scheduleError = body?.message ?? 'Failed to schedule session';
+				scheduleError = body?.message ?? fallback;
 			} else if (err instanceof Error) {
 				scheduleError = err.message;
 			} else {
-				scheduleError = 'Failed to schedule session';
+				scheduleError = fallback;
 			}
 		} finally {
 			scheduling = false;
@@ -630,7 +665,7 @@
 	);
 
 	$effect(() => {
-		void (courseId, taskId, mode, cid, confirmedSession);
+		void (courseId, taskId, mode, cid, sessionId, confirmedSession);
 		loadAvailability();
 	});
 </script>
@@ -645,7 +680,7 @@
 			<p class="text-sm opacity-70">
 				Times shown in your local timezone ({timeZone}).
 			</p>
-			{#if mode === 'schedule'}
+			{#if isScheduling}
 				<p class="text-sm opacity-70">
 					Drag to select a continuous session time. Shaded slots show student availability.
 				</p>
@@ -753,7 +788,7 @@
 						<p class="text-warning text-sm">You have unsaved changes.</p>
 					{/if}
 				</div>
-			{:else if mode === 'schedule'}
+			{:else if isScheduling}
 				<div class="flex flex-wrap items-center gap-3">
 					<button
 						type="button"
@@ -761,7 +796,7 @@
 						disabled={selectedKeys.size === 0}
 						onclick={openScheduleDialog}
 					>
-						Schedule session
+						{mode === 'reschedule' ? 'Reschedule session' : 'Schedule session'}
 					</button>
 				</div>
 			{/if}
@@ -771,7 +806,9 @@
 
 <dialog class="modal" bind:this={confirmDialog}>
 	<div class="modal-box">
-		<h3 class="text-lg font-bold">Schedule training session</h3>
+		<h3 class="text-lg font-bold">
+			{mode === 'reschedule' ? 'Reschedule training session' : 'Schedule training session'}
+		</h3>
 		{#if selectedRangeLabel}
 			<p class="py-2 text-sm">{selectedRangeLabel}</p>
 		{/if}
@@ -791,7 +828,7 @@
 			<button type="button" class="btn btn-primary" disabled={scheduling} onclick={handleSchedule}>
 				{#if scheduling}
 					<span class="loading loading-spinner loading-sm"></span>
-					Scheduling...
+					{mode === 'reschedule' ? 'Rescheduling...' : 'Scheduling...'}
 				{:else}
 					Confirm
 				{/if}

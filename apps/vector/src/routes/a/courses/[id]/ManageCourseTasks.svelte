@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { ArrowUp, ArrowDown, Trash, SquarePen } from '@lucide/svelte';
+	import { ArrowUp, ArrowDown, Trash, SquarePen, Plus } from '@lucide/svelte';
 	import {
 		COURSE_TASK_TYPE_LABELS,
+		TRAINING_SESSION_OBJECTIVE_MAX_COUNT,
+		TRAINING_SESSION_OBJECTIVE_MAX_LENGTH,
 		TRAINING_SESSION_TYPE_LABELS,
 		describeCourseTask,
 		formatCourseTaskType
@@ -25,6 +27,7 @@
 
 	type CourseData = Awaited<ReturnType<typeof getCourse>>;
 	type TaskRow = CourseData['tasks'][number];
+	type ObjectiveDraft = { id: number; text: string };
 
 	const TASK_TYPES = Object.entries(COURSE_TASK_TYPE_LABELS).map(([value, label]) => ({
 		value,
@@ -48,6 +51,9 @@
 	let editTaskValue1 = $state('');
 	let editTaskValue2 = $state('');
 	let selectedCbtBlockId = $state('');
+	let nextObjectiveId = 1;
+	let addObjectives = $state<ObjectiveDraft[]>([{ id: 0, text: '' }]);
+	let editObjectives = $state<ObjectiveDraft[]>([{ id: 0, text: '' }]);
 	let formKey = $state(0);
 	let handledCreateResult = $state<unknown>(undefined);
 	let handledUpdateResult = $state<unknown>(undefined);
@@ -93,12 +99,23 @@
 		return groups;
 	}
 
+	function newObjectiveDraft(text = ''): ObjectiveDraft {
+		return { id: nextObjectiveId++, text };
+	}
+
+	function setObjectiveDrafts(existing?: string[] | null): ObjectiveDraft[] {
+		const texts = (existing ?? []).map((value) => value.trim()).filter(Boolean);
+		if (texts.length === 0) return [newObjectiveDraft()];
+		return texts.map((text) => newObjectiveDraft(text));
+	}
+
 	function openAddModal() {
 		editingTask = null;
 		selectedTaskType = 'manual';
 		editTaskValue1 = '';
 		editTaskValue2 = '';
 		selectedCbtBlockId = '';
+		addObjectives = setObjectiveDrafts();
 		formKey++;
 		taskModal?.showModal();
 	}
@@ -118,6 +135,7 @@
 		editTaskValue1 =
 			task.taskType === 'vatcan_cbt' ? cbtBlockSelectValue(task) : (task.taskValue1 ?? '');
 		editTaskValue2 = task.taskValue2 ?? '';
+		editObjectives = setObjectiveDrafts(task.objectives);
 		formKey++;
 		taskModal?.showModal();
 	}
@@ -163,6 +181,8 @@
 		editTaskValue1 = '';
 		editTaskValue2 = '';
 		selectedCbtBlockId = '';
+		addObjectives = setObjectiveDrafts();
+		editObjectives = setObjectiveDrafts();
 		formKey++;
 		void getCourse(courseId).refresh();
 	}
@@ -183,6 +203,53 @@
 		}
 	});
 </script>
+
+{#snippet objectiveFields(objectives: ObjectiveDraft[])}
+	<fieldset class="fieldset">
+		<legend class="fieldset-legend">Objectives</legend>
+		<p class="label">
+			At least one objective is required. Instructors check these at the end of a session.
+		</p>
+		<input
+			type="hidden"
+			name="objectivesJson"
+			value={JSON.stringify(objectives.map((objective) => objective.text))}
+		/>
+		<div class="flex flex-col gap-2">
+			{#each objectives as objective, index (objective.id)}
+				<div class="flex gap-2">
+					<input
+						type="text"
+						class="input min-w-0 flex-1"
+						bind:value={objective.text}
+						maxlength={TRAINING_SESSION_OBJECTIVE_MAX_LENGTH}
+						placeholder="Objective {index + 1}"
+					/>
+					{#if objectives.length > 1}
+						<button
+							type="button"
+							class="btn btn-square btn-ghost btn-sm"
+							aria-label="Remove objective"
+							onclick={() => objectives.splice(index, 1)}
+						>
+							<Trash size="16" />
+						</button>
+					{/if}
+				</div>
+			{/each}
+			{#if objectives.length < TRAINING_SESSION_OBJECTIVE_MAX_COUNT}
+				<button
+					type="button"
+					class="btn btn-sm btn-outline self-start"
+					onclick={() => objectives.push(newObjectiveDraft())}
+				>
+					<Plus size="14" />
+					Add objective
+				</button>
+			{/if}
+		</div>
+	</fieldset>
+{/snippet}
 
 {#snippet taskRows(catalog?: VatcanCbtBlockOption[])}
 	{#each course.tasks as task, index (task.taskId)}
@@ -345,6 +412,7 @@
 							<legend class="fieldset-legend">Session Name (optional)</legend>
 							<input type="text" class="input" name="taskValue2" bind:value={editTaskValue2} />
 						</fieldset>
+						{@render objectiveFields(editObjectives)}
 					{:else if editingTask.taskType === 'delay'}
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">Unit</legend>
@@ -457,6 +525,7 @@
 									<legend class="fieldset-legend">Session Name (optional)</legend>
 									<input type="text" class="input" name="taskValue2" />
 								</fieldset>
+								{@render objectiveFields(addObjectives)}
 							{:else if selectedTaskType === 'delay'}
 								<fieldset class="fieldset">
 									<legend class="fieldset-legend">Unit</legend>

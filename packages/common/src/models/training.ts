@@ -277,6 +277,7 @@ export class Course {
           taskType: task.taskType,
           taskValue1: task.taskValue1,
           taskValue2: task.taskValue2,
+          ...(task.objectives.length > 0 ? { objectives: task.objectives } : {}),
         })),
       })
       .where(eq(schema.courses.id, this.id));
@@ -289,13 +290,14 @@ export class Course {
     taskType: TaskType,
     taskValue1: string | null = null,
     taskValue2: string | null = null,
+    objectives: string[] = [],
   ): Promise<CourseTask> {
     const taskId =
       this.tasks.reduce((max, task) => Math.max(max, task.taskId), 0) + 1;
 
     const task = CourseTask.fromRow(
       this.db,
-      { taskId, taskType, taskValue1, taskValue2 },
+      { taskId, taskType, taskValue1, taskValue2, objectives },
       this.id,
     );
 
@@ -309,6 +311,7 @@ export class Course {
     taskType: TaskType,
     taskValue1: string | null = null,
     taskValue2: string | null = null,
+    objectives: string[] = [],
   ): Promise<CourseTask> {
     const index = this.tasks.findIndex((task) => task.taskId === taskId);
     if (index === -1) {
@@ -317,7 +320,7 @@ export class Course {
 
     const task = CourseTask.fromRow(
       this.db,
-      { taskId, taskType, taskValue1, taskValue2 },
+      { taskId, taskType, taskValue1, taskValue2, objectives },
       this.id,
     );
 
@@ -595,6 +598,68 @@ export function isTrainingSessionType(
   value: string,
 ): value is TrainingSessionType {
   return value in TRAINING_SESSION_TYPE_LABELS;
+}
+
+export const TRAINING_SESSION_OBJECTIVE_MAX_LENGTH = 200;
+export const TRAINING_SESSION_OBJECTIVE_MAX_COUNT = 20;
+
+export function readCourseTaskObjectives(
+  values: string[] | null | undefined,
+): string[] {
+  if (!Array.isArray(values)) return [];
+  const seen = new Set<string>();
+  const objectives: string[] = [];
+  for (const value of values) {
+    if (typeof value !== "string") continue;
+    const text = value.trim();
+    if (!text) continue;
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    objectives.push(text.slice(0, TRAINING_SESSION_OBJECTIVE_MAX_LENGTH));
+    if (objectives.length >= TRAINING_SESSION_OBJECTIVE_MAX_COUNT) break;
+  }
+  return objectives;
+}
+
+export function normalizeTrainingSessionObjectives(
+  values: string | string[] | null | undefined,
+): string[] {
+  const list = values == null ? [] : Array.isArray(values) ? values : [values];
+  const seen = new Set<string>();
+  const objectives: string[] = [];
+
+  for (const value of list) {
+    const text = value.trim();
+    if (!text) continue;
+    if (text.length > TRAINING_SESSION_OBJECTIVE_MAX_LENGTH) {
+      throw new Error(
+        `Each objective must be ${TRAINING_SESSION_OBJECTIVE_MAX_LENGTH} characters or fewer`,
+      );
+    }
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    objectives.push(text);
+  }
+
+  if (objectives.length > TRAINING_SESSION_OBJECTIVE_MAX_COUNT) {
+    throw new Error(
+      `A training session can have at most ${TRAINING_SESSION_OBJECTIVE_MAX_COUNT} objectives`,
+    );
+  }
+
+  return objectives;
+}
+
+export function requireTrainingSessionObjectives(
+  values: string | string[] | null | undefined,
+): string[] {
+  const objectives = normalizeTrainingSessionObjectives(values);
+  if (objectives.length === 0) {
+    throw new Error("At least one objective is required for a training session");
+  }
+  return objectives;
 }
 
 /** Orientation and OTS sessions may only be scheduled by instructors, not mentors. */
@@ -1020,6 +1085,7 @@ export abstract class CourseTask {
   taskValue2: string | null;
   courseId: string;
   taskId: number;
+  objectives: string[];
 
   protected constructor(
     db: DB,
@@ -1028,6 +1094,7 @@ export abstract class CourseTask {
     taskValue2: string | null,
     courseId: string,
     taskId: number,
+    objectives: string[] = [],
   ) {
     this.db = db;
     this.taskType = taskType;
@@ -1035,6 +1102,7 @@ export abstract class CourseTask {
     this.taskValue2 = taskValue2;
     this.courseId = courseId;
     this.taskId = taskId;
+    this.objectives = objectives;
   }
 
   static fromRow(
@@ -1044,15 +1112,18 @@ export abstract class CourseTask {
       taskType: string;
       taskValue1: string | null;
       taskValue2: string | null;
+      objectives?: string[] | null;
     },
     courseId: string,
   ): CourseTask {
+    const objectives = readCourseTaskObjectives(row.objectives);
     const args = [
       db,
       row.taskValue1,
       row.taskValue2,
       courseId,
       row.taskId,
+      objectives,
     ] as const;
 
     switch (row.taskType) {
@@ -1201,8 +1272,9 @@ export class ManualCourseTask extends CourseTask {
     taskValue2: string | null,
     courseId: string,
     taskId: number,
+    objectives: string[] = [],
   ) {
-    super(db, "manual", taskValue1, taskValue2, courseId, taskId);
+    super(db, "manual", taskValue1, taskValue2, courseId, taskId, objectives);
   }
 
   get label(): string | null {
@@ -1221,8 +1293,17 @@ export class VatcanExamCourseTask extends CourseTask {
     taskValue2: string | null,
     courseId: string,
     taskId: number,
+    objectives: string[] = [],
   ) {
-    super(db, "vatcan_exam", taskValue1, taskValue2, courseId, taskId);
+    super(
+      db,
+      "vatcan_exam",
+      taskValue1,
+      taskValue2,
+      courseId,
+      taskId,
+      objectives,
+    );
   }
 
   get examName(): string | null {
@@ -1241,8 +1322,9 @@ export class MoodleCourseTask extends CourseTask {
     taskValue2: string | null,
     courseId: string,
     taskId: number,
+    objectives: string[] = [],
   ) {
-    super(db, "moodle", taskValue1, taskValue2, courseId, taskId);
+    super(db, "moodle", taskValue1, taskValue2, courseId, taskId, objectives);
   }
 
   get courseName(): string | null {
@@ -1273,8 +1355,9 @@ export class VatcanCbtCourseTask extends CourseTask {
     taskValue2: string | null,
     courseId: string,
     taskId: number,
+    objectives: string[] = [],
   ) {
-    super(db, "vatcan_cbt", taskValue1, taskValue2, courseId, taskId);
+    super(db, "vatcan_cbt", taskValue1, taskValue2, courseId, taskId, objectives);
   }
 
   get blockId(): number | null {
@@ -1322,8 +1405,17 @@ export class TrainingSessionCourseTask extends CourseTask {
     taskValue2: string | null,
     courseId: string,
     taskId: number,
+    objectives: string[] = [],
   ) {
-    super(db, "training_session", taskValue1, taskValue2, courseId, taskId);
+    super(
+      db,
+      "training_session",
+      taskValue1,
+      taskValue2,
+      courseId,
+      taskId,
+      objectives,
+    );
   }
 
   get sessionType(): string | null {
@@ -1350,8 +1442,9 @@ export class DelayCourseTask extends CourseTask {
     taskValue2: string | null,
     courseId: string,
     taskId: number,
+    objectives: string[] = [],
   ) {
-    super(db, "delay", taskValue1, taskValue2, courseId, taskId);
+    super(db, "delay", taskValue1, taskValue2, courseId, taskId, objectives);
   }
 
   get unit(): "hours" | "days" {
