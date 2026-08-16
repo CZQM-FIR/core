@@ -210,7 +210,9 @@
 					<p class="text-sm opacity-70">{subheading}</p>
 				{/if}
 			</div>
-			<span class="badge badge-sm {statusBadgeClass(session.status)}">{statusLabel(session.status)}</span>
+			<span class="badge badge-sm {statusBadgeClass(session.status)}"
+				>{statusLabel(session.status)}</span
+			>
 		</div>
 
 		{#if showStudentActions && session.status === 'pending'}
