@@ -131,8 +131,7 @@
 		<div class="mt-6 flex flex-col gap-3">
 			{#snippet headerActions()}
 				<SyncCourseTasksButton
-					onSync={() =>
-						syncStudentCourseTasks({ courseId: view.course.id, cid: view.student.cid })}
+					onSync={() => syncStudentCourseTasks({ courseId: view.course.id, cid: view.student.cid })}
 					bind:error={syncError}
 				/>
 			{/snippet}

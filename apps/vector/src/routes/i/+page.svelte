@@ -119,7 +119,8 @@
 							<p class="text-sm font-medium">{startsInLabel}</p>
 						{/if}
 					</div>
-					<span class="badge {statusBadgeClass(session.status)}">{statusLabel(session.status)}</span>
+					<span class="badge {statusBadgeClass(session.status)}">{statusLabel(session.status)}</span
+					>
 				</div>
 				<p class="text-sm">{session.studentName}</p>
 				<p class="text-sm opacity-80">{session.sessionTypeLabel}</p>
@@ -145,7 +146,9 @@
 					<div class="card-body gap-2">
 						<div class="flex flex-wrap items-start justify-between gap-2">
 							<h2 class="card-title text-lg">Training Notes To Be Completed</h2>
-							<span class="badge {statusBadgeClass(session.status)}">{statusLabel(session.status)}</span>
+							<span class="badge {statusBadgeClass(session.status)}"
+								>{statusLabel(session.status)}</span
+							>
 						</div>
 						<p class="text-sm">{session.studentName}</p>
 						<p class="text-sm opacity-80">{session.sessionTypeLabel}</p>

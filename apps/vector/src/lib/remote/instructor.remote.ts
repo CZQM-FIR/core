@@ -625,10 +625,7 @@ async function requireSchedulerSession(sessionId: number, actionerCid: number) {
 	return session;
 }
 
-async function toInstructorSessionDetail(
-	row: TrainingSessionRow,
-	actionerCid: number
-) {
+async function toInstructorSessionDetail(row: TrainingSessionRow, actionerCid: number) {
 	const course = await Course.fetchById(row.courseId, db);
 	if (!course) throw error(404, 'Course not found');
 
@@ -647,15 +644,12 @@ async function toInstructorSessionDetail(
 	if (!instructor) throw error(404, 'Instructor not found');
 
 	const notesLocked = row.notesSubmittedAt != null;
-	const unsubmitUntil = row.notesSubmittedAt
-		? notesUnsubmitDeadline(row.notesSubmittedAt)
-		: null;
+	const unsubmitUntil = row.notesSubmittedAt ? notesUnsubmitDeadline(row.notesSubmittedAt) : null;
 	const isFirstSubmit = row.vatcanNoteId == null;
 	const taskComplete = completion?.isComplete ?? false;
 	const status = row.status as TrainingSessionStatus;
 	const canManage = actionerCid === row.scheduledByCid;
-	const sessionType =
-		task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
+	const sessionType = task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
 
 	return {
 		id: row.id,
@@ -687,13 +681,10 @@ async function toInstructorSessionDetail(
 		canStart: canManage && status === 'confirmed',
 		canEnd: canManage && status === 'in_progress',
 		canCancel:
-			canManage &&
-			canCancelTrainingSession(status, 'scheduler', trainingNotesSentToVatcan(row)),
+			canManage && canCancelTrainingSession(status, 'scheduler', trainingNotesSentToVatcan(row)),
 		canReschedule: canManage && (status === 'pending' || status === 'confirmed'),
-		canSaveNotes:
-			canManage && !notesLocked && status !== 'cancelled' && status !== 'declined',
-		canSubmitNotes:
-			canManage && canSubmitTrainingNotesToVatcan(status) && !notesLocked,
+		canSaveNotes: canManage && !notesLocked && status !== 'cancelled' && status !== 'declined',
+		canSubmitNotes: canManage && canSubmitTrainingNotesToVatcan(status) && !notesLocked,
 		student: {
 			cid: student.cid,
 			name: student.displayName
@@ -752,8 +743,7 @@ export const getUpcomingInstructorSession = query(async () => {
 	const student = await User.fromCid(db, row.studentCid);
 	const course = await Course.fetchById(row.courseId, db);
 	const task = course?.tasks.find((entry) => entry.taskId === row.taskId);
-	const sessionType =
-		task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
+	const sessionType = task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
 
 	return {
 		id: row.id,
@@ -788,8 +778,7 @@ export const getSessionsAwaitingTrainingNotes = query(async () => {
 			const student = await User.fromCid(db, row.studentCid);
 			const course = await Course.fetchById(row.courseId, db);
 			const task = course?.tasks.find((entry) => entry.taskId === row.taskId);
-			const sessionType =
-				task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
+			const sessionType = task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
 
 			return {
 				id: row.id,
@@ -969,8 +958,7 @@ export const submitTrainingSessionNotes = command(
 		const course = await Course.fetchById(session.courseId, db);
 		if (!course) throw error(404, 'Course not found');
 		const task = course.tasks.find((entry) => entry.taskId === session.taskId);
-		const sessionType =
-			task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
+		const sessionType = task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
 		const isFirstSubmit = session.vatcanNoteId == null;
 		const completion = task ? await task.getCompletion(session.studentCid) : null;
 		const askProficiency = isFirstSubmit && !(completion?.isComplete ?? false);
@@ -992,8 +980,7 @@ export const submitTrainingSessionNotes = command(
 			position,
 			note: formatVatcanTrainingNote(note, session.actualStartedAt, session.actualEndedAt, {
 				sessionTypeLabel: sessionType ? formatTrainingSessionType(sessionType) : 'Training',
-				sessionDescription:
-					task?.taskType === 'training_session' ? (task.taskValue2 ?? null) : null
+				sessionDescription: task?.taskType === 'training_session' ? (task.taskValue2 ?? null) : null
 			}),
 			sessionType: vatcanSessionTypeFromVector(sessionType)
 		};
@@ -1009,11 +996,7 @@ export const submitTrainingSessionNotes = command(
 			if (vatcanNoteId != null) {
 				await updateVatcanTrainingNote(vatcanEnv, session.studentCid, vatcanNoteId, vatcanInput);
 			} else {
-				const created = await createVatcanTrainingNote(
-					vatcanEnv,
-					session.studentCid,
-					vatcanInput
-				);
+				const created = await createVatcanTrainingNote(vatcanEnv, session.studentCid, vatcanInput);
 				vatcanNoteId = created.id;
 			}
 		} catch (err) {

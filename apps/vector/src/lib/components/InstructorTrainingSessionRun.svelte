@@ -642,7 +642,12 @@
 			<form method="dialog">
 				<button class="btn" disabled={unsubmitting}>Keep locked</button>
 			</form>
-			<button type="button" class="btn btn-warning" disabled={unsubmitting} onclick={handleUnsubmit}>
+			<button
+				type="button"
+				class="btn btn-warning"
+				disabled={unsubmitting}
+				onclick={handleUnsubmit}
+			>
 				{#if unsubmitting}
 					<span class="loading loading-spinner loading-sm"></span>
 					Unsubmitting...
