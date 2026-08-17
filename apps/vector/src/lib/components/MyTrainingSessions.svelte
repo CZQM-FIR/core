@@ -30,7 +30,9 @@
 				showCancel
 				cancelAs={role === 'student' ? 'student' : 'staff'}
 				studentCid={item.studentCid}
-				href={role === 'student' ? `/sessions/${item.session.id}` : `/i/sessions/${item.session.id}`}
+				href={role === 'student'
+					? `/sessions/${item.session.id}`
+					: `/i/sessions/${item.session.id}`}
 				heading={item.courseName}
 				subheading={role === 'instructor'
 					? `${item.sessionDescription} · ${item.studentName}`

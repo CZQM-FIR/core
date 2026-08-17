@@ -218,10 +218,7 @@
 	]}
 >
 	{#if href}
-		<a
-			{href}
-			class="absolute inset-0 z-0"
-			aria-label={heading ? `View ${heading}` : 'View session'}
+		<a {href} class="absolute inset-0 z-0" aria-label={heading ? `View ${heading}` : 'View session'}
 		></a>
 	{/if}
 	<div class={['card-body relative z-10 gap-2 p-4', href && 'pointer-events-none']}>
