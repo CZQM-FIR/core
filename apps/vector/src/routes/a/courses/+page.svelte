@@ -69,7 +69,7 @@
 							<th>#</th>
 							<th>Course Name</th>
 							<th>Description</th>
-							<th># Students</th>
+							<th>Students in Waitlist</th>
 							<th>Actions</th>
 						</tr>
 					</thead>
