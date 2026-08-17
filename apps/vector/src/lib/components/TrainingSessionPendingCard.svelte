@@ -103,6 +103,10 @@
 				return 'Declined';
 			case 'cancelled':
 				return 'Cancelled';
+			case 'in_progress':
+				return 'In progress';
+			case 'completed':
+				return 'Completed';
 		}
 	}
 
@@ -124,6 +128,10 @@
 				return 'badge-ghost';
 			case 'cancelled':
 				return 'badge-ghost';
+			case 'in_progress':
+				return 'badge-info';
+			case 'completed':
+				return 'badge-accent';
 		}
 	}
 

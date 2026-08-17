@@ -103,6 +103,36 @@ export function canUnsubmitTrainingSessionNotes(
   return now.getTime() < notesUnsubmitDeadline(notesSubmittedAt).getTime();
 }
 
+export function trainingNotesSentToVatcan(row: {
+  notesSubmittedAt: Date | null;
+  vatcanNoteId: number | null;
+}): boolean {
+  return row.notesSubmittedAt != null || row.vatcanNoteId != null;
+}
+
+export function canSubmitTrainingNotesToVatcan(
+  status: TrainingSessionStatus,
+): boolean {
+  return status === "completed";
+}
+
+export function canCancelTrainingSession(
+  status: TrainingSessionStatus,
+  actor: "student" | "scheduler",
+  notesSentToVatcan: boolean,
+): boolean {
+  if (notesSentToVatcan) return false;
+  if (actor === "student") {
+    return status === "pending" || status === "confirmed";
+  }
+  return (
+    status === "pending" ||
+    status === "confirmed" ||
+    status === "in_progress" ||
+    status === "completed"
+  );
+}
+
 export function validateSubmittedInstructorNotes(value: string): string {
   const trimmed = value.trim();
   if (
@@ -327,9 +357,24 @@ export class TrainingSession {
         "Only the student or the person who scheduled this session can cancel it",
       );
     }
-    if (row.status !== "pending" && row.status !== "confirmed") {
+    if (trainingNotesSentToVatcan(row)) {
       throw new Error(
-        "Only pending or confirmed training sessions can be cancelled",
+        "Sessions with training notes submitted to VATCAN cannot be cancelled",
+      );
+    }
+    const actor =
+      row.scheduledByCid === actorCid ? "scheduler" : "student";
+    if (
+      !canCancelTrainingSession(
+        row.status as TrainingSessionStatus,
+        actor,
+        false,
+      )
+    ) {
+      throw new Error(
+        actor === "scheduler"
+          ? "This training session cannot be cancelled"
+          : "Only pending or confirmed training sessions can be cancelled",
       );
     }
 
@@ -434,6 +479,9 @@ export class TrainingSession {
     const row = await TrainingSession.fetchById(db, sessionId);
     if (!row) throw new Error("Training session not found");
     assertScheduler(row, actorCid);
+    if (row.status === "cancelled" || row.status === "declined") {
+      throw new Error("Cannot edit training notes for a cancelled session");
+    }
     if (row.notesSubmittedAt) {
       throw new Error("Training notes are locked and cannot be edited");
     }
@@ -462,7 +510,12 @@ export class TrainingSession {
     const row = await TrainingSession.fetchById(db, sessionId);
     if (!row) throw new Error("Training session not found");
     assertScheduler(row, actorCid);
-    if (row.status !== "completed") {
+    if (row.status === "cancelled" || row.status === "declined") {
+      throw new Error(
+        "Cancelled sessions cannot have training notes submitted to VATCAN",
+      );
+    }
+    if (!canSubmitTrainingNotesToVatcan(row.status as TrainingSessionStatus)) {
       throw new Error("Notes can only be submitted after the session has ended");
     }
 

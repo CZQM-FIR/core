@@ -17,6 +17,8 @@ import {
 	type TrainingSessionRow
 } from '@czqm/db/schema';
 import {
+	canCancelTrainingSession,
+	canSubmitTrainingNotesToVatcan,
 	canUnsubmitTrainingSessionNotes,
 	Course,
 	createVatcanTrainingNote,
@@ -32,13 +34,15 @@ import {
 	validateSubmittedPositionTrained,
 	VatcanNoteLockedError,
 	vatcanSessionTypeFromVector,
+	formatVatcanTrainingNote,
+	trainingNotesSentToVatcan,
 	trainingSessionBlocksBookingSql,
 	type TrainingSessionStatus
 } from '@czqm/common';
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
-import { and, eq, gt, gte, inArray, isNull, lte, or } from 'drizzle-orm';
+import { and, desc, eq, gt, gte, inArray, isNull, lte, or } from 'drizzle-orm';
 import { authorizeVectorInstructorAccess } from './auth';
 import { getStudentCourseView } from './student.remote';
 import { getMyTrainingSessions } from './users.remote';
@@ -521,6 +525,7 @@ export const scheduleTrainingSession = command(
 		getMyTrainingSessions().refresh();
 		getUpcomingInstructorSession().refresh();
 		getInstructorTrainingSession(session.id).refresh();
+		getSessionsAwaitingTrainingNotes().refresh();
 
 		return { outsideAvailability };
 	}
@@ -587,6 +592,7 @@ export const cancelTrainingSession = command(
 		getMyTrainingSessions().refresh();
 		getUpcomingInstructorSession().refresh();
 		getInstructorTrainingSession(sessionId).refresh();
+		getSessionsAwaitingTrainingNotes().refresh();
 	}
 );
 
@@ -599,6 +605,7 @@ function refreshInstructorSessionQueries(session: {
 }) {
 	getInstructorTrainingSession(session.id).refresh();
 	getUpcomingInstructorSession().refresh();
+	getSessionsAwaitingTrainingNotes().refresh();
 	getMyTrainingSessions().refresh();
 	getInstructorStudentView({ courseId: session.courseId, cid: session.studentCid }).refresh();
 	getStudentCourseView(session.courseId).refresh();
@@ -663,18 +670,30 @@ async function toInstructorSessionDetail(
 		notesSubmittedAt: row.notesSubmittedAt,
 		vatcanNoteId: row.vatcanNoteId,
 		notesLocked,
-		canUnsubmitNotes: canManage && canUnsubmitTrainingSessionNotes(row.notesSubmittedAt),
+		canUnsubmitNotes:
+			canManage &&
+			canSubmitTrainingNotesToVatcan(status) &&
+			canUnsubmitTrainingSessionNotes(row.notesSubmittedAt),
 		unsubmitUntil,
 		isFirstSubmit,
 		taskComplete,
-		askProficiency: canManage && !notesLocked && isFirstSubmit && !taskComplete,
+		askProficiency:
+			canManage &&
+			canSubmitTrainingNotesToVatcan(status) &&
+			!notesLocked &&
+			isFirstSubmit &&
+			!taskComplete,
 		canManage,
 		canStart: canManage && status === 'confirmed',
 		canEnd: canManage && status === 'in_progress',
-		canCancel: canManage && (status === 'pending' || status === 'confirmed'),
+		canCancel:
+			canManage &&
+			canCancelTrainingSession(status, 'scheduler', trainingNotesSentToVatcan(row)),
 		canReschedule: canManage && (status === 'pending' || status === 'confirmed'),
-		canSaveNotes: canManage && !notesLocked,
-		canSubmitNotes: canManage && status === 'completed' && !notesLocked,
+		canSaveNotes:
+			canManage && !notesLocked && status !== 'cancelled' && status !== 'declined',
+		canSubmitNotes:
+			canManage && canSubmitTrainingNotesToVatcan(status) && !notesLocked,
 		student: {
 			cid: student.cid,
 			name: student.displayName
@@ -694,10 +713,13 @@ async function toInstructorSessionDetail(
 			sessionType,
 			sessionTypeLabel: sessionType ? formatTrainingSessionType(sessionType) : 'Training'
 		},
-		positionSuggestions: positionRows.map((position) => ({
-			callsign: position.callsign,
-			name: position.name
-		}))
+		positionSuggestions: positionRows
+			.filter((position) => {
+				const name = position.name.trim();
+				const callsign = position.callsign.trim();
+				return name.length > 0 && name.toUpperCase() !== callsign.toUpperCase();
+			})
+			.map((position) => position.callsign)
 	};
 }
 
@@ -718,11 +740,7 @@ export const getUpcomingInstructorSession = query(async () => {
 						lte(trainingSessions.startsAt, windowEnd),
 						or(gte(trainingSessions.startsAt, now), gte(trainingSessions.endsAt, now))
 					),
-					eq(trainingSessions.status, 'in_progress'),
-					and(
-						eq(trainingSessions.status, 'completed'),
-						isNull(trainingSessions.notesSubmittedAt)
-					)
+					eq(trainingSessions.status, 'in_progress')
 				)
 			)
 		)
@@ -748,6 +766,44 @@ export const getUpcomingInstructorSession = query(async () => {
 		sessionType,
 		sessionTypeLabel: sessionType ? formatTrainingSessionType(sessionType) : 'Training'
 	};
+});
+
+export const getSessionsAwaitingTrainingNotes = query(async () => {
+	const actioner = await authorizeVectorInstructorAccess();
+
+	const rows = await db
+		.select()
+		.from(trainingSessions)
+		.where(
+			and(
+				eq(trainingSessions.scheduledByCid, actioner.cid),
+				eq(trainingSessions.status, 'completed'),
+				isNull(trainingSessions.notesSubmittedAt)
+			)
+		)
+		.orderBy(desc(trainingSessions.actualEndedAt), desc(trainingSessions.startsAt));
+
+	return Promise.all(
+		rows.map(async (row) => {
+			const student = await User.fromCid(db, row.studentCid);
+			const course = await Course.fetchById(row.courseId, db);
+			const task = course?.tasks.find((entry) => entry.taskId === row.taskId);
+			const sessionType =
+				task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
+
+			return {
+				id: row.id,
+				status: row.status as TrainingSessionStatus,
+				startsAt: row.startsAt,
+				endsAt: row.endsAt,
+				studentName: student?.displayName ?? `CID ${row.studentCid}`,
+				courseName: course?.name ?? 'Course',
+				sessionDescription: task ? describeCourseTask(task) : 'Training session',
+				sessionType,
+				sessionTypeLabel: sessionType ? formatTrainingSessionType(sessionType) : 'Training'
+			};
+		})
+	);
 });
 
 export const getInstructorTrainingSession = query(SessionId, async (sessionId) => {
@@ -888,11 +944,17 @@ export const submitTrainingSessionNotes = command(
 		const actioner = await authorizeVectorInstructorAccess();
 		const session = await requireSchedulerSession(sessionId, actioner.cid);
 
-		if (session.status !== 'completed') {
+		if (session.status === 'cancelled' || session.status === 'declined') {
+			throw error(400, 'Cancelled sessions cannot have training notes submitted to VATCAN');
+		}
+		if (!canSubmitTrainingNotesToVatcan(session.status as TrainingSessionStatus)) {
 			throw error(400, 'Notes can only be submitted after the session has ended');
 		}
 		if (session.notesSubmittedAt) {
 			throw error(400, 'Training notes are already submitted');
+		}
+		if (!session.actualStartedAt || !session.actualEndedAt) {
+			throw error(400, 'Session start and end times are required to submit training notes');
 		}
 
 		let note: string;
@@ -928,7 +990,11 @@ export const submitTrainingSessionNotes = command(
 		const vatcanInput = {
 			instructorCid: actioner.cid,
 			position,
-			note,
+			note: formatVatcanTrainingNote(note, session.actualStartedAt, session.actualEndedAt, {
+				sessionTypeLabel: sessionType ? formatTrainingSessionType(sessionType) : 'Training',
+				sessionDescription:
+					task?.taskType === 'training_session' ? (task.taskValue2 ?? null) : null
+			}),
 			sessionType: vatcanSessionTypeFromVector(sessionType)
 		};
 
@@ -1053,6 +1119,43 @@ export const uncompleteStudentCourseTask = command(
 		await completion.uncomplete();
 
 		getInstructorStudentView({ courseId, cid }).refresh();
+	}
+);
+
+export const syncStudentCourseTasks = command(
+	type({
+		courseId: CourseId,
+		cid: 'number.integer > 0'
+	}),
+	async ({ courseId, cid }) => {
+		await authorizeVectorInstructorAccess();
+
+		const course = await Course.fetchById(courseId, db);
+		if (!course) throw error(404, 'Course not found');
+
+		const enrolled = await db.query.enrolledUsers.findFirst({
+			where: {
+				waitlistId: course.waitlist.id,
+				cid,
+				hiddenAt: { isNull: true }
+			}
+		});
+		if (!enrolled) {
+			throw error(403, 'Student must be actively enrolled in this course');
+		}
+
+		if (!env.VATCAN_API_TOKEN) {
+			throw error(500, 'VATCAN API token is not configured on this server.');
+		}
+
+		await course.syncTaskCompletions(cid, {
+			VATCAN_API_TOKEN: env.VATCAN_API_TOKEN
+		});
+
+		getInstructorStudentView({ courseId, cid }).refresh();
+		getStudentCourseView(courseId).refresh();
+
+		return { ok: true as const };
 	}
 );
 

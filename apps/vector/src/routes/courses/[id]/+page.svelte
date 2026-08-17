@@ -2,6 +2,7 @@
 	import { ChevronLeft } from '@lucide/svelte';
 	import CoursePrerequisiteChecklist from '$lib/components/CoursePrerequisiteChecklist.svelte';
 	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
+	import SyncCourseTasksButton from '$lib/components/SyncCourseTasksButton.svelte';
 	import TrainingSessionAvailabilityCalendar from '$lib/components/TrainingSessionAvailabilityCalendar.svelte';
 	import TrainingSessionPendingCard from '$lib/components/TrainingSessionPendingCard.svelte';
 	import TrainingSessionStudentPrepNote from '$lib/components/TrainingSessionStudentPrepNote.svelte';
@@ -18,24 +19,7 @@
 
 	let joining = $state(false);
 	let joinError = $state<string | null>(null);
-
-	let syncing = $state(false);
 	let syncError = $state<string | null>(null);
-	let syncCooldownUntil = $state(0);
-	let syncCooldownSeconds = $state(0);
-
-	$effect(() => {
-		const updateCooldown = () => {
-			const remaining = Math.ceil((syncCooldownUntil - Date.now()) / 1000);
-			syncCooldownSeconds = remaining > 0 ? remaining : 0;
-		};
-
-		updateCooldown();
-		if (syncCooldownUntil <= Date.now()) return;
-
-		const interval = setInterval(updateCooldown, 1000);
-		return () => clearInterval(interval);
-	});
 
 	async function handleJoinWaitlist() {
 		joining = true;
@@ -53,26 +37,6 @@
 			}
 		} finally {
 			joining = false;
-		}
-	}
-
-	async function handleSyncTasks() {
-		syncing = true;
-		syncError = null;
-		try {
-			await syncStudentCourseTasks(data.courseId);
-		} catch (err) {
-			if (err && typeof err === 'object' && 'body' in err) {
-				const body = (err as { body?: { message?: string } }).body;
-				syncError = body?.message ?? 'Failed to sync tasks';
-			} else if (err instanceof Error) {
-				syncError = err.message;
-			} else {
-				syncError = 'Failed to sync tasks';
-			}
-		} finally {
-			syncing = false;
-			syncCooldownUntil = Date.now() + 60_000;
 		}
 	}
 </script>
@@ -157,20 +121,10 @@
 					<div class="flex min-w-0 flex-col gap-3">
 						<CourseTaskList tasks={view.tasks} linkVatcanTasks highlightNextTask>
 							{#snippet headerActions()}
-								<button
-									class="btn btn-outline btn-sm"
-									disabled={syncing || syncCooldownSeconds > 0}
-									onclick={handleSyncTasks}
-								>
-									{#if syncing}
-										<span class="loading loading-spinner loading-sm"></span>
-										Syncing...
-									{:else if syncCooldownSeconds > 0}
-										Refresh in {syncCooldownSeconds}s
-									{:else}
-										Sync tasks
-									{/if}
-								</button>
+								<SyncCourseTasksButton
+									onSync={() => syncStudentCourseTasks(data.courseId)}
+									bind:error={syncError}
+								/>
 							{/snippet}
 						</CourseTaskList>
 						{#if syncError}

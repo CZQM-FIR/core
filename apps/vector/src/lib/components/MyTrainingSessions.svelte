@@ -32,7 +32,7 @@
 				studentCid={item.studentCid}
 				href={role === 'student'
 					? `/courses/${item.courseId}`
-					: `/i/${item.courseId}/${item.studentCid}`}
+					: `/i/sessions/${item.session.id}`}
 				heading={item.courseName}
 				subheading={role === 'instructor'
 					? `${item.sessionDescription} · ${item.studentName}`

@@ -296,6 +296,7 @@ export const syncStudentCourseTasks = command(CourseId, async (courseId) => {
 	});
 
 	getStudentCourseView(courseId).refresh();
+	getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 
 	return { ok: true as const };
 });
