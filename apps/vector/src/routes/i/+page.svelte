@@ -178,5 +178,13 @@
 				</p>
 			</div>
 		</a>
+		<a href="/i/notes" class="card bg-base-200 shadow-sm transition-shadow hover:shadow-md">
+			<div class="card-body">
+				<h2 class="card-title text-lg">Training notes</h2>
+				<p class="text-sm opacity-80">
+					Review training notes you have authored as an instructor or mentor.
+				</p>
+			</div>
+		</a>
 	</div>
 </section>

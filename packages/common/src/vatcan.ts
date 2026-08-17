@@ -388,11 +388,25 @@ export const VATCAN_SESSION_TYPE_BY_VECTOR_TYPE: Record<string, number> = {
   generic: 3,
 };
 
+const VATCAN_SESSION_TYPE_LABELS: Record<number, string> = {
+  0: "Sweatbox",
+  1: "Monitoring",
+  2: "OTS",
+  3: "Orientation",
+};
+
 export function vatcanSessionTypeFromVector(
   sessionType: string | null | undefined,
 ): number {
   if (!sessionType) return 3;
   return VATCAN_SESSION_TYPE_BY_VECTOR_TYPE[sessionType] ?? 3;
+}
+
+export function vatcanSessionTypeLabel(
+  sessionType: number | null | undefined,
+): string | null {
+  if (sessionType == null) return null;
+  return VATCAN_SESSION_TYPE_LABELS[sessionType] ?? null;
 }
 
 function formatVatcanNoteTime(date: Date): string {
@@ -542,7 +556,7 @@ function parseVatcanNoteId(body: unknown, depth = 0): number | null {
   return null;
 }
 
-type VatcanNoteListEntry = {
+export type VatcanNoteListEntry = {
   id: number;
   instructorCid: number | null;
   position: string | null;
@@ -597,7 +611,7 @@ function parseVatcanNoteList(body: unknown): VatcanNoteListEntry[] {
   return notes;
 }
 
-async function fetchVatcanUserNotes(
+export async function fetchVatcanUserNotes(
   token: string,
   studentCid: number,
 ): Promise<VatcanNoteListEntry[]> {

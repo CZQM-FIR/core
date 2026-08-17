@@ -42,7 +42,7 @@ import {
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
-import { and, desc, eq, gt, gte, inArray, isNull, lte, or } from 'drizzle-orm';
+import { and, desc, eq, gt, gte, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm';
 import { authorizeVectorInstructorAccess } from './auth';
 import { getStudentCourseView } from './student.remote';
 import { getMyTrainingSessions } from './users.remote';
@@ -793,6 +793,65 @@ export const getSessionsAwaitingTrainingNotes = query(async () => {
 			};
 		})
 	);
+});
+
+export const getAuthoredTrainingNotes = query(async () => {
+	const actioner = await authorizeVectorInstructorAccess();
+
+	const submittedRows = await db
+		.select()
+		.from(trainingSessions)
+		.where(
+			and(
+				eq(trainingSessions.scheduledByCid, actioner.cid),
+				isNotNull(trainingSessions.notesSubmittedAt)
+			)
+		)
+		.orderBy(
+			desc(trainingSessions.notesSubmittedAt),
+			desc(trainingSessions.actualEndedAt),
+			desc(trainingSessions.startsAt)
+		);
+
+	const courseIds = [...new Set(submittedRows.map((row) => row.courseId))];
+	const studentCids = [...new Set(submittedRows.map((row) => row.studentCid))];
+
+	const [courses, loadedStudents] = await Promise.all([
+		courseIds.length === 0
+			? Promise.resolve([])
+			: db.query.courses.findMany({
+					where: { id: { in: courseIds } },
+					columns: { id: true, name: true, tasks: true }
+				}),
+		Promise.all(studentCids.map((cid) => User.fromCid(db, cid)))
+	]);
+
+	const courseById = new Map(courses.map((course) => [course.id, course]));
+	const studentByCid = new Map(
+		loadedStudents
+			.filter((student): student is User => student != null)
+			.map((student) => [student.cid, student])
+	);
+
+	return submittedRows.map((row) => {
+		const course = courseById.get(row.courseId);
+		const task = course?.tasks.find((entry) => entry.taskId === row.taskId);
+		const student = studentByCid.get(row.studentCid);
+		const sessionType = task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
+
+		return {
+			sessionId: row.id,
+			notesSubmittedAt: row.notesSubmittedAt,
+			startsAt: row.startsAt,
+			actualEndedAt: row.actualEndedAt,
+			courseName: course?.name ?? 'Course',
+			sessionDescription: task ? describeCourseTask(task) : 'Training session',
+			sessionTypeLabel: sessionType ? formatTrainingSessionType(sessionType) : 'Training',
+			positionTrained: row.positionTrained,
+			studentName: student?.displayName ?? `CID ${row.studentCid}`,
+			instructorNotes: row.instructorNotes
+		};
+	});
 });
 
 export const getInstructorTrainingSession = query(SessionId, async (sessionId) => {
