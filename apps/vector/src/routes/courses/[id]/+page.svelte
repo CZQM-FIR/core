@@ -139,6 +139,7 @@
 								session={view.activeSession}
 								showStudentActions
 								showCancel={view.canCancelActiveSession}
+								href={`/sessions/${view.activeSession.id}`}
 							/>
 						</div>
 					{:else if view.canSubmitSessionAvailability && view.nextTask}
@@ -149,6 +150,7 @@
 									taskId={view.nextTask.taskId}
 									session={view.activeSession}
 									showCancel={view.canCancelActiveSession}
+									href={`/sessions/${view.activeSession.id}`}
 								/>
 								<TrainingSessionStudentPrepNote />
 							{/if}

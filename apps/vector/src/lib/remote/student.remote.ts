@@ -12,7 +12,8 @@ import {
 	moodleQueue,
 	trainingSessionAvailability,
 	trainingSessions,
-	waitingUsers
+	waitingUsers,
+	type TrainingSessionRow
 } from '@czqm/db/schema';
 import {
 	getInstructorStudentView,
@@ -20,7 +21,14 @@ import {
 	getUpcomingInstructorSession
 } from './instructor.remote';
 import { getMyTrainingSessions } from './users.remote';
-import { Course, TrainingSession, User } from '@czqm/common';
+import {
+	Course,
+	describeCourseTask,
+	formatTrainingSessionType,
+	TrainingSession,
+	User,
+	type TrainingSessionStatus
+} from '@czqm/common';
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
@@ -479,6 +487,61 @@ export const saveTrainingSessionAvailability = command(
 	}
 );
 
+const SessionId = type('number.integer > 0');
+
+async function toStudentSessionDetail(row: TrainingSessionRow) {
+	const course = await Course.fetchById(row.courseId, db);
+	if (!course) throw error(404, 'Course not found');
+
+	const task = course.tasks.find((entry) => entry.taskId === row.taskId);
+	const instructor = await User.fromCid(db, row.scheduledByCid);
+	if (!instructor) throw error(404, 'Instructor not found');
+
+	const notesSubmitted = row.notesSubmittedAt != null;
+	const status = row.status as TrainingSessionStatus;
+	const sessionType = task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
+
+	return {
+		id: row.id,
+		status,
+		startsAt: row.startsAt,
+		endsAt: row.endsAt,
+		actualStartedAt: row.actualStartedAt,
+		actualEndedAt: row.actualEndedAt,
+		trainingNote: row.trainingNote,
+		notesSubmitted,
+		instructorNotes: notesSubmitted ? row.instructorNotes : null,
+		positionTrained: notesSubmitted ? row.positionTrained : null,
+		canConfirm: status === 'pending',
+		canDecline: status === 'pending',
+		canCancel: status === 'confirmed',
+		instructor: {
+			cid: instructor.cid,
+			name: instructor.displayName,
+			role: TrainingSession.schedulerRoleLabel(instructor)
+		},
+		course: {
+			id: course.id,
+			name: course.name
+		},
+		task: {
+			taskId: row.taskId,
+			description: task ? describeCourseTask(task) : 'Training session',
+			sessionType,
+			sessionTypeLabel: sessionType ? formatTrainingSessionType(sessionType) : 'Training'
+		}
+	};
+}
+
+export const getStudentTrainingSession = query(SessionId, async (sessionId) => {
+	const user = await authorizeVectorStudentAccess();
+	const session = await TrainingSession.fetchById(db, sessionId);
+	if (!session || session.studentCid !== user.cid) {
+		throw error(404, 'Training session not found');
+	}
+	return toStudentSessionDetail(session);
+});
+
 const TrainingSessionActionOptions = type({
 	courseId: CourseId,
 	taskId: 'number.integer >= 0',
@@ -509,6 +572,7 @@ export const confirmTrainingSession = command(
 		getMyTrainingSessions().refresh();
 		getUpcomingInstructorSession().refresh();
 		getInstructorTrainingSession(sessionId).refresh();
+		getStudentTrainingSession(sessionId).refresh();
 	}
 );
 
@@ -536,6 +600,7 @@ export const declineTrainingSession = command(
 		getMyTrainingSessions().refresh();
 		getUpcomingInstructorSession().refresh();
 		getInstructorTrainingSession(sessionId).refresh();
+		getStudentTrainingSession(sessionId).refresh();
 	}
 );
 
@@ -563,5 +628,6 @@ export const cancelTrainingSession = command(
 		getMyTrainingSessions().refresh();
 		getUpcomingInstructorSession().refresh();
 		getInstructorTrainingSession(sessionId).refresh();
+		getStudentTrainingSession(sessionId).refresh();
 	}
 );

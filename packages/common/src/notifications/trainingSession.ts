@@ -87,7 +87,7 @@ function getStudentCopy(
   input: QueueTrainingSessionEmailsInput,
 ): { subject: string; paragraphs: string[] } {
   const sessionRange = formatSessionRange(input.startsAt, input.endsAt);
-  const courseUrl = `${input.vectorUrl}/courses/${input.courseId}`;
+  const sessionUrl = `${input.vectorUrl}/sessions/${input.sessionId}`;
   const schedulerLabel = input.scheduler.displayName;
 
   switch (event) {
@@ -98,7 +98,7 @@ function getStudentCopy(
           `Hello ${input.student.name_full} (${input.student.cid}),`,
           `${schedulerLabel} has scheduled a training session for you in ${input.courseName}.`,
           `Session time: ${sessionRange}`,
-          `<a href=${courseUrl}>Please confirm or decline this session in Vector</a>`,
+          `<a href=${sessionUrl}>Please confirm or decline this session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],
@@ -110,7 +110,7 @@ function getStudentCopy(
           `Hello ${input.student.name_full} (${input.student.cid}),`,
           `You confirmed your training session in ${input.courseName}.`,
           `Session time: ${sessionRange}`,
-          `<a href=${courseUrl}>View your course in Vector</a>`,
+          `<a href=${sessionUrl}>View your session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],
@@ -122,7 +122,7 @@ function getStudentCopy(
           `Hello ${input.student.name_full} (${input.student.cid}),`,
           `You declined the training session scheduled by ${schedulerLabel} in ${input.courseName}.`,
           `Session time: ${sessionRange}`,
-          `<a href=${courseUrl}>View your course in Vector</a>`,
+          `<a href=${sessionUrl}>View your session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],
@@ -134,7 +134,7 @@ function getStudentCopy(
           `Hello ${input.student.name_full} (${input.student.cid}),`,
           `The training session in ${input.courseName} has been cancelled.`,
           `Session time: ${sessionRange}`,
-          `<a href=${courseUrl}>View your course in Vector</a>`,
+          `<a href=${sessionUrl}>View your session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],
@@ -146,7 +146,7 @@ function getStudentCopy(
           `Hello ${input.student.name_full} (${input.student.cid}),`,
           `${schedulerLabel} has rescheduled your training session in ${input.courseName}.`,
           `New session time: ${sessionRange}`,
-          `<a href=${courseUrl}>Please confirm or decline this session in Vector</a>`,
+          `<a href=${sessionUrl}>Please confirm or decline this session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
         ],

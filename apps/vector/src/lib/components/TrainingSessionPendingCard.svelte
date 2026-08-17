@@ -218,10 +218,13 @@
 	]}
 >
 	{#if href}
-		<a {href} class="absolute inset-0 z-10" aria-label={heading ? `View ${heading}` : 'View course'}
+		<a
+			{href}
+			class="absolute inset-0 z-0"
+			aria-label={heading ? `View ${heading}` : 'View session'}
 		></a>
 	{/if}
-	<div class="card-body gap-2 p-4">
+	<div class={['card-body relative z-10 gap-2 p-4', href && 'pointer-events-none']}>
 		<div class="flex flex-wrap items-start justify-between gap-2">
 			<div class="min-w-0">
 				<h2 class="card-title text-base">{heading || 'Training Session'}</h2>
@@ -260,10 +263,10 @@
 		{/if}
 
 		{#if showStudentActions && session.status === 'pending'}
-			<div class="flex flex-wrap items-center gap-3">
+			<div class="pointer-events-auto flex flex-wrap items-center gap-3">
 				<button
 					type="button"
-					class="btn btn-primary btn-sm relative z-20"
+					class="btn btn-primary btn-sm"
 					disabled={confirming || declining || cancelling}
 					onclick={handleConfirm}
 				>
@@ -276,7 +279,7 @@
 				</button>
 				<button
 					type="button"
-					class="btn btn-outline btn-sm relative z-20"
+					class="btn btn-outline btn-sm"
 					disabled={confirming || declining || cancelling}
 					onclick={handleDecline}
 				>
@@ -291,10 +294,10 @@
 		{/if}
 
 		{#if canCancel}
-			<div class="flex flex-wrap items-center gap-3">
+			<div class="pointer-events-auto flex flex-wrap items-center gap-3">
 				<button
 					type="button"
-					class="btn btn-outline btn-error btn-sm relative z-20"
+					class="btn btn-outline btn-error btn-sm"
 					disabled={confirming || declining || cancelling}
 					onclick={openCancelDialog}
 				>
