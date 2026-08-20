@@ -3,6 +3,7 @@ export * from "./training";
 export * from "./trainingSession";
 export * from "./position";
 export * from "./soloEndorsements";
+export * from "./rosterAuthorization";
 export * from "./event";
 export * from "./newsArticle";
 export * from "./userWrite";

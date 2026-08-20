@@ -5,7 +5,9 @@ import {
 	encodeVatcanCbtTaskValue2,
 	fetchVatcanCbtBlockOptions,
 	findVatcanCbtBlock,
+	isRosterPosition,
 	isTrainingSessionType,
+	parseSoloDurationDays,
 	requireTrainingSessionObjectives,
 	type PrerequisiteType,
 	type TaskType
@@ -18,7 +20,7 @@ import { authorizeVectorAdminAccess } from './auth';
 const CourseId = type(/^[0-9a-z]{5}$/);
 
 const TaskTypeSchema = type(
-	"'moodle' | 'vatcan_cbt' | 'vatcan_exam' | 'training_session' | 'delay' | 'manual'"
+	"'moodle' | 'vatcan_cbt' | 'vatcan_exam' | 'training_session' | 'delay' | 'manual' | 'certify' | 'solo'"
 );
 
 const PrerequisiteTypeSchema = type(
@@ -76,6 +78,42 @@ function validateTrainingSessionTaskValues(
 		taskValue1,
 		taskValue2: trimmedName ? trimmedName : null
 	};
+}
+
+function validateCertifyTaskValues(taskValue1: string | undefined): {
+	taskValue1: string;
+	taskValue2: null;
+} {
+	const position = taskValue1?.trim();
+	if (!position || !isRosterPosition(position)) {
+		throw error(400, 'Certify position is required and must be Ground, Tower, Approach, or Centre');
+	}
+
+	return { taskValue1: position, taskValue2: null };
+}
+
+async function validateSoloTaskValues(
+	taskValue1: string | undefined,
+	taskValue2: string | undefined
+): Promise<{ taskValue1: string; taskValue2: string }> {
+	const callsign = taskValue1?.trim().toUpperCase();
+	if (!callsign) {
+		throw error(400, 'Solo position is required');
+	}
+
+	const position = await db.query.positions.findFirst({
+		where: { callsign }
+	});
+	if (!position) {
+		throw error(400, `Position not found: ${callsign}`);
+	}
+
+	try {
+		const durationDays = parseSoloDurationDays(taskValue2);
+		return { taskValue1: callsign, taskValue2: String(durationDays) };
+	} catch (err) {
+		throw error(400, err instanceof Error ? err.message : 'Invalid solo duration');
+	}
 }
 
 function parseTrainingSessionObjectives(objectivesJson: string | undefined): string[] {
@@ -242,6 +280,18 @@ export const createCourseTask = form(
 			resolvedTaskValue2 = resolved.taskValue2;
 		}
 
+		if (taskType === 'certify') {
+			const validated = validateCertifyTaskValues(taskValue1);
+			resolvedTaskValue1 = validated.taskValue1;
+			resolvedTaskValue2 = validated.taskValue2;
+		}
+
+		if (taskType === 'solo') {
+			const validated = await validateSoloTaskValues(taskValue1, taskValue2);
+			resolvedTaskValue1 = validated.taskValue1;
+			resolvedTaskValue2 = validated.taskValue2;
+		}
+
 		await course.createTask(
 			taskType as TaskType,
 			resolvedTaskValue1,
@@ -280,6 +330,18 @@ export const updateCourseTask = form(CourseTaskOptions, async (data) => {
 		const resolved = await resolveVatcanCbtTaskValues(blockKey);
 		resolvedTaskValue1 = resolved.taskValue1;
 		resolvedTaskValue2 = resolved.taskValue2;
+	}
+
+	if (data.taskType === 'certify') {
+		const validated = validateCertifyTaskValues(data.taskValue1);
+		resolvedTaskValue1 = validated.taskValue1;
+		resolvedTaskValue2 = validated.taskValue2;
+	}
+
+	if (data.taskType === 'solo') {
+		const validated = await validateSoloTaskValues(data.taskValue1, data.taskValue2);
+		resolvedTaskValue1 = validated.taskValue1;
+		resolvedTaskValue2 = validated.taskValue2;
 	}
 
 	await course.updateTask(
@@ -350,6 +412,21 @@ export const getRatings = query(async () => {
 	await authorizeVectorAdminAccess();
 
 	return db.query.ratings.findMany();
+});
+
+export const getFacilityPositions = query(async () => {
+	await authorizeVectorAdminAccess();
+
+	const rows = await db.query.positions.findMany({
+		orderBy: (positions, { asc }) => [asc(positions.callsign)]
+	});
+
+	return rows.filter((position) => {
+		const name = position.name.trim();
+		const callsign = position.callsign.trim();
+		if (callsign === 'UNKN' || callsign === 'EXTERNAL') return false;
+		return name.length > 0 && name.toUpperCase() !== callsign.toUpperCase();
+	});
 });
 
 export const getVatcanCbtBlocks = query(async () => {

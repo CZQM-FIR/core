@@ -1,8 +1,10 @@
 import type { Course } from '@czqm/common';
 import {
+	DelayCourseTask,
 	describeCourseTask,
 	fetchVatcanCbtBlockOptions,
 	formatCourseTaskType,
+	requiresInstructorToComplete,
 	vatcanCbtBlockMetaFromOption,
 	type VatcanCbtBlockMeta
 } from '@czqm/common';
@@ -18,6 +20,8 @@ export type CourseTaskProgress = {
 	completedAt: Date | null;
 	isComplete: boolean;
 	manuallyCompletable: boolean;
+	requiresInstructorCompletion: boolean;
+	remainingLabel: string | null;
 };
 
 async function buildVatcanCbtMetaMap(
@@ -53,6 +57,10 @@ export async function getCourseTaskProgress(
 	return Promise.all(
 		course.tasks.map(async (task) => {
 			const completion = await task.getCompletion(cid);
+			const remainingLabel =
+				task instanceof DelayCourseTask && !completion?.isComplete
+					? await task.getRemainingLabel(cid, completion)
+					: null;
 			return {
 				taskId: task.taskId,
 				taskType: task.taskType,
@@ -62,7 +70,9 @@ export async function getCourseTaskProgress(
 				startedAt: completion?.startedAt ?? null,
 				completedAt: completion?.completedAt ?? null,
 				isComplete: completion?.isComplete ?? false,
-				manuallyCompletable: task.isManuallyCompletable()
+				manuallyCompletable: task.isManuallyCompletable(),
+				requiresInstructorCompletion: requiresInstructorToComplete(task.taskType),
+				remainingLabel
 			};
 		})
 	);

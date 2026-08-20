@@ -23,15 +23,21 @@ import {
 	canSubmitTrainingNotesToVatcan,
 	canUnsubmitTrainingSessionNotes,
 	Course,
+	certifyControllerOnRoster,
 	createVatcanTrainingNote,
 	describeCourseTask,
 	formatTrainingSessionType,
+	grantSoloEndorsement,
+	isRosterPosition,
 	notesUnsubmitDeadline,
+	parseSoloDurationDays,
 	TrainingSession,
 	updateVatcanTrainingNote,
 	User,
+	userCanCompleteInstructorOnlyCourseTasks,
 	userCanGraduateVectorStudents,
 	userCanScheduleTrainingSessionType,
+	requiresInstructorToComplete,
 	validateSubmittedInstructorNotes,
 	validateSubmittedPositionTrained,
 	VatcanNoteLockedError,
@@ -50,6 +56,7 @@ import { getStudentCourseView } from './student.remote';
 import { getMyTrainingSessions } from './users.remote';
 import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
 import { notifyCourseEnrollmentEmail } from '$lib/courseEnrollmentEmails';
+import { notifyCourseTaskCompletionEmail } from '$lib/courseTaskCompletionEmails';
 
 const CourseId = type(/^[0-9a-z]{5}$/);
 const WaitlistId = type('number.integer >= 0');
@@ -215,6 +222,7 @@ export const getInstructorStudentView = query(
 			completedAt: completed?.completedAt ?? null,
 			tasks,
 			canGraduateStudent: userCanGraduateVectorStudents(actioner),
+			canCompleteInstructorOnlyTasks: userCanCompleteInstructorOnlyCourseTasks(actioner),
 			allTasksComplete,
 			nextTask,
 			canViewSessionAvailability,
@@ -1165,21 +1173,77 @@ async function getInstructorCourseTask(courseId: string, taskId: number) {
 export const completeStudentCourseTask = command(
 	StudentTaskOptions,
 	async ({ courseId, cid, taskId }) => {
-		await authorizeVectorInstructorAccess();
+		const actioner = await authorizeVectorInstructorAccess();
 
 		const task = await getInstructorCourseTask(courseId, taskId);
+		if (
+			requiresInstructorToComplete(task.taskType) &&
+			!userCanCompleteInstructorOnlyCourseTasks(actioner)
+		) {
+			throw error(403, 'Only instructors can mark this task complete');
+		}
+
+		if (task.taskType === 'certify' || task.taskType === 'solo') {
+			const course = await Course.fetchById(courseId, db);
+			if (!course) throw error(404, 'Course not found');
+
+			const taskIndex = course.tasks.findIndex((entry) => entry.taskId === taskId);
+			const priorTasks = course.tasks.slice(0, Math.max(taskIndex, 0));
+			for (const priorTask of priorTasks) {
+				const completion = await priorTask.getCompletion(cid);
+				if (!completion?.isComplete) {
+					throw error(400, 'Complete all previous tasks first');
+				}
+			}
+		}
+
+		try {
+			if (task.taskType === 'certify') {
+				const position = task.taskValue1?.trim() ?? '';
+				if (!isRosterPosition(position)) {
+					throw new Error('This certify task is missing a valid roster position');
+				}
+				await certifyControllerOnRoster(db, cid, position);
+			} else if (task.taskType === 'solo') {
+				const callsign = task.taskValue1?.trim() ?? '';
+				const durationDays = parseSoloDurationDays(task.taskValue2);
+				await grantSoloEndorsement(db, cid, callsign, durationDays);
+			}
+		} catch (err) {
+			remoteCommandError(err, 'Failed to update roster or solo endorsement');
+		}
+
 		await task.complete(cid);
 
+		if (task.taskType === 'certify' || task.taskType === 'solo') {
+			try {
+				await notifyCourseTaskCompletionEmail(task.taskType, courseId, cid, actioner.cid, task);
+			} catch (err) {
+				console.error('Failed to queue training completion email', err);
+			}
+		}
+
 		getInstructorStudentView({ courseId, cid }).refresh();
+
+		return {
+			followUp: task.taskType === 'certify' || task.taskType === 'solo' ? task.taskType : null
+		};
 	}
 );
 
 export const uncompleteStudentCourseTask = command(
 	StudentTaskOptions,
 	async ({ courseId, cid, taskId }) => {
-		await authorizeVectorInstructorAccess();
+		const actioner = await authorizeVectorInstructorAccess();
 
 		const task = await getInstructorCourseTask(courseId, taskId);
+		if (
+			requiresInstructorToComplete(task.taskType) &&
+			!userCanCompleteInstructorOnlyCourseTasks(actioner)
+		) {
+			throw error(403, 'Only instructors can mark this task incomplete');
+		}
+
 		const completion = await task.getCompletion(cid);
 		if (!completion) throw error(404, 'Task completion not found');
 
