@@ -1,5 +1,6 @@
 import type { DB } from "../db";
 import * as schema from "@czqm/db/schema";
+import type { RosterPosition } from "@czqm/db/schema";
 import { and, eq } from "drizzle-orm";
 import type { Env } from "../types";
 import { User } from "./user";
@@ -569,16 +570,68 @@ export type TaskType =
   | "vatcan_exam"
   | "training_session"
   | "delay"
-  | "manual";
+  | "manual"
+  | "certify"
+  | "solo";
 
 export const COURSE_TASK_TYPE_LABELS: Record<TaskType, string> = {
   manual: "Manual",
+  certify: "Certify",
+  solo: "Solo",
   vatcan_exam: "VATCAN Exam",
   moodle: "Moodle",
   vatcan_cbt: "VATCAN CBT",
   training_session: "Training Session",
   delay: "Delay",
 };
+
+export const ROSTER_POSITION_LABELS: Record<RosterPosition, string> = {
+  gnd: "Ground",
+  twr: "Tower",
+  app: "Approach",
+  ctr: "Centre",
+};
+
+export const SOLO_ENDORSEMENT_MAX_DAYS = 30;
+
+export function isRosterPosition(value: string): value is RosterPosition {
+  return value in ROSTER_POSITION_LABELS;
+}
+
+export function formatRosterPosition(value: string | null | undefined): string {
+  if (value && isRosterPosition(value)) {
+    return ROSTER_POSITION_LABELS[value];
+  }
+  return value?.trim() || "Unknown";
+}
+
+export function parseSoloDurationDays(
+  value: string | number | null | undefined,
+): number {
+  const days = typeof value === "number" ? value : Number(value);
+  if (!Number.isInteger(days) || days < 1 || days > SOLO_ENDORSEMENT_MAX_DAYS) {
+    throw new Error(
+      `Solo duration must be an integer from 1 to ${SOLO_ENDORSEMENT_MAX_DAYS} days`,
+    );
+  }
+  return days;
+}
+
+function describeCertifyTask(taskValue1: string | null): string {
+  return `Certify on ${formatRosterPosition(taskValue1)}`;
+}
+
+function describeSoloTask(
+  taskValue1: string | null,
+  taskValue2: string | null,
+): string {
+  const callsign = taskValue1?.trim() || "Unknown";
+  const days = Number(taskValue2 ?? 0);
+  const durationLabel = Number.isInteger(days) && days > 0 ? `${days}-day` : "";
+  return durationLabel
+    ? `Grant a ${durationLabel} solo on ${callsign}`
+    : `Grant a solo on ${callsign}`;
+}
 
 export function formatCourseTaskType(taskType: string): string {
   return COURSE_TASK_TYPE_LABELS[taskType as TaskType] ?? taskType;
@@ -673,6 +726,11 @@ export function requiresInstructorToSchedule(sessionType: string): boolean {
   return sessionType === "orientation" || sessionType === "ots";
 }
 
+/** Certify and solo tasks may only be completed by instructors, not mentors. */
+export function requiresInstructorToComplete(taskType: string): boolean {
+  return taskType === "certify" || taskType === "solo";
+}
+
 function indefiniteArticle(word: string): "a" | "an" {
   return /^[aeiou]/i.test(word) ? "an" : "a";
 }
@@ -764,6 +822,10 @@ export function describeCourseTask(
         ? `Wait ${amount} controlling hour(s)`
         : `Wait ${amount} day(s)`;
     }
+    case "certify":
+      return describeCertifyTask(task.taskValue1);
+    case "solo":
+      return describeSoloTask(task.taskValue1, task.taskValue2);
     default:
       return "Unknown task";
   }
@@ -1233,6 +1295,10 @@ export abstract class CourseTask {
         return new TrainingSessionCourseTask(...args);
       case "delay":
         return new DelayCourseTask(...args);
+      case "certify":
+        return new CertifyCourseTask(...args);
+      case "solo":
+        return new SoloCourseTask(...args);
       default:
         throw new Error(`Unknown task type: ${row.taskType}`);
     }
@@ -1563,6 +1629,46 @@ export class DelayCourseTask extends CourseTask {
       : `Wait ${this.amount} day(s)`;
   }
 
+  async getRemainingLabel(
+    userId: number,
+    completion?: CourseTaskCompletion | null,
+  ): Promise<string | null> {
+    const existing =
+      completion === undefined ? await this.getCompletion(userId) : completion;
+    if (!existing || existing.isComplete) return null;
+
+    const amount = this.amount;
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+
+    if (this.unit === "days") {
+      const remainingMs =
+        amount * 24 * 60 * 60 * 1000 -
+        (Date.now() - existing.startedAt.getTime());
+      const remainingDays = Math.max(
+        0,
+        Math.ceil(remainingMs / (24 * 60 * 60 * 1000)),
+      );
+      return remainingDays === 1
+        ? "1 day remaining"
+        : `${remainingDays} days remaining`;
+    }
+
+    const user = await User.fromCid(this.db, userId, {
+      sessions: { since: existing.startedAt },
+    });
+    if (!user) return null;
+
+    const totalHours =
+      user.hours.localSessions.reduce(
+        (total, session) => total + session.duration,
+        0,
+      ) / 3600;
+    const remainingHours = Math.max(0, Math.ceil(amount - totalHours));
+    return remainingHours === 1
+      ? "1 hour remaining"
+      : `${remainingHours} hours remaining`;
+  }
+
   isAutoCompletable(): boolean {
     return true;
   }
@@ -1614,6 +1720,52 @@ export class DelayCourseTask extends CourseTask {
     );
 
     return totalSeconds / 3600 >= amount;
+  }
+}
+
+export class CertifyCourseTask extends CourseTask {
+  constructor(
+    db: DB,
+    taskValue1: string | null,
+    taskValue2: string | null,
+    courseId: string,
+    taskId: number,
+    objectives: string[] = [],
+  ) {
+    super(db, "certify", taskValue1, taskValue2, courseId, taskId, objectives);
+  }
+
+  get rosterPosition(): string | null {
+    return this.taskValue1;
+  }
+
+  getDescription(): string {
+    return describeCertifyTask(this.rosterPosition);
+  }
+}
+
+export class SoloCourseTask extends CourseTask {
+  constructor(
+    db: DB,
+    taskValue1: string | null,
+    taskValue2: string | null,
+    courseId: string,
+    taskId: number,
+    objectives: string[] = [],
+  ) {
+    super(db, "solo", taskValue1, taskValue2, courseId, taskId, objectives);
+  }
+
+  get callsign(): string | null {
+    return this.taskValue1;
+  }
+
+  get durationDays(): number {
+    return Number(this.taskValue2 ?? 0);
+  }
+
+  getDescription(): string {
+    return describeSoloTask(this.callsign, this.taskValue2);
   }
 }
 

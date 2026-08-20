@@ -139,65 +139,77 @@ export const notificationsJob = async (db: DB, env: Env) => {
 
   const discordNotificationQueue = [];
 
+  const userAllowsNotification = (user: NotificationQueueItem['user'], notificationType: string) =>
+    user.preferences.some((pref) => pref.key === notificationType && pref.value === 'true') ||
+    (!user.preferences.find((pref) => pref.key === notificationType) &&
+      defaultOnPreferences.includes(notificationType as NotificationType));
+
   for (const notification of notifications) {
     const { user } = notification;
 
-    if (notification.location === 'discord' && !user.integrations?.length) continue;
+    if (notification.location === 'discord') {
+      if (!user.integrations?.length) continue;
+      if (!userAllowsNotification(user, notification.type)) continue;
 
-    if (
-      user.preferences.some((pref) => pref.key === notification.type && pref.value === 'true') ||
-      (!user.preferences.find((pref) => pref.key === notification.type) &&
-        defaultOnPreferences.includes(notification.type as NotificationType))
-    ) {
-      if (notification.location === 'discord') {
-        discordNotificationQueue.push({
-          id: notification.id,
-          userId: user.integrations.find((i) => i.type === 0)!.integrationUserId,
-          message: notification.message,
-          buttons: notification.buttons,
-          user
-        });
-      } else if (notification.location === 'email') {
-        const MessageJson = type({
-          to: 'string.email?',
-          bcc: 'string.email[]?',
-          subject: 'string',
-          body: 'string',
-          replyto: 'string.email?'
-        });
+      discordNotificationQueue.push({
+        id: notification.id,
+        userId: user.integrations.find((i) => i.type === 0)!.integrationUserId,
+        message: notification.message,
+        buttons: notification.buttons,
+        user
+      });
+      continue;
+    }
 
-        const messageJson = MessageJson(JSON.parse(notification.message));
+    if (notification.location !== 'email') continue;
 
-        if (!(messageJson instanceof type.errors)) {
-          const { to, bcc, subject, body, replyto } = messageJson;
+    const MessageJson = type({
+      to: 'string.email?',
+      bcc: 'string.email[]?',
+      subject: 'string',
+      body: 'string',
+      replyto: 'string.email?'
+    });
 
-          const email = await sendEmail(
-            {
-              id: notification.id,
-              to,
-              bcc,
-              subject,
-              body,
-              user,
-              replyto
-            },
-            env
-          );
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(notification.message);
+    } catch (err) {
+      console.error('Invalid email message JSON for notification ID:', notification.id, err);
+      continue;
+    }
 
-          if (email.success) {
-            await db
-              .update(schema.notifications)
-              .set({ sent: new Date() })
-              .where(eq(schema.notifications.id, notification.id));
-          }
-        } else {
-          console.error(
-            'Invalid email message JSON for notification ID:',
-            notification.id,
-            messageJson.summary
-          );
-        }
-      }
+    const messageJson = MessageJson(parsed);
+    if (messageJson instanceof type.errors) {
+      console.error(
+        'Invalid email message JSON for notification ID:',
+        notification.id,
+        messageJson.summary
+      );
+      continue;
+    }
+
+    const { to, bcc, subject, body, replyto } = messageJson;
+    if (!to && !userAllowsNotification(user, notification.type)) continue;
+
+    const email = await sendEmail(
+      {
+        id: notification.id,
+        to,
+        bcc,
+        subject,
+        body,
+        user,
+        replyto
+      },
+      env
+    );
+
+    if (email.success) {
+      await db
+        .update(schema.notifications)
+        .set({ sent: new Date() })
+        .where(eq(schema.notifications.id, notification.id));
     }
   }
 

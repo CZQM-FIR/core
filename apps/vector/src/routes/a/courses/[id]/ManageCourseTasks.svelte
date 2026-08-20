@@ -2,14 +2,22 @@
 	import { ArrowUp, ArrowDown, Trash, SquarePen, Plus } from '@lucide/svelte';
 	import {
 		COURSE_TASK_TYPE_LABELS,
+		ROSTER_POSITION_LABELS,
+		SOLO_ENDORSEMENT_MAX_DAYS,
 		TRAINING_SESSION_OBJECTIVE_MAX_COUNT,
 		TRAINING_SESSION_OBJECTIVE_MAX_LENGTH,
 		TRAINING_SESSION_TYPE_LABELS,
+		decodeVatcanCbtTaskValue2,
 		describeCourseTask,
-		formatCourseTaskType
+		formatCbtBlockKey,
+		formatCourseTaskType,
+		vatcanCbtBlockMetaFromOption,
+		type VatcanCbtBlockMeta,
+		type VatcanCbtBlockOption
 	} from '@czqm/common';
 	import {
 		getCourse,
+		getFacilityPositions,
 		getVatcanCbtBlocks,
 		createCourseTask,
 		updateCourseTask,
@@ -17,13 +25,6 @@
 		moveCourseTaskUp,
 		moveCourseTaskDown
 	} from '$lib/remote/courses.remote';
-	import {
-		decodeVatcanCbtTaskValue2,
-		formatCbtBlockKey,
-		vatcanCbtBlockMetaFromOption,
-		type VatcanCbtBlockMeta,
-		type VatcanCbtBlockOption
-	} from '@czqm/common';
 
 	type CourseData = Awaited<ReturnType<typeof getCourse>>;
 	type TaskRow = CourseData['tasks'][number];
@@ -40,6 +41,11 @@
 			label
 		})
 	);
+
+	const ROSTER_POSITIONS = Object.entries(ROSTER_POSITION_LABELS).map(([value, label]) => ({
+		value,
+		label
+	}));
 
 	let { course, courseId }: { course: CourseData; courseId: string } = $props();
 
@@ -431,6 +437,52 @@
 								bind:value={editTaskValue2}
 							/>
 						</fieldset>
+					{:else if editingTask.taskType === 'certify'}
+						<fieldset class="fieldset">
+							<legend class="fieldset-legend">Position</legend>
+							<select class="select" name="taskValue1" required bind:value={editTaskValue1}>
+								<option value="" disabled>Select position</option>
+								{#each ROSTER_POSITIONS as position (position.value)}
+									<option value={position.value}>{position.label}</option>
+								{/each}
+							</select>
+						</fieldset>
+					{:else if editingTask.taskType === 'solo'}
+						<fieldset class="fieldset">
+							<legend class="fieldset-legend">Position</legend>
+							{#await getFacilityPositions()}
+								<p class="text-sm opacity-70">Loading positions...</p>
+							{:then positions}
+								{#if positions.length === 0}
+									<p class="text-warning text-sm">No facility positions available.</p>
+								{:else}
+									<select class="select" name="taskValue1" required bind:value={editTaskValue1}>
+										<option value="" disabled>Select position</option>
+										{#each positions as position (position.id)}
+											<option value={position.callsign}
+												>{position.callsign} — {position.name}</option
+											>
+										{/each}
+									</select>
+								{/if}
+							{:catch err}
+								<p class="text-error text-sm">
+									Failed to load positions{err instanceof Error ? `: ${err.message}` : '.'}
+								</p>
+							{/await}
+						</fieldset>
+						<fieldset class="fieldset">
+							<legend class="fieldset-legend">Duration (days)</legend>
+							<input
+								type="number"
+								class="input"
+								name="taskValue2"
+								min="1"
+								max={SOLO_ENDORSEMENT_MAX_DAYS}
+								required
+								bind:value={editTaskValue2}
+							/>
+						</fieldset>
 					{/if}
 
 					<div class="modal-action">
@@ -537,6 +589,52 @@
 								<fieldset class="fieldset">
 									<legend class="fieldset-legend">Quantity</legend>
 									<input type="number" class="input" name="taskValue2" min="1" />
+								</fieldset>
+							{:else if selectedTaskType === 'certify'}
+								<fieldset class="fieldset">
+									<legend class="fieldset-legend">Position</legend>
+									<select class="select" name="taskValue1" required>
+										<option value="" disabled selected>Select position</option>
+										{#each ROSTER_POSITIONS as position (position.value)}
+											<option value={position.value}>{position.label}</option>
+										{/each}
+									</select>
+								</fieldset>
+							{:else if selectedTaskType === 'solo'}
+								<fieldset class="fieldset">
+									<legend class="fieldset-legend">Position</legend>
+									{#await getFacilityPositions()}
+										<p class="text-sm opacity-70">Loading positions...</p>
+									{:then positions}
+										{#if positions.length === 0}
+											<p class="text-warning text-sm">No facility positions available.</p>
+										{:else}
+											<select class="select" name="taskValue1" required>
+												<option value="" disabled selected>Select position</option>
+												{#each positions as position (position.id)}
+													<option value={position.callsign}
+														>{position.callsign} — {position.name}</option
+													>
+												{/each}
+											</select>
+										{/if}
+									{:catch err}
+										<p class="text-error text-sm">
+											Failed to load positions{err instanceof Error ? `: ${err.message}` : '.'}
+										</p>
+									{/await}
+								</fieldset>
+								<fieldset class="fieldset">
+									<legend class="fieldset-legend">Duration (days)</legend>
+									<input
+										type="number"
+										class="input"
+										name="taskValue2"
+										min="1"
+										max={SOLO_ENDORSEMENT_MAX_DAYS}
+										value="30"
+										required
+									/>
 								</fieldset>
 							{/if}
 						{/key}

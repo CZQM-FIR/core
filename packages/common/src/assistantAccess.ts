@@ -107,6 +107,11 @@ export function userCanGraduateVectorStudents(user: User): boolean {
   return user.hasFlag(["instructor", "chief-instructor", "admin"]);
 }
 
+/** Complete certify/solo course tasks (mentors blocked). */
+export function userCanCompleteInstructorOnlyCourseTasks(user: User): boolean {
+  return userCanGraduateVectorStudents(user);
+}
+
 /** Schedule a training session of this type (mentors blocked for orientation/OTS). */
 export function userCanScheduleTrainingSessionType(
   user: User,

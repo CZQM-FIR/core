@@ -137,7 +137,11 @@
 			{/snippet}
 			<CourseTaskList
 				tasks={view.tasks}
-				instructorContext={{ courseId: view.course.id, cid: view.student.cid }}
+				instructorContext={{
+					courseId: view.course.id,
+					cid: view.student.cid,
+					canCompleteInstructorOnlyTasks: view.canCompleteInstructorOnlyTasks
+				}}
 				headerActions={view.status === 'enrolled' ? headerActions : undefined}
 			/>
 			{#if syncError}
