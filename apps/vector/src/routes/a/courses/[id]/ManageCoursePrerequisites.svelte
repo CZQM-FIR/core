@@ -15,8 +15,6 @@
 
 	type CourseData = Awaited<ReturnType<typeof getCourse>>;
 	type PrerequisiteRow = CourseData['prerequisites'][number];
-	type RatingRow = Awaited<ReturnType<typeof getRatings>>[number];
-	type CourseOption = Awaited<ReturnType<typeof getCourses>>[number];
 
 	const PREREQUISITE_TYPES = Object.entries(COURSE_PREREQUISITE_TYPE_LABELS).map(
 		([value, label]) => ({ value, label })
@@ -32,39 +30,6 @@
 	let handledCreateResult = $state<unknown>(undefined);
 
 	const addPrerequisiteForm = $derived(createCoursePrerequisite.for(formKey));
-
-	function describePrerequisite(
-		prerequisite: PrerequisiteRow,
-		ratings: RatingRow[],
-		courses: CourseOption[]
-	): string {
-		switch (prerequisite.prerequisiteType) {
-			case 'minimum_rating': {
-				const rating = ratings.find((row) => row.id === Number(prerequisite.prerequisiteValue1));
-				return rating
-					? `Minimum rating ${rating.short} or higher`
-					: describeCoursePrerequisite(prerequisite);
-			}
-			case 'controlling_hours': {
-				const rating = ratings.find((row) => row.id === Number(prerequisite.prerequisiteValue2));
-				return `${prerequisite.prerequisiteValue1 ?? '0'} controlling hour(s) at ${rating?.short ?? 'unknown'} or above`;
-			}
-			case 'prior_course': {
-				const priorCourse = courses.find((row) => row.id === prerequisite.prerequisiteValue1);
-				return priorCourse
-					? `Completed course ${priorCourse.name}`
-					: describeCoursePrerequisite(prerequisite);
-			}
-			case 'home_controller':
-				return 'Must be a home controller';
-			case 'visiting_controller':
-				return 'Must be a visiting controller';
-			case 'home_or_visiting_controller':
-				return 'Must be a home or visiting controller';
-			default:
-				return describeCoursePrerequisite(prerequisite);
-		}
-	}
 
 	function openAddModal() {
 		selectedPrerequisiteType = 'minimum_rating';
@@ -127,7 +92,7 @@
 			{:then [ratings, courses]}
 				<div class="flex flex-col gap-1.5">
 					{#each course.prerequisites as prerequisite (prerequisite.prerequisiteId)}
-						{@const label = describePrerequisite(prerequisite, ratings, courses)}
+						{@const label = describeCoursePrerequisite(prerequisite, { ratings, courses })}
 						<div
 							class="bg-base-100 flex flex-row items-center gap-2 rounded-lg px-2.5 py-1.5 shadow-sm"
 						>
