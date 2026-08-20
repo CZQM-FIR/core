@@ -3,10 +3,7 @@ import * as schema from "@czqm/db/schema";
 import { and, eq } from "drizzle-orm";
 import type { Env } from "../types";
 import { User } from "./user";
-import {
-  decodeVatcanCbtTaskValue2,
-  type VatcanCbtBlockMeta,
-} from "../vatcan";
+import { decodeVatcanCbtTaskValue2, type VatcanCbtBlockMeta } from "../vatcan";
 
 type PrerequisiteRow = {
   prerequisiteId: number;
@@ -277,7 +274,9 @@ export class Course {
           taskType: task.taskType,
           taskValue1: task.taskValue1,
           taskValue2: task.taskValue2,
-          ...(task.objectives.length > 0 ? { objectives: task.objectives } : {}),
+          ...(task.objectives.length > 0
+            ? { objectives: task.objectives }
+            : {}),
         })),
       })
       .where(eq(schema.courses.id, this.id));
@@ -475,14 +474,19 @@ export class Course {
 
   async evaluatePrerequisites(
     user: User,
+    lookups?: CoursePrerequisiteLookups,
   ): Promise<CoursePrerequisiteEvaluationResult> {
     if (this.prerequisites.length === 0) {
       return { satisfied: true, failures: [], results: [] };
     }
 
+    const resolvedLookups =
+      lookups ??
+      (await loadCoursePrerequisiteLookups(this.db, this.prerequisites));
+
     const evaluated = await Promise.all(
       this.prerequisites.map(async (prerequisite) => ({
-        description: describeCoursePrerequisite(prerequisite),
+        description: describeCoursePrerequisite(prerequisite, resolvedLookups),
         met: await prerequisite.isMet(user),
       })),
     );
@@ -657,7 +661,9 @@ export function requireTrainingSessionObjectives(
 ): string[] {
   const objectives = normalizeTrainingSessionObjectives(values);
   if (objectives.length === 0) {
-    throw new Error("At least one objective is required for a training session");
+    throw new Error(
+      "At least one objective is required for a training session",
+    );
   }
   return objectives;
 }
@@ -790,20 +796,108 @@ export function formatCoursePrerequisiteType(prerequisiteType: string): string {
   );
 }
 
-export function describeCoursePrerequisite(prerequisite: {
-  prerequisiteType: string;
-  prerequisiteValue1: string | null;
-  prerequisiteValue2: string | null;
-}): string {
+export type CoursePrerequisiteLookups = {
+  ratings?: ReadonlyArray<{ id: number; short: string }>;
+  courses?: ReadonlyArray<{ id: string; name: string }>;
+};
+
+function ratingShort(
+  value: string | null,
+  ratings?: ReadonlyArray<{ id: number; short: string }>,
+): string {
+  if (!value) return "unknown";
+  const id = Number(value);
+  if (!Number.isFinite(id)) return "unknown";
+  return ratings?.find((row) => row.id === id)?.short ?? "unknown";
+}
+
+function formatControllingHours(value: string | null): string {
+  const hours = Number(value ?? 0);
+  const amount = Number.isFinite(hours) ? hours : 0;
+  return amount === 1 ? "1 controlling hour" : `${amount} controlling hours`;
+}
+
+function formatEnrollDate(value: string | null): string {
+  if (!value) return "unknown";
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return value;
+
+  const date = new Date(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+  );
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+export async function loadCoursePrerequisiteLookups(
+  db: DB,
+  prerequisites: ReadonlyArray<{
+    prerequisiteType: string;
+    prerequisiteValue1: string | null;
+    prerequisiteValue2: string | null;
+  }>,
+): Promise<CoursePrerequisiteLookups> {
+  const needsRatings = prerequisites.some(
+    (prerequisite) =>
+      prerequisite.prerequisiteType === "minimum_rating" ||
+      prerequisite.prerequisiteType === "controlling_hours",
+  );
+  const courseIds = [
+    ...new Set(
+      prerequisites
+        .filter(
+          (prerequisite) =>
+            prerequisite.prerequisiteType === "prior_course" &&
+            prerequisite.prerequisiteValue1,
+        )
+        .map((prerequisite) => prerequisite.prerequisiteValue1!),
+    ),
+  ];
+
+  const [ratings, courses] = await Promise.all([
+    needsRatings
+      ? db.query.ratings.findMany({ columns: { id: true, short: true } })
+      : Promise.resolve([]),
+    courseIds.length > 0
+      ? db.query.courses.findMany({
+          where: { id: { in: courseIds } },
+          columns: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  return { ratings, courses };
+}
+
+export function describeCoursePrerequisite(
+  prerequisite: {
+    prerequisiteType: string;
+    prerequisiteValue1: string | null;
+    prerequisiteValue2: string | null;
+  },
+  lookups?: CoursePrerequisiteLookups,
+): string {
   switch (prerequisite.prerequisiteType) {
     case "minimum_rating":
-      return `Minimum rating ${prerequisite.prerequisiteValue1 ?? "unknown"} or higher`;
+      return `Minimum rating ${ratingShort(prerequisite.prerequisiteValue1, lookups?.ratings)} or higher`;
     case "controlling_hours":
-      return `${prerequisite.prerequisiteValue1 ?? "0"} controlling hour(s) at rating ${prerequisite.prerequisiteValue2 ?? "unknown"} or above`;
-    case "prior_course":
-      return `Completed course ${prerequisite.prerequisiteValue1 ?? "unknown"}`;
+      return `${formatControllingHours(prerequisite.prerequisiteValue1)} at ${ratingShort(prerequisite.prerequisiteValue2, lookups?.ratings)} or above`;
+    case "prior_course": {
+      const courseId = prerequisite.prerequisiteValue1;
+      const courseName = courseId
+        ? lookups?.courses?.find((row) => row.id === courseId)?.name
+        : undefined;
+      return `Completed ${courseName ?? "a prior course"}`;
+    }
     case "earliest_enroll_date":
-      return `Enrollment available from ${prerequisite.prerequisiteValue1 ?? "unknown"}`;
+      return `Enrollment available from ${formatEnrollDate(prerequisite.prerequisiteValue1)}`;
     case "home_controller":
       return "Must be a home controller";
     case "visiting_controller":
@@ -874,8 +968,8 @@ export abstract class CoursePrerequisite {
 
   abstract isMet(user: User): boolean | Promise<boolean>;
 
-  getDescription(): string {
-    return describeCoursePrerequisite(this);
+  getDescription(lookups?: CoursePrerequisiteLookups): string {
+    return describeCoursePrerequisite(this, lookups);
   }
 }
 
@@ -1357,7 +1451,15 @@ export class VatcanCbtCourseTask extends CourseTask {
     taskId: number,
     objectives: string[] = [],
   ) {
-    super(db, "vatcan_cbt", taskValue1, taskValue2, courseId, taskId, objectives);
+    super(
+      db,
+      "vatcan_cbt",
+      taskValue1,
+      taskValue2,
+      courseId,
+      taskId,
+      objectives,
+    );
   }
 
   get blockId(): number | null {
@@ -1472,7 +1574,9 @@ export class DelayCourseTask extends CourseTask {
     const course = await Course.fetchById(this.courseId, this.db);
     if (!course) return false;
 
-    const taskIndex = course.tasks.findIndex((task) => task.taskId === this.taskId);
+    const taskIndex = course.tasks.findIndex(
+      (task) => task.taskId === this.taskId,
+    );
     if (taskIndex === -1) return false;
 
     const priorTasks = course.tasks.slice(0, taskIndex);

@@ -87,6 +87,12 @@ export const getStudentCourses = query(async () => {
 	const eligible: CourseSummary[] = [];
 	const ineligible: CourseSummary[] = [];
 
+	const ratings = await db.query.ratings.findMany({ columns: { id: true, short: true } });
+	const prerequisiteLookups = {
+		ratings,
+		courses: courses.map((course) => ({ id: course.id, name: course.name }))
+	};
+
 	for (const course of courses) {
 		const base = {
 			id: course.id,
@@ -117,7 +123,7 @@ export const getStudentCourses = query(async () => {
 		const fullCourse = await Course.fetchById(course.id, db);
 		if (!fullCourse) continue;
 
-		const evaluation = await fullCourse.evaluatePrerequisites(userWithData);
+		const evaluation = await fullCourse.evaluatePrerequisites(userWithData, prerequisiteLookups);
 		const summary: CourseSummary = {
 			...base,
 			prerequisiteResults: evaluation.results
