@@ -11,13 +11,24 @@
 	} from '$lib/trainingSessionAvailability';
 	import {
 		getInstructorStudentSessionAvailability,
+		getScheduledSessionsInWindow,
 		rescheduleTrainingSession,
-		scheduleTrainingSession
+		scheduleTrainingSession,
+		type ScheduledSessionInWindow
 	} from '$lib/remote/instructor.remote';
 	import {
 		getTrainingSessionAvailability,
 		saveTrainingSessionAvailability
 	} from '$lib/remote/student.remote';
+	import ScheduledSessionsList from '$lib/components/ScheduledSessionsList.svelte';
+	import {
+		formatScheduledSessionSummary,
+		groupSessionsByVisibleDay,
+		occupiedSlotKeys,
+		sessionsBySlotKey,
+		sessionsOverlappingRange,
+		toOverlaySession
+	} from '$lib/scheduledSessionOverlay';
 
 	type Props =
 		| {
@@ -74,6 +85,7 @@
 	let scheduleError = $state<string | null>(null);
 	let loadError = $state<string | null>(null);
 	let outsideAvailabilityWarning = $state(false);
+	let scheduledSessions = $state.raw<ScheduledSessionInWindow[]>([]);
 	let confirmDialog = $state<HTMLDialogElement | null>(null);
 	let dragState = $state<{
 		anchor: { dayIndex: number; slotIndex: number };
@@ -84,6 +96,14 @@
 
 	const isScheduling = $derived(mode === 'schedule' || mode === 'reschedule');
 	const isInteractive = $derived(mode === 'edit' || isScheduling);
+	const showScheduledOverlay = $derived(mode !== 'edit');
+	const overlaySessions = $derived(
+		sessionId == null
+			? scheduledSessions
+			: scheduledSessions.filter((session) => session.id !== sessionId)
+	);
+	const occupiedKeys = $derived(occupiedSlotKeys(overlaySessions, getWindowStartDay()));
+	const sessionsByKey = $derived(sessionsBySlotKey(overlaySessions, getWindowStartDay()));
 	const calendarTitle = $derived(
 		mode === 'reschedule'
 			? 'Reschedule Training Session'
@@ -333,7 +353,10 @@
 	function isSlotEnabled(start: Date): boolean {
 		const now = new Date();
 		const end = new Date(start.getTime() + SLOT_MS);
-		return start >= now && end <= windowEndsAt;
+		if (end > windowEndsAt) return false;
+		// Scheduling cannot start in the past. Editing availability can still
+		// toggle a block until each 30-minute slot has ended.
+		return isScheduling ? start >= now : end > now;
 	}
 
 	function formatSlotLabel(slotIndex: number): string {
@@ -395,16 +418,32 @@
 		loading = true;
 		loadError = null;
 		try {
-			const data =
-				mode !== 'edit'
-					? await getInstructorStudentSessionAvailability({ courseId, cid, taskId })
-					: await getTrainingSessionAvailability({ courseId, taskId });
-			windowEndsAt = data.windowEndsAt;
+			if (mode !== 'edit') {
+				if (cid == null) {
+					throw new Error('Student is required to load session availability');
+				}
+				const [data, scheduled] = await Promise.all([
+					getInstructorStudentSessionAvailability({ courseId, cid, taskId }),
+					getScheduledSessionsInWindow()
+				]);
+				windowEndsAt = data.windowEndsAt;
+				scheduledSessions = scheduled.map(toOverlaySession);
 
-			if (isScheduling) {
-				availabilityKeys = loadSlotsToSelected(data.slots, getWindowStartDay());
-				selectedKeys = new Set();
+				if (isScheduling) {
+					availabilityKeys = loadSlotsToSelected(data.slots, getWindowStartDay());
+					selectedKeys = new Set();
+				} else {
+					selectedKeys = loadSlotsToSelected(data.slots, getWindowStartDay());
+					availabilityKeys = new Set();
+					for (const key of getBlockedKeys()) {
+						selectedKeys.add(key);
+					}
+					savedKeys = new Set(selectedKeys);
+				}
 			} else {
+				const data = await getTrainingSessionAvailability({ courseId, taskId });
+				windowEndsAt = data.windowEndsAt;
+				scheduledSessions = [];
 				selectedKeys = loadSlotsToSelected(data.slots, getWindowStartDay());
 				availabilityKeys = new Set();
 				for (const key of getBlockedKeys()) {
@@ -538,23 +577,40 @@
 		);
 	}
 
-	function getSlotClass(dayIndex: number, slotIndex: number, enabled: boolean): string {
+	function getSlotClass(dayIndex: number, slotIndex: number, enabled: boolean) {
 		const key = slotKey(dayIndex, slotIndex);
 		const scheduled = selectedKeys.has(key);
 		const available = availabilityKeys.has(key);
 		const blocked = getBlockedKeys().has(key);
-
-		if (isScheduling) {
-			if (scheduled) return 'bg-accent text-accent-content';
-			if (available) return 'bg-primary/40 hover:bg-primary/50';
-			if (enabled) return 'bg-base-100 hover:bg-base-300 cursor-pointer';
-			return 'bg-base-100 cursor-not-allowed opacity-30';
-		}
+		const occupied = occupiedKeys.has(key);
 
 		if (blocked) return 'training-session-blocked-slot cursor-not-allowed';
-		if (scheduled) return 'bg-primary text-primary-content';
-		if (enabled) return 'bg-base-100 hover:bg-base-300 cursor-pointer';
-		return 'bg-base-100 cursor-not-allowed opacity-30';
+		if (!enabled) return 'bg-base-100 cursor-not-allowed opacity-30';
+
+		if (isScheduling) {
+			return [
+				occupied && 'training-session-occupied-slot',
+				scheduled && 'bg-accent text-accent-content',
+				!scheduled && occupied && !available && 'bg-warning/50',
+				!scheduled && available && 'bg-primary/40 hover:bg-primary/50',
+				!scheduled && !available && !occupied && 'bg-base-100 hover:bg-base-300 cursor-pointer',
+				!scheduled && !available && occupied && 'hover:bg-warning/60 cursor-pointer'
+			];
+		}
+
+		return [
+			occupied && 'training-session-occupied-slot',
+			scheduled && 'bg-primary text-primary-content',
+			!scheduled && occupied && 'bg-warning/50',
+			!scheduled && !occupied && 'bg-base-100 hover:bg-base-300 cursor-pointer',
+			!isInteractive && 'cursor-default'
+		];
+	}
+
+	function slotOccupancyLabel(dayIndex: number, slotIndex: number): string {
+		const sessions = sessionsByKey.get(slotKey(dayIndex, slotIndex)) ?? [];
+		if (sessions.length === 0) return '';
+		return sessions.map(formatScheduledSessionSummary).join('; ');
 	}
 
 	async function handleSave() {
@@ -658,6 +714,12 @@
 	const visibleDays = $derived(getVisibleDays());
 	const weekRangeLabel = $derived(formatWeekRange(visibleDays));
 	const selectedRangeLabel = $derived(formatSelectedRange());
+	const visibleScheduledGroups = $derived(groupSessionsByVisibleDay(overlaySessions, visibleDays));
+	const overlappingScheduled = $derived.by(() => {
+		const range = getSelectedSessionRange();
+		if (!range) return [];
+		return sessionsOverlappingRange(overlaySessions, range);
+	});
 	const hasUnsavedChanges = $derived(
 		mode === 'edit' &&
 			!loading &&
@@ -682,12 +744,15 @@
 			</p>
 			{#if isScheduling}
 				<p class="text-sm opacity-70">
-					Drag to select a continuous session time. Shaded slots show student availability.
+					Drag to select a continuous session time. Shaded slots show student availability. Striped
+					slots are other scheduled sessions.
 				</p>
 			{:else if confirmedSession}
 				<p class="text-sm opacity-70">
 					Purple sections are your confirmed training session and cannot be changed.
 				</p>
+			{:else if showScheduledOverlay}
+				<p class="text-sm opacity-70">Striped slots are other scheduled sessions.</p>
 			{/if}
 		</div>
 
@@ -716,6 +781,27 @@
 				</button>
 			</div>
 
+			{#if showScheduledOverlay}
+				<div class="flex flex-wrap gap-3 text-[11px] opacity-80">
+					{#if isScheduling}
+						<span class="flex items-center gap-1">
+							<span class="bg-primary/40 inline-block h-3 w-3 rounded-sm"></span>
+							Student availability
+						</span>
+						<span class="flex items-center gap-1">
+							<span class="bg-accent inline-block h-3 w-3 rounded-sm"></span>
+							Your selection
+						</span>
+					{/if}
+					<span class="flex items-center gap-1">
+						<span
+							class="training-session-occupied-slot bg-warning/50 inline-block h-3 w-3 rounded-sm"
+						></span>
+						Other scheduled sessions
+					</span>
+				</div>
+			{/if}
+
 			<div class="overflow-x-auto overflow-y-auto">
 				<div
 					class="bg-base-300 grid min-w-max touch-none gap-px {dragState ? 'select-none' : ''}"
@@ -743,17 +829,20 @@
 							{@const enabled = isSlotEnabled(start)}
 							{@const selected = selectedKeys.has(slotKey(dayIndex, slotIndex))}
 							{@const blocked = getBlockedKeys().has(slotKey(dayIndex, slotIndex))}
+							{@const occupancy = slotOccupancyLabel(dayIndex, slotIndex)}
 							<button
 								type="button"
-								class="h-3 min-h-3 border-0 p-0 transition-colors {getSlotClass(
-									dayIndex,
-									slotIndex,
-									enabled
-								)}"
+								class={[
+									'h-3 min-h-3 border-0 p-0 transition-colors',
+									getSlotClass(dayIndex, slotIndex, enabled)
+								]}
 								disabled={!isInteractive || blocked}
 								tabindex={enabled && isInteractive && !blocked ? 0 : -1}
+								title={occupancy || undefined}
 								aria-disabled={!isInteractive || !enabled || blocked}
-								aria-label="{formatDayHeader(day)} {formatSlotLabel(slotIndex)}"
+								aria-label="{formatDayHeader(day)} {formatSlotLabel(slotIndex)}{occupancy
+									? ` · ${occupancy}`
+									: ''}"
 								aria-pressed={selected}
 								onpointerdown={(event) => {
 									if (!isInteractive || !enabled || blocked) return;
@@ -766,6 +855,10 @@
 					{/each}
 				</div>
 			</div>
+
+			{#if showScheduledOverlay}
+				<ScheduledSessionsList groups={visibleScheduledGroups} />
+			{/if}
 
 			{#if mode === 'edit'}
 				<div class="flex flex-wrap items-center gap-3">
@@ -817,6 +910,20 @@
 			<p class="text-warning text-sm">This time is outside the student's submitted availability.</p>
 		{/if}
 
+		{#if overlappingScheduled.length > 0}
+			<p class="text-warning text-sm">
+				This time overlaps {overlappingScheduled.length} other scheduled
+				{overlappingScheduled.length === 1 ? 'session' : 'sessions'}.
+			</p>
+			<ul class="mt-1 space-y-1 text-sm">
+				{#each overlappingScheduled as session (session.id)}
+					<li>
+						{formatScheduledSessionSummary(session)} · {session.courseName}
+					</li>
+				{/each}
+			</ul>
+		{/if}
+
 		{#if scheduleError}
 			<p class="text-error mt-2 text-sm">{scheduleError}</p>
 		{/if}
@@ -849,6 +956,16 @@
 			transparent 2px,
 			rgb(255 255 255 / 0.2) 2px,
 			rgb(255 255 255 / 0.2) 4px
+		);
+	}
+
+	:global(.training-session-occupied-slot) {
+		background-image: repeating-linear-gradient(
+			-45deg,
+			transparent,
+			transparent 2px,
+			rgb(245 158 11 / 0.55) 2px,
+			rgb(245 158 11 / 0.55) 4px
 		);
 	}
 </style>

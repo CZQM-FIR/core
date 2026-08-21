@@ -18,6 +18,7 @@ import {
 import {
 	getInstructorStudentView,
 	getInstructorTrainingSession,
+	getScheduledSessionsInWindow,
 	getUpcomingInstructorSession
 } from './instructor.remote';
 import { getMyTrainingSessions } from './users.remote';
@@ -614,6 +615,7 @@ export const confirmTrainingSession = command(
 		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 		getMyTrainingSessions().refresh();
 		getUpcomingInstructorSession().refresh();
+		getScheduledSessionsInWindow().refresh();
 		getInstructorTrainingSession(sessionId).refresh();
 		getStudentTrainingSession(sessionId).refresh();
 	}
@@ -642,6 +644,7 @@ export const declineTrainingSession = command(
 		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 		getMyTrainingSessions().refresh();
 		getUpcomingInstructorSession().refresh();
+		getScheduledSessionsInWindow().refresh();
 		getInstructorTrainingSession(sessionId).refresh();
 		getStudentTrainingSession(sessionId).refresh();
 	}
@@ -670,6 +673,7 @@ export const cancelTrainingSession = command(
 		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 		getMyTrainingSessions().refresh();
 		getUpcomingInstructorSession().refresh();
+		getScheduledSessionsInWindow().refresh();
 		getInstructorTrainingSession(sessionId).refresh();
 		getStudentTrainingSession(sessionId).refresh();
 	}
