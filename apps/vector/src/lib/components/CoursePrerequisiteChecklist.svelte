@@ -1,8 +1,10 @@
 <script lang="ts">
+	import type { CoursePrerequisiteResult } from '@czqm/common';
+
 	let {
 		results
 	}: {
-		results: { description: string; met: boolean }[];
+		results: CoursePrerequisiteResult[];
 	} = $props();
 </script>
 
@@ -14,16 +16,19 @@
 		{:else}
 			<ul class="flex flex-col gap-2">
 				{#each results as result, index (index)}
-					<li class="bg-base-100 flex items-center gap-2 rounded-lg px-3 py-2 shadow-sm">
+					<li class="bg-base-100 flex items-start gap-2 rounded-lg px-3 py-2 shadow-sm">
 						<span
-							class="badge badge-sm shrink-0 {result.met
+							class="badge badge-sm mt-0.5 shrink-0 {result.met
 								? 'badge-success'
 								: 'badge-error text-black'}"
 							aria-label={result.met ? 'Prerequisite met' : 'Prerequisite not met'}
 						>
 							{result.met ? '✓' : '×'}
 						</span>
-						<span class="text-sm">{result.description}</span>
+						<div class="min-w-0">
+							<p class="text-sm">{result.description}</p>
+							<p class="text-xs opacity-70">{result.progress}</p>
+						</div>
 					</li>
 				{/each}
 			</ul>
