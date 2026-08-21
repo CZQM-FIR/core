@@ -262,11 +262,7 @@
 								onclick={(event) => {
 									event.preventDefault();
 									event.stopPropagation();
-									void markComplete(
-										instructorContext.courseId,
-										instructorContext.cid,
-										task.taskId
-									);
+									void markComplete(instructorContext.courseId, instructorContext.cid, task.taskId);
 								}}
 							>
 								{#if updatingTaskId === task.taskId}

@@ -2,6 +2,7 @@
 	import { Trash } from '@lucide/svelte';
 	import {
 		COURSE_PREREQUISITE_TYPE_LABELS,
+		RATING_COMPARISON_LABELS,
 		describeCoursePrerequisite,
 		formatCoursePrerequisiteType
 	} from '@czqm/common';
@@ -25,14 +26,14 @@
 	let prerequisiteModal: HTMLDialogElement | undefined;
 	let deletePrerequisiteModal: HTMLDialogElement | undefined;
 	let prerequisiteToDelete = $state<{ prerequisiteId: number; label: string } | null>(null);
-	let selectedPrerequisiteType = $state<string>('minimum_rating');
+	let selectedPrerequisiteType = $state<string>('rating');
 	let formKey = $state(0);
 	let handledCreateResult = $state<unknown>(undefined);
 
 	const addPrerequisiteForm = $derived(createCoursePrerequisite.for(formKey));
 
 	function openAddModal() {
-		selectedPrerequisiteType = 'minimum_rating';
+		selectedPrerequisiteType = 'rating';
 		formKey++;
 		prerequisiteModal?.showModal();
 	}
@@ -63,7 +64,7 @@
 
 	function handlePrerequisiteFormSuccess() {
 		prerequisiteModal?.close();
-		selectedPrerequisiteType = 'minimum_rating';
+		selectedPrerequisiteType = 'rating';
 		formKey++;
 		void getCourse(courseId).refresh();
 	}
@@ -135,16 +136,24 @@
 					<input type="hidden" name="prerequisiteType" value={selectedPrerequisiteType} />
 
 					{#key selectedPrerequisiteType}
-						{#if selectedPrerequisiteType === 'minimum_rating'}
+						{#if selectedPrerequisiteType === 'rating'}
 							<fieldset class="fieldset">
-								<legend class="fieldset-legend">Minimum Rating</legend>
+								<legend class="fieldset-legend">Comparison</legend>
+								<select class="select" name="prerequisiteValue2" required>
+									{#each Object.entries(RATING_COMPARISON_LABELS) as [value, label] (value)}
+										<option {value}>{label}</option>
+									{/each}
+								</select>
+							</fieldset>
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Rating</legend>
 								{#await getRatings()}
 									<select class="select" disabled>
 										<option>Loading ratings...</option>
 									</select>
 								{:then ratings}
 									<select class="select" name="prerequisiteValue1" required>
-										{#each ratings as rating (rating.id)}
+										{#each ratings.filter((rating) => rating.id > 0) as rating (rating.id)}
 											<option value={String(rating.id)}>{rating.short} — {rating.long}</option>
 										{/each}
 									</select>

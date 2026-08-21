@@ -29,6 +29,7 @@ import {
 	TrainingSession,
 	User,
 	vatcanSessionTypeLabel,
+	type CoursePrerequisiteResult,
 	type TrainingSessionStatus
 } from '@czqm/common';
 import { env } from '$env/dynamic/private';
@@ -46,7 +47,7 @@ import {
 
 const CourseId = type(/^[0-9a-z]{5}$/);
 
-type PrerequisiteResult = { description: string; met: boolean };
+type PrerequisiteResult = CoursePrerequisiteResult;
 
 type CourseSummary = {
 	id: string;

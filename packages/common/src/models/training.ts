@@ -13,10 +13,16 @@ type PrerequisiteRow = {
   prerequisiteValue2: string | null;
 };
 
+export type CoursePrerequisiteResult = {
+  description: string;
+  progress: string;
+  met: boolean;
+};
+
 export type CoursePrerequisiteEvaluationResult = {
   satisfied: boolean;
   failures: string[];
-  results: { description: string; met: boolean }[];
+  results: CoursePrerequisiteResult[];
 };
 
 export class Course {
@@ -494,13 +500,14 @@ export class Course {
     const evaluated = await Promise.all(
       this.prerequisites.map(async (prerequisite) => ({
         description: describeCoursePrerequisite(prerequisite, resolvedLookups),
+        progress: await prerequisite.getProgress(user, resolvedLookups),
         met: await prerequisite.isMet(user),
       })),
     );
 
     const failures = evaluated
       .filter((result) => !result.met)
-      .map((result) => result.description);
+      .map((result) => `${result.description}. ${result.progress}`);
 
     return {
       satisfied: failures.length === 0,
@@ -838,7 +845,7 @@ export function describeCourseTask(
 }
 
 export type PrerequisiteType =
-  | "minimum_rating"
+  | "rating"
   | "controlling_hours"
   | "prior_course"
   | "earliest_enroll_date"
@@ -846,9 +853,26 @@ export type PrerequisiteType =
   | "visiting_controller"
   | "home_or_visiting_controller";
 
+export type RatingComparison = "equal" | "minimum" | "maximum";
+
+export const RATING_COMPARISON_LABELS: Record<RatingComparison, string> = {
+  minimum: "Minimum",
+  equal: "Equal to",
+  maximum: "Maximum",
+};
+
+export function parseRatingComparison(
+  value: string | null,
+): RatingComparison | null {
+  if (value === "equal" || value === "minimum" || value === "maximum") {
+    return value;
+  }
+  return null;
+}
+
 export const COURSE_PREREQUISITE_TYPE_LABELS: Record<PrerequisiteType, string> =
   {
-    minimum_rating: "Minimum Rating",
+    rating: "Rating",
     controlling_hours: "Controlling Hours",
     prior_course: "Prior Course",
     earliest_enroll_date: "Earliest Enroll Date",
@@ -885,6 +909,12 @@ function formatControllingHours(value: string | null): string {
   return amount === 1 ? "1 controlling hour" : `${amount} controlling hours`;
 }
 
+function formatHourCount(hours: number): string {
+  if (!Number.isFinite(hours) || hours <= 0) return "0";
+  const rounded = Math.round(hours * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
 function formatEnrollDate(value: string | null): string {
   if (!value) return "unknown";
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -914,7 +944,7 @@ export async function loadCoursePrerequisiteLookups(
 ): Promise<CoursePrerequisiteLookups> {
   const needsRatings = prerequisites.some(
     (prerequisite) =>
-      prerequisite.prerequisiteType === "minimum_rating" ||
+      prerequisite.prerequisiteType === "rating" ||
       prerequisite.prerequisiteType === "controlling_hours",
   );
   const courseIds = [
@@ -953,8 +983,22 @@ export function describeCoursePrerequisite(
   lookups?: CoursePrerequisiteLookups,
 ): string {
   switch (prerequisite.prerequisiteType) {
-    case "minimum_rating":
-      return `Minimum rating ${ratingShort(prerequisite.prerequisiteValue1, lookups?.ratings)} or higher`;
+    case "rating": {
+      const short = ratingShort(
+        prerequisite.prerequisiteValue1,
+        lookups?.ratings,
+      );
+      switch (parseRatingComparison(prerequisite.prerequisiteValue2)) {
+        case "equal":
+          return `Rating equal to ${short}`;
+        case "maximum":
+          return `Maximum rating ${short} or lower`;
+        case "minimum":
+          return `Minimum rating ${short} or higher`;
+        default:
+          return "Unknown prerequisite";
+      }
+    }
     case "controlling_hours":
       return `${formatControllingHours(prerequisite.prerequisiteValue1)} at ${ratingShort(prerequisite.prerequisiteValue2, lookups?.ratings)} or above`;
     case "prior_course": {
@@ -1015,8 +1059,8 @@ export abstract class CoursePrerequisite {
     ] as const;
 
     switch (row.prerequisiteType) {
-      case "minimum_rating":
-        return new MinimumRatingCoursePrerequisite(...args);
+      case "rating":
+        return new RatingCoursePrerequisite(...args);
       case "controlling_hours":
         return new ControllingHoursCoursePrerequisite(...args);
       case "prior_course":
@@ -1036,12 +1080,17 @@ export abstract class CoursePrerequisite {
 
   abstract isMet(user: User): boolean | Promise<boolean>;
 
+  abstract getProgress(
+    user: User,
+    lookups?: CoursePrerequisiteLookups,
+  ): string | Promise<string>;
+
   getDescription(lookups?: CoursePrerequisiteLookups): string {
     return describeCoursePrerequisite(this, lookups);
   }
 }
 
-export class MinimumRatingCoursePrerequisite extends CoursePrerequisite {
+export class RatingCoursePrerequisite extends CoursePrerequisite {
   constructor(
     db: DB,
     prerequisiteValue1: string | null,
@@ -1051,7 +1100,7 @@ export class MinimumRatingCoursePrerequisite extends CoursePrerequisite {
   ) {
     super(
       db,
-      "minimum_rating",
+      "rating",
       prerequisiteValue1,
       prerequisiteValue2,
       courseId,
@@ -1060,11 +1109,32 @@ export class MinimumRatingCoursePrerequisite extends CoursePrerequisite {
   }
 
   isMet(user: User): boolean {
-    const requiredRatingId = Number(this.prerequisiteValue1);
-    if (!Number.isFinite(requiredRatingId)) {
+    if (user.rating.id <= 0) {
       return false;
     }
-    return user.rating.id >= requiredRatingId;
+
+    const requiredRatingId = Number(this.prerequisiteValue1);
+    if (!Number.isFinite(requiredRatingId) || requiredRatingId <= 0) {
+      return false;
+    }
+
+    const comparison = parseRatingComparison(this.prerequisiteValue2);
+    if (!comparison) {
+      return false;
+    }
+
+    switch (comparison) {
+      case "equal":
+        return user.rating.id === requiredRatingId;
+      case "maximum":
+        return user.rating.id <= requiredRatingId;
+      case "minimum":
+        return user.rating.id >= requiredRatingId;
+    }
+  }
+
+  getProgress(user: User): string {
+    return `You are ${user.rating.short}`;
   }
 }
 
@@ -1088,9 +1158,21 @@ export class ControllingHoursCoursePrerequisite extends CoursePrerequisite {
 
   isMet(user: User): boolean {
     const requiredHours = Number(this.prerequisiteValue1);
-    const minimumRatingId = Number(this.prerequisiteValue2);
-    if (!Number.isFinite(requiredHours) || !Number.isFinite(minimumRatingId)) {
+    if (!Number.isFinite(requiredHours)) {
       return false;
+    }
+
+    return this.hoursEarned(user) >= requiredHours;
+  }
+
+  getProgress(user: User): string {
+    return `You have ${formatHourCount(this.hoursEarned(user))}`;
+  }
+
+  private hoursEarned(user: User): number {
+    const minimumRatingId = Number(this.prerequisiteValue2);
+    if (!Number.isFinite(minimumRatingId)) {
+      return 0;
     }
 
     const totalSeconds = user.hours.localSessions.reduce((total, session) => {
@@ -1100,7 +1182,7 @@ export class ControllingHoursCoursePrerequisite extends CoursePrerequisite {
       return total + session.duration;
     }, 0);
 
-    return totalSeconds / 3600 >= requiredHours;
+    return totalSeconds / 3600;
   }
 }
 
@@ -1137,6 +1219,12 @@ export class PriorCourseCoursePrerequisite extends CoursePrerequisite {
       (completed) => completed.waitlistId === priorCourse.waitlist.id,
     );
   }
+
+  async getProgress(user: User): Promise<string> {
+    return (await this.isMet(user))
+      ? "You have completed this course"
+      : "You have not completed this course";
+  }
 }
 
 export class EarliestEnrollDateCoursePrerequisite extends CoursePrerequisite {
@@ -1169,6 +1257,12 @@ export class EarliestEnrollDateCoursePrerequisite extends CoursePrerequisite {
 
     return new Date() >= enrollDate;
   }
+
+  getProgress(_user: User): string {
+    return this.isMet(_user)
+      ? "You can enroll now"
+      : "Enrollment is not open yet";
+  }
 }
 
 export class HomeControllerCoursePrerequisite extends CoursePrerequisite {
@@ -1191,6 +1285,12 @@ export class HomeControllerCoursePrerequisite extends CoursePrerequisite {
 
   isMet(user: User): boolean {
     return user.hasFlag("controller");
+  }
+
+  getProgress(user: User): string {
+    return this.isMet(user)
+      ? "You are a home controller"
+      : "You are not a home controller";
   }
 }
 
@@ -1215,6 +1315,12 @@ export class VisitingControllerCoursePrerequisite extends CoursePrerequisite {
   isMet(user: User): boolean {
     return user.hasFlag("visitor");
   }
+
+  getProgress(user: User): string {
+    return this.isMet(user)
+      ? "You are a visiting controller"
+      : "You are not a visiting controller";
+  }
 }
 
 export class HomeOrVisitingControllerCoursePrerequisite extends CoursePrerequisite {
@@ -1237,6 +1343,16 @@ export class HomeOrVisitingControllerCoursePrerequisite extends CoursePrerequisi
 
   isMet(user: User): boolean {
     return user.hasFlag(["controller", "visitor"]);
+  }
+
+  getProgress(user: User): string {
+    if (user.hasFlag("controller")) {
+      return "You are a home controller";
+    }
+    if (user.hasFlag("visitor")) {
+      return "You are a visiting controller";
+    }
+    return "You are not a home or visiting controller";
   }
 }
 

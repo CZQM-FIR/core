@@ -7,6 +7,7 @@ import {
 	findVatcanCbtBlock,
 	isRosterPosition,
 	isTrainingSessionType,
+	parseRatingComparison,
 	parseSoloDurationDays,
 	requireTrainingSessionObjectives,
 	type PrerequisiteType,
@@ -24,7 +25,7 @@ const TaskTypeSchema = type(
 );
 
 const PrerequisiteTypeSchema = type(
-	"'minimum_rating' | 'controlling_hours' | 'prior_course' | 'earliest_enroll_date' | 'home_controller' | 'visiting_controller' | 'home_or_visiting_controller'"
+	"'rating' | 'controlling_hours' | 'prior_course' | 'earliest_enroll_date' | 'home_controller' | 'visiting_controller' | 'home_or_visiting_controller'"
 );
 
 const FormId = type('string.integer > 0')
@@ -464,6 +465,18 @@ export const createCoursePrerequisite = form(
 
 		const course = await Course.fetchById(courseId, db);
 		if (!course) throw error(404, 'Course not found');
+
+		if (prerequisiteType === 'rating') {
+			const comparison = parseRatingComparison(prerequisiteValue2 ?? null);
+			if (!comparison) {
+				throw error(400, 'Rating comparison must be equal, minimum, or maximum');
+			}
+
+			const requiredRatingId = Number(prerequisiteValue1);
+			if (!Number.isFinite(requiredRatingId) || requiredRatingId <= 0) {
+				throw error(400, 'Rating is required and cannot be inactive or suspended');
+			}
+		}
 
 		await course.createPrerequisite(
 			prerequisiteType as PrerequisiteType,
