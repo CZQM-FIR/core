@@ -1,7 +1,12 @@
 import { db } from '$lib/db';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
-import { User, userHasVectorInstructorAccess } from '@czqm/common';
+import {
+	User,
+	getAssistantParentFlagsForUser,
+	userHasVectorAdminAccess,
+	userHasVectorInstructorAccess
+} from '@czqm/common';
 
 export const load = (async ({ locals }) => {
 	if (!locals.user) {
@@ -9,7 +14,16 @@ export const load = (async ({ locals }) => {
 	}
 
 	const user = await User.fromCid(db, locals.user.cid);
-	if (!user || !userHasVectorInstructorAccess(user)) {
+	if (!user) {
+		throw redirect(303, '/');
+	}
+
+	if (userHasVectorInstructorAccess(user)) {
+		return {};
+	}
+
+	const assistantParents = await getAssistantParentFlagsForUser(db, user.cid);
+	if (!userHasVectorAdminAccess(user, assistantParents)) {
 		throw redirect(303, '/');
 	}
 
