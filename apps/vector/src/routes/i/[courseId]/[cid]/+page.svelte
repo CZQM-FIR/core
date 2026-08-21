@@ -2,6 +2,7 @@
 	import { ChevronLeft } from '@lucide/svelte';
 	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
 	import SyncCourseTasksButton from '$lib/components/SyncCourseTasksButton.svelte';
+	import TrainingPauseBanner from '$lib/components/TrainingPauseBanner.svelte';
 	import TrainingSessionAvailabilityCalendar from '$lib/components/TrainingSessionAvailabilityCalendar.svelte';
 	import TrainingSessionPendingCard from '$lib/components/TrainingSessionPendingCard.svelte';
 	import {
@@ -9,6 +10,7 @@
 		graduateStudentFromCourse,
 		syncStudentCourseTasks
 	} from '$lib/remote/instructor.remote';
+	import { pauseEnrolledStudent, resumeEnrolledStudent } from '$lib/remote/waitlist.remote';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -20,6 +22,11 @@
 	let graduating = $state(false);
 	let graduateError = $state<string | null>(null);
 	let syncError = $state<string | null>(null);
+	let pauseReason = $state('');
+	let pausing = $state(false);
+	let resuming = $state(false);
+	let pauseError = $state<string | null>(null);
+	let pauseDialog = $state<HTMLDialogElement | null>(null);
 
 	type StudentStatus = 'waitlisted' | 'enrolled' | 'completed' | 'none';
 
@@ -30,22 +37,58 @@
 		none: 'Not on course'
 	};
 
+	function commandErrorMessage(err: unknown, fallback: string): string {
+		if (err && typeof err === 'object' && 'body' in err) {
+			const body = (err as { body?: { message?: string } }).body;
+			if (body?.message) return body.message;
+		}
+		if (err instanceof Error && err.message) return err.message;
+		return fallback;
+	}
+
 	async function handleGraduate(courseId: string, cid: number) {
 		graduating = true;
 		graduateError = null;
 		try {
 			await graduateStudentFromCourse({ courseId, cid });
 		} catch (err) {
-			if (err && typeof err === 'object' && 'body' in err) {
-				const body = (err as { body?: { message?: string } }).body;
-				graduateError = body?.message ?? 'Failed to mark course as completed';
-			} else if (err instanceof Error) {
-				graduateError = err.message;
-			} else {
-				graduateError = 'Failed to mark course as completed';
-			}
+			graduateError = commandErrorMessage(err, 'Failed to mark course as completed');
 		} finally {
 			graduating = false;
+		}
+	}
+
+	function openPauseDialog() {
+		if (!data.isVectorAdmin) return;
+		pauseReason = '';
+		pauseError = null;
+		pauseDialog?.showModal();
+	}
+
+	async function handlePause(courseId: string, cid: number) {
+		if (!data.isVectorAdmin) return;
+		pausing = true;
+		pauseError = null;
+		try {
+			await pauseEnrolledStudent({ courseId, cid, reason: pauseReason });
+			pauseDialog?.close();
+		} catch (err) {
+			pauseError = commandErrorMessage(err, 'Failed to pause training');
+		} finally {
+			pausing = false;
+		}
+	}
+
+	async function handleResume(courseId: string, cid: number) {
+		if (!data.isVectorAdmin) return;
+		resuming = true;
+		pauseError = null;
+		try {
+			await resumeEnrolledStudent({ courseId, cid });
+		} catch (err) {
+			pauseError = commandErrorMessage(err, 'Failed to resume training');
+		} finally {
+			resuming = false;
 		}
 	}
 </script>
@@ -67,17 +110,42 @@
 				<h1 class="text-3xl font-semibold">{view.student.name_full}</h1>
 				<p class="text-sm opacity-70">CID {view.student.cid} · {view.student.rating}</p>
 			</div>
-			<span
-				class="badge {view.status === 'completed'
-					? 'badge-accent'
-					: view.status === 'enrolled'
-						? 'badge-secondary'
-						: view.status === 'waitlisted'
-							? 'badge-primary'
-							: 'badge-ghost'}"
-			>
-				{statusLabels[view.status as StudentStatus]}
-			</span>
+			<div class="flex flex-wrap items-center gap-2">
+				<span
+					class="badge {view.pause
+						? 'badge-warning'
+						: view.status === 'completed'
+							? 'badge-accent'
+							: view.status === 'enrolled'
+								? 'badge-secondary'
+								: view.status === 'waitlisted'
+									? 'badge-primary'
+									: 'badge-ghost'}"
+				>
+					{view.pause ? 'Paused' : statusLabels[view.status as StudentStatus]}
+				</span>
+				{#if data.isVectorAdmin && view.canPauseTraining && view.status === 'enrolled'}
+					{#if view.pause}
+						<button
+							type="button"
+							class="btn btn-outline btn-sm"
+							disabled={resuming}
+							onclick={() => handleResume(view.course.id, view.student.cid)}
+						>
+							{#if resuming}
+								<span class="loading loading-spinner loading-sm"></span>
+								Resuming...
+							{:else}
+								Resume training
+							{/if}
+						</button>
+					{:else}
+						<button type="button" class="btn btn-warning btn-sm" onclick={openPauseDialog}>
+							Pause training
+						</button>
+					{/if}
+				{/if}
+			</div>
 		</div>
 
 		{#if view.status === 'waitlisted' && view.waitingSince}
@@ -92,6 +160,16 @@
 			<p class="mt-2 text-sm opacity-70">
 				Completed {view.completedAt.toUTCString().replace(' GMT', 'z')}
 			</p>
+		{/if}
+
+		{#if view.pause}
+			<div class="mt-4">
+				<TrainingPauseBanner pausedAt={view.pause.pausedAt} pauseReason={view.pause.pauseReason} />
+			</div>
+		{/if}
+
+		{#if data.isVectorAdmin && pauseError}
+			<p class="text-error mt-2 text-sm">{pauseError}</p>
 		{/if}
 
 		{#if view.activeSession}
@@ -116,7 +194,7 @@
 					sessionDescription={view.nextTask.description}
 				/>
 			</div>
-		{:else if view.canViewSessionAvailability && view.nextTask}
+		{:else if !view.pause && view.canViewSessionAvailability && view.nextTask}
 			<div class="mt-6">
 				<TrainingSessionAvailabilityCalendar
 					mode="view"
@@ -140,16 +218,17 @@
 				instructorContext={{
 					courseId: view.course.id,
 					cid: view.student.cid,
-					canCompleteInstructorOnlyTasks: view.canCompleteInstructorOnlyTasks
+					canCompleteInstructorOnlyTasks: view.canCompleteInstructorOnlyTasks,
+					paused: view.pause != null
 				}}
-				headerActions={view.status === 'enrolled' ? headerActions : undefined}
+				headerActions={view.status === 'enrolled' && !view.pause ? headerActions : undefined}
 			/>
 			{#if syncError}
 				<p class="text-error text-sm">{syncError}</p>
 			{/if}
 		</div>
 
-		{#if view.canGraduateStudent && view.status === 'enrolled' && view.allTasksComplete}
+		{#if view.canGraduateStudent && view.status === 'enrolled' && !view.pause && view.allTasksComplete}
 			<div class="mt-4 flex flex-col gap-2">
 				{#if graduateError}
 					<p class="text-error text-sm">{graduateError}</p>
@@ -170,6 +249,50 @@
 					</button>
 				</div>
 			</div>
+		{/if}
+
+		{#if data.isVectorAdmin && view.canPauseTraining && view.status === 'enrolled'}
+			<dialog class="modal" bind:this={pauseDialog}>
+				<div class="modal-box">
+					<h3 class="text-lg font-bold">Pause training</h3>
+					<p class="py-2 text-sm">
+						This pauses {view.student.name_full}'s progress in {view.course.name}. The reason will
+						be visible to the student, instructors, and training admins.
+					</p>
+					<p class="mb-1 text-sm font-medium">Reason</p>
+					<textarea
+						class="textarea w-full"
+						rows="4"
+						maxlength="1000"
+						bind:value={pauseReason}
+						disabled={pausing}
+					></textarea>
+					{#if pauseError}
+						<p class="text-error mt-2 text-sm">{pauseError}</p>
+					{/if}
+					<div class="modal-action">
+						<form method="dialog">
+							<button class="btn" disabled={pausing}>Cancel</button>
+						</form>
+						<button
+							type="button"
+							class="btn btn-warning"
+							disabled={pausing || pauseReason.trim().length === 0}
+							onclick={() => handlePause(view.course.id, view.student.cid)}
+						>
+							{#if pausing}
+								<span class="loading loading-spinner loading-sm"></span>
+								Pausing...
+							{:else}
+								Pause training
+							{/if}
+						</button>
+					</div>
+				</div>
+				<form method="dialog" class="modal-backdrop">
+					<button>close</button>
+				</form>
+			</dialog>
 		{/if}
 	{:catch err}
 		<p class="text-error">Error loading student: {err.message}</p>

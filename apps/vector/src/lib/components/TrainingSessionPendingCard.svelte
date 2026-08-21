@@ -14,6 +14,7 @@
 		session,
 		showStudentActions = false,
 		showCancel = false,
+		allowConfirm = true,
 		cancelAs = 'student',
 		studentCid,
 		href = null,
@@ -25,6 +26,7 @@
 		session: TrainingSessionSummary;
 		showStudentActions?: boolean;
 		showCancel?: boolean;
+		allowConfirm?: boolean;
 		cancelAs?: 'student' | 'staff';
 		studentCid?: number;
 		href?: string | null;
@@ -261,19 +263,21 @@
 
 		{#if showStudentActions && session.status === 'pending'}
 			<div class="pointer-events-auto flex flex-wrap items-center gap-3">
-				<button
-					type="button"
-					class="btn btn-primary btn-sm"
-					disabled={confirming || declining || cancelling}
-					onclick={handleConfirm}
-				>
-					{#if confirming}
-						<span class="loading loading-spinner loading-sm"></span>
-						Confirming...
-					{:else}
-						Confirm
-					{/if}
-				</button>
+				{#if allowConfirm}
+					<button
+						type="button"
+						class="btn btn-primary btn-sm"
+						disabled={confirming || declining || cancelling}
+						onclick={handleConfirm}
+					>
+						{#if confirming}
+							<span class="loading loading-spinner loading-sm"></span>
+							Confirming...
+						{:else}
+							Confirm
+						{/if}
+					</button>
+				{/if}
 				<button
 					type="button"
 					class="btn btn-outline btn-sm"

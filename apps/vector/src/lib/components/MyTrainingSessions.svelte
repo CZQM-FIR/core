@@ -27,6 +27,7 @@
 				taskId={item.taskId}
 				session={item.session}
 				showStudentActions={role === 'student'}
+				allowConfirm={!(role === 'student' && item.paused)}
 				showCancel
 				cancelAs={role === 'student' ? 'student' : 'staff'}
 				studentCid={item.studentCid}

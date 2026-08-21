@@ -95,7 +95,11 @@
 									<div class="flex items-start justify-between gap-2">
 										<h3 class="card-title text-lg">{course.name}</h3>
 										{#if course.status === 'enrolled'}
-											<span class="badge badge-secondary shrink-0">Enrolled</span>
+											<span
+												class="badge {course.pause ? 'badge-warning' : 'badge-secondary'} shrink-0"
+											>
+												{course.pause ? 'Paused' : 'Enrolled'}
+											</span>
 										{:else}
 											<span class="badge badge-primary shrink-0">
 												Waitlisted
@@ -105,7 +109,11 @@
 											</span>
 										{/if}
 									</div>
-									{#if course.description}
+									{#if course.pause}
+										<p class="line-clamp-3 text-sm whitespace-pre-wrap opacity-80">
+											{course.pause.pauseReason}
+										</p>
+									{:else if course.description}
 										<p class="line-clamp-2 text-sm opacity-80">{course.description}</p>
 									{/if}
 								</div>

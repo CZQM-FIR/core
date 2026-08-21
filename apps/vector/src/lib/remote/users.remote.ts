@@ -71,7 +71,7 @@ export const getMyTrainingSessions = query(async () => {
 	const [courses, loadedUsers] = await Promise.all([
 		db.query.courses.findMany({
 			where: { id: { in: courseIds } },
-			columns: { id: true, name: true, tasks: true }
+			columns: { id: true, name: true, tasks: true, waitlistId: true }
 		}),
 		Promise.all(userCids.map((cid) => User.fromCid(db, cid)))
 	]);
@@ -79,6 +79,24 @@ export const getMyTrainingSessions = query(async () => {
 	const courseById = new Map(courses.map((course) => [course.id, course]));
 	const userByCid = new Map(
 		loadedUsers.filter((user): user is User => user != null).map((user) => [user.cid, user])
+	);
+	const waitlistIds = [...new Set(courses.map((course) => course.waitlistId))];
+	const studentCids = [...new Set(rows.map((row) => row.studentCid))];
+	const pausedEnrollments =
+		waitlistIds.length === 0 || studentCids.length === 0
+			? []
+			: await db.query.enrolledUsers.findMany({
+					where: {
+						cid: { in: studentCids },
+						waitlistId: { in: waitlistIds },
+						hiddenAt: { isNull: true }
+					},
+					columns: { cid: true, waitlistId: true, pausedAt: true }
+				});
+	const pausedKeys = new Set(
+		pausedEnrollments
+			.filter((row) => row.pausedAt != null)
+			.map((row) => `${row.cid}:${row.waitlistId}`)
 	);
 
 	return rows.map((row) => {
@@ -101,7 +119,8 @@ export const getMyTrainingSessions = query(async () => {
 			sessionDescription: task ? describeCourseTask(task) : 'Training session',
 			studentCid: row.studentCid,
 			studentName: student?.displayName ?? `CID ${row.studentCid}`,
-			role: row.studentCid === actioner.cid ? ('student' as const) : ('instructor' as const)
+			role: row.studentCid === actioner.cid ? ('student' as const) : ('instructor' as const),
+			paused: course ? pausedKeys.has(`${row.studentCid}:${course.waitlistId}`) : false
 		};
 	});
 });

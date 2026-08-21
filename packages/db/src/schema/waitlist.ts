@@ -51,12 +51,16 @@ export const enrolledUsers = sqliteTable(
       .notNull()
       .default(new Date(0)),
     hiddenAt: int("hidden_at", { mode: "timestamp" }),
+    pausedAt: int("paused_at", { mode: "timestamp" }),
+    pauseReason: text("pause_reason"),
+    pausedByCid: int("paused_by_cid").references(() => users.cid),
   },
   (t) => [
     index("enrolled_users_cid_idx").on(t.cid),
     index("enrolled_users_waitlistId_idx").on(t.waitlistId),
     index("enrolled_users_enrolledAt_idx").on(t.enrolledAt),
     index("enrolled_users_hidden_at_idx").on(t.hiddenAt),
+    index("enrolled_users_paused_at_idx").on(t.pausedAt),
   ],
 );
 

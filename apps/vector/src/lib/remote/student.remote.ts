@@ -38,6 +38,11 @@ import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import { authorizeVectorStudentAccess } from './auth';
 import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
 import { notifyCourseEnrollmentEmail } from '$lib/courseEnrollmentEmails';
+import {
+	assertEnrollmentNotPaused,
+	toCoursePauseInfo,
+	type CoursePauseInfo
+} from '$lib/courseEnrollmentPause';
 
 const CourseId = type(/^[0-9a-z]{5}$/);
 
@@ -53,6 +58,7 @@ type CourseSummary = {
 	enrolledAt?: Date | null;
 	waitingSince?: Date | null;
 	completedAt?: Date | null;
+	pause?: CoursePauseInfo | null;
 	prerequisiteResults?: PrerequisiteResult[];
 };
 
@@ -115,7 +121,8 @@ export const getStudentCourses = query(async () => {
 				status: enrolledRow ? 'enrolled' : 'waitlisted',
 				position: waitingRow?.position,
 				enrolledAt: enrolledRow?.enrolledAt ?? null,
-				waitingSince: waitingRow?.waitingSince ?? null
+				waitingSince: waitingRow?.waitingSince ?? null,
+				pause: enrolledRow ? toCoursePauseInfo(enrolledRow) : null
 			});
 			continue;
 		}
@@ -200,8 +207,12 @@ export const getStudentCourseView = query(CourseId, async (courseId) => {
 			: null;
 	}
 
+	const pause = status === 'enrolled' ? toCoursePauseInfo(enrolled) : null;
+
 	const canSubmitSessionAvailability =
-		trainingSessionIsNext && (activeSession == null || activeSession.status === 'confirmed');
+		trainingSessionIsNext &&
+		pause == null &&
+		(activeSession == null || activeSession.status === 'confirmed');
 
 	return {
 		course: {
@@ -216,6 +227,7 @@ export const getStudentCourseView = query(CourseId, async (courseId) => {
 		enrolledAt: enrolled?.enrolledAt ?? null,
 		completedAt: completedRow?.completedAt ?? null,
 		waitTime: waitlist?.waitTime ?? null,
+		pause,
 		prerequisiteResults,
 		tasks,
 		nextTask,
@@ -306,6 +318,7 @@ export const syncStudentCourseTasks = command(CourseId, async (courseId) => {
 	if (!enrolled) {
 		throw error(403, 'You must be actively enrolled in this course');
 	}
+	assertEnrollmentNotPaused(enrolled);
 
 	if (!env.VATCAN_API_TOKEN) {
 		throw error(500, 'VATCAN API token is not configured on this server.');
@@ -351,7 +364,7 @@ async function assertStudentSessionAvailabilityEligible(
 		throw error(400, 'Session availability is only available for your next training session task');
 	}
 
-	return course;
+	return { course, enrolled };
 }
 
 async function assertStudentTrainingSessionAction(
@@ -360,7 +373,7 @@ async function assertStudentTrainingSessionAction(
 	sessionId: number,
 	cid: number
 ) {
-	await assertStudentSessionAvailabilityEligible(courseId, taskId, cid);
+	const { enrolled } = await assertStudentSessionAvailabilityEligible(courseId, taskId, cid);
 
 	const [session] = await db
 		.select()
@@ -377,7 +390,7 @@ async function assertStudentTrainingSessionAction(
 		throw error(404, 'Training session not found');
 	}
 
-	return session;
+	return { session, enrolled };
 }
 
 async function fetchTrainingSessionAvailabilityRows(cid: number, courseId: string, taskId: number) {
@@ -427,7 +440,8 @@ export const saveTrainingSessionAvailability = command(
 	SaveTrainingSessionAvailabilityOptions,
 	async ({ courseId, taskId, slots }) => {
 		const user = await authorizeVectorStudentAccess();
-		await assertStudentSessionAvailabilityEligible(courseId, taskId, user.cid);
+		const { enrolled } = await assertStudentSessionAvailabilityEligible(courseId, taskId, user.cid);
+		assertEnrollmentNotPaused(enrolled);
 
 		const activeSession = await TrainingSession.fetchActiveForTask(db, {
 			studentCid: user.cid,
@@ -510,6 +524,15 @@ async function toStudentSessionDetail(row: TrainingSessionRow) {
 	const sessionType = task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
 	const objectives = task?.taskType === 'training_session' ? task.objectives : [];
 	const objectiveResults = notesSubmitted ? (row.objectiveResults ?? []) : [];
+	const pause = toCoursePauseInfo(
+		await db.query.enrolledUsers.findFirst({
+			where: {
+				waitlistId: course.waitlist.id,
+				cid: row.studentCid,
+				hiddenAt: { isNull: true }
+			}
+		})
+	);
 
 	return {
 		id: row.id,
@@ -524,9 +547,10 @@ async function toStudentSessionDetail(row: TrainingSessionRow) {
 		positionTrained: notesSubmitted ? row.positionTrained : null,
 		objectives,
 		objectiveResults,
-		canConfirm: status === 'pending',
+		canConfirm: status === 'pending' && pause == null,
 		canDecline: status === 'pending',
 		canCancel: status === 'confirmed',
+		pause,
 		instructor: {
 			cid: instructor.cid,
 			name: instructor.displayName,
@@ -564,7 +588,13 @@ export const confirmTrainingSession = command(
 	TrainingSessionActionOptions,
 	async ({ courseId, taskId, sessionId }) => {
 		const user = await authorizeVectorStudentAccess();
-		await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
+		const { enrolled } = await assertStudentTrainingSessionAction(
+			courseId,
+			taskId,
+			sessionId,
+			user.cid
+		);
+		assertEnrollmentNotPaused(enrolled);
 
 		let updated;
 		try {

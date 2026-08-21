@@ -54,6 +54,10 @@
 							<p class="text-xs opacity-70">
 								Enrolled {student.enrolledAt.toUTCString().replace(' GMT', 'z')}
 							</p>
+							{#if student.pausedAt}
+								<p class="text-warning mt-1 text-xs font-medium">Paused</p>
+								<p class="text-xs whitespace-pre-wrap opacity-80">{student.pauseReason}</p>
+							{/if}
 						</a>
 					{/each}
 				</div>

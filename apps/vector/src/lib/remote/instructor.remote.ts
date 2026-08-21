@@ -36,7 +36,9 @@ import {
 	User,
 	userCanCompleteInstructorOnlyCourseTasks,
 	userCanGraduateVectorStudents,
+	userCanPauseVectorTraining,
 	userCanScheduleTrainingSessionType,
+	getAssistantParentFlagsForUser,
 	requiresInstructorToComplete,
 	validateSubmittedInstructorNotes,
 	validateSubmittedPositionTrained,
@@ -57,6 +59,11 @@ import { getMyTrainingSessions } from './users.remote';
 import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
 import { notifyCourseEnrollmentEmail } from '$lib/courseEnrollmentEmails';
 import { notifyCourseTaskCompletionEmail } from '$lib/courseTaskCompletionEmails';
+import {
+	assertEnrollmentNotPaused,
+	requireActiveUnpausedEnrollment,
+	toCoursePauseInfo
+} from '$lib/courseEnrollmentPause';
 
 const CourseId = type(/^[0-9a-z]{5}$/);
 const WaitlistId = type('number.integer >= 0');
@@ -148,10 +155,11 @@ export const getInstructorStudentView = query(
 
 		const waitlistId = course.waitlist.id;
 
-		const [waiting, enrolled, completed] = await Promise.all([
+		const [waiting, enrolled, completed, assistantParents] = await Promise.all([
 			db.query.waitingUsers.findFirst({ where: { waitlistId, cid } }),
 			db.query.enrolledUsers.findFirst({ where: { waitlistId, cid } }),
-			db.query.completedUsers.findFirst({ where: { waitlistId, cid } })
+			db.query.completedUsers.findFirst({ where: { waitlistId, cid } }),
+			getAssistantParentFlagsForUser(db, actioner.cid)
 		]);
 
 		const status = completed
@@ -162,6 +170,7 @@ export const getInstructorStudentView = query(
 					? 'waitlisted'
 					: 'none';
 
+		const pause = status === 'enrolled' ? toCoursePauseInfo(enrolled) : null;
 		const tasks = await getCourseTaskProgress(course, cid);
 		const allTasksComplete = tasks.length === 0 || tasks.every((task) => task.isComplete);
 		const nextTask = toNextTaskSummary(getNextIncompleteTask(tasks));
@@ -200,6 +209,7 @@ export const getInstructorStudentView = query(
 
 			canScheduleSession =
 				status === 'enrolled' &&
+				pause == null &&
 				canViewSessionAvailability &&
 				activeSession == null &&
 				userCanScheduleTrainingSessionType(actioner, sessionType);
@@ -220,6 +230,8 @@ export const getInstructorStudentView = query(
 			waitingSince: waiting?.waitingSince ?? null,
 			enrolledAt: enrolled?.enrolledAt ?? null,
 			completedAt: completed?.completedAt ?? null,
+			pause,
+			canPauseTraining: userCanPauseVectorTraining(actioner, assistantParents),
 			tasks,
 			canGraduateStudent: userCanGraduateVectorStudents(actioner),
 			canCompleteInstructorOnlyTasks: userCanCompleteInstructorOnlyCourseTasks(actioner),
@@ -325,7 +337,7 @@ export const getStudentsWithSessionAvailability = query(async () => {
 						waitlistId: { in: waitlistIds },
 						hiddenAt: { isNull: true }
 					},
-					columns: { cid: true, waitlistId: true }
+					columns: { cid: true, waitlistId: true, pausedAt: true }
 				}),
 		db
 			.select({
@@ -357,7 +369,9 @@ export const getStudentsWithSessionAvailability = query(async () => {
 			)
 	]);
 
-	const enrolledKeys = new Set(enrolledRows.map((row) => `${row.cid}:${row.waitlistId}`));
+	const enrolledKeys = new Set(
+		enrolledRows.filter((row) => row.pausedAt == null).map((row) => `${row.cid}:${row.waitlistId}`)
+	);
 	const completedTaskKeys = new Set(
 		completionRows
 			.filter((row) => row.completedAt != null)
@@ -457,6 +471,7 @@ export const scheduleTrainingSession = command(
 			}
 		});
 		if (!enrolled) throw error(400, 'Student is not enrolled in this course');
+		assertEnrollmentNotPaused(enrolled);
 
 		const tasks = await getCourseTaskProgress(course, studentCid);
 		const next = getNextIncompleteTask(tasks);
@@ -953,6 +968,11 @@ export const rescheduleTrainingSession = command(
 	async ({ sessionId, startsAt, endsAt }) => {
 		const actioner = await authorizeVectorInstructorAccess();
 		const session = await requireSchedulerSession(sessionId, actioner.cid);
+		await requireActiveUnpausedEnrollment(
+			session.courseId,
+			session.studentCid,
+			'Student is not enrolled in this course'
+		);
 
 		if (session.status !== 'pending' && session.status !== 'confirmed') {
 			throw error(400, 'Only pending or confirmed training sessions can be rescheduled');
@@ -1174,6 +1194,7 @@ export const completeStudentCourseTask = command(
 	StudentTaskOptions,
 	async ({ courseId, cid, taskId }) => {
 		const actioner = await authorizeVectorInstructorAccess();
+		await requireActiveUnpausedEnrollment(courseId, cid, 'Student is not enrolled in this course');
 
 		const task = await getInstructorCourseTask(courseId, taskId);
 		if (
@@ -1235,6 +1256,7 @@ export const uncompleteStudentCourseTask = command(
 	StudentTaskOptions,
 	async ({ courseId, cid, taskId }) => {
 		const actioner = await authorizeVectorInstructorAccess();
+		await requireActiveUnpausedEnrollment(courseId, cid, 'Student is not enrolled in this course');
 
 		const task = await getInstructorCourseTask(courseId, taskId);
 		if (
@@ -1274,6 +1296,7 @@ export const syncStudentCourseTasks = command(
 		if (!enrolled) {
 			throw error(403, 'Student must be actively enrolled in this course');
 		}
+		assertEnrollmentNotPaused(enrolled);
 
 		if (!env.VATCAN_API_TOKEN) {
 			throw error(500, 'VATCAN API token is not configured on this server.');
@@ -1312,6 +1335,7 @@ export const graduateStudentFromCourse = command(
 			}
 		});
 		if (!enrolled) throw error(400, 'Student is not enrolled in this course');
+		assertEnrollmentNotPaused(enrolled);
 
 		if (!(await course.isComplete(cid))) {
 			throw error(400, 'Not all course tasks are complete');

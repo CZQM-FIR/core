@@ -97,6 +97,14 @@ export function userHasVectorAdminAccess(
   return assistantParentFlags.includes("chief-instructor");
 }
 
+/** Pause or resume a student's course enrollment. Same gate as Training Administration. */
+export function userCanPauseVectorTraining(
+  user: User,
+  assistantParentFlags: FlagName[],
+): boolean {
+  return userHasVectorAdminAccess(user, assistantParentFlags);
+}
+
 /** Vector `/i/*`: instructors, mentors, chief instructor, and admins */
 export function userHasVectorInstructorAccess(user: User): boolean {
   return user.hasFlag(["instructor", "mentor", "chief-instructor", "admin"]);

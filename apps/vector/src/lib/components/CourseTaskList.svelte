@@ -21,6 +21,7 @@
 			courseId: string;
 			cid: number;
 			canCompleteInstructorOnlyTasks?: boolean;
+			paused?: boolean;
 		};
 		headerActions?: Snippet;
 	} = $props();
@@ -54,7 +55,7 @@
 	}
 
 	function canShowInstructorControls(task: CourseTaskProgress): boolean {
-		if (!instructorContext || !task.manuallyCompletable) return false;
+		if (!instructorContext || instructorContext.paused || !task.manuallyCompletable) return false;
 		if (task.requiresInstructorCompletion) {
 			return Boolean(instructorContext.canCompleteInstructorOnlyTasks);
 		}

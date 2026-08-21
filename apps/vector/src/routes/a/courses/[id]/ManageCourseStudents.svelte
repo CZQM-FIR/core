@@ -181,7 +181,10 @@
 																		user: student.user,
 																		enrolledAt: new Date(),
 																		waitlistId,
-																		hiddenAt: null
+																		hiddenAt: null,
+																		pausedAt: null,
+																		pauseReason: null,
+																		pausedByCid: null
 																	}
 																];
 															})
@@ -234,6 +237,10 @@
 											<p class="text-xs opacity-70">
 												Enrolled {student.enrolledAt.toUTCString().replace(' GMT', 'z')}
 											</p>
+											{#if student.pausedAt}
+												<p class="text-warning mt-1 text-xs font-medium">Paused</p>
+												<p class="text-xs whitespace-pre-wrap opacity-80">{student.pauseReason}</p>
+											{/if}
 										</div>
 										<div class="flex flex-row justify-end gap-2">
 											<button class="tooltip tooltip-left" data-tip="Move back to waitlist">
@@ -286,37 +293,41 @@
 													size="16"
 												/>
 											</button>
-											<button class="tooltip tooltip-left" data-tip="Graduate Student">
-												<SquareCheck
-													onclickcapture={() =>
-														graduateUserFromCourse({
-															userId: student.cid,
-															waitlistId
-														}).updates(
-															getEnrolledWaitlistEntries(waitlistId).withOverride((enrolled) =>
-																enrolled.filter((e) => e.cid !== student.cid)
-															),
-															getCompletedWaitlistEntries(waitlistId).withOverride((completed) => {
-																const nextId =
-																	completed && completed.length
-																		? Math.max(...completed.map((e) => e.id)) + 1
-																		: 1;
-																return [
-																	{
-																		id: nextId,
-																		cid: student.cid,
-																		user: student.user,
-																		waitlistId,
-																		completedAt: new Date()
-																	},
-																	...(completed ?? [])
-																];
-															})
-														)}
-													class="hover:text-success transition-colors"
-													size="16"
-												/>
-											</button>
+											{#if !student.pausedAt}
+												<button class="tooltip tooltip-left" data-tip="Graduate Student">
+													<SquareCheck
+														onclickcapture={() =>
+															graduateUserFromCourse({
+																userId: student.cid,
+																waitlistId
+															}).updates(
+																getEnrolledWaitlistEntries(waitlistId).withOverride((enrolled) =>
+																	enrolled.filter((e) => e.cid !== student.cid)
+																),
+																getCompletedWaitlistEntries(waitlistId).withOverride(
+																	(completed) => {
+																		const nextId =
+																			completed && completed.length
+																				? Math.max(...completed.map((e) => e.id)) + 1
+																				: 1;
+																		return [
+																			{
+																				id: nextId,
+																				cid: student.cid,
+																				user: student.user,
+																				waitlistId,
+																				completedAt: new Date()
+																			},
+																			...(completed ?? [])
+																		];
+																	}
+																)
+															)}
+														class="hover:text-success transition-colors"
+														size="16"
+													/>
+												</button>
+											{/if}
 										</div>
 									</div>
 								</div>
