@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { ChevronLeft } from '@lucide/svelte';
 	import TrainingSessionAvailabilityMatcher from '$lib/components/TrainingSessionAvailabilityMatcher.svelte';
-	import { getStudentsWithSessionAvailability } from '$lib/remote/instructor.remote';
+	import {
+		getScheduledSessionsInWindow,
+		getStudentsWithSessionAvailability
+	} from '$lib/remote/instructor.remote';
 	import { anySlotsOverlap, type AvailabilitySlot } from '$lib/trainingSessionAvailability';
 
 	const availabilityQuery = getStudentsWithSessionAvailability();
+	const scheduledQuery = getScheduledSessionsInWindow();
 
 	let courseFilter = $state('');
 	let selectedSlots = $state<AvailabilitySlot[]>([]);
@@ -64,6 +68,7 @@
 			<TrainingSessionAvailabilityMatcher
 				students={courseFiltered}
 				windowEndsAt={availabilityQuery.current.windowEndsAt}
+				scheduledSessions={scheduledQuery.current ?? []}
 				bind:selectedSlots
 			/>
 

@@ -13,6 +13,15 @@
 		slotStartDate,
 		slotsToKeys
 	} from '$lib/trainingSessionAvailability';
+	import ScheduledSessionsList from '$lib/components/ScheduledSessionsList.svelte';
+	import type { ScheduledSessionInWindow } from '$lib/remote/instructor.remote';
+	import {
+		formatScheduledSessionSummary,
+		groupSessionsByVisibleDay,
+		occupiedSlotKeys,
+		sessionsBySlotKey,
+		toOverlaySession
+	} from '$lib/scheduledSessionOverlay';
 
 	type MatcherStudent = {
 		cid: number;
@@ -22,10 +31,12 @@
 	let {
 		students,
 		windowEndsAt,
+		scheduledSessions = [],
 		selectedSlots = $bindable([] as AvailabilitySlot[])
 	}: {
 		students: MatcherStudent[];
 		windowEndsAt: Date;
+		scheduledSessions?: ScheduledSessionInWindow[];
 		selectedSlots?: AvailabilitySlot[];
 	} = $props();
 
@@ -44,6 +55,9 @@
 	} | null>(null);
 
 	const resolvedWindowEndsAt = $derived(windowEndsAt ?? getAvailabilityWindowEndsAt());
+	const overlaySessions = $derived(scheduledSessions.map(toOverlaySession));
+	const occupiedKeys = $derived(occupiedSlotKeys(overlaySessions, getWindowStartDay()));
+	const sessionsByKey = $derived(sessionsBySlotKey(overlaySessions, getWindowStartDay()));
 
 	const heatmapCounts = $derived.by(() => {
 		const counts: Record<string, number> = {};
@@ -188,10 +202,17 @@
 		commitSelection(new Set());
 	}
 
-	function getSlotClass(dayIndex: number, slotIndex: number, enabled: boolean): string {
+	function getSlotClass(dayIndex: number, slotIndex: number, enabled: boolean) {
 		const key = slotKey(dayIndex, slotIndex);
-		if (selectedKeys.has(key)) return 'bg-accent text-accent-content';
+		const occupied = occupiedKeys.has(key);
 		if (!enabled) return 'bg-base-100 cursor-not-allowed opacity-30';
+		if (selectedKeys.has(key)) {
+			return ['bg-accent text-accent-content', occupied && 'training-session-occupied-slot'];
+		}
+		if (occupied && (heatmapCounts[key] ?? 0) === 0) {
+			return 'training-session-occupied-slot bg-warning/50 cursor-pointer hover:bg-warning/60';
+		}
+		if (occupied) return 'training-session-occupied-slot cursor-pointer hover:brightness-95';
 		if ((heatmapCounts[key] ?? 0) === 0) return 'bg-base-100 hover:bg-base-300 cursor-pointer';
 		return 'cursor-pointer hover:brightness-95';
 	}
@@ -209,8 +230,15 @@
 		return `color-mix(in oklab, var(--color-primary) ${pct}%, var(--color-base-100))`;
 	}
 
+	function slotOccupancyLabel(dayIndex: number, slotIndex: number): string {
+		const sessions = sessionsByKey.get(slotKey(dayIndex, slotIndex)) ?? [];
+		if (sessions.length === 0) return '';
+		return sessions.map(formatScheduledSessionSummary).join('; ');
+	}
+
 	const visibleDays = $derived(getVisibleDays());
 	const weekRangeLabel = $derived(formatWeekRange(visibleDays));
+	const visibleScheduledGroups = $derived(groupSessionsByVisibleDay(overlaySessions, visibleDays));
 </script>
 
 <svelte:window onpointerup={endDrag} onpointercancel={endDrag} />
@@ -223,7 +251,8 @@
 				Times shown in your local timezone ({timeZone}).
 			</p>
 			<p class="text-sm opacity-70">
-				Shaded intensity shows how many listed students are free. Drag to highlight your free times.
+				Shaded intensity shows how many listed students are free. Striped slots are other scheduled
+				sessions. Drag to highlight your free times.
 			</p>
 		</div>
 
@@ -245,6 +274,22 @@
 			>
 				Next week
 			</button>
+		</div>
+
+		<div class="flex flex-wrap gap-3 text-[11px] opacity-80">
+			<span class="flex items-center gap-1">
+				<span class="bg-primary/40 inline-block h-3 w-3 rounded-sm"></span>
+				Student availability
+			</span>
+			<span class="flex items-center gap-1">
+				<span class="bg-accent inline-block h-3 w-3 rounded-sm"></span>
+				Your selection
+			</span>
+			<span class="flex items-center gap-1">
+				<span class="training-session-occupied-slot bg-warning/50 inline-block h-3 w-3 rounded-sm"
+				></span>
+				Other scheduled sessions
+			</span>
 		</div>
 
 		<div class="overflow-x-auto overflow-y-auto">
@@ -273,17 +318,20 @@
 						{@const start = slotStartDate(day, slotIndex)}
 						{@const enabled = isAvailabilitySlotEnabled(start, resolvedWindowEndsAt)}
 						{@const selected = selectedKeys.has(slotKey(dayIndex, slotIndex))}
+						{@const occupancy = slotOccupancyLabel(dayIndex, slotIndex)}
 						<button
 							type="button"
-							class="h-3 min-h-3 border-0 p-0 transition-colors {getSlotClass(
-								dayIndex,
-								slotIndex,
-								enabled
-							)}"
+							class={[
+								'h-3 min-h-3 border-0 p-0 transition-colors',
+								getSlotClass(dayIndex, slotIndex, enabled)
+							]}
 							style:background-color={getHeatmapColor(dayIndex, slotIndex, enabled)}
 							tabindex={enabled ? 0 : -1}
+							title={occupancy || undefined}
 							aria-disabled={!enabled}
-							aria-label="{formatDayHeader(day)} {formatSlotLabel(slotIndex)}"
+							aria-label="{formatDayHeader(day)} {formatSlotLabel(slotIndex)}{occupancy
+								? ` · ${occupancy}`
+								: ''}"
 							aria-pressed={selected}
 							onpointerdown={(event) => {
 								if (!enabled) return;
@@ -297,6 +345,8 @@
 			</div>
 		</div>
 
+		<ScheduledSessionsList groups={visibleScheduledGroups} />
+
 		{#if selectedKeys.size > 0}
 			<div class="flex flex-wrap items-center gap-3">
 				<button type="button" class="btn btn-outline btn-sm" onclick={clearSelection}>
@@ -306,3 +356,15 @@
 		{/if}
 	</div>
 </div>
+
+<style>
+	:global(.training-session-occupied-slot) {
+		background-image: repeating-linear-gradient(
+			-45deg,
+			transparent,
+			transparent 2px,
+			rgb(245 158 11 / 0.55) 2px,
+			rgb(245 158 11 / 0.55) 4px
+		);
+	}
+</style>

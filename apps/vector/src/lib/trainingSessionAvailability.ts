@@ -48,13 +48,19 @@ export function dateToSlotKey(date: Date, windowStartDay: Date): string | null {
 	return slotKey(dayIndex, slotIndex);
 }
 
-export function slotsToKeys(slots: AvailabilitySlot[], windowStartDay: Date): Set<string> {
+export function slotsToKeys(
+	slots: AvailabilitySlot[],
+	windowStartDay: Date,
+	now = new Date()
+): Set<string> {
 	const selected = new Set<string>();
 	for (const slot of slots) {
 		let current = new Date(slot.startsAt);
 		while (current < slot.endsAt) {
-			const key = dateToSlotKey(current, windowStartDay);
-			if (key) selected.add(key);
+			if (current.getTime() + SLOT_MS > now.getTime()) {
+				const key = dateToSlotKey(current, windowStartDay);
+				if (key) selected.add(key);
+			}
 			current = new Date(current.getTime() + SLOT_MS);
 		}
 	}
@@ -110,7 +116,21 @@ export function isAvailabilitySlotEnabled(
 	now = new Date()
 ): boolean {
 	const end = new Date(start.getTime() + SLOT_MS);
-	return start >= now && end <= windowEndsAt;
+	return end > now && end <= windowEndsAt;
+}
+
+/** Drop elapsed time from a slot, keeping the current 30-minute chunk if it is still in progress. */
+export function clipAvailabilitySlotToNow(
+	slot: { startsAt: Date; endsAt: Date },
+	now = new Date()
+): { startsAt: Date; endsAt: Date } | null {
+	if (slot.endsAt <= now) return null;
+	if (slot.startsAt >= now) return { startsAt: slot.startsAt, endsAt: slot.endsAt };
+
+	const elapsedSlots = Math.floor((now.getTime() - slot.startsAt.getTime()) / SLOT_MS);
+	const startsAt = new Date(slot.startsAt.getTime() + elapsedSlots * SLOT_MS);
+	if (startsAt >= slot.endsAt) return null;
+	return { startsAt, endsAt: slot.endsAt };
 }
 
 export function rangesOverlap(a: AvailabilitySlot, b: AvailabilitySlot): boolean {
@@ -174,6 +194,8 @@ export function validateAvailabilitySlots(
 	windowStart = new Date(),
 	windowEnd = getAvailabilityWindowEndsAt(windowStart)
 ): { startsAt: Date; endsAt: Date }[] {
+	const clipped: { startsAt: Date; endsAt: Date }[] = [];
+
 	for (const slot of slots) {
 		if (slot.startsAt >= slot.endsAt) {
 			throw new Error('Each slot must have startsAt before endsAt');
@@ -184,12 +206,17 @@ export function validateAvailabilitySlots(
 			throw new Error('Each slot duration must be a multiple of 30 minutes');
 		}
 
-		if (slot.startsAt < windowStart || slot.endsAt > windowEnd) {
+		if (slot.endsAt > windowEnd) {
 			throw new Error('Each slot must fall within the availability window');
 		}
+
+		// Merged blocks keep their original start. Once that start has passed, still
+		// allow editing the remaining time instead of rejecting the whole block.
+		const remaining = clipAvailabilitySlotToNow(slot, windowStart);
+		if (remaining) clipped.push(remaining);
 	}
 
-	return mergeAvailabilitySlots(slots);
+	return mergeAvailabilitySlots(clipped);
 }
 
 export function isSameCalendarDay(startsAt: Date, endsAt: Date): boolean {

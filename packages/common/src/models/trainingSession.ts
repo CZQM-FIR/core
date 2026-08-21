@@ -3,7 +3,7 @@ import {
   type TrainingSessionObjectiveResult,
   type TrainingSessionRow,
 } from "@czqm/db/schema";
-import { and, eq, inArray, isNull, or } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, lt, or } from "drizzle-orm";
 import type { DB } from "../db";
 import { User } from "./user";
 
@@ -87,9 +87,7 @@ export function allObjectivesAchieved(
 
 function assertScheduler(row: TrainingSessionRow, actorCid: number): void {
   if (row.scheduledByCid !== actorCid) {
-    throw new Error(
-      "Only the person who scheduled this session can manage it",
-    );
+    throw new Error("Only the person who scheduled this session can manage it");
   }
 }
 
@@ -285,13 +283,34 @@ export class TrainingSession {
       .orderBy(trainingSessions.startsAt);
   }
 
+  /** pending, confirmed, and in_progress sessions that overlap a time window. */
+  static async fetchScheduledInWindow(
+    db: DB,
+    windowStart: Date,
+    windowEnd: Date,
+  ): Promise<TrainingSessionRow[]> {
+    return db
+      .select()
+      .from(trainingSessions)
+      .where(
+        and(
+          inArray(trainingSessions.status, ACTIVE_STATUSES),
+          lt(trainingSessions.startsAt, windowEnd),
+          gt(trainingSessions.endsAt, windowStart),
+        ),
+      )
+      .orderBy(trainingSessions.startsAt);
+  }
+
   static async createPending(
     db: DB,
     input: CreatePendingInput,
   ): Promise<TrainingSessionRow> {
     const existing = await TrainingSession.fetchActiveForTask(db, input);
     if (existing) {
-      throw new Error("An active training session already exists for this task");
+      throw new Error(
+        "An active training session already exists for this task",
+      );
     }
 
     const now = new Date();
@@ -392,8 +411,7 @@ export class TrainingSession {
         "Sessions with training notes submitted to VATCAN cannot be cancelled",
       );
     }
-    const actor =
-      row.scheduledByCid === actorCid ? "scheduler" : "student";
+    const actor = row.scheduledByCid === actorCid ? "scheduler" : "student";
     if (
       !canCancelTrainingSession(
         row.status as TrainingSessionStatus,
@@ -549,7 +567,9 @@ export class TrainingSession {
       );
     }
     if (!canSubmitTrainingNotesToVatcan(row.status as TrainingSessionStatus)) {
-      throw new Error("Notes can only be submitted after the session has ended");
+      throw new Error(
+        "Notes can only be submitted after the session has ended",
+      );
     }
 
     const [updated] = await db

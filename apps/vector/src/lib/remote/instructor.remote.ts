@@ -3,6 +3,7 @@ import { db } from '$lib/db';
 import {
 	getAvailabilityWindowEndsAt,
 	getNextIncompleteTask,
+	getWindowStartDay,
 	isRangeWithinAvailability,
 	isTrainingSessionNext,
 	mergeAvailabilitySlots,
@@ -304,6 +305,71 @@ export const getInstructorStudentSessionAvailability = query(
 	}
 );
 
+export type ScheduledSessionInWindow = {
+	id: number;
+	startsAt: Date;
+	endsAt: Date;
+	status: TrainingSessionStatus;
+	sessionType: string;
+	sessionTypeLabel: string;
+	sessionDescription: string;
+	courseId: string;
+	courseName: string;
+	studentCid: number;
+	studentName: string;
+	instructorCid: number;
+	instructorName: string;
+};
+
+export const getScheduledSessionsInWindow = query(async () => {
+	await authorizeVectorInstructorAccess();
+
+	const windowStart = getWindowStartDay();
+	const windowEndsAt = getAvailabilityWindowEndsAt(windowStart);
+	const rows = await TrainingSession.fetchScheduledInWindow(db, windowStart, windowEndsAt);
+	if (rows.length === 0) return [];
+
+	const courseIds = [...new Set(rows.map((row) => row.courseId))];
+	const userCids = [...new Set(rows.flatMap((row) => [row.studentCid, row.scheduledByCid]))];
+
+	const [courses, loadedUsers] = await Promise.all([
+		db.query.courses.findMany({
+			where: { id: { in: courseIds } },
+			columns: { id: true, name: true, tasks: true }
+		}),
+		Promise.all(userCids.map((cid) => User.fromCid(db, cid)))
+	]);
+
+	const courseById = new Map(courses.map((course) => [course.id, course]));
+	const userByCid = new Map(
+		loadedUsers.filter((user): user is User => user != null).map((user) => [user.cid, user])
+	);
+
+	return rows.map((row): ScheduledSessionInWindow => {
+		const course = courseById.get(row.courseId);
+		const task = course?.tasks.find((entry) => entry.taskId === row.taskId);
+		const sessionType = task?.taskValue1 || 'generic';
+		const student = userByCid.get(row.studentCid);
+		const instructor = userByCid.get(row.scheduledByCid);
+
+		return {
+			id: row.id,
+			startsAt: row.startsAt,
+			endsAt: row.endsAt,
+			status: row.status as TrainingSessionStatus,
+			sessionType,
+			sessionTypeLabel: formatTrainingSessionType(sessionType),
+			sessionDescription: task ? describeCourseTask(task) : 'Training session',
+			courseId: row.courseId,
+			courseName: course?.name ?? 'Course',
+			studentCid: row.studentCid,
+			studentName: student?.displayName ?? `CID ${row.studentCid}`,
+			instructorCid: row.scheduledByCid,
+			instructorName: instructor?.displayName ?? `CID ${row.scheduledByCid}`
+		};
+	});
+});
+
 export const getStudentsWithSessionAvailability = query(async () => {
 	const actioner = await authorizeVectorInstructorAccess();
 
@@ -557,6 +623,7 @@ export const scheduleTrainingSession = command(
 		getInstructorStudentView({ courseId, cid: studentCid }).refresh();
 		getStudentCourseView(courseId).refresh();
 		getStudentsWithSessionAvailability().refresh();
+		getScheduledSessionsInWindow().refresh();
 		getMyTrainingSessions().refresh();
 		getUpcomingInstructorSession().refresh();
 		getInstructorTrainingSession(session.id).refresh();
@@ -624,6 +691,7 @@ export const cancelTrainingSession = command(
 		getInstructorStudentView({ courseId, cid: studentCid }).refresh();
 		getStudentCourseView(courseId).refresh();
 		getStudentsWithSessionAvailability().refresh();
+		getScheduledSessionsInWindow().refresh();
 		getMyTrainingSessions().refresh();
 		getUpcomingInstructorSession().refresh();
 		getInstructorTrainingSession(sessionId).refresh();
@@ -645,6 +713,7 @@ function refreshInstructorSessionQueries(session: {
 	getInstructorStudentView({ courseId: session.courseId, cid: session.studentCid }).refresh();
 	getStudentCourseView(session.courseId).refresh();
 	getStudentsWithSessionAvailability().refresh();
+	getScheduledSessionsInWindow().refresh();
 }
 
 function remoteCommandError(err: unknown, fallback: string): never {
