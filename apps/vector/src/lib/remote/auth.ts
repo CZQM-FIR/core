@@ -41,6 +41,27 @@ export async function authorizeVectorInstructorAccess() {
 	return actioner;
 }
 
+/** Instructor dashboard student page: instructors, or training admins arriving from /a/courses. */
+export async function authorizeVectorInstructorOrAdminAccess() {
+	const event = getRequestEvent();
+	const token = event.cookies.get('session');
+	if (!token) {
+		throw error(403, 'Forbidden');
+	}
+	const actioner = await User.fromSessionToken(db, token);
+	if (!actioner) {
+		throw error(403, 'Forbidden');
+	}
+	if (userHasVectorInstructorAccess(actioner)) {
+		return actioner;
+	}
+	const parents = await getAssistantParentFlagsForUser(db, actioner.cid);
+	if (!userHasVectorAdminAccess(actioner, parents)) {
+		throw error(403, 'Forbidden');
+	}
+	return actioner;
+}
+
 export async function authorizeVectorStudentOrInstructorAccess() {
 	const event = getRequestEvent();
 	const token = event.cookies.get('session');

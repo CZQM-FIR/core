@@ -105,6 +105,14 @@ export function userCanPauseVectorTraining(
   return userHasVectorAdminAccess(user, assistantParentFlags);
 }
 
+/** Force-complete or undo a course task regardless of type. Same gate as Training Administration. */
+export function userCanForceCompleteCourseTasks(
+  user: User,
+  assistantParentFlags: FlagName[],
+): boolean {
+  return userHasVectorAdminAccess(user, assistantParentFlags);
+}
+
 /** Vector `/i/*`: instructors, mentors, chief instructor, and admins */
 export function userHasVectorInstructorAccess(user: User): boolean {
   return user.hasFlag(["instructor", "mentor", "chief-instructor", "admin"]);

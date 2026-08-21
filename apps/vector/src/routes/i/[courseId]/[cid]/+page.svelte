@@ -219,6 +219,8 @@
 					courseId: view.course.id,
 					cid: view.student.cid,
 					canCompleteInstructorOnlyTasks: view.canCompleteInstructorOnlyTasks,
+					canForceComplete: view.canForceCompleteTasks,
+					canMarkTasksComplete: view.canMarkTasksComplete,
 					paused: view.pause != null
 				}}
 				headerActions={view.status === 'enrolled' && !view.pause ? headerActions : undefined}

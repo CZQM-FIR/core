@@ -23,6 +23,7 @@ import {
 	canSubmitTrainingNotesToVatcan,
 	canUnsubmitTrainingSessionNotes,
 	Course,
+	CourseTask,
 	certifyControllerOnRoster,
 	createVatcanTrainingNote,
 	describeCourseTask,
@@ -35,9 +36,11 @@ import {
 	updateVatcanTrainingNote,
 	User,
 	userCanCompleteInstructorOnlyCourseTasks,
+	userCanForceCompleteCourseTasks,
 	userCanGraduateVectorStudents,
 	userCanPauseVectorTraining,
 	userCanScheduleTrainingSessionType,
+	userHasVectorInstructorAccess,
 	getAssistantParentFlagsForUser,
 	requiresInstructorToComplete,
 	validateSubmittedInstructorNotes,
@@ -53,7 +56,11 @@ import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, desc, eq, gt, gte, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm';
-import { authorizeVectorInstructorAccess } from './auth';
+import {
+	authorizeVectorAdminAccess,
+	authorizeVectorInstructorAccess,
+	authorizeVectorInstructorOrAdminAccess
+} from './auth';
 import { getStudentCourseView } from './student.remote';
 import { getMyTrainingSessions } from './users.remote';
 import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
@@ -145,7 +152,7 @@ export const getInstructorStudentView = query(
 		cid: 'number.integer > 0'
 	}),
 	async ({ courseId, cid }) => {
-		const actioner = await authorizeVectorInstructorAccess();
+		const actioner = await authorizeVectorInstructorOrAdminAccess();
 
 		const course = await Course.fetchById(courseId, db);
 		if (!course) throw error(404, 'Course not found');
@@ -212,6 +219,7 @@ export const getInstructorStudentView = query(
 				pause == null &&
 				canViewSessionAvailability &&
 				activeSession == null &&
+				userHasVectorInstructorAccess(actioner) &&
 				userCanScheduleTrainingSessionType(actioner, sessionType);
 		}
 
@@ -235,6 +243,8 @@ export const getInstructorStudentView = query(
 			tasks,
 			canGraduateStudent: userCanGraduateVectorStudents(actioner),
 			canCompleteInstructorOnlyTasks: userCanCompleteInstructorOnlyCourseTasks(actioner),
+			canForceCompleteTasks: userCanForceCompleteCourseTasks(actioner, assistantParents),
+			canMarkTasksComplete: userHasVectorInstructorAccess(actioner),
 			allTasksComplete,
 			nextTask,
 			canViewSessionAvailability,
@@ -1177,17 +1187,62 @@ const StudentTaskOptions = type({
 	taskId: 'number.integer >= 0'
 });
 
-async function getInstructorCourseTask(courseId: string, taskId: number) {
+async function getCourseTaskById(courseId: string, taskId: number) {
 	const course = await Course.fetchById(courseId, db);
 	if (!course) throw error(404, 'Course not found');
 
 	const task = course.tasks.find((entry) => entry.taskId === taskId);
 	if (!task) throw error(404, 'Task not found');
+	return { course, task };
+}
+
+async function getInstructorCourseTask(courseId: string, taskId: number) {
+	const { task } = await getCourseTaskById(courseId, taskId);
 	if (task.isAutoCompletable() || !task.isManuallyCompletable()) {
 		throw error(400, 'This task cannot be marked complete manually');
 	}
 
 	return task;
+}
+
+async function applyCourseTaskCompletion(
+	task: CourseTask,
+	courseId: string,
+	cid: number,
+	actionerCid: number
+) {
+	try {
+		if (task.taskType === 'certify') {
+			const position = task.taskValue1?.trim() ?? '';
+			if (!isRosterPosition(position)) {
+				throw new Error('This certify task is missing a valid roster position');
+			}
+			await certifyControllerOnRoster(db, cid, position);
+		} else if (task.taskType === 'solo') {
+			const callsign = task.taskValue1?.trim() ?? '';
+			const durationDays = parseSoloDurationDays(task.taskValue2);
+			await grantSoloEndorsement(db, cid, callsign, durationDays);
+		}
+	} catch (err) {
+		remoteCommandError(err, 'Failed to update roster or solo endorsement');
+	}
+
+	await task.complete(cid);
+
+	if (task.taskType === 'certify' || task.taskType === 'solo') {
+		try {
+			await notifyCourseTaskCompletionEmail(task.taskType, courseId, cid, actionerCid, task);
+		} catch (err) {
+			console.error('Failed to queue training completion email', err);
+		}
+	}
+
+	getInstructorStudentView({ courseId, cid }).refresh();
+	getStudentCourseView(courseId).refresh();
+
+	return {
+		followUp: task.taskType === 'certify' || task.taskType === 'solo' ? task.taskType : null
+	};
 }
 
 export const completeStudentCourseTask = command(
@@ -1218,37 +1273,18 @@ export const completeStudentCourseTask = command(
 			}
 		}
 
-		try {
-			if (task.taskType === 'certify') {
-				const position = task.taskValue1?.trim() ?? '';
-				if (!isRosterPosition(position)) {
-					throw new Error('This certify task is missing a valid roster position');
-				}
-				await certifyControllerOnRoster(db, cid, position);
-			} else if (task.taskType === 'solo') {
-				const callsign = task.taskValue1?.trim() ?? '';
-				const durationDays = parseSoloDurationDays(task.taskValue2);
-				await grantSoloEndorsement(db, cid, callsign, durationDays);
-			}
-		} catch (err) {
-			remoteCommandError(err, 'Failed to update roster or solo endorsement');
-		}
+		return applyCourseTaskCompletion(task, courseId, cid, actioner.cid);
+	}
+);
 
-		await task.complete(cid);
+export const forceCompleteStudentCourseTask = command(
+	StudentTaskOptions,
+	async ({ courseId, cid, taskId }) => {
+		const actioner = await authorizeVectorAdminAccess();
+		await requireActiveUnpausedEnrollment(courseId, cid, 'Student is not enrolled in this course');
 
-		if (task.taskType === 'certify' || task.taskType === 'solo') {
-			try {
-				await notifyCourseTaskCompletionEmail(task.taskType, courseId, cid, actioner.cid, task);
-			} catch (err) {
-				console.error('Failed to queue training completion email', err);
-			}
-		}
-
-		getInstructorStudentView({ courseId, cid }).refresh();
-
-		return {
-			followUp: task.taskType === 'certify' || task.taskType === 'solo' ? task.taskType : null
-		};
+		const { task } = await getCourseTaskById(courseId, taskId);
+		return applyCourseTaskCompletion(task, courseId, cid, actioner.cid);
 	}
 );
 
@@ -1272,6 +1308,24 @@ export const uncompleteStudentCourseTask = command(
 		await completion.uncomplete();
 
 		getInstructorStudentView({ courseId, cid }).refresh();
+		getStudentCourseView(courseId).refresh();
+	}
+);
+
+export const forceUncompleteStudentCourseTask = command(
+	StudentTaskOptions,
+	async ({ courseId, cid, taskId }) => {
+		await authorizeVectorAdminAccess();
+		await requireActiveUnpausedEnrollment(courseId, cid, 'Student is not enrolled in this course');
+
+		const { task } = await getCourseTaskById(courseId, taskId);
+		const completion = await task.getCompletion(cid);
+		if (!completion) throw error(404, 'Task completion not found');
+
+		await completion.uncomplete();
+
+		getInstructorStudentView({ courseId, cid }).refresh();
+		getStudentCourseView(courseId).refresh();
 	}
 );
 
