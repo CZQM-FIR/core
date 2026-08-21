@@ -176,6 +176,12 @@ export class Course {
       );
     }
 
+    if (enrolled.pausedAt) {
+      throw new Error(
+        `User ${userId} training is paused on waitlist ${waitlistId}`,
+      );
+    }
+
     await this.db.insert(schema.completedUsers).values({
       cid: userId,
       waitlistId,

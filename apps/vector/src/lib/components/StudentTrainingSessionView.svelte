@@ -3,6 +3,7 @@
 	import { ChevronLeft } from '@lucide/svelte';
 	import type { TrainingSessionStatus } from '@czqm/common';
 	import TrainingSessionStudentPrepNote from '$lib/components/TrainingSessionStudentPrepNote.svelte';
+	import TrainingPauseBanner from '$lib/components/TrainingPauseBanner.svelte';
 	import {
 		cancelTrainingSession,
 		confirmTrainingSession,
@@ -213,6 +214,15 @@
 	</div>
 	<span class="badge {statusBadgeClass(session.status)}">{statusLabel(session.status)}</span>
 </div>
+
+{#if session.pause}
+	<div class="mt-4">
+		<TrainingPauseBanner
+			pausedAt={session.pause.pausedAt}
+			pauseReason={session.pause.pauseReason}
+		/>
+	</div>
+{/if}
 
 {#if session.canConfirm}
 	<p class="mt-4 text-sm">

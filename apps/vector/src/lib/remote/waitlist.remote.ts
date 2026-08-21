@@ -7,6 +7,13 @@ import { and, eq } from 'drizzle-orm';
 import { Course, User } from '@czqm/common';
 import { authorizeVectorAdminAccess } from './auth';
 import { notifyCourseEnrollmentEmailByWaitlist } from '$lib/courseEnrollmentEmails';
+import {
+	getInstructorEnrolledEntries,
+	getInstructorStudentView,
+	getStudentsWithSessionAvailability
+} from './instructor.remote';
+import { getStudentCourses, getStudentCourseView } from './student.remote';
+import { getMyTrainingSessions } from './users.remote';
 
 export const getWaitlist = query(type('number.integer >= 0'), async (waitlistId) => {
 	await authorizeVectorAdminAccess();
@@ -512,6 +519,9 @@ export const graduateUserFromCourse = command(
 		});
 
 		if (!enrolledUser) throw error(404, 'Enrolled user not found');
+		if (enrolledUser.pausedAt) {
+			throw error(400, 'Training in this course is paused');
+		}
 
 		const course = await Course.fetchByWaitlistId(waitlistId, db);
 		if (!course) throw error(404, 'Course not found for waitlist');
@@ -533,3 +543,91 @@ export const graduateUserFromCourse = command(
 		};
 	}
 );
+
+const CourseId = type(/^[0-9a-z]{5}$/);
+const PauseEnrollmentOptions = type({
+	courseId: CourseId,
+	cid: 'number.integer > 0',
+	reason: 'string'
+});
+const ResumeEnrollmentOptions = type({
+	courseId: CourseId,
+	cid: 'number.integer > 0'
+});
+
+function refreshEnrollmentPauseQueries(courseId: string, cid: number, waitlistId: number) {
+	getInstructorStudentView({ courseId, cid }).refresh();
+	getStudentCourseView(courseId).refresh();
+	getStudentCourses().refresh();
+	getEnrolledWaitlistEntries(waitlistId).refresh();
+	getInstructorEnrolledEntries(waitlistId).refresh();
+	getStudentsWithSessionAvailability().refresh();
+	getMyTrainingSessions().refresh();
+}
+
+export const pauseEnrolledStudent = command(
+	PauseEnrollmentOptions,
+	async ({ courseId, cid, reason }) => {
+		const actioner = await authorizeVectorAdminAccess();
+
+		const pauseReason = reason.trim();
+		if (!pauseReason) throw error(400, 'A pause reason is required');
+		if (pauseReason.length > 1000) throw error(400, 'Pause reason is too long');
+
+		const course = await Course.fetchById(courseId, db);
+		if (!course) throw error(404, 'Course not found');
+
+		const enrolled = await db.query.enrolledUsers.findFirst({
+			where: {
+				waitlistId: course.waitlist.id,
+				cid,
+				hiddenAt: { isNull: true }
+			}
+		});
+		if (!enrolled) throw error(400, 'Student is not enrolled in this course');
+		if (enrolled.pausedAt) throw error(400, 'Training in this course is already paused');
+
+		await db
+			.update(enrolledUsers)
+			.set({
+				pausedAt: new Date(),
+				pauseReason,
+				pausedByCid: actioner.cid
+			})
+			.where(eq(enrolledUsers.id, enrolled.id));
+
+		refreshEnrollmentPauseQueries(courseId, cid, course.waitlist.id);
+
+		return { success: true as const };
+	}
+);
+
+export const resumeEnrolledStudent = command(ResumeEnrollmentOptions, async ({ courseId, cid }) => {
+	await authorizeVectorAdminAccess();
+
+	const course = await Course.fetchById(courseId, db);
+	if (!course) throw error(404, 'Course not found');
+
+	const enrolled = await db.query.enrolledUsers.findFirst({
+		where: {
+			waitlistId: course.waitlist.id,
+			cid,
+			hiddenAt: { isNull: true }
+		}
+	});
+	if (!enrolled) throw error(400, 'Student is not enrolled in this course');
+	if (!enrolled.pausedAt) throw error(400, 'Training in this course is not paused');
+
+	await db
+		.update(enrolledUsers)
+		.set({
+			pausedAt: null,
+			pauseReason: null,
+			pausedByCid: null
+		})
+		.where(eq(enrolledUsers.id, enrolled.id));
+
+	refreshEnrollmentPauseQueries(courseId, cid, course.waitlist.id);
+
+	return { success: true as const };
+});
