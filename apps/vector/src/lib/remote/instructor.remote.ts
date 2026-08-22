@@ -11,6 +11,7 @@ import {
 	validateSessionTimeRange
 } from '$lib/trainingSessionAvailability';
 import { getCourseTaskProgress } from '$lib/courseTaskProgress';
+import { loadTrainingNotesForStudent } from '$lib/trainingNotes';
 import {
 	courseTaskCompletions,
 	trainingSessionAvailability,
@@ -711,6 +712,7 @@ function refreshInstructorSessionQueries(session: {
 	getSessionsAwaitingTrainingNotes().refresh();
 	getMyTrainingSessions().refresh();
 	getInstructorStudentView({ courseId: session.courseId, cid: session.studentCid }).refresh();
+	getInstructorStudentTrainingNotes({ cid: session.studentCid }).refresh();
 	getStudentCourseView(session.courseId).refresh();
 	getStudentsWithSessionAvailability().refresh();
 	getScheduledSessionsInWindow().refresh();
@@ -958,6 +960,20 @@ export const getAuthoredTrainingNotes = query(async () => {
 		};
 	});
 });
+
+export const getInstructorStudentTrainingNotes = query(
+	type({
+		cid: 'number.integer > 0'
+	}),
+	async ({ cid }) => {
+		await authorizeVectorInstructorOrAdminAccess();
+
+		const student = await User.fromCid(db, cid);
+		if (!student) throw error(404, 'Student not found');
+
+		return loadTrainingNotesForStudent(cid);
+	}
+);
 
 export const getInstructorTrainingSession = query(SessionId, async (sessionId) => {
 	const actioner = await authorizeVectorInstructorAccess();

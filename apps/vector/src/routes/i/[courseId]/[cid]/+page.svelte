@@ -2,10 +2,12 @@
 	import { ChevronLeft } from '@lucide/svelte';
 	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
 	import SyncCourseTasksButton from '$lib/components/SyncCourseTasksButton.svelte';
+	import TrainingNotesList from '$lib/components/TrainingNotesList.svelte';
 	import TrainingPauseBanner from '$lib/components/TrainingPauseBanner.svelte';
 	import TrainingSessionAvailabilityCalendar from '$lib/components/TrainingSessionAvailabilityCalendar.svelte';
 	import TrainingSessionPendingCard from '$lib/components/TrainingSessionPendingCard.svelte';
 	import {
+		getInstructorStudentTrainingNotes,
 		getInstructorStudentView,
 		graduateStudentFromCourse,
 		syncStudentCourseTasks
@@ -18,6 +20,10 @@
 	const viewQuery = $derived.by(() =>
 		getInstructorStudentView({ courseId: data.courseId, cid: data.cid })
 	);
+	const notesQuery = $derived.by(() => getInstructorStudentTrainingNotes({ cid: data.cid }));
+	const notes = $derived(notesQuery.current?.notes ?? []);
+	const legacyNotes = $derived(notesQuery.current?.legacyNotes ?? []);
+	const legacyError = $derived(notesQuery.current?.legacyError ?? null);
 
 	let graduating = $state(false);
 	let graduateError = $state<string | null>(null);
@@ -252,6 +258,26 @@
 				</div>
 			</div>
 		{/if}
+
+		<div class="mt-8">
+			<h2 class="text-xl font-semibold">Training Notes</h2>
+			{#if notesQuery.loading && !notesQuery.current}
+				<p class="mt-3">Loading training notes...</p>
+			{:else if notesQuery.error && !notesQuery.current}
+				<p class="text-error mt-3">{notesQuery.error.message}</p>
+			{:else}
+				<div class="mt-3">
+					<TrainingNotesList
+						{notes}
+						{legacyNotes}
+						{legacyError}
+						sessionHrefPrefix="/i/sessions"
+						emptyMessage="This student doesn't have any training notes yet."
+						emptyVectorMessage="This student doesn't have any Vector training notes yet."
+					/>
+				</div>
+			{/if}
+		</div>
 
 		{#if data.isVectorAdmin && view.canPauseTraining && view.status === 'enrolled'}
 			<dialog class="modal" bind:this={pauseDialog}>
