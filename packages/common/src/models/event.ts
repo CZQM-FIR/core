@@ -36,7 +36,7 @@ export class Event {
       where: {
         end: { gte: dateFloorUtc },
       },
-      orderBy: (events, { desc }) => desc(events.start),
+      orderBy: (events, { asc }) => asc(events.start),
     });
   }
 
