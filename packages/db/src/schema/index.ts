@@ -21,3 +21,4 @@ export * from "./jobs";
 export * from "./documentManagementSystem";
 export * from "./assistants";
 export * from "./training";
+export * from "./appSettings";

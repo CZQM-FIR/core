@@ -1,8 +1,19 @@
 <script lang="ts">
 	import { createCourse, deleteCourse, getCourses } from '$lib/remote/courses.remote';
+	import {
+		getCourseStatusNotificationsEnabled,
+		setCourseStatusNotificationsEnabled
+	} from '$lib/remote/settings.remote';
 	import { SquarePen, Trash } from '@lucide/svelte';
 
 	const coursesQuery = getCourses();
+	const notificationsQuery = getCourseStatusNotificationsEnabled();
+
+	const notificationsEnabled = $derived(notificationsQuery.current !== false);
+	const notificationsToggleDisabled = $derived(
+		(notificationsQuery.loading && notificationsQuery.current === undefined) ||
+			!!setCourseStatusNotificationsEnabled.pending
+	);
 
 	let createModal: HTMLDialogElement | undefined;
 	let deleteModal: HTMLDialogElement | undefined;
@@ -18,6 +29,14 @@
 		selectedCourseId = id;
 		selectedCourseName = name;
 		deleteModal?.showModal();
+	}
+
+	async function onNotificationsChange(event: Event) {
+		const enabled = (event.currentTarget as HTMLInputElement).checked;
+
+		await setCourseStatusNotificationsEnabled(enabled).updates(
+			notificationsQuery.withOverride(() => enabled)
+		);
 	}
 
 	async function confirmDelete() {
@@ -48,6 +67,67 @@
 	<div class="container mx-auto">
 		<h1 class="pt-6 text-2xl font-semibold">Training Administration</h1>
 		<div class="divider"></div>
+
+		<div
+			class={[
+				'rounded-box mt-2 mb-4 flex items-start justify-between gap-4 border p-4',
+				notificationsToggleDisabled && 'opacity-70',
+				!notificationsEnabled && 'border-warning bg-warning/10'
+			]}
+		>
+			<span class="flex flex-col gap-1">
+				<span class="flex flex-wrap items-baseline gap-x-2">
+					<label for="course-status-notifications" class="font-medium">
+						Course status notifications
+					</label>
+					<span
+						class={[
+							'text-sm font-semibold',
+							notificationsEnabled ? 'text-success' : 'text-warning'
+						]}
+					>
+						{notificationsEnabled ? 'Sending' : 'Paused'}
+					</span>
+				</span>
+				<span class="text-sm opacity-70">
+					Waitlist, enrollment, and completion emails only; training session emails are not
+					affected.
+				</span>
+			</span>
+			<div
+				class={[
+					'flex shrink-0 items-center gap-2',
+					notificationsToggleDisabled && 'cursor-not-allowed'
+				]}
+			>
+				<span
+					class={['text-sm', notificationsEnabled ? 'opacity-50' : 'text-warning font-semibold']}
+					aria-hidden="true"
+				>
+					Off
+				</span>
+				<input
+					id="course-status-notifications"
+					type="checkbox"
+					role="switch"
+					class={['toggle', notificationsEnabled ? 'toggle-success' : 'toggle-warning']}
+					checked={notificationsEnabled}
+					disabled={notificationsToggleDisabled}
+					aria-checked={notificationsEnabled}
+					onchange={onNotificationsChange}
+				/>
+				<span
+					class={['text-sm', notificationsEnabled ? 'text-success font-semibold' : 'opacity-50']}
+					aria-hidden="true"
+				>
+					On
+				</span>
+			</div>
+		</div>
+		{#if notificationsQuery.error}
+			<p class="text-error mb-4 text-sm">Failed to load notification settings.</p>
+		{/if}
+
 		<div class="flex flex-row items-center justify-between gap-2">
 			<p>
 				Manage the courses offered by CZQM. Each course owns its own waitlist; create a new course
@@ -69,7 +149,7 @@
 							<th>#</th>
 							<th>Course Name</th>
 							<th>Description</th>
-							<th># Students</th>
+							<th>Students in Waitlist</th>
 							<th>Actions</th>
 						</tr>
 					</thead>
