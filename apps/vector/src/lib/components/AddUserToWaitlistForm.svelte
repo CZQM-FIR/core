@@ -65,7 +65,8 @@
 				<option value="" disabled selected={!selectedUserId}>Select a Student</option>
 				{#each controllers
 					.filter((c) => !waitlistedCids.includes(c.cid) && !enrolledEntries.some((e) => e.cid === c.cid))
-					.toSorted( (a, b) => a.name_first.localeCompare(b.name_first) ) as controller (controller.cid)}
+					.slice()
+					.sort((a, b) => a.name_first.localeCompare(b.name_first)) as controller (controller.cid)}
 					<option value={String(controller.cid)}>
 						{controller.name_full} ({controller.cid})
 					</option>

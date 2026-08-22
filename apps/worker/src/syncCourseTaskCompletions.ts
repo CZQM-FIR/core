@@ -14,10 +14,15 @@ export const syncCourseTaskCompletions = async (db: DB, env: Pick<Env, 'VATCAN_A
 
   console.log(`Starting course task completions sync for ${enrolled.length} enrolled students`);
 
+  const courseByWaitlistId = new Map<number, Awaited<ReturnType<typeof Course.fetchByWaitlistId>>>();
   let processed = 0;
 
   for (const row of enrolled) {
-    const course = await Course.fetchByWaitlistId(row.waitlistId, db);
+    let course = courseByWaitlistId.get(row.waitlistId);
+    if (course === undefined) {
+      course = await Course.fetchByWaitlistId(row.waitlistId, db);
+      courseByWaitlistId.set(row.waitlistId, course);
+    }
     if (!course) continue;
 
     try {

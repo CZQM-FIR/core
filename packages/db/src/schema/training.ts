@@ -29,7 +29,7 @@ export const courses = sqliteTable("courses", {
         objectives?: string[];
       }[]
     >()
-    .default([]),
+    .$defaultFn(() => []),
   prerequisites: text("prerequisites", { mode: "json" })
     .notNull()
     .$type<
@@ -40,7 +40,7 @@ export const courses = sqliteTable("courses", {
         prerequisiteValue2: string | null;
       }[]
     >()
-    .default([]),
+    .$defaultFn(() => []),
 });
 
 export const courseTaskCompletions = sqliteTable("course_task_completions", {
