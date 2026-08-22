@@ -201,8 +201,7 @@
     <p class="text-gray-500">FAQs - <span class="italic">Coming Soon!</span></p>
     <a href="/join" class="link-hover link">Join Us</a>
     <a href="/contact" class="link-hover link">Contact Us</a>
-    <!-- <a href="https://wiki.czqm.ca" class="link-hover link">Wiki</a> -->
-    <p class="text-gray-500">Wiki - <span class="italic">Coming Soon!</span></p>
+    <a href="https://wiki.czqm.ca" class="link-hover link">Wiki</a>
   </nav>
   <nav>
     <h3 class="footer-title">Connect With Us</h3>
