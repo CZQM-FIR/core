@@ -506,7 +506,8 @@ export class UserHours {
           (wp) => wp.waitlist.name === "Visitors / Transfers",
         ) ||
         this.user.enrolledPositions.some(
-          (ep) => ep.waitlist.name === "Visitors / Transfers",
+          (ep) =>
+            ep.waitlist.name === "Visitors / Transfers" && ep.hiddenAt === null,
         )
       ) {
         // Visitor is currently on the Visitors/Transfers waitlist or in training
@@ -525,7 +526,9 @@ export class UserHours {
     } else if (this.user.hasFlag("controller")) {
       if (
         this.user.waitlistPositions.some((wp) => wp.waitlist.name === "S1") ||
-        this.user.enrolledPositions.some((ep) => ep.waitlist.name === "S1")
+        this.user.enrolledPositions.some(
+          (ep) => ep.waitlist.name === "S1" && ep.hiddenAt === null,
+        )
       ) {
         // Controller is currently on the S1 waitlist or in training
         // Doesn't have the ability to control therefore exempt from activity requirement
@@ -559,7 +562,9 @@ export class UserHours {
           (wp) => wp.waitlist.name === "Visitors / Transfers",
         ) ||
         this.user.enrolledPositions.some(
-          (ep) => ep.waitlist.name === "Visitors / Transfers",
+          (ep) =>
+            ep.waitlist.name === "Visitors / Transfers" &&
+            (ep.hiddenAt === null || ep.hiddenAt >= lastQuarterStart),
         ) ||
         this.user.completedPositions.some(
           (cp) =>
@@ -583,7 +588,11 @@ export class UserHours {
     } else if (this.user.hasFlag("controller")) {
       if (
         this.user.waitlistPositions.some((wp) => wp.waitlist.name === "S1") ||
-        this.user.enrolledPositions.some((ep) => ep.waitlist.name === "S1") ||
+        this.user.enrolledPositions.some(
+          (ep) =>
+            ep.waitlist.name === "S1" &&
+            (ep.hiddenAt === null || ep.hiddenAt >= lastQuarterStart),
+        ) ||
         this.user.completedPositions.some(
           (cp) =>
             cp.waitlist.name === "S1" && cp.completedAt >= lastQuarterStart,

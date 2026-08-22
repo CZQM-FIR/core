@@ -73,7 +73,8 @@ export async function grantSoloEndorsement(
   });
   if (
     rosterRows.some(
-      (row) => positionName.includes(row.position) && row.status === 2,
+      (row) =>
+        positionName.toLowerCase().includes(row.position) && row.status === 2,
     )
   ) {
     throw new Error("User is already certified for this position");
