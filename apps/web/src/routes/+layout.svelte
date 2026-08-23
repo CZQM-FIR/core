@@ -197,8 +197,7 @@
   <nav>
     <h3 class="footer-title">Quick Links</h3>
     <a href="/about" class="link-hover link">About Us</a>
-    <!-- <a href="https://wiki.czqm.ca/en/faqs" class="link-hover link">FAQs</a> -->
-    <p class="text-gray-500">FAQs - <span class="italic">Coming Soon!</span></p>
+    <a href="https://wiki.czqm.ca/faqs" class="link-hover link">FAQs</a>
     <a href="/join" class="link-hover link">Join Us</a>
     <a href="/contact" class="link-hover link">Contact Us</a>
     <a href="https://wiki.czqm.ca" class="link-hover link">Wiki</a>

@@ -12,7 +12,8 @@ nav = [
   { "Software Guides" = [
     "software/index.md",
     "software/vacs.md"
-    ]}
+    ]},
+  { "FAQs" = "faqs/index.md" },
 ]
 #extra_css = ["stylesheets/extra.css"]
 #extra_javascript = ["javascripts/extra.js"]
