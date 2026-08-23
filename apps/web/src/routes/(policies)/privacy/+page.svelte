@@ -4,7 +4,7 @@
 <section>
   <div class="prose container mx-auto max-w-240 py-6">
     <h1 class="mb-0">CZQM / QX Privacy Policy</h1>
-    <span class="mt-0 text-sm">Last Updated 23 October 2025</span>
+    <span class="mt-0 text-sm">Last Updated 22 August 2026</span>
     <p>
       When you use CZQM / QX Moncton / Gander services such as but not limited to czqm.ca, and the
       CZQM Discord, there is information sent to us and stored to allow us to provide services to
@@ -58,12 +58,16 @@
     <p>
       Your full name as provided by VATSIM may be displayed publicly; however, at user discretion,
       through a setting located on the myCZQM dashboard, your full name may be replaced by your
-      first name and last initial or solely your VATSIM CID.
+      first name and last initial or solely your VATSIM CID. Please note that your full name will
+      continue to be displayed to members of the CZQM FIR staff team and members of the CZQM FIR
+      training team.
     </p>
     <h3>Discord</h3>
     <p>
       When you link your Discord account on the myCZQM dashboard, your full name will be transmitted
-      and stored on Discord's servers. This is to allow us to maintain our Discord server.
+      and stored on Discord's servers. This is to allow us to maintain our Discord server. Should
+      you wish, your full name may be replaced with either your first name and last initial or
+      solely your VATSIM CID as outlined above.
     </p>
     <h2>Cookies</h2>
     <p>
@@ -100,13 +104,14 @@
     </p>
     <p>Request for access to your information will be provided to you at no charge.</p>
     <h3>Right to Rectify</h3>
-
-    You have a right to rectify data you believe to be inaccurate. We encourage members to ensure
-    details such as email address are kept up to date through their VATSIM account. If you believe
-    other data held is incorrect you may contact the CZQM staff team to seek to have it corrected.
-    To request data rectification, email CZQM at ‎<a href="mailto:webmaster@czqm.ca">
-      webmaster@czqm.ca</a
-    >.
+    <p>
+      You have a right to rectify data you believe to be inaccurate. We encourage members to ensure
+      details such as email address are kept up to date through their VATSIM account. If you believe
+      other data held is incorrect you may contact the CZQM staff team to seek to have it corrected.
+      To request data rectification, email CZQM at ‎<a href="mailto:webmaster@czqm.ca">
+        webmaster@czqm.ca</a
+      >.
+    </p>
     <p>All changes will be completed at no charge to you.</p>
     <p>
       You have the right to request we restrict the processing of your data in the event of a
@@ -122,7 +127,13 @@
     <p>
       You have the right to request the erasure of your data from our systems. This will result in
       the termination of your controller or visitor status with CZQM (if applicable). Should you
-      continue to access the CZQM website, your data will be re-collected from VATSIM and VATCAN.
+      continue to access the CZQM website, your data will be re-collected from VATSIM and VATCAN as
+      outlined above.
+    </p>
+    <p>
+      To request the erasure of your data, please contact <a href="mailto:webmaster@czqm.ca"
+        >webmaster@czqm.ca</a
+      >.
     </p>
     <p>
       Should you wish for your data to be removed from VATCAN or VATSIM, please contact them
