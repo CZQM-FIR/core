@@ -4,7 +4,7 @@ import { enrolledUsers, moodleQueue, waitingUsers, waitlists } from '@czqm/db/sc
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
-import { Course, User } from '@czqm/common';
+import { Course, User, userHasVectorInstructorAccess } from '@czqm/common';
 import { authorizeVectorAdminAccess } from './auth';
 import { notifyCourseEnrollmentEmailByWaitlist } from '$lib/courseEnrollmentEmails';
 import {
@@ -12,8 +12,6 @@ import {
 	getInstructorStudentView,
 	getStudentsWithSessionAvailability
 } from './instructor.remote';
-import { getStudentCourses, getStudentCourseView } from './student.remote';
-import { getMyTrainingSessions } from './users.remote';
 
 export const getWaitlist = query(type('number.integer >= 0'), async (waitlistId) => {
 	await authorizeVectorAdminAccess();
@@ -555,14 +553,18 @@ const ResumeEnrollmentOptions = type({
 	cid: 'number.integer > 0'
 });
 
-function refreshEnrollmentPauseQueries(courseId: string, cid: number, waitlistId: number) {
+function refreshEnrollmentPauseQueries(
+	courseId: string,
+	cid: number,
+	waitlistId: number,
+	actioner: User
+) {
 	getInstructorStudentView({ courseId, cid }).refresh();
-	getStudentCourseView(courseId).refresh();
-	getStudentCourses().refresh();
 	getEnrolledWaitlistEntries(waitlistId).refresh();
-	getInstructorEnrolledEntries(waitlistId).refresh();
-	getStudentsWithSessionAvailability().refresh();
-	getMyTrainingSessions().refresh();
+	if (userHasVectorInstructorAccess(actioner)) {
+		getInstructorEnrolledEntries(waitlistId).refresh();
+		getStudentsWithSessionAvailability().refresh();
+	}
 }
 
 export const pauseEnrolledStudent = command(
@@ -596,14 +598,14 @@ export const pauseEnrolledStudent = command(
 			})
 			.where(eq(enrolledUsers.id, enrolled.id));
 
-		refreshEnrollmentPauseQueries(courseId, cid, course.waitlist.id);
+		refreshEnrollmentPauseQueries(courseId, cid, course.waitlist.id, actioner);
 
 		return { success: true as const };
 	}
 );
 
 export const resumeEnrolledStudent = command(ResumeEnrollmentOptions, async ({ courseId, cid }) => {
-	await authorizeVectorAdminAccess();
+	const actioner = await authorizeVectorAdminAccess();
 
 	const course = await Course.fetchById(courseId, db);
 	if (!course) throw error(404, 'Course not found');
@@ -627,7 +629,7 @@ export const resumeEnrolledStudent = command(ResumeEnrollmentOptions, async ({ c
 		})
 		.where(eq(enrolledUsers.id, enrolled.id));
 
-	refreshEnrollmentPauseQueries(courseId, cid, course.waitlist.id);
+	refreshEnrollmentPauseQueries(courseId, cid, course.waitlist.id, actioner);
 
 	return { success: true as const };
 });
