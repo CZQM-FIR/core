@@ -304,7 +304,8 @@ export const joinCourseWaitlist = command(CourseId, async (courseId) => {
 });
 
 export const syncStudentCourseTasks = command(CourseId, async (courseId) => {
-	const user = await authorizeVectorStudentAccess();
+	const event = getRequestEvent();
+	const cid = event?.locals.user!.cid;
 
 	const course = await Course.fetchById(courseId, db);
 	if (!course) throw error(404, 'Course not found');
@@ -312,7 +313,7 @@ export const syncStudentCourseTasks = command(CourseId, async (courseId) => {
 	const enrolled = await db.query.enrolledUsers.findFirst({
 		where: {
 			waitlistId: course.waitlist.id,
-			cid: user.cid,
+			cid,
 			hiddenAt: { isNull: true }
 		}
 	});
@@ -325,12 +326,12 @@ export const syncStudentCourseTasks = command(CourseId, async (courseId) => {
 		throw error(500, 'VATCAN API token is not configured on this server.');
 	}
 
-	await course.syncTaskCompletions(user.cid, {
+	await course.syncTaskCompletions(cid, {
 		VATCAN_API_TOKEN: env.VATCAN_API_TOKEN
 	});
 
 	getStudentCourseView(courseId).refresh();
-	getInstructorStudentView({ courseId, cid: user.cid }).refresh();
+	getInstructorStudentView({ courseId, cid }).refresh();
 
 	return { ok: true as const };
 });
