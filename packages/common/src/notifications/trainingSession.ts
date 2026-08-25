@@ -6,7 +6,8 @@ export type TrainingSessionEmailEvent =
   | "confirmed"
   | "declined"
   | "cancelled"
-  | "rescheduled";
+  | "rescheduled"
+  | "transferred";
 
 type Participant = {
   cid: number;
@@ -25,6 +26,7 @@ type QueueTrainingSessionEmailsInput = {
   endsAt: Date;
   student: Participant;
   scheduler: Participant;
+  previousScheduler?: Participant;
   vectorUrl: string;
 };
 
@@ -151,6 +153,18 @@ function getStudentCopy(
           "CZQM Training Team",
         ],
       };
+    case "transferred":
+      return {
+        subject: "CZQM - Training session transferred",
+        paragraphs: [
+          `Hello ${input.student.name_full} (${input.student.cid}),`,
+          `Your training session in ${input.courseName} is now assigned to ${schedulerLabel}.`,
+          `Session time: ${sessionRange}`,
+          `<a href=${sessionUrl}>View your session in Vector</a>`,
+          "Best regards,",
+          "CZQM Training Team",
+        ],
+      };
   }
 }
 
@@ -225,7 +239,42 @@ function getSchedulerCopy(
           "CZQM Training Team",
         ],
       };
+    case "transferred":
+      return {
+        subject: `CZQM - Training session with ${studentLabel} transferred to you`,
+        paragraphs: [
+          `Hello ${input.scheduler.name_full} (${input.scheduler.cid}),`,
+          `A training session with ${studentLabel} in ${input.courseName} was transferred to you.`,
+          `Session time: ${sessionRange}`,
+          `<a href=${sessionUrl}>View session in Vector</a>`,
+          "Best regards,",
+          "CZQM Training Team",
+        ],
+      };
   }
+}
+
+function getPreviousSchedulerCopy(
+  input: QueueTrainingSessionEmailsInput,
+): { subject: string; paragraphs: string[] } | null {
+  if (!input.previousScheduler) return null;
+
+  const sessionRange = formatSessionRange(input.startsAt, input.endsAt);
+  const sessionUrl = `${input.vectorUrl}/i/sessions/${input.sessionId}`;
+  const studentLabel = input.student.displayName;
+  const newSchedulerLabel = input.scheduler.displayName;
+
+  return {
+    subject: `CZQM - Training session with ${studentLabel} transferred`,
+    paragraphs: [
+      `Hello ${input.previousScheduler.name_full} (${input.previousScheduler.cid}),`,
+      `Your training session with ${studentLabel} in ${input.courseName} was transferred to ${newSchedulerLabel}.`,
+      `Session time: ${sessionRange}`,
+      `<a href=${sessionUrl}>View session in Vector</a>`,
+      "Best regards,",
+      "CZQM Training Team",
+    ],
+  };
 }
 
 export async function queueTrainingSessionEmails(
@@ -235,24 +284,46 @@ export async function queueTrainingSessionEmails(
   const now = new Date();
   const studentCopy = getStudentCopy(input.event, input);
   const schedulerCopy = getSchedulerCopy(input.event, input);
+  const previousSchedulerCopy =
+    input.event === "transferred" ? getPreviousSchedulerCopy(input) : null;
 
-  await db.insert(notifications).values([
+  const rows = [
     {
       timestamp: now,
       userId: input.studentCid,
-      type: "trainingUpdates",
-      location: "email",
+      type: "trainingUpdates" as const,
+      location: "email" as const,
       message: buildEmailPayload(studentCopy.subject, studentCopy.paragraphs),
     },
     {
       timestamp: now,
       userId: input.scheduledByCid,
-      type: "trainingUpdates",
-      location: "email",
+      type: "trainingUpdates" as const,
+      location: "email" as const,
       message: buildEmailPayload(
         schedulerCopy.subject,
         schedulerCopy.paragraphs,
       ),
     },
-  ]);
+  ];
+
+  if (
+    previousSchedulerCopy &&
+    input.previousScheduler &&
+    input.previousScheduler.cid !== input.scheduledByCid &&
+    input.previousScheduler.cid !== input.studentCid
+  ) {
+    rows.push({
+      timestamp: now,
+      userId: input.previousScheduler.cid,
+      type: "trainingUpdates",
+      location: "email",
+      message: buildEmailPayload(
+        previousSchedulerCopy.subject,
+        previousSchedulerCopy.paragraphs,
+      ),
+    });
+  }
+
+  await db.insert(notifications).values(rows);
 }

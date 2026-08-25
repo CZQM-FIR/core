@@ -161,6 +161,20 @@ export function canCancelTrainingSession(
   );
 }
 
+/** Unsubmitted pending, confirmed, in-progress, and completed sessions can be transferred. */
+export function canTransferTrainingSession(
+  status: TrainingSessionStatus,
+  notesSentToVatcan: boolean,
+): boolean {
+  if (notesSentToVatcan) return false;
+  return (
+    status === "pending" ||
+    status === "confirmed" ||
+    status === "in_progress" ||
+    status === "completed"
+  );
+}
+
 export function validateSubmittedInstructorNotes(value: string): string {
   const trimmed = value.trim();
   if (
@@ -479,6 +493,47 @@ export class TrainingSession {
       .set({
         status: "completed",
         actualEndedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(trainingSessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  static async transfer(
+    db: DB,
+    sessionId: number,
+    toCid: number,
+  ): Promise<TrainingSessionRow> {
+    const row = await TrainingSession.fetchById(db, sessionId);
+    if (!row) throw new Error("Training session not found");
+    if (trainingNotesSentToVatcan(row)) {
+      throw new Error(
+        "Sessions with training notes submitted to VATCAN cannot be transferred",
+      );
+    }
+    if (
+      !canTransferTrainingSession(row.status as TrainingSessionStatus, false)
+    ) {
+      throw new Error("This training session cannot be transferred");
+    }
+    if (toCid === row.scheduledByCid) {
+      throw new Error(
+        "This training session is already assigned to that instructor",
+      );
+    }
+    if (toCid === row.studentCid) {
+      throw new Error(
+        "A training session cannot be transferred to the student",
+      );
+    }
+
+    const now = new Date();
+    const [updated] = await db
+      .update(trainingSessions)
+      .set({
+        scheduledByCid: toCid,
         updatedAt: now,
       })
       .where(eq(trainingSessions.id, sessionId))

@@ -23,6 +23,7 @@ import {
 	allObjectivesAchieved,
 	canCancelTrainingSession,
 	canSubmitTrainingNotesToVatcan,
+	canTransferTrainingSession,
 	canUnsubmitTrainingSessionNotes,
 	Course,
 	CourseTask,
@@ -37,11 +38,13 @@ import {
 	TrainingSession,
 	updateVatcanTrainingNote,
 	User,
+	USER_FETCH_MINIMAL,
 	userCanCompleteInstructorOnlyCourseTasks,
 	userCanForceCompleteCourseTasks,
 	userCanGraduateVectorStudents,
 	userCanPauseVectorTraining,
 	userCanScheduleTrainingSessionType,
+	userHasVectorAdminAccess,
 	userHasVectorInstructorAccess,
 	getAssistantParentFlagsForUser,
 	requiresInstructorToComplete,
@@ -731,7 +734,26 @@ async function requireSchedulerSession(sessionId: number, actionerCid: number) {
 	return session;
 }
 
-async function toInstructorSessionDetail(row: TrainingSessionRow, actionerCid: number) {
+async function actorCanTransferSession(actioner: User, session: TrainingSessionRow) {
+	if (
+		!canTransferTrainingSession(
+			session.status as TrainingSessionStatus,
+			trainingNotesSentToVatcan(session)
+		)
+	) {
+		return false;
+	}
+	if (actioner.cid === session.scheduledByCid) return true;
+	const parents = await getAssistantParentFlagsForUser(db, actioner.cid);
+	return userHasVectorAdminAccess(actioner, parents);
+}
+
+function trainingSessionTypeFromCourse(course: Course | null, taskId: number): string | null {
+	const task = course?.tasks.find((entry) => entry.taskId === taskId);
+	return task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
+}
+
+async function toInstructorSessionDetail(row: TrainingSessionRow, actioner: User) {
 	const course = await Course.fetchById(row.courseId, db);
 	if (!course) throw error(404, 'Course not found');
 
@@ -754,7 +776,8 @@ async function toInstructorSessionDetail(row: TrainingSessionRow, actionerCid: n
 	const isFirstSubmit = row.vatcanNoteId == null;
 	const taskComplete = completion?.isComplete ?? false;
 	const status = row.status as TrainingSessionStatus;
-	const canManage = actionerCid === row.scheduledByCid;
+	const canManage = actioner.cid === row.scheduledByCid;
+	const canTransfer = await actorCanTransferSession(actioner, row);
 	const sessionType = task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
 	const taskObjectives = task?.taskType === 'training_session' ? task.objectives : [];
 	const objectiveResults = notesLocked
@@ -785,6 +808,7 @@ async function toInstructorSessionDetail(row: TrainingSessionRow, actionerCid: n
 		objectives,
 		objectiveResults,
 		canManage,
+		canTransfer,
 		canStart: canManage && status === 'confirmed',
 		canEnd: canManage && status === 'in_progress',
 		canCancel:
@@ -976,11 +1000,102 @@ export const getInstructorStudentTrainingNotes = query(
 );
 
 export const getInstructorTrainingSession = query(SessionId, async (sessionId) => {
-	const actioner = await authorizeVectorInstructorAccess();
+	const actioner = await authorizeVectorInstructorOrAdminAccess();
 	const session = await TrainingSession.fetchById(db, sessionId);
 	if (!session) throw error(404, 'Training session not found');
-	return toInstructorSessionDetail(session, actioner.cid);
+	return toInstructorSessionDetail(session, actioner);
 });
+
+export const getTrainingSessionTransferTargets = query(SessionId, async (sessionId) => {
+	const actioner = await authorizeVectorInstructorOrAdminAccess();
+	const session = await TrainingSession.fetchById(db, sessionId);
+	if (!session) throw error(404, 'Training session not found');
+	if (!(await actorCanTransferSession(actioner, session))) {
+		throw error(403, 'You cannot transfer this training session');
+	}
+
+	const course = await Course.fetchById(session.courseId, db);
+	const sessionType = trainingSessionTypeFromCourse(course, session.taskId);
+	const candidates = await User.fromFlag(
+		db,
+		['instructor', 'mentor', 'chief-instructor', 'admin'],
+		USER_FETCH_MINIMAL
+	);
+
+	const seen = new Set<number>();
+	const targets = [];
+	for (const candidate of candidates) {
+		if (seen.has(candidate.cid)) continue;
+		seen.add(candidate.cid);
+		if (candidate.cid === session.scheduledByCid || candidate.cid === session.studentCid) {
+			continue;
+		}
+		if (!userHasVectorInstructorAccess(candidate)) continue;
+		if (!userCanScheduleTrainingSessionType(candidate, sessionType)) continue;
+		targets.push({
+			cid: candidate.cid,
+			name: candidate.displayName,
+			role: TrainingSession.schedulerRoleLabel(candidate)
+		});
+	}
+
+	return targets.sort((a, b) => a.name.localeCompare(b.name));
+});
+
+const TransferTrainingSessionOptions = type({
+	sessionId: SessionId,
+	toCid: 'number.integer > 0'
+});
+
+export const transferTrainingSession = command(
+	TransferTrainingSessionOptions,
+	async ({ sessionId, toCid }) => {
+		const actioner = await authorizeVectorInstructorOrAdminAccess();
+		const session = await TrainingSession.fetchById(db, sessionId);
+		if (!session) throw error(404, 'Training session not found');
+		if (!(await actorCanTransferSession(actioner, session))) {
+			throw error(403, 'You cannot transfer this training session');
+		}
+
+		const course = await Course.fetchById(session.courseId, db);
+		if (!course) throw error(404, 'Course not found');
+		const sessionType = trainingSessionTypeFromCourse(course, session.taskId);
+
+		const target = await User.fromCid(db, toCid);
+		if (!target) throw error(404, 'Instructor not found');
+		if (target.cid === session.scheduledByCid) {
+			throw error(400, 'This training session is already assigned to that instructor');
+		}
+		if (target.cid === session.studentCid) {
+			throw error(400, 'A training session cannot be transferred to the student');
+		}
+		if (!userHasVectorInstructorAccess(target)) {
+			throw error(400, 'Sessions can only be transferred to an instructor or mentor');
+		}
+		if (!userCanScheduleTrainingSessionType(target, sessionType)) {
+			throw error(400, 'This session type cannot be transferred to a mentor');
+		}
+
+		let updated;
+		try {
+			updated = await TrainingSession.transfer(db, sessionId, toCid);
+		} catch (err) {
+			remoteCommandError(err, 'Failed to transfer training session');
+		}
+
+		try {
+			await notifyTrainingSessionEmails('transferred', session.courseId, {
+				...updated,
+				previousScheduledByCid: session.scheduledByCid
+			});
+		} catch (err) {
+			console.error('Failed to queue training session emails', err);
+		}
+
+		refreshInstructorSessionQueries(updated);
+		getTrainingSessionTransferTargets(sessionId).refresh();
+	}
+);
 
 const ObjectiveResult = type({
 	text: 'string',

@@ -12,6 +12,7 @@ type TrainingSessionEmailContext = {
 	scheduledByCid: number;
 	startsAt: Date;
 	endsAt: Date;
+	previousScheduledByCid?: number;
 };
 
 export async function notifyTrainingSessionEmails(
@@ -22,9 +23,12 @@ export async function notifyTrainingSessionEmails(
 	const course = await Course.fetchById(courseId, db);
 	if (!course) return;
 
-	const [student, scheduler] = await Promise.all([
+	const [student, scheduler, previousScheduler] = await Promise.all([
 		User.fromCid(db, session.studentCid),
-		User.fromCid(db, session.scheduledByCid)
+		User.fromCid(db, session.scheduledByCid),
+		session.previousScheduledByCid
+			? User.fromCid(db, session.previousScheduledByCid)
+			: Promise.resolve(null)
 	]);
 	if (!student || !scheduler) return;
 
@@ -47,6 +51,13 @@ export async function notifyTrainingSessionEmails(
 			name_full: scheduler.name_full,
 			displayName: scheduler.displayName
 		},
+		previousScheduler: previousScheduler
+			? {
+					cid: previousScheduler.cid,
+					name_full: previousScheduler.name_full,
+					displayName: previousScheduler.displayName
+				}
+			: undefined,
 		vectorUrl: env.PUBLIC_VECTOR_URL
 	});
 }

@@ -15,9 +15,11 @@
 		cancelTrainingSession,
 		endTrainingSession,
 		getInstructorTrainingSession,
+		getTrainingSessionTransferTargets,
 		saveTrainingSessionNotes,
 		startTrainingSession,
 		submitTrainingSessionNotes,
+		transferTrainingSession,
 		unsubmitTrainingSessionNotes
 	} from '$lib/remote/instructor.remote';
 
@@ -41,13 +43,17 @@
 	let starting = $state(false);
 	let ending = $state(false);
 	let cancelling = $state(false);
+	let transferring = $state(false);
 	let submitting = $state(false);
 	let unsubmitting = $state(false);
 	let cancelError = $state<string | null>(null);
+	let transferError = $state<string | null>(null);
 	let submitError = $state<string | null>(null);
 	let unsubmitError = $state<string | null>(null);
 	let rescheduleOpen = $state(false);
+	let selectedTransferCid = $state('');
 	let cancelDialog = $state<HTMLDialogElement | null>(null);
+	let transferDialog = $state<HTMLDialogElement | null>(null);
 	let rescheduleDialog = $state<HTMLDialogElement | null>(null);
 	let submitDialog = $state<HTMLDialogElement | null>(null);
 	let unsubmitDialog = $state<HTMLDialogElement | null>(null);
@@ -65,7 +71,9 @@
 		return label;
 	});
 
-	const actionBusy = $derived(starting || ending || cancelling || submitting || unsubmitting);
+	const actionBusy = $derived(
+		starting || ending || cancelling || transferring || submitting || unsubmitting
+	);
 	const achievedCount = $derived(objectiveResults.filter((result) => result.achieved).length);
 	const allObjectivesAchieved = $derived(
 		objectiveResults.length > 0 && achievedCount === objectiveResults.length
@@ -87,14 +95,19 @@
 		return count;
 	});
 	const showActions = $derived(
-		session.canManage &&
-			(session.canCancel ||
-				session.canReschedule ||
-				session.canStart ||
-				session.canEnd ||
-				session.canSubmitNotes ||
-				session.canUnsubmitNotes)
+		session.canTransfer ||
+			(session.canManage &&
+				(session.canCancel ||
+					session.canReschedule ||
+					session.canStart ||
+					session.canEnd ||
+					session.canSubmitNotes ||
+					session.canUnsubmitNotes))
 	);
+	const transferTargetsQuery = $derived(
+		session.canTransfer ? getTrainingSessionTransferTargets(session.id) : null
+	);
+	const transferTargets = $derived(transferTargetsQuery?.current ?? []);
 
 	onMount(() => {
 		return () => {
@@ -281,6 +294,28 @@
 		}
 	}
 
+	function openTransferDialog() {
+		transferError = null;
+		selectedTransferCid = '';
+		transferDialog?.showModal();
+	}
+
+	async function handleTransfer() {
+		if (!session.canTransfer) return;
+		const toCid = Number(selectedTransferCid);
+		if (!toCid) return;
+		transferring = true;
+		transferError = null;
+		try {
+			await transferTrainingSession({ sessionId: session.id, toCid });
+			transferDialog?.close();
+		} catch (err) {
+			transferError = remoteErrorMessage(err, 'Failed to transfer session');
+		} finally {
+			transferring = false;
+		}
+	}
+
 	function openRescheduleDialog() {
 		rescheduleOpen = true;
 		rescheduleDialog?.showModal();
@@ -414,6 +449,16 @@
 				onclick={openRescheduleDialog}
 			>
 				Reschedule
+			</button>
+		{/if}
+		{#if session.canTransfer}
+			<button
+				type="button"
+				class="btn btn-outline"
+				disabled={actionBusy}
+				onclick={openTransferDialog}
+			>
+				Transfer
 			</button>
 		{/if}
 		{#if session.canCancel}
@@ -609,6 +654,62 @@
 			<form method="dialog">
 				<button class="btn">Close</button>
 			</form>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+
+<dialog class="modal" bind:this={transferDialog}>
+	<div class="modal-box">
+		<h3 class="text-lg font-bold">Transfer training session</h3>
+		<p class="py-2 text-sm">
+			Assign this session to another instructor or mentor. Status, time, and notes will not change.
+		</p>
+
+		{#if transferTargetsQuery}
+			{#if transferTargetsQuery.error && !transferTargetsQuery.current}
+				<p class="text-error text-sm">{transferTargetsQuery.error.message}</p>
+			{:else if !transferTargetsQuery.current && transferTargetsQuery.loading}
+				<p class="text-sm opacity-80">Loading instructors and mentors...</p>
+			{:else if transferTargets.length > 0}
+				<select class="select w-full" bind:value={selectedTransferCid}>
+					<option value="">Select an instructor or mentor</option>
+					{#each transferTargets as target (target.cid)}
+						<option value={String(target.cid)}>
+							{target.name} ({target.role}) — CID {target.cid}
+						</option>
+					{/each}
+				</select>
+			{:else}
+				<p class="text-sm opacity-80">
+					No other instructors or mentors are available for this session.
+				</p>
+			{/if}
+		{/if}
+
+		{#if transferError}
+			<p class="text-error mt-2 text-sm">{transferError}</p>
+		{/if}
+
+		<div class="modal-action">
+			<form method="dialog">
+				<button class="btn" disabled={transferring}>Keep session</button>
+			</form>
+			<button
+				type="button"
+				class="btn btn-primary"
+				disabled={transferring || !selectedTransferCid}
+				onclick={handleTransfer}
+			>
+				{#if transferring}
+					<span class="loading loading-spinner loading-sm"></span>
+					Transferring...
+				{:else}
+					Transfer
+				{/if}
+			</button>
 		</div>
 	</div>
 	<form method="dialog" class="modal-backdrop">
