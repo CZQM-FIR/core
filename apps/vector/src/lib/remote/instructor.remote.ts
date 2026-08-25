@@ -66,7 +66,6 @@ import {
 	authorizeVectorInstructorAccess,
 	authorizeVectorInstructorOrAdminAccess
 } from './auth';
-import { getStudentCourseView } from './student.remote';
 import { getMyTrainingSessions } from './users.remote';
 import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
 import { notifyCourseEnrollmentEmail } from '$lib/courseEnrollmentEmails';
@@ -625,7 +624,6 @@ export const scheduleTrainingSession = command(
 		}
 
 		getInstructorStudentView({ courseId, cid: studentCid }).refresh();
-		getStudentCourseView(courseId).refresh();
 		getStudentsWithSessionAvailability().refresh();
 		getScheduledSessionsInWindow().refresh();
 		getMyTrainingSessions().refresh();
@@ -693,7 +691,6 @@ export const cancelTrainingSession = command(
 		}
 
 		getInstructorStudentView({ courseId, cid: studentCid }).refresh();
-		getStudentCourseView(courseId).refresh();
 		getStudentsWithSessionAvailability().refresh();
 		getScheduledSessionsInWindow().refresh();
 		getMyTrainingSessions().refresh();
@@ -716,7 +713,6 @@ function refreshInstructorSessionQueries(session: {
 	getMyTrainingSessions().refresh();
 	getInstructorStudentView({ courseId: session.courseId, cid: session.studentCid }).refresh();
 	getInstructorStudentTrainingNotes({ cid: session.studentCid }).refresh();
-	getStudentCourseView(session.courseId).refresh();
 	getStudentsWithSessionAvailability().refresh();
 	getScheduledSessionsInWindow().refresh();
 }
@@ -1438,7 +1434,6 @@ async function applyCourseTaskCompletion(
 	}
 
 	getInstructorStudentView({ courseId, cid }).refresh();
-	getStudentCourseView(courseId).refresh();
 
 	return {
 		followUp: task.taskType === 'certify' || task.taskType === 'solo' ? task.taskType : null
@@ -1508,7 +1503,6 @@ export const uncompleteStudentCourseTask = command(
 		await completion.uncomplete();
 
 		getInstructorStudentView({ courseId, cid }).refresh();
-		getStudentCourseView(courseId).refresh();
 	}
 );
 
@@ -1525,7 +1519,6 @@ export const forceUncompleteStudentCourseTask = command(
 		await completion.uncomplete();
 
 		getInstructorStudentView({ courseId, cid }).refresh();
-		getStudentCourseView(courseId).refresh();
 	}
 );
 
@@ -1561,7 +1554,6 @@ export const syncStudentCourseTasks = command(
 		});
 
 		getInstructorStudentView({ courseId, cid }).refresh();
-		getStudentCourseView(courseId).refresh();
 
 		return { ok: true as const };
 	}

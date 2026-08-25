@@ -16,12 +16,6 @@ import {
 	waitingUsers,
 	type TrainingSessionRow
 } from '@czqm/db/schema';
-import {
-	getInstructorStudentView,
-	getInstructorTrainingSession,
-	getScheduledSessionsInWindow,
-	getUpcomingInstructorSession
-} from './instructor.remote';
 import { getMyTrainingSessions } from './users.remote';
 import {
 	Course,
@@ -304,8 +298,8 @@ export const joinCourseWaitlist = command(CourseId, async (courseId) => {
 });
 
 export const syncStudentCourseTasks = command(CourseId, async (courseId) => {
-	const event = getRequestEvent();
-	const cid = event?.locals.user!.cid;
+	const user = await authorizeVectorStudentAccess();
+	const cid = user.cid;
 
 	const course = await Course.fetchById(courseId, db);
 	if (!course) throw error(404, 'Course not found');
@@ -331,7 +325,6 @@ export const syncStudentCourseTasks = command(CourseId, async (courseId) => {
 	});
 
 	getStudentCourseView(courseId).refresh();
-	getInstructorStudentView({ courseId, cid }).refresh();
 
 	return { ok: true as const };
 });
@@ -507,7 +500,6 @@ export const saveTrainingSessionAvailability = command(
 
 		getTrainingSessionAvailability({ courseId, taskId }).refresh();
 		getStudentCourseView(courseId).refresh();
-		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 	}
 );
 
@@ -612,11 +604,7 @@ export const confirmTrainingSession = command(
 		}
 
 		getStudentCourseView(courseId).refresh();
-		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 		getMyTrainingSessions().refresh();
-		getUpcomingInstructorSession().refresh();
-		getScheduledSessionsInWindow().refresh();
-		getInstructorTrainingSession(sessionId).refresh();
 		getStudentTrainingSession(sessionId).refresh();
 	}
 );
@@ -641,11 +629,7 @@ export const declineTrainingSession = command(
 		}
 
 		getStudentCourseView(courseId).refresh();
-		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 		getMyTrainingSessions().refresh();
-		getUpcomingInstructorSession().refresh();
-		getScheduledSessionsInWindow().refresh();
-		getInstructorTrainingSession(sessionId).refresh();
 		getStudentTrainingSession(sessionId).refresh();
 	}
 );
@@ -670,11 +654,7 @@ export const cancelTrainingSession = command(
 		}
 
 		getStudentCourseView(courseId).refresh();
-		getInstructorStudentView({ courseId, cid: user.cid }).refresh();
 		getMyTrainingSessions().refresh();
-		getUpcomingInstructorSession().refresh();
-		getScheduledSessionsInWindow().refresh();
-		getInstructorTrainingSession(sessionId).refresh();
 		getStudentTrainingSession(sessionId).refresh();
 	}
 );
