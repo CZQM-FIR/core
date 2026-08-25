@@ -103,12 +103,12 @@ export const ensureUserOnWaitlist = async (
   db: DB,
   input: {
     cid: number;
-    waitlistName: string;
+    waitlistID: number;
     waitingSince?: Date;
   },
 ): Promise<boolean> => {
   const waitlist = await db.query.waitlists.findFirst({
-    where: { name: input.waitlistName },
+    where: { id: input.waitlistID },
     with: {
       students: {
         columns: {
@@ -119,7 +119,7 @@ export const ensureUserOnWaitlist = async (
   });
 
   if (!waitlist) {
-    throw new Error(`Waitlist not found: ${input.waitlistName}`);
+    throw new Error(`Waitlist not found: ID ${input.waitlistID}`);
   }
 
   const existing = await db.query.waitingUsers.findFirst({

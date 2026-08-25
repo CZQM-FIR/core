@@ -76,11 +76,13 @@ export const vatcanPull = async (db: DB, env: Env) => {
 
     await ensureUserFlag(db, controller.cid, 'controller');
 
+    const S1_WAITLIST_ID = 7;
+
     if (isNewUser && controller.rating === 1) {
       // if the controllers rating is 1 (OBS), add them to the S1 waitlist
       await ensureUserOnWaitlist(db, {
         cid: controller.cid,
-        waitlistName: 'S1'
+        waitlistID: S1_WAITLIST_ID
       });
     }
 
