@@ -10,6 +10,7 @@
 		declineTrainingSession,
 		getStudentTrainingSession
 	} from '$lib/remote/student.remote';
+	import { refreshAfterStudentSessionAction } from '$lib/refreshStudentQueries';
 	import TrainingSessionStudentPostNote from './TrainingSessionStudentPostNote.svelte';
 
 	type StudentSession = NonNullable<ReturnType<typeof getStudentTrainingSession>['current']>;
@@ -148,6 +149,7 @@
 				taskId: session.task.taskId,
 				sessionId: session.id
 			});
+			await refreshAfterStudentSessionAction(session.course.id, session.id);
 		} catch (err) {
 			actionError = remoteErrorMessage(err, 'Failed to confirm session');
 		} finally {
@@ -166,6 +168,7 @@
 				taskId: session.task.taskId,
 				sessionId: session.id
 			});
+			await refreshAfterStudentSessionAction(session.course.id, session.id);
 		} catch (err) {
 			actionError = remoteErrorMessage(err, 'Failed to decline session');
 		} finally {
@@ -189,6 +192,7 @@
 				taskId: session.task.taskId,
 				sessionId: session.id
 			});
+			await refreshAfterStudentSessionAction(session.course.id, session.id);
 			cancelDialog?.close();
 		} catch (err) {
 			cancelError = remoteErrorMessage(err, 'Failed to cancel session');

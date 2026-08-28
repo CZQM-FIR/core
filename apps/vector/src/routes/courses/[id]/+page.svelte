@@ -12,6 +12,10 @@
 		joinCourseWaitlist,
 		syncStudentCourseTasks
 	} from '$lib/remote/student.remote';
+	import {
+		refreshAfterJoinCourseWaitlist,
+		refreshStudentCourseView
+	} from '$lib/refreshStudentQueries';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -27,6 +31,7 @@
 		joinError = null;
 		try {
 			await joinCourseWaitlist(data.courseId);
+			await refreshAfterJoinCourseWaitlist(data.courseId);
 		} catch (err) {
 			if (err && typeof err === 'object' && 'body' in err) {
 				const body = (err as { body?: { message?: string } }).body;
@@ -136,7 +141,10 @@
 					<div class="flex min-w-0 flex-col gap-3">
 						{#snippet syncActions()}
 							<SyncCourseTasksButton
-								onSync={() => syncStudentCourseTasks(data.courseId)}
+								onSync={async () => {
+									await syncStudentCourseTasks(data.courseId);
+									await refreshStudentCourseView(data.courseId);
+								}}
 								bind:error={syncError}
 							/>
 						{/snippet}

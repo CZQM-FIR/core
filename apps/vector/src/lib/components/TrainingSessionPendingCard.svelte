@@ -7,6 +7,7 @@
 		declineTrainingSession
 	} from '$lib/remote/student.remote';
 	import { cancelTrainingSession as cancelTrainingSessionAsStaff } from '$lib/remote/instructor.remote';
+	import { refreshAfterStudentSessionAction } from '$lib/refreshStudentQueries';
 
 	let {
 		courseId,
@@ -142,6 +143,7 @@
 		actionError = null;
 		try {
 			await confirmTrainingSession({ courseId, taskId, sessionId: session.id });
+			await refreshAfterStudentSessionAction(courseId, session.id);
 		} catch (err) {
 			if (err && typeof err === 'object' && 'body' in err) {
 				const body = (err as { body?: { message?: string } }).body;
@@ -161,6 +163,7 @@
 		actionError = null;
 		try {
 			await declineTrainingSession({ courseId, taskId, sessionId: session.id });
+			await refreshAfterStudentSessionAction(courseId, session.id);
 		} catch (err) {
 			if (err && typeof err === 'object' && 'body' in err) {
 				const body = (err as { body?: { message?: string } }).body;
@@ -191,6 +194,7 @@
 				});
 			} else {
 				await cancelTrainingSessionAsStudent({ courseId, taskId, sessionId: session.id });
+				await refreshAfterStudentSessionAction(courseId, session.id);
 			}
 			cancelDialog?.close();
 		} catch (err) {

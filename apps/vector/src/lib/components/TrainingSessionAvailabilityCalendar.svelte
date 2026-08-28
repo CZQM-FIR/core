@@ -20,6 +20,7 @@
 		getTrainingSessionAvailability,
 		saveTrainingSessionAvailability
 	} from '$lib/remote/student.remote';
+	import { refreshStudentCourseView } from '$lib/refreshStudentQueries';
 	import ScheduledSessionsList from '$lib/components/ScheduledSessionsList.svelte';
 	import {
 		formatScheduledSessionSummary,
@@ -613,6 +614,15 @@
 		return sessions.map(formatScheduledSessionSummary).join('; ');
 	}
 
+	function remoteErrorMessage(err: unknown, fallback: string): string {
+		if (err && typeof err === 'object' && 'body' in err) {
+			const body = (err as { body?: { message?: string } }).body;
+			if (body?.message) return body.message;
+		}
+		if (err instanceof Error && err.message) return err.message;
+		return fallback;
+	}
+
 	async function handleSave() {
 		if (mode !== 'edit') return;
 
@@ -628,16 +638,9 @@
 				taskId,
 				slots: selectedKeysToSlots(keysToSave, getWindowStartDay())
 			});
-			await loadAvailability();
+			await Promise.all([loadAvailability(), refreshStudentCourseView(courseId)]);
 		} catch (err) {
-			if (err && typeof err === 'object' && 'body' in err) {
-				const body = (err as { body?: { message?: string } }).body;
-				saveError = body?.message ?? 'Failed to save availability';
-			} else if (err instanceof Error) {
-				saveError = err.message;
-			} else {
-				saveError = 'Failed to save availability';
-			}
+			saveError = remoteErrorMessage(err, 'Failed to save availability');
 		} finally {
 			saving = false;
 		}

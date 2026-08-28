@@ -559,6 +559,7 @@ function refreshEnrollmentPauseQueries(
 	waitlistId: number,
 	actioner: User
 ) {
+	// Instructor-only queries must be guarded — refreshes re-run under the admin's session.
 	getInstructorStudentView({ courseId, cid }).refresh();
 	getEnrolledWaitlistEntries(waitlistId).refresh();
 	if (userHasVectorInstructorAccess(actioner)) {

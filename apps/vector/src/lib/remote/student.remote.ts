@@ -1,4 +1,4 @@
-import { command, getRequestEvent, query } from '$app/server';
+import { command, query } from '$app/server';
 import { db } from '$lib/db';
 import {
 	getAvailabilityWindowEndsAt,
@@ -16,7 +16,6 @@ import {
 	waitingUsers,
 	type TrainingSessionRow
 } from '@czqm/db/schema';
-import { getMyTrainingSessions } from './users.remote';
 import {
 	Course,
 	describeCourseTask,
@@ -30,7 +29,7 @@ import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
-import { authorizeVectorStudentAccess } from './auth';
+import { authorizeVectorStudentAccess, authorizeVectorStudentOrInstructorAccess } from './auth';
 import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
 import { notifyCourseEnrollmentEmail } from '$lib/courseEnrollmentEmails';
 import {
@@ -287,9 +286,6 @@ export const joinCourseWaitlist = command(CourseId, async (courseId) => {
 		});
 	}
 
-	getStudentCourses().refresh();
-	getStudentCourseView(courseId).refresh();
-
 	try {
 		await notifyCourseEnrollmentEmail('waitlisted', courseId, user.cid);
 	} catch (err) {
@@ -323,8 +319,6 @@ export const syncStudentCourseTasks = command(CourseId, async (courseId) => {
 	await course.syncTaskCompletions(cid, {
 		VATCAN_API_TOKEN: env.VATCAN_API_TOKEN
 	});
-
-	getStudentCourseView(courseId).refresh();
 
 	return { ok: true as const };
 });
@@ -497,9 +491,6 @@ export const saveTrainingSessionAvailability = command(
 				}))
 			);
 		}
-
-		getTrainingSessionAvailability({ courseId, taskId }).refresh();
-		getStudentCourseView(courseId).refresh();
 	}
 );
 
@@ -602,10 +593,6 @@ export const confirmTrainingSession = command(
 		} catch (err) {
 			console.error('Failed to queue training session emails', err);
 		}
-
-		getStudentCourseView(courseId).refresh();
-		getMyTrainingSessions().refresh();
-		getStudentTrainingSession(sessionId).refresh();
 	}
 );
 
@@ -627,10 +614,6 @@ export const declineTrainingSession = command(
 		} catch (err) {
 			console.error('Failed to queue training session emails', err);
 		}
-
-		getStudentCourseView(courseId).refresh();
-		getMyTrainingSessions().refresh();
-		getStudentTrainingSession(sessionId).refresh();
 	}
 );
 
@@ -652,17 +635,11 @@ export const cancelTrainingSession = command(
 		} catch (err) {
 			console.error('Failed to queue training session emails', err);
 		}
-
-		getStudentCourseView(courseId).refresh();
-		getMyTrainingSessions().refresh();
-		getStudentTrainingSession(sessionId).refresh();
 	}
 );
 
 export const getMyTrainingNotes = query(async () => {
-	const event = getRequestEvent();
-	const user = await User.fromSessionToken(db, event.cookies.get('session') || '');
-	if (!user) throw error(403, 'Forbidden');
+	const user = await authorizeVectorStudentOrInstructorAccess();
 
 	return loadTrainingNotesForStudent(user.cid);
 });
