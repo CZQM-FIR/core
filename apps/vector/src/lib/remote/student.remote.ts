@@ -362,7 +362,11 @@ async function assertStudentTrainingSessionAction(
 	sessionId: number,
 	cid: number
 ) {
-	const { enrolled, course } = await assertStudentSessionAvailabilityEligible(courseId, taskId, cid);
+	const { enrolled, course } = await assertStudentSessionAvailabilityEligible(
+		courseId,
+		taskId,
+		cid
+	);
 
 	const [session] = await db
 		.select()
@@ -600,7 +604,12 @@ export const declineTrainingSession = command(
 	TrainingSessionActionOptions,
 	async ({ courseId, taskId, sessionId }) => {
 		const user = await authorizeVectorStudentAccess();
-		const { course } = await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
+		const { course } = await assertStudentTrainingSessionAction(
+			courseId,
+			taskId,
+			sessionId,
+			user.cid
+		);
 
 		let updated;
 		try {
@@ -621,7 +630,12 @@ export const cancelTrainingSession = command(
 	TrainingSessionActionOptions,
 	async ({ courseId, taskId, sessionId }) => {
 		const user = await authorizeVectorStudentAccess();
-		const { course } = await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
+		const { course } = await assertStudentTrainingSessionAction(
+			courseId,
+			taskId,
+			sessionId,
+			user.cid
+		);
 
 		let updated;
 		try {
