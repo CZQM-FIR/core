@@ -8,8 +8,12 @@ app's README and `.env.example`. Only non-obvious, durable notes are captured he
 
 ### Services / apps
 - `apps/web` — public SvelteKit site, dev port **5100**.
-- `apps/overseer` — admin SvelteKit app, dev port **5101**.
-- `apps/vector` — training SvelteKit app, dev port **5102**.
+- `apps/overseer` — admin SvelteKit app, dev port **5101**. Production runs as a Docker
+  container (`apps/overseer/Dockerfile`, port 5101); image built/pushed to GHCR by
+  `.github/workflows/docker-overseer.yml`. Runtime env vars are injected at container start.
+- `apps/vector` — training SvelteKit app, dev port **5102**. Production runs as a Docker
+  container (`apps/vector/Dockerfile`, port 5102); image built/pushed to GHCR by
+  `.github/workflows/docker-vector.yml`. Runtime env vars are injected at container start.
 - `apps/worker` — Express + node-cron background worker, dev port **3000**
   (health at `/cron-health`; with `NODE_ENV=dev` it exposes manual `/dev/*` trigger
   endpoints instead of running cron on a schedule).
