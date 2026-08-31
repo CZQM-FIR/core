@@ -33,9 +33,7 @@ async function loadCompletionByTaskId(
 		where: { userId: cid, courseId: course.id }
 	});
 
-	return new Map(
-		rows.map((row) => [row.taskId, CourseTaskCompletion.fromDBRow(row, course.db)])
-	);
+	return new Map(rows.map((row) => [row.taskId, CourseTaskCompletion.fromDBRow(row, course.db)]));
 }
 
 export function findNextIncompleteTask(
