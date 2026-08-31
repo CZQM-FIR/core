@@ -73,13 +73,11 @@ export const getMyTrainingSessions = query(async () => {
 			where: { id: { in: courseIds } },
 			columns: { id: true, name: true, tasks: true, waitlistId: true }
 		}),
-		Promise.all(userCids.map((cid) => User.fromCid(db, cid)))
+		User.fromCids(db, userCids)
 	]);
 
 	const courseById = new Map(courses.map((course) => [course.id, course]));
-	const userByCid = new Map(
-		loadedUsers.filter((user): user is User => user != null).map((user) => [user.cid, user])
-	);
+	const userByCid = new Map(loadedUsers.map((user) => [user.cid, user]));
 	const waitlistIds = [...new Set(courses.map((course) => course.waitlistId))];
 	const studentCids = [...new Set(rows.map((row) => row.studentCid))];
 	const pausedEnrollments =

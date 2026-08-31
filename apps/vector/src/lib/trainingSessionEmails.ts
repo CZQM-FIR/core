@@ -18,10 +18,11 @@ type TrainingSessionEmailContext = {
 export async function notifyTrainingSessionEmails(
 	event: TrainingSessionEmailEvent,
 	courseId: string,
-	session: TrainingSessionEmailContext
+	session: TrainingSessionEmailContext,
+	course?: Course | null
 ): Promise<void> {
-	const course = await Course.fetchById(courseId, db);
-	if (!course) return;
+	const resolvedCourse = course ?? (await Course.fetchById(courseId, db));
+	if (!resolvedCourse) return;
 
 	const [student, scheduler, previousScheduler] = await Promise.all([
 		User.fromCid(db, session.studentCid),
@@ -35,7 +36,7 @@ export async function notifyTrainingSessionEmails(
 	await queueTrainingSessionEmails(db, {
 		event,
 		courseId,
-		courseName: course.name,
+		courseName: resolvedCourse.name,
 		sessionId: session.id,
 		studentCid: session.studentCid,
 		scheduledByCid: session.scheduledByCid,

@@ -362,7 +362,7 @@ async function assertStudentTrainingSessionAction(
 	sessionId: number,
 	cid: number
 ) {
-	const { enrolled } = await assertStudentSessionAvailabilityEligible(courseId, taskId, cid);
+	const { enrolled, course } = await assertStudentSessionAvailabilityEligible(courseId, taskId, cid);
 
 	const [session] = await db
 		.select()
@@ -379,7 +379,7 @@ async function assertStudentTrainingSessionAction(
 		throw error(404, 'Training session not found');
 	}
 
-	return { session, enrolled };
+	return { session, enrolled, course };
 }
 
 async function fetchTrainingSessionAvailabilityRows(cid: number, courseId: string, taskId: number) {
@@ -573,7 +573,7 @@ export const confirmTrainingSession = command(
 	TrainingSessionActionOptions,
 	async ({ courseId, taskId, sessionId }) => {
 		const user = await authorizeVectorStudentAccess();
-		const { enrolled } = await assertStudentTrainingSessionAction(
+		const { enrolled, course } = await assertStudentTrainingSessionAction(
 			courseId,
 			taskId,
 			sessionId,
@@ -589,7 +589,7 @@ export const confirmTrainingSession = command(
 		}
 
 		try {
-			await notifyTrainingSessionEmails('confirmed', courseId, updated);
+			await notifyTrainingSessionEmails('confirmed', courseId, updated, course);
 		} catch (err) {
 			console.error('Failed to queue training session emails', err);
 		}
@@ -600,7 +600,7 @@ export const declineTrainingSession = command(
 	TrainingSessionActionOptions,
 	async ({ courseId, taskId, sessionId }) => {
 		const user = await authorizeVectorStudentAccess();
-		await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
+		const { course } = await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
 
 		let updated;
 		try {
@@ -610,7 +610,7 @@ export const declineTrainingSession = command(
 		}
 
 		try {
-			await notifyTrainingSessionEmails('declined', courseId, updated);
+			await notifyTrainingSessionEmails('declined', courseId, updated, course);
 		} catch (err) {
 			console.error('Failed to queue training session emails', err);
 		}
@@ -621,7 +621,7 @@ export const cancelTrainingSession = command(
 	TrainingSessionActionOptions,
 	async ({ courseId, taskId, sessionId }) => {
 		const user = await authorizeVectorStudentAccess();
-		await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
+		const { course } = await assertStudentTrainingSessionAction(courseId, taskId, sessionId, user.cid);
 
 		let updated;
 		try {
@@ -631,7 +631,7 @@ export const cancelTrainingSession = command(
 		}
 
 		try {
-			await notifyTrainingSessionEmails('cancelled', courseId, updated);
+			await notifyTrainingSessionEmails('cancelled', courseId, updated, course);
 		} catch (err) {
 			console.error('Failed to queue training session emails', err);
 		}

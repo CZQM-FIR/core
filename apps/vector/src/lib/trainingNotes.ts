@@ -53,15 +53,11 @@ export async function loadTrainingNotesForStudent(
 					where: { id: { in: courseIds } },
 					columns: { id: true, name: true, tasks: true }
 				}),
-		Promise.all(instructorCids.map((cid) => User.fromCid(db, cid)))
+		User.fromCids(db, instructorCids)
 	]);
 
 	const courseById = new Map(courses.map((course) => [course.id, course]));
-	const instructorByCid = new Map(
-		loadedInstructors
-			.filter((instructor): instructor is User => instructor != null)
-			.map((instructor) => [instructor.cid, instructor])
-	);
+	const instructorByCid = new Map(loadedInstructors.map((instructor) => [instructor.cid, instructor]));
 
 	const notes = submittedRows.map((row) => {
 		const course = courseById.get(row.courseId);
@@ -102,13 +98,9 @@ export async function loadTrainingNotesForStudent(
 					unmatched.map((note) => note.instructorCid).filter((cid): cid is number => cid != null)
 				)
 			];
-			const legacyInstructors = await Promise.all(
-				legacyInstructorCids.map((cid) => User.fromCid(db, cid))
-			);
+			const legacyInstructors = await User.fromCids(db, legacyInstructorCids);
 			const legacyInstructorByCid = new Map(
-				legacyInstructors
-					.filter((instructor): instructor is User => instructor != null)
-					.map((instructor) => [instructor.cid, instructor])
+				legacyInstructors.map((instructor) => [instructor.cid, instructor])
 			);
 
 			legacyNotes = unmatched

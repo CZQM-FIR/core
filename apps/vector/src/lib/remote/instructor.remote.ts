@@ -10,7 +10,7 @@ import {
 	toNextTaskSummary,
 	validateSessionTimeRange
 } from '$lib/trainingSessionAvailability';
-import { getCourseTaskProgress } from '$lib/courseTaskProgress';
+import { assertNextTrainingSessionTask, getCourseTaskProgress } from '$lib/courseTaskProgress';
 import { loadTrainingNotesForStudent } from '$lib/trainingNotes';
 import {
 	courseTaskCompletions,
@@ -340,13 +340,11 @@ export const getScheduledSessionsInWindow = query(async () => {
 			where: { id: { in: courseIds } },
 			columns: { id: true, name: true, tasks: true }
 		}),
-		Promise.all(userCids.map((cid) => User.fromCid(db, cid)))
+		User.fromCids(db, userCids)
 	]);
 
 	const courseById = new Map(courses.map((course) => [course.id, course]));
-	const userByCid = new Map(
-		loadedUsers.filter((user): user is User => user != null).map((user) => [user.cid, user])
-	);
+	const userByCid = new Map(loadedUsers.map((user) => [user.cid, user]));
 
 	return rows.map((row): ScheduledSessionInWindow => {
 		const course = courseById.get(row.courseId);
@@ -552,10 +550,13 @@ export const scheduleTrainingSession = command(
 		if (!enrolled) throw error(400, 'Student is not enrolled in this course');
 		assertEnrollmentNotPaused(enrolled);
 
-		const tasks = await getCourseTaskProgress(course, studentCid);
-		const next = getNextIncompleteTask(tasks);
-		if (!next || next.taskType !== 'training_session' || next.taskId !== taskId) {
-			throw error(400, 'Session scheduling is not available for this task');
+		try {
+			await assertNextTrainingSessionTask(course, studentCid, taskId);
+		} catch (err) {
+			throw error(
+				400,
+				err instanceof Error ? err.message : 'Session scheduling is not available for this task'
+			);
 		}
 
 		const courseTask = course.tasks.find((entry) => entry.taskId === taskId);
@@ -618,7 +619,7 @@ export const scheduleTrainingSession = command(
 		}
 
 		try {
-			await notifyTrainingSessionEmails('scheduled', courseId, session);
+			await notifyTrainingSessionEmails('scheduled', courseId, session, course);
 		} catch (err) {
 			console.error('Failed to queue training session emails', err);
 		}
@@ -653,10 +654,18 @@ export const cancelTrainingSession = command(
 		const student = await User.fromCid(db, studentCid);
 		if (!student) throw error(404, 'Student not found');
 
-		const tasks = await getCourseTaskProgress(course, studentCid);
-		const next = getNextIncompleteTask(tasks);
-		if (!next || next.taskType !== 'training_session' || next.taskId !== taskId) {
-			throw error(400, 'Session availability is not available for this task');
+		try {
+			await assertNextTrainingSessionTask(
+				course,
+				studentCid,
+				taskId,
+				'Session availability is not available for this task'
+			);
+		} catch (err) {
+			throw error(
+				400,
+				err instanceof Error ? err.message : 'Session availability is not available for this task'
+			);
 		}
 
 		const [session] = await db
@@ -685,7 +694,7 @@ export const cancelTrainingSession = command(
 		}
 
 		try {
-			await notifyTrainingSessionEmails('cancelled', courseId, session);
+			await notifyTrainingSessionEmails('cancelled', courseId, session, course);
 		} catch (err) {
 			console.error('Failed to queue training session emails', err);
 		}
@@ -900,26 +909,40 @@ export const getSessionsAwaitingTrainingNotes = query(async () => {
 		)
 		.orderBy(desc(trainingSessions.actualEndedAt), desc(trainingSessions.startsAt));
 
-	return Promise.all(
-		rows.map(async (row) => {
-			const student = await User.fromCid(db, row.studentCid);
-			const course = await Course.fetchById(row.courseId, db);
-			const task = course?.tasks.find((entry) => entry.taskId === row.taskId);
-			const sessionType = task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
+	const courseIds = [...new Set(rows.map((row) => row.courseId))];
+	const studentCids = [...new Set(rows.map((row) => row.studentCid))];
 
-			return {
-				id: row.id,
-				status: row.status as TrainingSessionStatus,
-				startsAt: row.startsAt,
-				endsAt: row.endsAt,
-				studentName: student?.displayName ?? `CID ${row.studentCid}`,
-				courseName: course?.name ?? 'Course',
-				sessionDescription: task ? describeCourseTask(task) : 'Training session',
-				sessionType,
-				sessionTypeLabel: sessionType ? formatTrainingSessionType(sessionType) : 'Training'
-			};
-		})
-	);
+	const [courses, loadedStudents] = await Promise.all([
+		courseIds.length === 0
+			? Promise.resolve([])
+			: db.query.courses.findMany({
+					where: { id: { in: courseIds } },
+					columns: { id: true, name: true, tasks: true }
+				}),
+		User.fromCids(db, studentCids)
+	]);
+
+	const courseById = new Map(courses.map((course) => [course.id, course]));
+	const studentByCid = new Map(loadedStudents.map((student) => [student.cid, student]));
+
+	return rows.map((row) => {
+		const course = courseById.get(row.courseId);
+		const task = course?.tasks.find((entry) => entry.taskId === row.taskId);
+		const student = studentByCid.get(row.studentCid);
+		const sessionType = task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
+
+		return {
+			id: row.id,
+			status: row.status as TrainingSessionStatus,
+			startsAt: row.startsAt,
+			endsAt: row.endsAt,
+			studentName: student?.displayName ?? `CID ${row.studentCid}`,
+			courseName: course?.name ?? 'Course',
+			sessionDescription: task ? describeCourseTask(task) : 'Training session',
+			sessionType,
+			sessionTypeLabel: sessionType ? formatTrainingSessionType(sessionType) : 'Training'
+		};
+	});
 });
 
 export const getAuthoredTrainingNotes = query(async () => {
@@ -950,15 +973,11 @@ export const getAuthoredTrainingNotes = query(async () => {
 					where: { id: { in: courseIds } },
 					columns: { id: true, name: true, tasks: true }
 				}),
-		Promise.all(studentCids.map((cid) => User.fromCid(db, cid)))
+		User.fromCids(db, studentCids)
 	]);
 
 	const courseById = new Map(courses.map((course) => [course.id, course]));
-	const studentByCid = new Map(
-		loadedStudents
-			.filter((student): student is User => student != null)
-			.map((student) => [student.cid, student])
-	);
+	const studentByCid = new Map(loadedStudents.map((student) => [student.cid, student]));
 
 	return submittedRows.map((row) => {
 		const course = courseById.get(row.courseId);
@@ -1080,10 +1099,15 @@ export const transferTrainingSession = command(
 		}
 
 		try {
-			await notifyTrainingSessionEmails('transferred', session.courseId, {
-				...updated,
-				previousScheduledByCid: session.scheduledByCid
-			});
+			await notifyTrainingSessionEmails(
+				'transferred',
+				session.courseId,
+				{
+					...updated,
+					previousScheduledByCid: session.scheduledByCid
+				},
+				course
+			);
 		} catch (err) {
 			console.error('Failed to queue training session emails', err);
 		}
@@ -1224,8 +1248,10 @@ export const rescheduleTrainingSession = command(
 			remoteCommandError(err, 'Failed to reschedule training session');
 		}
 
+		const course = await Course.fetchById(session.courseId, db);
+
 		try {
-			await notifyTrainingSessionEmails('rescheduled', session.courseId, updated);
+			await notifyTrainingSessionEmails('rescheduled', session.courseId, updated, course);
 		} catch (err) {
 			console.error('Failed to queue training session emails', err);
 		}

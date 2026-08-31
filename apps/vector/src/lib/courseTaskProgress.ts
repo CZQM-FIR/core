@@ -1,5 +1,6 @@
-import type { Course } from '@czqm/common';
+import type { Course, CourseTask } from '@czqm/common';
 import {
+	CourseTaskCompletion,
 	DelayCourseTask,
 	describeCourseTask,
 	fetchVatcanCbtBlockOptions,
@@ -23,6 +24,45 @@ export type CourseTaskProgress = {
 	requiresInstructorCompletion: boolean;
 	remainingLabel: string | null;
 };
+
+async function loadCompletionByTaskId(
+	course: Course,
+	cid: number
+): Promise<Map<number, CourseTaskCompletion>> {
+	const rows = await course.db.query.courseTaskCompletions.findMany({
+		where: { userId: cid, courseId: course.id }
+	});
+
+	return new Map(
+		rows.map((row) => [row.taskId, CourseTaskCompletion.fromDBRow(row, course.db)])
+	);
+}
+
+export function findNextIncompleteTask(
+	course: Course,
+	completionByTaskId: Map<number, CourseTaskCompletion>
+): CourseTask | null {
+	return (
+		course.tasks.find((task) => {
+			const completion = completionByTaskId.get(task.taskId);
+			return !completion?.isComplete;
+		}) ?? null
+	);
+}
+
+export async function assertNextTrainingSessionTask(
+	course: Course,
+	cid: number,
+	taskId: number,
+	message = 'Session scheduling is not available for this task'
+): Promise<void> {
+	const completionByTaskId = await loadCompletionByTaskId(course, cid);
+	const nextTask = findNextIncompleteTask(course, completionByTaskId);
+
+	if (!nextTask || nextTask.taskType !== 'training_session' || nextTask.taskId !== taskId) {
+		throw new Error(message);
+	}
+}
 
 async function buildVatcanCbtMetaMap(
 	tasks: Course['tasks']
@@ -51,12 +91,15 @@ export async function getCourseTaskProgress(
 	course: Course,
 	cid: number
 ): Promise<CourseTaskProgress[]> {
-	const vatcanCbtMetaByBlockId = await buildVatcanCbtMetaMap(course.tasks);
+	const [vatcanCbtMetaByBlockId, completionByTaskId] = await Promise.all([
+		buildVatcanCbtMetaMap(course.tasks),
+		loadCompletionByTaskId(course, cid)
+	]);
 	const describeOptions = vatcanCbtMetaByBlockId ? { vatcanCbtMetaByBlockId } : undefined;
 
 	return Promise.all(
 		course.tasks.map(async (task) => {
-			const completion = await task.getCompletion(cid);
+			const completion = completionByTaskId.get(task.taskId) ?? null;
 			const remainingLabel =
 				task instanceof DelayCourseTask && !completion?.isComplete
 					? await task.getRemainingLabel(cid, completion)
