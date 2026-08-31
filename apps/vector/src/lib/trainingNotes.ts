@@ -57,7 +57,9 @@ export async function loadTrainingNotesForStudent(
 	]);
 
 	const courseById = new Map(courses.map((course) => [course.id, course]));
-	const instructorByCid = new Map(loadedInstructors.map((instructor) => [instructor.cid, instructor]));
+	const instructorByCid = new Map(
+		loadedInstructors.map((instructor) => [instructor.cid, instructor])
+	);
 
 	const notes = submittedRows.map((row) => {
 		const course = courseById.get(row.courseId);
