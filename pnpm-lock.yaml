@@ -119,8 +119,8 @@ importers:
         specifier: ^3.0.0
         version: 3.9.2(eslint@9.39.4)(svelte@5.55.0)
       globals:
-        specifier: ^16.0.0
-        version: 16.5.0
+        specifier: ^17.0.0
+        version: 17.12.0
       prettier:
         specifier: ^3.4.2
         version: 3.5.3
@@ -237,8 +237,8 @@ importers:
         specifier: ^3.0.0
         version: 3.9.2(eslint@9.39.4)(svelte@5.55.0)
       globals:
-        specifier: ^16.0.0
-        version: 16.5.0
+        specifier: ^17.0.0
+        version: 17.12.0
       prettier:
         specifier: ^3.4.2
         version: 3.5.3
@@ -352,8 +352,8 @@ importers:
         specifier: ^2.36.0
         version: 2.46.1(eslint@9.39.4)(svelte@5.55.0)
       globals:
-        specifier: ^15.0.0
-        version: 15.15.0
+        specifier: ^17.0.0
+        version: 17.12.0
       prettier:
         specifier: ^3.3.2
         version: 3.5.3
@@ -440,8 +440,8 @@ importers:
         specifier: ^10.0.1
         version: 10.1.5(eslint@9.39.4)
       globals:
-        specifier: ^16.0.0
-        version: 16.5.0
+        specifier: ^17.0.0
+        version: 17.12.0
       prettier:
         specifier: ^3.5.3
         version: 3.5.3
@@ -7240,13 +7240,13 @@ packages:
     engines: {node: '>=18'}
     dev: true
 
-  /globals@15.15.0:
-    resolution: {integrity: sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg==}
+  /globals@16.5.0:
+    resolution: {integrity: sha512-c/c15i26VrJ4IRt5Z89DnIzCGDn9EcebibhAOjw5ibqEHsE1wLUgkPn9RDmNcUKyU87GeaL633nyJ+pplFR2ZQ==}
     engines: {node: '>=18'}
     dev: true
 
-  /globals@16.5.0:
-    resolution: {integrity: sha512-c/c15i26VrJ4IRt5Z89DnIzCGDn9EcebibhAOjw5ibqEHsE1wLUgkPn9RDmNcUKyU87GeaL633nyJ+pplFR2ZQ==}
+  /globals@17.12.0:
+    resolution: {integrity: sha512-cezEd/DTyyht9cvSSURyygXPfy04GtWO/5e6ZPvH7fCtjKz9PYOmuawphw1Ctd1f6C+5JypXfGD7ahNMXvevBA==}
     engines: {node: '>=18'}
     dev: true
 
