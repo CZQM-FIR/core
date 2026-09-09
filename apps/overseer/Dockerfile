@@ -1,5 +1,5 @@
 # Builder: install pnpm via corepack, install workspace deps and build the overseer app
-FROM node:20-slim AS builder
+FROM node:24-slim AS builder
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
@@ -10,7 +10,7 @@ WORKDIR /repo/apps/overseer
 RUN pnpm dotenv -e build.env -- pnpm build
 
 # Runtime: small production image running Node adapter server
-FROM node:20-slim AS runtime
+FROM node:24-slim AS runtime
 ENV NODE_ENV=production
 ENV PORT=5101
 
