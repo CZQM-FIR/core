@@ -2,13 +2,13 @@
 	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
-	import { OVERSEER_PARENT_PARITY_GATE_FLAGS, type FlagName } from '@czqm/common';
+	import { type FlagName } from '@czqm/common';
 
 	import CZQMLogo from '$lib/assets/images/CZQM-White.svg';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
-	const trainingNavFlags: FlagName[] = OVERSEER_PARENT_PARITY_GATE_FLAGS;
+	const trainingNavFlags: FlagName[] = ['admin', 'chief', 'deputy', 'chief-instructor'];
 	const eventsNavFlags: FlagName[] = ['admin', 'chief', 'deputy', 'events'];
 
 	function showTrainingNav(): boolean {
