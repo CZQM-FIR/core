@@ -45,7 +45,7 @@
     "typescript": "^5.0.0",
     "typescript-eslint": "^8.0.0",
     "vite": "^6.0.0",
-    "wrangler": "^3.99.0"
+    "wrangler": "^4.0.0"
   },
   "dependencies": {
     "@czqm/common": "workspace:*",
