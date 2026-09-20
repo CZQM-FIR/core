@@ -1,7 +1,7 @@
 import { form, getRequestEvent, query } from '$app/server';
 import { db } from '$lib/db';
 import { assistants, type AssistantRole } from '@czqm/db/schema';
-import { ASSISTANT_ROLE_INFO, OVERSEER_PARENT_PARITY_GATE_FLAGS, User } from '@czqm/common';
+import { ASSISTANT_ROLE_INFO, OVERSEER_TRAINING_TOOL_FLAGS, User } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { eq } from 'drizzle-orm';
@@ -12,7 +12,7 @@ const getAuthorizedActioner = async () => {
 	const actioner = await User.resolveAuthorizedUser(db, {
 		cid: event.locals.user?.cid,
 		sessionToken: event.cookies.get('session'),
-		requiredFlags: OVERSEER_PARENT_PARITY_GATE_FLAGS
+		requiredFlags: OVERSEER_TRAINING_TOOL_FLAGS
 	});
 
 	if (!actioner) {

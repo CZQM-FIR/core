@@ -13,7 +13,7 @@ import { type } from 'arktype';
 import { asc } from 'drizzle-orm';
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
-export const getDocuments = query(async () => {
+const requireStaffScopedUser = async () => {
 	const event = getRequestEvent();
 	const user = await User.resolveAuthenticatedUser(db, {
 		cid: event.locals.user?.cid,
@@ -23,6 +23,15 @@ export const getDocuments = query(async () => {
 	if (!user) {
 		throw error(401, 'Unauthorized');
 	}
+	if (!(await userCanUseStaffScopedOverseerTools(db, user))) {
+		throw error(401, 'Unauthorized');
+	}
+
+	return user;
+};
+
+export const getDocuments = query(async () => {
+	await requireStaffScopedUser();
 
 	const documents = await DmsDocument.fetchAll(db);
 
@@ -30,15 +39,7 @@ export const getDocuments = query(async () => {
 });
 
 export const getDocument = query(type('string'), async (id: string) => {
-	const event = getRequestEvent();
-	const user = await User.resolveAuthenticatedUser(db, {
-		cid: event.locals.user?.cid,
-		sessionToken: event.cookies.get('session')
-	});
-
-	if (!user) {
-		throw error(401, 'Unauthorized');
-	}
+	await requireStaffScopedUser();
 
 	const document = await DmsDocument.fromId(db, id);
 
@@ -364,15 +365,7 @@ export const deleteDocumentAsset = form('unchecked', async (rawData) => {
 });
 
 export const getDocumentsByGroup = query(type('string'), async (groupId) => {
-	const event = getRequestEvent();
-	const user = await User.resolveAuthenticatedUser(db, {
-		cid: event.locals.user?.cid,
-		sessionToken: event.cookies.get('session')
-	});
-
-	if (!user) {
-		throw error(401, 'Unauthorized');
-	}
+	await requireStaffScopedUser();
 
 	const group = await DmsGroup.fromId(db, groupId);
 
@@ -388,15 +381,7 @@ export const getDocumentsByGroup = query(type('string'), async (groupId) => {
 });
 
 export const getGroups = query(async () => {
-	const event = getRequestEvent();
-	const user = await User.resolveAuthenticatedUser(db, {
-		cid: event.locals.user?.cid,
-		sessionToken: event.cookies.get('session')
-	});
-
-	if (!user) {
-		throw error(401, 'Unauthorized');
-	}
+	await requireStaffScopedUser();
 
 	const groups = await DmsGroup.fetchAll(db);
 
@@ -404,15 +389,7 @@ export const getGroups = query(async () => {
 });
 
 export const getGroup = query(type('string'), async (id) => {
-	const event = getRequestEvent();
-	const user = await User.resolveAuthenticatedUser(db, {
-		cid: event.locals.user?.cid,
-		sessionToken: event.cookies.get('session')
-	});
-
-	if (!user) {
-		throw error(401, 'Unauthorized');
-	}
+	await requireStaffScopedUser();
 
 	const group = await DmsGroup.fromId(db, id);
 
