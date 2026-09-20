@@ -2,7 +2,7 @@ import { command, form, getRequestEvent, query } from '$app/server';
 import { db } from '$lib/db';
 import { soloEndorsements, users, usersToFlags } from '@czqm/db/schema';
 import {
-	OVERSEER_PARENT_PARITY_GATE_FLAGS,
+	OVERSEER_TRAINING_TOOL_FLAGS,
 	User,
 	type RosterPositionStatus,
 	USER_FETCH_FULL
@@ -17,7 +17,7 @@ const getAuthorizedActioner = async () => {
 	const actioner = await User.resolveAuthorizedUser(db, {
 		cid: event.locals.user?.cid,
 		sessionToken: event.cookies.get('session'),
-		requiredFlags: OVERSEER_PARENT_PARITY_GATE_FLAGS
+		requiredFlags: OVERSEER_TRAINING_TOOL_FLAGS
 	});
 
 	if (!actioner) {

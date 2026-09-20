@@ -1,15 +1,15 @@
 import { getRequestEvent, query } from '$app/server';
 import { db } from '$lib/db';
-import { OVERSEER_PARENT_PARITY_GATE_FLAGS, User, userCanAccessOverseerArea } from '@czqm/common';
+import { OVERSEER_TRAINING_TOOL_FLAGS, User, userCanAccessOverseerArea } from '@czqm/common';
 import { error } from '@sveltejs/kit';
 
-/** Users / Activity remotes: same OR gate as leadership nav (`OVERSEER_PARENT_PARITY_GATE_FLAGS`). */
+/** Users / Activity remotes: same OR gate as training nav (`OVERSEER_TRAINING_TOOL_FLAGS`). */
 const authorizeUsersOrActivityList = async () => {
 	const event = getRequestEvent();
 	const actioner = await User.resolveAuthorizedUser(db, {
 		cid: event.locals.user?.cid,
 		sessionToken: event.cookies.get('session'),
-		requiredFlags: OVERSEER_PARENT_PARITY_GATE_FLAGS
+		requiredFlags: OVERSEER_TRAINING_TOOL_FLAGS
 	});
 	if (!actioner) {
 		throw error(403, 'Forbidden');

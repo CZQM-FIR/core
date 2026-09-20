@@ -5,25 +5,20 @@ import { requiresInstructorToSchedule } from "./models/training";
 import type { User } from "./models/user";
 import type { FlagName } from "./models/user";
 
-/**
- * OR gate for Overseer leadership tools and user listing: real `staff` role flags plus
- * every flag that can be an assistant parent (`ASSISTANT_ROLE_INFO.parentFlag`), plus
- * `admin` / `chief` / `deputy`. Used with `User.resolveAuthorizedUser` (default assistant parity).
- */
-export const OVERSEER_PARENT_PARITY_GATE_FLAGS: FlagName[] = [
+export const OVERSEER_TRAINING_TOOL_FLAGS: FlagName[] = [
   "admin",
   "chief",
   "deputy",
   "chief-instructor",
-  "web",
-  "events",
-  "sector",
 ];
 
-/**
- * Parent staff flags implied by rows in `assistants` for this user (`cid`).
- * Does not grant Discord/staff table flags; use only for auth parity checks.
- */
+export const OVERSEER_EVENTS_TOOL_FLAGS: FlagName[] = [
+  "admin",
+  "chief",
+  "deputy",
+  "events",
+];
+
 export async function getAssistantParentFlagsForUser(
   db: DB,
   cid: number,
@@ -78,6 +73,7 @@ export async function userCanAccessOverseerArea(
 
 /**
  * Tools that were staff-gated (`admin` | `staff`): assistants may use them if they have any assignment.
+ * Matches navbar staff-area items (News, File Upload, Documents) and resources admin.
  */
 export async function userCanUseStaffScopedOverseerTools(
   db: DB,
@@ -85,6 +81,22 @@ export async function userCanUseStaffScopedOverseerTools(
 ): Promise<boolean> {
   if (user.hasFlag(["admin", "staff"])) return true;
   return userHasAnyAssistantAssignment(db, user.cid);
+}
+
+/** Users / Staff Roles / Activity in Overseer — same gate as training nav. */
+export async function userCanAccessOverseerTrainingTools(
+  db: DB,
+  user: User,
+): Promise<boolean> {
+  return userHasEffectiveFlag(db, user, OVERSEER_TRAINING_TOOL_FLAGS);
+}
+
+/** Events tools in Overseer — same gate as events nav. */
+export async function userCanAccessOverseerEventsTools(
+  db: DB,
+  user: User,
+): Promise<boolean> {
+  return userHasEffectiveFlag(db, user, OVERSEER_EVENTS_TOOL_FLAGS);
 }
 
 /** Vector `/a/*`: chief / deputy / FIR staff admin, or assistant to chief instructor */
