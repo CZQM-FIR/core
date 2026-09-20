@@ -2,26 +2,23 @@
 	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
-	import { type FlagName } from '@czqm/common';
+	import { OVERSEER_TRAINING_TOOL_FLAGS, OVERSEER_EVENTS_TOOL_FLAGS } from '@czqm/common';
 
 	import CZQMLogo from '$lib/assets/images/CZQM-White.svg';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
-	const trainingNavFlags: FlagName[] = ['admin', 'chief', 'deputy', 'chief-instructor'];
-	const eventsNavFlags: FlagName[] = ['admin', 'chief', 'deputy', 'events'];
-
 	function showTrainingNav(): boolean {
 		const u = data.user;
 		if (!u) return false;
-		if (trainingNavFlags.some((n) => u.flags.some((f) => f.name === n))) return true;
-		return data.assistantParentFlags.some((p) => trainingNavFlags.includes(p));
+		if (OVERSEER_TRAINING_TOOL_FLAGS.some((n) => u.flags.some((f) => f.name === n))) return true;
+		return data.assistantParentFlags.some((p) => OVERSEER_TRAINING_TOOL_FLAGS.includes(p));
 	}
 
 	function showEventsNav(): boolean {
 		const u = data.user;
 		if (!u) return false;
-		if (eventsNavFlags.some((n) => u.flags.some((f) => f.name === n))) return true;
+		if (OVERSEER_EVENTS_TOOL_FLAGS.some((n) => u.flags.some((f) => f.name === n))) return true;
 		return data.assistantParentFlags.includes('events');
 	}
 

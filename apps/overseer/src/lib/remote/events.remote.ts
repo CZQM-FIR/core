@@ -2,11 +2,9 @@ import { command, form, getRequestEvent, query } from '$app/server';
 import { db } from '$lib/db';
 import env from '$lib/env';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { Event, type FlagName, User } from '@czqm/common';
+import { Event, OVERSEER_EVENTS_TOOL_FLAGS, User } from '@czqm/common';
 import { error, redirect } from '@sveltejs/kit';
 import { type } from 'arktype';
-
-const eventManagerFlags: FlagName[] = ['admin', 'chief', 'deputy', 'chief-instructor', 'events'];
 
 const createDateFromInput = (value: string) => {
 	const parsed = new Date(value);
@@ -24,7 +22,7 @@ const getAuthorizedActioner = async () => {
 	const actioner = await User.resolveAuthorizedUser(db, {
 		cid: event.locals.user?.cid,
 		sessionToken: event.cookies.get('session'),
-		requiredFlags: eventManagerFlags
+		requiredFlags: OVERSEER_EVENTS_TOOL_FLAGS
 	});
 
 	if (!actioner) {
