@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 # Install pnpm globally
 RUN npm install -g pnpm
@@ -23,7 +23,7 @@ WORKDIR /app/apps/worker
 RUN pnpm build
 
 # Stage 2: Run
-FROM node:20-alpine
+FROM node:20-slim
 
 RUN npm install -g pnpm
 
