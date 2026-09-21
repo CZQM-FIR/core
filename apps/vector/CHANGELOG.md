@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.2](https://github.com/CZQM-FIR/core/compare/vector-v1.1.1...vector-v1.1.2) (2026-09-21)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @czqm/common bumped to 1.1.2
+
 ## [1.1.1](https://github.com/CZQM-FIR/core/compare/vector-v1.1.0...vector-v1.1.1) (2026-09-21)
 
 ### Bug Fixes

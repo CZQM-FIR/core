@@ -1,8 +1,8 @@
 {
   "apps/web": "1.1.2",
   "apps/overseer": "1.1.0",
-  "apps/vector": "1.1.1",
-  "apps/worker": "1.0.1",
+  "apps/vector": "1.1.2",
+  "apps/worker": "1.0.2",
   "packages/common": "1.1.1",
   "packages/db": "1.1.0"
 }
