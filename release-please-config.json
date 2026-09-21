@@ -3,6 +3,13 @@
   "include-component-in-tag": true,
   "include-v-in-tag": true,
   "separate-pull-requests": true,
+  "always-link-local": true,
+  "plugins": [
+    {
+      "type": "node-workspace",
+      "merge": true
+    }
+  ],
   "packages": {
     "apps/web": {
       "release-type": "node",
