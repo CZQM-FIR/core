@@ -17,22 +17,17 @@ export type SoloPresetWithPositions = SoloPreset & {
 export async function ensureSoloPresets(
   db: DB,
 ): Promise<SoloPresetWithPositions[]> {
-  const existing = await db.query.soloPresets.findMany({
+  for (const level of SOLO_PRESET_LEVELS) {
+    await db
+      .insert(soloPresets)
+      .values({ level, name: null })
+      .onConflictDoNothing({ target: soloPresets.level });
+  }
+
+  const ensured = await db.query.soloPresets.findMany({
     with: { positions: true },
   });
-  const byLevel = new Map(existing.map((preset) => [preset.level, preset]));
-
-  for (const level of SOLO_PRESET_LEVELS) {
-    if (!byLevel.has(level)) {
-      const [created] = await db
-        .insert(soloPresets)
-        .values({ level, name: null })
-        .returning();
-      if (created) {
-        byLevel.set(level, { ...created, positions: [] });
-      }
-    }
-  }
+  const byLevel = new Map(ensured.map((preset) => [preset.level, preset]));
 
   return SOLO_PRESET_LEVELS.map((level) => {
     const preset = byLevel.get(level);
