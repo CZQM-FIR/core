@@ -221,8 +221,8 @@
 					<div class="card-body gap-3">
 						<h2 class="card-title text-lg">Log past session</h2>
 						<p class="text-sm opacity-80">
-							Record a completed training session for {view.nextTask.description} using the actual
-							start and end times instead of scheduling one in the future.
+							Record a completed training session for {view.nextTask.description} using the actual start
+							and end times instead of scheduling one in the future.
 						</p>
 						<BackdatedSessionTimesForm
 							submitLabel="Log past session"
