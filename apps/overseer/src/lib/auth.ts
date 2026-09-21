@@ -82,7 +82,8 @@ export function auth(event: RequestEvent): Promise<SessionValidationResult> {
 }
 
 export type SessionValidationResult =
-	{ session: AuthSession; user: User } | { session: null; user: null };
+	| { session: AuthSession; user: User }
+	| { session: null; user: null };
 
 export type UserWithRelations = User & {
 	flags: Array<{
