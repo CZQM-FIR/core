@@ -3,6 +3,7 @@ import { db } from '$lib/db';
 import { soloEndorsements, users, usersToFlags } from '@czqm/db/schema';
 import {
 	OVERSEER_TRAINING_TOOL_FLAGS,
+	SOLO_MAX_POSITIONS,
 	User,
 	grantSoloEndorsement,
 	type RosterPositionStatus,
@@ -280,8 +281,8 @@ export const createSoloEndorsement = form(
 				.map((value) => value.trim().toUpperCase())
 				.filter(Boolean);
 
-			if (callsigns.length < 1 || callsigns.length > 5) {
-				return { message: 'Provide 1–5 callsigns', ok: false };
+			if (callsigns.length < 1 || callsigns.length > SOLO_MAX_POSITIONS) {
+				return { message: `Provide 1–${SOLO_MAX_POSITIONS} callsigns`, ok: false };
 			}
 
 			await grantSoloEndorsement(db, user.cid, callsigns, duration);
