@@ -1,9 +1,6 @@
 {
   "include-component-in-tag": true,
   "packages": {
-    ".": {
-      "release-type": "none"
-    },
     "apps/web": {
       "release-type": "node",
       "package-name": "web",
