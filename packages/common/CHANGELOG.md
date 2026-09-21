@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/CZQM-FIR/core/compare/common-v1.1.0...common-v1.1.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* **vector:** clean up solo preset wording ([6b06b30](https://github.com/CZQM-FIR/core/commit/6b06b30402b0cacbbbcf8db183b5f898a8d87d1b))
+
 ## [1.1.0](https://github.com/CZQM-FIR/core/compare/common-v1.0.0...common-v1.1.0) (2026-09-21)
 
 
