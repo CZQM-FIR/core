@@ -65,7 +65,7 @@ importers:
         version: 4.2.1
       arktype:
         specifier: ^2.1.20
-        version: 2.1.20
+        version: 2.2.3
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -183,7 +183,7 @@ importers:
         version: 4.2.1
       arktype:
         specifier: ^2.1.20
-        version: 2.1.20
+        version: 2.2.3
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -295,7 +295,7 @@ importers:
         version: 4.2.1
       arktype:
         specifier: ^2.1.20
-        version: 2.1.20
+        version: 2.2.3
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
@@ -404,7 +404,7 @@ importers:
         version: 0.18.0
       arktype:
         specifier: ^2.1.20
-        version: 2.1.20
+        version: 2.2.3
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -471,7 +471,7 @@ importers:
         version: 1.1.0
       arktype:
         specifier: ^2.1.20
-        version: 2.1.20
+        version: 2.2.3
       drizzle-orm:
         specifier: 1.0.0-beta.13-f728631
         version: 1.0.0-beta.13-f728631(@types/mssql@9.1.11)(mssql@11.0.2)
@@ -506,14 +506,14 @@ packages:
     engines: {node: '>=10'}
     dev: false
 
-  /@ark/schema@0.46.0:
-    resolution: {integrity: sha512-c2UQdKgP2eqqDArfBqQIJppxJHvNNXuQPeuSPlDML4rjw+f1cu0qAlzOG4b8ujgm9ctIDWwhpyw6gjG5ledIVQ==}
+  /@ark/schema@0.56.2:
+    resolution: {integrity: sha512-Qx4D2JFbBWpntiHZaTv7bGG4H/M2rigiknezKg/WVyDSaLdE4YCcWAOoFB7pjjDqHbbV2OqRfntm1nnXvwMexg==}
     dependencies:
-      '@ark/util': 0.46.0
+      '@ark/util': 0.56.2
     dev: false
 
-  /@ark/util@0.46.0:
-    resolution: {integrity: sha512-JPy/NGWn/lvf1WmGCPw2VGpBg5utZraE84I7wli18EDF3p3zc/e9WolT35tINeZO3l7C77SjqRJeAUoT0CvMRg==}
+  /@ark/util@0.56.2:
+    resolution: {integrity: sha512-9kU2sUE38FZEGG7l3hamYMBieLYEJh2L1mrYD2eXpT+78EnQSV1bhjxJhnxGBMSTbtwpBSDNSK+K60WvaI/DTQ==}
     dev: false
 
   /@aws-crypto/crc32@5.2.0:
@@ -6308,11 +6308,18 @@ packages:
     resolution: {integrity: sha512-Z/ZeOgVl7bcSYZ/u/rh0fOpvEpq//LZmdbkXyc7syVzjPAhfOa9ebsdTSjEBDU4vs5nC98Kfduj1uFo0qyET3g==}
     engines: {node: '>= 0.4'}
 
-  /arktype@2.1.20:
-    resolution: {integrity: sha512-IZCEEXaJ8g+Ijd59WtSYwtjnqXiwM8sWQ5EjGamcto7+HVN9eK0C4p0zDlCuAwWhpqr6fIBkxPuYDl4/Mcj/+Q==}
+  /arkregex@0.0.8:
+    resolution: {integrity: sha512-PJcx6G1kQTgLKPUbeYlYecDRaKq15AMSGVajlKFYWlPeJRQL+j3dKE6tyMs40HZ99djS1l9Vhl3ezAHy9JBIqQ==}
     dependencies:
-      '@ark/schema': 0.46.0
-      '@ark/util': 0.46.0
+      '@ark/util': 0.56.2
+    dev: false
+
+  /arktype@2.2.3:
+    resolution: {integrity: sha512-7W+0RLTUNJiBFIIZXwOQxSR8Z273IAd6IvqBeG9+gHnQKFsIx2C0iOtGTmMrPnlX4qLXyc5+ll7A0BIj9WrbTg==}
+    dependencies:
+      '@ark/schema': 0.56.2
+      '@ark/util': 0.56.2
+      arkregex: 0.0.8
     dev: false
 
   /as-table@1.0.55:
