@@ -1,41 +1,28 @@
 {
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "include-component-in-tag": true,
+  "include-v-in-tag": true,
+  "separate-pull-requests": true,
   "packages": {
     "apps/web": {
       "release-type": "node",
       "package-name": "web",
-      "component": "web",
-      "extra-files": [
-        "packages/common",
-        "packages/db"
-      ]
+      "component": "web"
     },
     "apps/overseer": {
       "release-type": "node",
       "package-name": "overseer",
-      "component": "overseer",
-      "extra-files": [
-        "packages/common",
-        "packages/db"
-      ]
+      "component": "overseer"
     },
     "apps/vector": {
       "release-type": "node",
       "package-name": "vector",
-      "component": "vector",
-      "extra-files": [
-        "packages/common",
-        "packages/db"
-      ]
+      "component": "vector"
     },
     "apps/worker": {
       "release-type": "node",
       "package-name": "worker",
-      "component": "worker",
-      "extra-files": [
-        "packages/common",
-        "packages/db"
-      ]
+      "component": "worker"
     },
     "packages/common": {
       "release-type": "node",

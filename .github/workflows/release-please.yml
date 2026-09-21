@@ -16,10 +16,9 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
-          # this assumes that you have created a personal access token
-          # (PAT) and configured it as a GitHub action secret named
-          # `RELEASE_PLEASE_TOKEN ` (this secret name is not important).
+          # PAT stored as RELEASE_PLEASE_TOKEN. Do NOT set release-type here —
+          # that forces a single-package (".") release and ignores the monorepo
+          # config/manifest. Per-package types live in release-please-config.json.
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          # this is a built-in strategy in release-please, see "Action Inputs"
-          # for more options
-          release-type: simple
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
