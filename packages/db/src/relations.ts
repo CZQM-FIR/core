@@ -69,7 +69,6 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.users.cid.through(r.tickets.authorId),
       to: r.ticketType.id.through(r.tickets.typeId),
     }),
-    positions: r.many.positions(),
     roster: r.many.roster(),
     authSessions: r.many.authSessions(),
     integrations: r.many.integrations(),

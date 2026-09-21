@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { ChevronLeft } from '@lucide/svelte';
+	import BackdatedSessionTimesForm from '$lib/components/BackdatedSessionTimesForm.svelte';
 	import CourseTaskList from '$lib/components/CourseTaskList.svelte';
 	import SyncCourseTasksButton from '$lib/components/SyncCourseTasksButton.svelte';
 	import TrainingNotesList from '$lib/components/TrainingNotesList.svelte';
@@ -7,6 +9,7 @@
 	import TrainingSessionAvailabilityCalendar from '$lib/components/TrainingSessionAvailabilityCalendar.svelte';
 	import TrainingSessionPendingCard from '$lib/components/TrainingSessionPendingCard.svelte';
 	import {
+		createBackdatedTrainingSession,
 		getInstructorStudentTrainingNotes,
 		getInstructorStudentView,
 		graduateStudentFromCourse,
@@ -190,26 +193,53 @@
 					href={`/i/sessions/${view.activeSession.id}`}
 				/>
 			</div>
-		{:else if view.canScheduleSession && view.nextTask}
-			<div class="mt-6">
-				<TrainingSessionAvailabilityCalendar
-					mode="schedule"
-					courseId={view.course.id}
-					taskId={view.nextTask.taskId}
-					cid={view.student.cid}
-					sessionDescription={view.nextTask.description}
-				/>
-			</div>
-		{:else if !view.pause && view.canViewSessionAvailability && view.nextTask}
-			<div class="mt-6">
-				<TrainingSessionAvailabilityCalendar
-					mode="view"
-					courseId={view.course.id}
-					taskId={view.nextTask.taskId}
-					cid={view.student.cid}
-					sessionDescription={view.nextTask.description}
-				/>
-			</div>
+		{:else}
+			{#if view.canScheduleSession && view.nextTask}
+				<div class="mt-6">
+					<TrainingSessionAvailabilityCalendar
+						mode="schedule"
+						courseId={view.course.id}
+						taskId={view.nextTask.taskId}
+						cid={view.student.cid}
+						sessionDescription={view.nextTask.description}
+					/>
+				</div>
+			{:else if !view.pause && view.canViewSessionAvailability && view.nextTask}
+				<div class="mt-6">
+					<TrainingSessionAvailabilityCalendar
+						mode="view"
+						courseId={view.course.id}
+						taskId={view.nextTask.taskId}
+						cid={view.student.cid}
+						sessionDescription={view.nextTask.description}
+					/>
+				</div>
+			{/if}
+
+			{#if view.canCreateBackdatedSession && view.nextTask}
+				<div class="card bg-base-200 mt-6 shadow-sm">
+					<div class="card-body gap-3">
+						<h2 class="card-title text-lg">Log past session</h2>
+						<p class="text-sm opacity-80">
+							Record a completed training session for {view.nextTask.description} using the actual
+							start and end times instead of scheduling one in the future.
+						</p>
+						<BackdatedSessionTimesForm
+							submitLabel="Log past session"
+							onSubmit={async (startsAt, endsAt) => {
+								const { sessionId } = await createBackdatedTrainingSession({
+									courseId: view.course.id,
+									studentCid: view.student.cid,
+									taskId: view.nextTask!.taskId,
+									startsAt: startsAt.toISOString(),
+									endsAt: endsAt.toISOString()
+								});
+								await goto(`/i/sessions/${sessionId}`);
+							}}
+						/>
+					</div>
+				</div>
+			{/if}
 		{/if}
 
 		<div class="mt-6 flex flex-col gap-3">

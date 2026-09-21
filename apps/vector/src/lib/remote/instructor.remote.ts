@@ -8,6 +8,7 @@ import {
 	isTrainingSessionNext,
 	mergeAvailabilitySlots,
 	toNextTaskSummary,
+	validatePastSessionTimeRange,
 	validateSessionTimeRange
 } from '$lib/trainingSessionAvailability';
 import { assertNextTrainingSessionTask, getCourseTaskProgress } from '$lib/courseTaskProgress';
@@ -190,6 +191,7 @@ export const getInstructorStudentView = query(
 
 		let canViewSessionAvailability = false;
 		let canScheduleSession = false;
+		let canCreateBackdatedSession = false;
 		let activeSession = null;
 
 		if (trainingSessionIsNext && nextTask) {
@@ -219,13 +221,19 @@ export const getInstructorStudentView = query(
 			const sessionType =
 				courseTask?.taskType === 'training_session' ? courseTask.taskValue1 : null;
 
+			const canScheduleType =
+				userHasVectorInstructorAccess(actioner) &&
+				userCanScheduleTrainingSessionType(actioner, sessionType);
+
 			canScheduleSession =
 				status === 'enrolled' &&
 				pause == null &&
 				canViewSessionAvailability &&
 				activeSession == null &&
-				userHasVectorInstructorAccess(actioner) &&
-				userCanScheduleTrainingSessionType(actioner, sessionType);
+				canScheduleType;
+
+			canCreateBackdatedSession =
+				status === 'enrolled' && pause == null && activeSession == null && canScheduleType;
 		}
 
 		return {
@@ -254,6 +262,7 @@ export const getInstructorStudentView = query(
 			nextTask,
 			canViewSessionAvailability,
 			canScheduleSession,
+			canCreateBackdatedSession,
 			activeSession,
 			canCancelActiveSession:
 				activeSession != null &&
@@ -637,6 +646,101 @@ export const scheduleTrainingSession = command(
 	}
 );
 
+const CreateBackdatedTrainingSessionOptions = type({
+	courseId: CourseId,
+	studentCid: 'number.integer > 0',
+	taskId: 'number.integer >= 0',
+	startsAt: 'string',
+	endsAt: 'string',
+	'trainingNote?': 'string'
+});
+
+export const createBackdatedTrainingSession = command(
+	CreateBackdatedTrainingSessionOptions,
+	async ({ courseId, studentCid, taskId, startsAt, endsAt, trainingNote }) => {
+		const actioner = await authorizeVectorInstructorAccess();
+
+		const course = await Course.fetchById(courseId, db);
+		if (!course) throw error(404, 'Course not found');
+
+		const student = await User.fromCid(db, studentCid);
+		if (!student) throw error(404, 'Student not found');
+
+		const enrolled = await db.query.enrolledUsers.findFirst({
+			where: {
+				waitlistId: course.waitlist.id,
+				cid: studentCid,
+				hiddenAt: { isNull: true }
+			}
+		});
+		if (!enrolled) throw error(400, 'Student is not enrolled in this course');
+		assertEnrollmentNotPaused(enrolled);
+
+		try {
+			await assertNextTrainingSessionTask(course, studentCid, taskId);
+		} catch (err) {
+			throw error(
+				400,
+				err instanceof Error ? err.message : 'Session scheduling is not available for this task'
+			);
+		}
+
+		const courseTask = course.tasks.find((entry) => entry.taskId === taskId);
+		if (!courseTask || courseTask.taskType !== 'training_session') {
+			throw error(400, 'Session scheduling is not available for this task');
+		}
+		if (!userCanScheduleTrainingSessionType(actioner, courseTask.taskValue1)) {
+			throw error(403, 'Forbidden');
+		}
+
+		const activeSession = await TrainingSession.fetchActiveForTask(db, {
+			studentCid,
+			courseId,
+			taskId
+		});
+		if (activeSession) {
+			throw error(400, 'An active training session already exists for this task');
+		}
+
+		const startsAtDate = new Date(startsAt);
+		const endsAtDate = new Date(endsAt);
+
+		try {
+			validatePastSessionTimeRange(startsAtDate, endsAtDate);
+		} catch (err) {
+			throw error(400, err instanceof Error ? err.message : 'Invalid session time range');
+		}
+
+		let session;
+		try {
+			session = await TrainingSession.createBackdated(db, {
+				studentCid,
+				courseId,
+				taskId,
+				scheduledByCid: actioner.cid,
+				startsAt: startsAtDate,
+				endsAt: endsAtDate,
+				trainingNote: trainingNote ?? null
+			});
+		} catch (err) {
+			throw error(
+				400,
+				err instanceof Error ? err.message : 'Failed to create backdated training session'
+			);
+		}
+
+		getInstructorStudentView({ courseId, cid: studentCid }).refresh();
+		getStudentsWithSessionAvailability().refresh();
+		getScheduledSessionsInWindow().refresh();
+		getMyTrainingSessions().refresh();
+		getUpcomingInstructorSession().refresh();
+		getInstructorTrainingSession(session.id).refresh();
+		getSessionsAwaitingTrainingNotes().refresh();
+
+		return { sessionId: session.id };
+	}
+);
+
 const CancelTrainingSessionOptions = type({
 	courseId: CourseId,
 	studentCid: 'number.integer > 0',
@@ -782,6 +886,7 @@ async function toInstructorSessionDetail(row: TrainingSessionRow, actioner: User
 	const isFirstSubmit = row.vatcanNoteId == null;
 	const taskComplete = completion?.isComplete ?? false;
 	const status = row.status as TrainingSessionStatus;
+	const isBackdated = row.isBackdated === true;
 	const canManage = actioner.cid === row.scheduledByCid;
 	const canTransfer = await actorCanTransferSession(actioner, row);
 	const sessionType = task?.taskType === 'training_session' ? (task.taskValue1 ?? null) : null;
@@ -794,6 +899,7 @@ async function toInstructorSessionDetail(row: TrainingSessionRow, actioner: User
 	return {
 		id: row.id,
 		status,
+		isBackdated,
 		startsAt: row.startsAt,
 		endsAt: row.endsAt,
 		actualStartedAt: row.actualStartedAt,
@@ -815,11 +921,13 @@ async function toInstructorSessionDetail(row: TrainingSessionRow, actioner: User
 		objectiveResults,
 		canManage,
 		canTransfer,
-		canStart: canManage && status === 'confirmed',
-		canEnd: canManage && status === 'in_progress',
+		canStart: canManage && !isBackdated && status === 'confirmed',
+		canEnd: canManage && !isBackdated && status === 'in_progress',
 		canCancel:
 			canManage && canCancelTrainingSession(status, 'scheduler', trainingNotesSentToVatcan(row)),
-		canReschedule: canManage && (status === 'pending' || status === 'confirmed'),
+		canReschedule: canManage && !isBackdated && (status === 'pending' || status === 'confirmed'),
+		canCompleteAsBackdated:
+			canManage && !isBackdated && (status === 'pending' || status === 'confirmed'),
 		canSaveNotes: canManage && !notesLocked && status !== 'cancelled' && status !== 'declined',
 		canSubmitNotes: canManage && canSubmitTrainingNotesToVatcan(status) && !notesLocked,
 		student: {
@@ -1187,6 +1295,50 @@ export const endTrainingSession = command(SessionId, async (sessionId) => {
 
 	refreshInstructorSessionQueries(session);
 });
+
+const CompleteTrainingSessionAsBackdatedOptions = type({
+	sessionId: SessionId,
+	startsAt: 'string',
+	endsAt: 'string'
+});
+
+export const completeTrainingSessionAsBackdated = command(
+	CompleteTrainingSessionAsBackdatedOptions,
+	async ({ sessionId, startsAt, endsAt }) => {
+		const actioner = await authorizeVectorInstructorAccess();
+		const session = await requireSchedulerSession(sessionId, actioner.cid);
+
+		if (session.status !== 'pending' && session.status !== 'confirmed') {
+			throw error(
+				400,
+				'Only pending or confirmed training sessions can be recorded as past sessions'
+			);
+		}
+
+		const startsAtDate = new Date(startsAt);
+		const endsAtDate = new Date(endsAt);
+
+		try {
+			validatePastSessionTimeRange(startsAtDate, endsAtDate);
+		} catch (err) {
+			throw error(400, err instanceof Error ? err.message : 'Invalid session time range');
+		}
+
+		try {
+			await TrainingSession.completeAsBackdated(
+				db,
+				sessionId,
+				actioner.cid,
+				startsAtDate,
+				endsAtDate
+			);
+		} catch (err) {
+			remoteCommandError(err, 'Failed to record training session as past');
+		}
+
+		refreshInstructorSessionQueries(session);
+	}
+);
 
 const RescheduleTrainingSessionOptions = type({
 	sessionId: SessionId,

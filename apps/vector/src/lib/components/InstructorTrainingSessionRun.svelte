@@ -10,9 +10,11 @@
 		validateSubmittedPositionTrained,
 		type TrainingSessionStatus
 	} from '@czqm/common';
+	import BackdatedSessionTimesForm from '$lib/components/BackdatedSessionTimesForm.svelte';
 	import TrainingSessionAvailabilityCalendar from '$lib/components/TrainingSessionAvailabilityCalendar.svelte';
 	import {
 		cancelTrainingSession,
+		completeTrainingSessionAsBackdated,
 		endTrainingSession,
 		getInstructorTrainingSession,
 		getTrainingSessionTransferTargets,
@@ -55,6 +57,7 @@
 	let cancelDialog = $state<HTMLDialogElement | null>(null);
 	let transferDialog = $state<HTMLDialogElement | null>(null);
 	let rescheduleDialog = $state<HTMLDialogElement | null>(null);
+	let backdatedDialog = $state<HTMLDialogElement | null>(null);
 	let submitDialog = $state<HTMLDialogElement | null>(null);
 	let unsubmitDialog = $state<HTMLDialogElement | null>(null);
 	let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -101,6 +104,7 @@
 					session.canReschedule ||
 					session.canStart ||
 					session.canEnd ||
+					session.canCompleteAsBackdated ||
 					session.canSubmitNotes ||
 					session.canUnsubmitNotes))
 	);
@@ -326,6 +330,26 @@
 		rescheduleDialog?.close();
 	}
 
+	function openBackdatedDialog() {
+		actionError = null;
+		backdatedDialog?.showModal();
+	}
+
+	function closeBackdatedDialog() {
+		backdatedDialog?.close();
+	}
+
+	async function handleCompleteAsBackdated(startsAt: Date, endsAt: Date) {
+		if (!session.canCompleteAsBackdated) return;
+
+		await completeTrainingSessionAsBackdated({
+			sessionId: session.id,
+			startsAt: startsAt.toISOString(),
+			endsAt: endsAt.toISOString()
+		});
+		closeBackdatedDialog();
+	}
+
 	async function openSubmitDialog() {
 		submitError = null;
 		if (autosaveTimer) {
@@ -396,7 +420,12 @@
 			{session.task.sessionTypeLabel} · {session.task.description}
 		</p>
 	</div>
-	<span class="badge {statusBadgeClass(session.status)}">{statusLabel(session.status)}</span>
+	<div class="flex flex-wrap items-center gap-2">
+		<span class="badge {statusBadgeClass(session.status)}">{statusLabel(session.status)}</span>
+		{#if session.isBackdated}
+			<span class="badge badge-outline">Past session</span>
+		{/if}
+	</div>
 </div>
 
 {#if showActions}
@@ -439,6 +468,16 @@
 				onclick={openUnsubmitDialog}
 			>
 				Unsubmit to edit
+			</button>
+		{/if}
+		{#if session.canCompleteAsBackdated}
+			<button
+				type="button"
+				class="btn btn-outline"
+				disabled={actionBusy}
+				onclick={openBackdatedDialog}
+			>
+				Record as past session
 			</button>
 		{/if}
 		{#if session.canReschedule}
@@ -653,6 +692,31 @@
 		<div class="modal-action">
 			<form method="dialog">
 				<button class="btn">Close</button>
+			</form>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+
+<dialog class="modal" bind:this={backdatedDialog}>
+	<div class="modal-box">
+		<h3 class="text-lg font-bold">Record as past session</h3>
+		<p class="py-2 text-sm">
+			Convert this scheduled session into a completed past session with the actual start and end
+			times. Start and end controls will no longer apply.
+		</p>
+		<BackdatedSessionTimesForm
+			initialStartsAt={session.startsAt}
+			initialEndsAt={session.endsAt}
+			submitLabel="Record as past session"
+			disabled={actionBusy}
+			onSubmit={handleCompleteAsBackdated}
+		/>
+		<div class="modal-action">
+			<form method="dialog">
+				<button class="btn">Cancel</button>
 			</form>
 		</div>
 	</div>

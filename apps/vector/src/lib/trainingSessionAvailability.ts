@@ -247,6 +247,55 @@ export function validateSessionTimeRange(
 	}
 }
 
+/** Max age for backdated (past) training sessions. */
+export const BACKDATED_SESSION_MAX_DAYS = 90;
+export const BACKDATED_SESSION_MAX_MS = BACKDATED_SESSION_MAX_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * Validate instructor-entered actual start/end for a backdated session.
+ * End must be ≤ now, start ≥ now − 90 days, duration a multiple of 30 minutes.
+ */
+export function validatePastSessionTimeRange(
+	startsAt: Date,
+	endsAt: Date,
+	now = new Date()
+): void {
+	if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) {
+		throw new Error('Invalid session start or end time');
+	}
+
+	if (startsAt >= endsAt) {
+		throw new Error('Session start must be before end');
+	}
+
+	const durationMs = endsAt.getTime() - startsAt.getTime();
+	if (durationMs % SLOT_MS !== 0) {
+		throw new Error('Session duration must be a multiple of 30 minutes');
+	}
+
+	if (endsAt.getTime() > now.getTime()) {
+		throw new Error('Session end must be in the past or now');
+	}
+
+	const earliestStart = new Date(now.getTime() - BACKDATED_SESSION_MAX_MS);
+	if (startsAt.getTime() < earliestStart.getTime()) {
+		throw new Error(
+			`Session start must be within the last ${BACKDATED_SESSION_MAX_DAYS} days`
+		);
+	}
+}
+
+/** Format a Date for an HTML datetime-local input (local timezone, minute precision). */
+export function toDatetimeLocalValue(date: Date): string {
+	const pad = (n: number) => String(n).padStart(2, '0');
+	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** Parse a datetime-local input value as a local Date. */
+export function fromDatetimeLocalValue(value: string): Date {
+	return new Date(value);
+}
+
 export function isRangeWithinAvailability(
 	selectedRange: { startsAt: Date; endsAt: Date },
 	availabilitySlots: { startsAt: Date; endsAt: Date }[]
