@@ -1,3 +1,4 @@
+import '@czqm/common/arktype-config';
 import { type } from 'arktype';
 import { env as dynamicPublicEnv } from '$env/dynamic/public';
 

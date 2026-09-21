@@ -1,3 +1,4 @@
+import '@czqm/common/arktype-config';
 import { type } from 'arktype';
 import { createDB } from '@czqm/common';
 import { handleOnlineSessions } from './onlineATC.js';

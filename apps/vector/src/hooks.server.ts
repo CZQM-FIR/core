@@ -1,3 +1,4 @@
+import '@czqm/common/arktype-config';
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { deleteSessionTokenCookie, setSessionTokenCookie, validateSessionToken } from '$lib/auth';

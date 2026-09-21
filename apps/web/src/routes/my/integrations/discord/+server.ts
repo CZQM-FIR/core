@@ -1,3 +1,4 @@
+import '@czqm/common/arktype-config';
 import { redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
@@ -14,11 +15,26 @@ const {
   DISCORD_REDIRECT_URI
 } = env;
 
-export const GET: RequestHandler = async ({ url, locals }) => {
-  const SearchParams = type({
-    code: 'string'
-  });
+const SearchParams = type({
+  code: 'string'
+});
 
+const TokenData = type({
+  token_type: "'Bearer'",
+  access_token: 'string',
+  expires_in: 'number.integer > 0',
+  refresh_token: 'string',
+  scope: type('string')
+    .pipe((v) => v.split(' '))
+    .to('string[]')
+});
+
+const UserData = type({
+  id: 'string.integer',
+  username: 'string'
+});
+
+export const GET: RequestHandler = async ({ url, locals }) => {
   const params = SearchParams(Object.fromEntries(url.searchParams.entries()));
   if (params instanceof type.errors) {
     console.error('Invalid search parameters:', params.summary);
@@ -46,16 +62,6 @@ export const GET: RequestHandler = async ({ url, locals }) => {
     return new Response('Failed to link Discord account', { status: 500 });
   }
 
-  const TokenData = type({
-    token_type: "'Bearer'",
-    access_token: 'string',
-    expires_in: 'number.integer > 0',
-    refresh_token: 'string',
-    scope: type('string')
-      .pipe((v) => v.split(' '))
-      .to('string[]')
-  });
-
   const tokenData = TokenData(await tokenResponse.json());
 
   if (tokenData instanceof type.errors) {
@@ -67,11 +73,6 @@ export const GET: RequestHandler = async ({ url, locals }) => {
     headers: {
       Authorization: `${tokenData.token_type} ${tokenData.access_token}`
     }
-  });
-
-  const UserData = type({
-    id: 'string.integer',
-    username: 'string'
   });
 
   const userData = UserData(await userResponse.json());

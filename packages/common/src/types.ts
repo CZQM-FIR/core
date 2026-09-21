@@ -1,3 +1,4 @@
+import "./arktype.config";
 import { type } from "arktype";
 
 export const Env = type({
