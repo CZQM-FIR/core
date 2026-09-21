@@ -4,5 +4,6 @@
   "apps/vector": "1.0.0",
   "apps/worker": "1.0.0",
   "packages/common": "1.0.0",
-  "packages/db": "1.0.0"
+  "packages/db": "1.0.0",
+  ".": "2.0.0"
 }
