@@ -35,6 +35,7 @@
 					<li><a href="/notes">Training Notes</a></li>
 					{#if data.isVectorAdmin}
 						<li><a href="/a/courses">Training Administration</a></li>
+						<li><a href="/a/solo-presets">Solo Presets</a></li>
 					{/if}
 					{#if data.isVectorInstructor}
 						<li><a href="/i">Instructor Dashboard</a></li>
@@ -51,6 +52,7 @@
 				<li><a href="/notes">Training Notes</a></li>
 				{#if data.isVectorAdmin}
 					<li><a href="/a/courses">Training Administration</a></li>
+					<li><a href="/a/solo-presets">Solo Presets</a></li>
 				{/if}
 				{#if data.isVectorInstructor}
 					<li><a href="/i">Instructor Dashboard</a></li>

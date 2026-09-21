@@ -637,13 +637,21 @@ function describeCertifyTask(taskValue1: string | null): string {
 function describeSoloTask(
   taskValue1: string | null,
   taskValue2: string | null,
+  callsigns?: string[],
 ): string {
-  const callsign = taskValue1?.trim() || "Unknown";
+  const level = taskValue1?.trim() || "";
+  const levelLabel = isRosterPosition(level)
+    ? formatRosterPosition(level)
+    : level || "Unknown";
   const days = Number(taskValue2 ?? 0);
-  const durationLabel = Number.isInteger(days) && days > 0 ? `${days}-day` : "";
-  return durationLabel
-    ? `Grant a ${durationLabel} solo on ${callsign}`
-    : `Grant a solo on ${callsign}`;
+  const durationLabel = Number.isInteger(days) && days > 0 ? `${days}-day ` : "";
+  if (callsigns && callsigns.length > 0) {
+    return `Grant a ${durationLabel}solo on ${callsigns.join(", ")}`.replace(
+      "  ",
+      " ",
+    );
+  }
+  return `Grant a ${durationLabel}${levelLabel} solo preset`.replace("  ", " ");
 }
 
 export function formatCourseTaskType(taskType: string): string {
@@ -1878,7 +1886,8 @@ export class SoloCourseTask extends CourseTask {
     super(db, "solo", taskValue1, taskValue2, courseId, taskId, objectives);
   }
 
-  get callsign(): string | null {
+  /** Preset roster level (`gnd` / `twr` / `app` / `ctr`). */
+  get presetLevel(): string | null {
     return this.taskValue1;
   }
 
@@ -1887,7 +1896,7 @@ export class SoloCourseTask extends CourseTask {
   }
 
   getDescription(): string {
-    return describeSoloTask(this.callsign, this.taskValue2);
+    return describeSoloTask(this.presetLevel, this.taskValue2);
   }
 }
 

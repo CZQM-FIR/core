@@ -66,6 +66,10 @@
 <section>
 	<div class="container mx-auto">
 		<h1 class="pt-6 text-2xl font-semibold">Training Administration</h1>
+		<p class="text-sm opacity-70">
+			<a href="/a/solo-presets" class="link">Manage solo presets</a>
+			for course solo tasks.
+		</p>
 		<div class="divider"></div>
 
 		<div

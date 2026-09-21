@@ -32,6 +32,7 @@ import {
 	describeCourseTask,
 	formatTrainingSessionType,
 	grantSoloEndorsement,
+	getSoloPresetByLevel,
 	isRosterPosition,
 	notesUnsubmitDeadline,
 	parseSoloDurationDays,
@@ -1441,9 +1442,25 @@ async function applyCourseTaskCompletion(
 			}
 			await certifyControllerOnRoster(db, cid, position);
 		} else if (task.taskType === 'solo') {
-			const callsign = task.taskValue1?.trim() ?? '';
+			const level = task.taskValue1?.trim() ?? '';
+			if (!isRosterPosition(level)) {
+				throw new Error(
+					'This solo task must use a preset level (Ground, Tower, Approach, or Centre). Re-save the task in course admin.'
+				);
+			}
+			const preset = await getSoloPresetByLevel(db, level);
+			if (!preset || preset.positions.length === 0) {
+				throw new Error(
+					`Solo preset for ${level} is empty. Configure positions under Solo Presets first.`
+				);
+			}
 			const durationDays = parseSoloDurationDays(task.taskValue2);
-			await grantSoloEndorsement(db, cid, callsign, durationDays);
+			await grantSoloEndorsement(
+				db,
+				cid,
+				preset.positions.map((position) => position.callsign),
+				durationDays
+			);
 		}
 	} catch (err) {
 		remoteCommandError(err, 'Failed to update roster or solo endorsement');

@@ -26,10 +26,14 @@ export const getRosterData = query(async () => {
 export const getSoloEndorsements = query(async () => {
   const solos = await SoloEndorsement.fetchAll(db);
   const solosData = solos.map((s) => {
-    const { callsign, frequency, name } = s.position;
     return {
+      id: s.id,
       cid: s.cid,
-      position: { callsign, frequency, name },
+      positions: s.positions.map((position) => ({
+        callsign: position.callsign,
+        frequency: position.frequency,
+        name: position.name
+      })),
       active: s.isActive,
       displayName: s.controller.displayName,
       expiresAt: s.expiresAt.toJSON()

@@ -4,6 +4,7 @@ import { soloEndorsements, users, usersToFlags } from '@czqm/db/schema';
 import {
 	OVERSEER_TRAINING_TOOL_FLAGS,
 	User,
+	grantSoloEndorsement,
 	type RosterPositionStatus,
 	USER_FETCH_FULL
 } from '@czqm/common';
@@ -252,10 +253,11 @@ export const deleteSoloEndorsement = form(SoloEndorsementActionSchema, async ({ 
 });
 
 const CreateSoloEndorsementSchema = type({
-	position: '1 <= string <= 10',
+	'positions?': 'string',
+	'position?': 'string',
 	duration: type('string.integer')
 		.pipe((v) => Number(v))
-		.to('number.integer >= 0'),
+		.to('number.integer >= 1'),
 	cid: type('string.integer')
 		.pipe((v) => Number(v))
 		.to('number.integer >= 0')
@@ -263,7 +265,7 @@ const CreateSoloEndorsementSchema = type({
 
 export const createSoloEndorsement = form(
 	CreateSoloEndorsementSchema,
-	async ({ position: positionName, duration, cid }) => {
+	async ({ positions: positionsRaw, position, duration, cid }) => {
 		try {
 			await getAuthorizedActioner();
 
@@ -273,40 +275,16 @@ export const createSoloEndorsement = form(
 				return { message: 'User not found', ok: false };
 			}
 
-			if (user.roster.some((r) => positionName.includes(r.position) && r.status === 2)) {
-				return { message: 'User is already certified for this position', ok: false };
+			const callsigns = (positionsRaw ?? position ?? '')
+				.split(/[\n,]+/)
+				.map((value) => value.trim().toUpperCase())
+				.filter(Boolean);
+
+			if (callsigns.length < 1 || callsigns.length > 5) {
+				return { message: 'Provide 1–5 callsigns', ok: false };
 			}
 
-			if (
-				user.soloEndorsements.some(
-					(endorsement) =>
-						endorsement.position.callsign === positionName && endorsement.expiresAt > new Date()
-				)
-			) {
-				return { message: 'User already has an active endorsement for this position', ok: false };
-			}
-
-			const position = await db.query.positions.findFirst({
-				where: { callsign: positionName.toUpperCase() }
-			});
-
-			if (!position) {
-				return { message: 'Position not found', ok: false };
-			}
-
-			await db
-				.insert(soloEndorsements)
-				.values({
-					controllerId: user.cid,
-					positionId: position.id,
-					expiresAt: new Date(Date.now() + duration * 24 * 60 * 60 * 1000)
-				})
-				.onConflictDoUpdate({
-					target: [soloEndorsements.controllerId, soloEndorsements.positionId],
-					set: {
-						expiresAt: new Date(Date.now() + duration * 24 * 60 * 60 * 1000)
-					}
-				});
+			await grantSoloEndorsement(db, user.cid, callsigns, duration);
 
 			getUserAdminDetails(cid).refresh();
 

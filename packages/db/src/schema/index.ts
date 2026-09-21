@@ -10,6 +10,7 @@ export * from "./authSessions";
 export * from "./tickets";
 export * from "./resources";
 export * from "./soloEndorsements";
+export * from "./soloPresets";
 export * from "./roster";
 export * from "./integrations";
 export * from "./preferences";

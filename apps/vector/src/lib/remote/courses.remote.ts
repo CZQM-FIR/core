@@ -5,6 +5,7 @@ import {
 	encodeVatcanCbtTaskValue2,
 	fetchVatcanCbtBlockOptions,
 	findVatcanCbtBlock,
+	getSoloPresetByLevel,
 	isRosterPosition,
 	isTrainingSessionType,
 	parseRatingComparison,
@@ -97,21 +98,25 @@ async function validateSoloTaskValues(
 	taskValue1: string | undefined,
 	taskValue2: string | undefined
 ): Promise<{ taskValue1: string; taskValue2: string }> {
-	const callsign = taskValue1?.trim().toUpperCase();
-	if (!callsign) {
-		throw error(400, 'Solo position is required');
+	const level = taskValue1?.trim();
+	if (!level || !isRosterPosition(level)) {
+		throw error(
+			400,
+			'Solo preset level is required and must be Ground, Tower, Approach, or Centre'
+		);
 	}
 
-	const position = await db.query.positions.findFirst({
-		where: { callsign }
-	});
-	if (!position) {
-		throw error(400, `Position not found: ${callsign}`);
+	const preset = await getSoloPresetByLevel(db, level);
+	if (!preset || preset.positions.length === 0) {
+		throw error(
+			400,
+			`Solo preset for ${level} is empty. Configure positions under Solo Presets before saving this task.`
+		);
 	}
 
 	try {
 		const durationDays = parseSoloDurationDays(taskValue2);
-		return { taskValue1: callsign, taskValue2: String(durationDays) };
+		return { taskValue1: level, taskValue2: String(durationDays) };
 	} catch (err) {
 		throw error(400, err instanceof Error ? err.message : 'Invalid solo duration');
 	}

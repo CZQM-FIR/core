@@ -17,6 +17,7 @@ import { createDB, type DB } from "../db";
 import { Env } from "../types";
 import { validateSessionToken } from "../auth";
 import { getAssistantParentFlagsForUser } from "../assistantAccess";
+import { rosterLevelFromCallsign } from "./rosterLevel";
 
 type UserData = UserSchema & {
   rating: Rating;
@@ -113,7 +114,7 @@ export function formatUserDisplayName(
 }
 
 export type SoloEndorsementWithPosition = SoloEndorsement & {
-  position: Position;
+  positions: Position[];
 };
 
 /** Options for limiting which relations are loaded. Omitted options use per-method defaults (see each method). */
@@ -128,7 +129,7 @@ export type UserFetchOptions = {
   enrolledPositions?: boolean;
   /** Include completed course positions (with waitlist). */
   completedPositions?: boolean;
-  /** Include solo endorsements (with position). */
+  /** Include solo endorsements (with positions). */
   soloEndorsements?: boolean;
 };
 
@@ -238,7 +239,7 @@ function buildUserWithClause(
       ? { with: { waitlist: true as const } }
       : false,
     soloEndorsements: r.soloEndorsements
-      ? { with: { position: true as const } }
+      ? { with: { positions: true as const } }
       : false,
     roster: r.roster,
   };
@@ -1105,13 +1106,11 @@ export class User {
     ) {
       return "nothing"; // N/A
     } else if (
-      soloEndorsementsList.filter((r: any) => {
-        if (
-          r.position?.callsign.toLowerCase().includes(position) &&
-          r.expiresAt > new Date().getTime()
-        ) {
-          return true;
-        }
+      soloEndorsementsList.filter((r) => {
+        if (r.expiresAt.valueOf() <= Date.now()) return false;
+        return r.positions.some(
+          (pos) => rosterLevelFromCallsign(pos.callsign) === position,
+        );
       }).length > 0
     ) {
       return "solo"; // solo

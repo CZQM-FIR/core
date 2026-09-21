@@ -17,7 +17,6 @@
 	} from '@czqm/common';
 	import {
 		getCourse,
-		getFacilityPositions,
 		getVatcanCbtBlocks,
 		createCourseTask,
 		updateCourseTask,
@@ -25,6 +24,7 @@
 		moveCourseTaskUp,
 		moveCourseTaskDown
 	} from '$lib/remote/courses.remote';
+	import { getSoloPresetsAdmin } from '$lib/remote/solo-presets.remote';
 
 	type CourseData = Awaited<ReturnType<typeof getCourse>>;
 	type TaskRow = CourseData['tasks'][number];
@@ -449,25 +449,31 @@
 						</fieldset>
 					{:else if editingTask.taskType === 'solo'}
 						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Position</legend>
-							{#await getFacilityPositions()}
-								<p class="text-sm opacity-70">Loading positions...</p>
-							{:then positions}
-								{#if positions.length === 0}
-									<p class="text-warning text-sm">No facility positions available.</p>
-								{:else}
-									<select class="select" name="taskValue1" required bind:value={editTaskValue1}>
-										<option value="" disabled>Select position</option>
-										{#each positions as position (position.id)}
-											<option value={position.callsign}
-												>{position.callsign} — {position.name}</option
-											>
-										{/each}
-									</select>
+							<legend class="fieldset-legend">Solo preset</legend>
+							{#await getSoloPresetsAdmin()}
+								<p class="text-sm opacity-70">Loading presets...</p>
+							{:then presetsData}
+								<select class="select" name="taskValue1" required bind:value={editTaskValue1}>
+									<option value="" disabled>Select preset level</option>
+									{#each ROSTER_POSITIONS as position (position.value)}
+										{@const preset = presetsData.presets.find((p) => p.level === position.value)}
+										{@const count = preset?.positions.length ?? 0}
+										{@const labels =
+											preset?.positions.map((p) => p.callsign).join(', ') || 'empty'}
+										<option value={position.value} disabled={count === 0}>
+											{position.label} ({count} positions: {labels})
+										</option>
+									{/each}
+								</select>
+								{#if presetsData.presets.every((p) => p.positions.length === 0)}
+									<p class="text-warning text-sm">
+										No solo presets configured.
+										<a href="/a/solo-presets" class="link">Configure presets</a>
+									</p>
 								{/if}
 							{:catch err}
 								<p class="text-error text-sm">
-									Failed to load positions{err instanceof Error ? `: ${err.message}` : '.'}
+									Failed to load presets{err instanceof Error ? `: ${err.message}` : '.'}
 								</p>
 							{/await}
 						</fieldset>
@@ -602,25 +608,33 @@
 								</fieldset>
 							{:else if selectedTaskType === 'solo'}
 								<fieldset class="fieldset">
-									<legend class="fieldset-legend">Position</legend>
-									{#await getFacilityPositions()}
-										<p class="text-sm opacity-70">Loading positions...</p>
-									{:then positions}
-										{#if positions.length === 0}
-											<p class="text-warning text-sm">No facility positions available.</p>
-										{:else}
-											<select class="select" name="taskValue1" required>
-												<option value="" disabled selected>Select position</option>
-												{#each positions as position (position.id)}
-													<option value={position.callsign}
-														>{position.callsign} — {position.name}</option
-													>
-												{/each}
-											</select>
+									<legend class="fieldset-legend">Solo preset</legend>
+									{#await getSoloPresetsAdmin()}
+										<p class="text-sm opacity-70">Loading presets...</p>
+									{:then presetsData}
+										<select class="select" name="taskValue1" required>
+											<option value="" disabled selected>Select preset level</option>
+											{#each ROSTER_POSITIONS as position (position.value)}
+												{@const preset = presetsData.presets.find(
+													(p) => p.level === position.value
+												)}
+												{@const count = preset?.positions.length ?? 0}
+												{@const labels =
+													preset?.positions.map((p) => p.callsign).join(', ') || 'empty'}
+												<option value={position.value} disabled={count === 0}>
+													{position.label} ({count} positions: {labels})
+												</option>
+											{/each}
+										</select>
+										{#if presetsData.presets.every((p) => p.positions.length === 0)}
+											<p class="text-warning text-sm">
+												No solo presets configured.
+												<a href="/a/solo-presets" class="link">Configure presets</a>
+											</p>
 										{/if}
 									{:catch err}
 										<p class="text-error text-sm">
-											Failed to load positions{err instanceof Error ? `: ${err.message}` : '.'}
+											Failed to load presets{err instanceof Error ? `: ${err.message}` : '.'}
 										</p>
 									{/await}
 								</fieldset>
