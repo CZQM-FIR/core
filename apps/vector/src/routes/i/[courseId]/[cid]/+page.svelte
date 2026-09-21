@@ -323,8 +323,7 @@
 						rows="4"
 						maxlength="1000"
 						bind:value={pauseReason}
-						disabled={pausing}
-					></textarea>
+						disabled={pausing}></textarea>
 					{#if pauseError}
 						<p class="text-error mt-2 text-sm">{pauseError}</p>
 					{/if}

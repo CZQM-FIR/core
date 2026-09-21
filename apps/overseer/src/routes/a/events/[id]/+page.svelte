@@ -62,8 +62,7 @@
 						name="description"
 						class="textarea h-36 w-120"
 						required
-						value={event.description}
-					></textarea>
+						value={event.description}></textarea>
 				</fieldset>
 
 				<fieldset class="fieldset">
