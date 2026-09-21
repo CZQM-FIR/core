@@ -20,7 +20,7 @@
     "db:generate": "drizzle-kit generate"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241112.0",
+    "@cloudflare/workers-types": "^5.0.0",
     "@sveltejs/adapter-auto": "^7.0.0",
     "@sveltejs/adapter-cloudflare": "^7.0.0",
     "@sveltejs/adapter-netlify": "^5.0.2",
