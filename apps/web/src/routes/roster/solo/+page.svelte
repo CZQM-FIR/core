@@ -12,27 +12,31 @@
       <p class="p-4">Loading...</p>
     {:then data}
       <div class="flex flex-row flex-wrap gap-3">
-        {#each data.solos as solo (solo.id)}
-          <div class="card border border-gray-600 p-4">
-            <div class="tooltip" data-tip={solo.cid}>
-              <a href="/controller/{solo.cid}" class="card-title text-xl">{solo.displayName}</a>
+        {#if data.solos.length > 0}
+          {#each data.solos as solo (solo.id)}
+            <div class="card border border-gray-600 p-4">
+              <div class="tooltip" data-tip={solo.cid}>
+                <a href="/controller/{solo.cid}" class="card-title text-xl">{solo.displayName}</a>
+              </div>
+              <ul class="mt-1 space-y-1">
+                {#each solo.positions as position (position.callsign)}
+                  <li>
+                    <p class="text-md">{position.name}</p>
+                    <p class="text-sm text-gray-400">
+                      {position.callsign}
+                      {Number(position.frequency).toFixed(3)}
+                    </p>
+                  </li>
+                {/each}
+              </ul>
+              <p class="mt-2 text-sm">
+                Expires: {new Date(solo.expiresAt).toISOString().split('T')[0]}
+              </p>
             </div>
-            <ul class="mt-1 space-y-1">
-              {#each solo.positions as position (position.callsign)}
-                <li>
-                  <p class="text-md">{position.name}</p>
-                  <p class="text-sm text-gray-400">
-                    {position.callsign}
-                    {Number(position.frequency).toFixed(3)}
-                  </p>
-                </li>
-              {/each}
-            </ul>
-            <p class="mt-2 text-sm">
-              Expires: {new Date(solo.expiresAt).toISOString().split('T')[0]}
-            </p>
-          </div>
-        {/each}
+          {/each}
+        {:else}
+          <p class="text-error p-4">No solo endorsements found.</p>
+        {/if}
       </div>
     {:catch err}
       <p class="text-error p-4">{err?.message ?? 'Failed to load solo endorsements.'}</p>
