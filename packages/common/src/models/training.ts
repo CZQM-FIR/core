@@ -644,14 +644,15 @@ function describeSoloTask(
     ? formatRosterPosition(level)
     : level || "Unknown";
   const days = Number(taskValue2 ?? 0);
-  const durationLabel = Number.isInteger(days) && days > 0 ? `${days}-day ` : "";
+  const durationLabel =
+    Number.isInteger(days) && days > 0 ? `${days}-day ` : "";
   if (callsigns && callsigns.length > 0) {
     return `Grant a ${durationLabel}solo on ${callsigns.join(", ")}`.replace(
       "  ",
       " ",
     );
   }
-  return `Grant a ${durationLabel}${levelLabel} solo preset`.replace("  ", " ");
+  return `Grant a ${durationLabel}${levelLabel} solo`.replace("  ", " ");
 }
 
 export function formatCourseTaskType(taskType: string): string {
