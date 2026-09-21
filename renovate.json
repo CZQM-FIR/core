@@ -1,8 +1,17 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
+  "extends": ["config:recommended"],
+  "semanticCommits": "enabled",
+  "semanticCommitType": "chore",
+  "semanticCommitScope": "deps",
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "semanticCommitType": "fix",
+    "semanticCommitScope": "deps",
+    "rangeStrategy": "bump",
+    "labels": ["security"]
+  },
   "packageRules": [
     {
       "matchUpdateTypes": [
@@ -17,6 +26,11 @@
       ],
       "matchCurrentVersion": "!/^0/",
       "automerge": true
+    },
+    {
+      "description": "Override config:recommended (:semanticPrefixFixDepsChoreOthers). Routine dep bumps stay chore so Release Please ignores them; security PRs use vulnerabilityAlerts.fix instead.",
+      "matchPackageNames": ["*"],
+      "semanticCommitType": "chore"
     }
   ],
   "prHourlyLimit": 5
