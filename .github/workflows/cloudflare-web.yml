@@ -1,0 +1,17 @@
+name: Cloudflare Web Deploy
+
+on:
+  push:
+    tags:
+      - "web-v*.*.*"
+  workflow_dispatch: # manual trigger if needed
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Trigger Cloudflare deploy webhook
+        run: curl --fail --silent --show-error -X GET "${{ secrets.CLOUDFLARE_WEB_WEBHOOK }}"
