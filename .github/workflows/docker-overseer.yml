@@ -2,10 +2,8 @@ name: Overseer Docker Image
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "apps/overseer/**"
-      - "packages/**"
+    tags:
+      - "overseer-v*.*.*"
   workflow_dispatch: # manual trigger if needed
 
 jobs:

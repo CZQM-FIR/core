@@ -2,10 +2,8 @@ name: Worker Docker Image
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "apps/worker/**"
-      - "packages/**"
+    tags:
+      - "worker-v*.*.*"
   workflow_dispatch: # manual trigger if needed
 
 jobs:

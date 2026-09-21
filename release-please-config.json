@@ -1,0 +1,44 @@
+{
+  "packages": {
+    "apps/web": {
+      "release-type": "node",
+      "package-name": "web",
+      "extra-files": [
+        "packages/common",
+        "packages/db"
+      ]
+    },
+    "apps/overseer": {
+      "release-type": "node",
+      "package-name": "overseer",
+      "extra-files": [
+        "packages/common",
+        "packages/db"
+      ]
+    },
+    "apps/vector": {
+      "release-type": "node",
+      "package-name": "vector",
+      "extra-files": [
+        "packages/common",
+        "packages/db"
+      ]
+    },
+    "apps/worker": {
+      "release-type": "node",
+      "package-name": "worker",
+      "extra-files": [
+        "packages/common",
+        "packages/db"
+      ]
+    },
+    "packages/common": {
+      "release-type": "node",
+      "package-name": "common"
+    },
+    "packages/db": {
+      "release-type": "node",
+      "package-name": "db"
+    }
+  }
+}

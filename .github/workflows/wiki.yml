@@ -1,12 +1,8 @@
 name: Wiki
 on:
   push:
-    branches:
-      - master
-      - main
-    paths:
-      - "apps/wiki/**"
-      - "packages/**"
+    tags:
+      - "wiki-v*.*.*"
 permissions:
   contents: read
   pages: write

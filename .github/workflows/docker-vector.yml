@@ -2,10 +2,8 @@ name: Vector Docker Image
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "apps/vector/**"
-      - "packages/**"
+    tags:
+      - "vector-v*.*.*"
   workflow_dispatch: # manual trigger if needed
 
 jobs:
