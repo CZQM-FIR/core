@@ -4,7 +4,7 @@ icon: lucide/home
 
 # Welcome!
 
-Welcome to the **CZQM FIR Wiki**! This site is currently a work in progress. We would love to hear what you would like to see here!
+Welcome to the **CZQM FIR Wiki**! This site is currently a _work in progress_. We would love to hear what you would like to see here!
 
 Explore the wiki using the navigation on the left or the search bar in the top right.
 
