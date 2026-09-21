@@ -50,6 +50,10 @@
 			}
 		}
 	});
+
+	function positionsLabel(endorsement: (typeof activeEndorsements)[number]): string {
+		return endorsement.positions.map((position) => position.callsign).join(', ');
+	}
 </script>
 
 <div class="flex min-w-96 flex-col rounded border border-gray-600 p-4">
@@ -63,7 +67,7 @@
 					<!-- head -->
 					<thead>
 						<tr>
-							<th>Position</th>
+							<th>Positions</th>
 							<th>Expires</th>
 							<th></th>
 						</tr>
@@ -76,7 +80,7 @@
 							)}
 							{@const canExtend = daysUntilExpiry <= 7}
 							<tr>
-								<td>{endorsement.position.callsign}</td>
+								<td>{positionsLabel(endorsement)}</td>
 								<td
 									>{endorsement.expiresAt.toLocaleDateString('en-GB', {
 										timeZone: 'UTC'
@@ -121,10 +125,18 @@
 	</div>
 
 	<h3 class="mt-auto">New Endorsement</h3>
-	<form {...createSoloEndorsement} class="flex w-full items-baseline gap-3">
+	<form {...createSoloEndorsement} class="flex w-full flex-col gap-3">
 		<fieldset class="fieldset">
-			<legend class="fieldset-legend">Position</legend>
-			<input type="text" class="input w-30" required name="position" placeholder="CXXX_GND" />
+			<legend class="fieldset-legend">Positions (1–5, same level)</legend>
+			<textarea
+				class="textarea w-full"
+				required
+				name="positions"
+				rows="3"
+				placeholder="CXXX_GND
+CXXX_DEL
+(one callsign per line, or comma-separated)"
+			></textarea>
 		</fieldset>
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Duration</legend>
@@ -139,7 +151,7 @@
 			/>
 		</fieldset>
 		<input name="cid" type="number" value={details.cid} class="hidden" />
-		<button class="btn btn-primary">Save</button>
+		<button class="btn btn-primary self-start">Save</button>
 	</form>
 	{#if message}
 		<p class="{message.isError ? 'text-error' : 'text-success'} mt-2 text-sm">

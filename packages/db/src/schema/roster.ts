@@ -41,14 +41,13 @@ export type RosterUserData = {
   };
   soloEndorsements: {
     id: number;
-    positionId: number | null;
     expiresAt: Date;
-    position: {
+    positions: {
       id: number;
       name: string;
       callsign: string;
       frequency: string;
-    };
+    }[];
   }[];
   roster: {
     id: number;

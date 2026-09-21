@@ -39,7 +39,11 @@ export default ts.config(
 	{
 		rules: {
 			'@typescript-eslint/no-explicit-any': 'off',
-			'no-empty-pattern': 'off'
+			'no-empty-pattern': 'off',
+			// Apps do not use kit.paths.base; enable when adopting resolve() app-wide.
+			'svelte/no-navigation-without-resolve': 'off',
+			// Existing Date/Map/Set usage; enable when migrating to Svelte reactive collections.
+			'svelte/prefer-svelte-reactivity': 'off'
 		}
 	}
 );

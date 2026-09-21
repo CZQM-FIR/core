@@ -138,9 +138,15 @@ export const relations = defineRelations(schema, (r) => ({
   },
   positions: {
     sessions: r.many.sessions(),
-    users: r.many.users({
-      from: r.positions.id.through(r.soloEndorsements.positionId),
-      to: r.users.cid.through(r.soloEndorsements.controllerId),
+    soloEndorsements: r.many.soloEndorsements({
+      from: r.positions.id.through(r.soloEndorsementPositions.positionId),
+      to: r.soloEndorsements.id.through(
+        r.soloEndorsementPositions.endorsementId,
+      ),
+    }),
+    soloPresets: r.many.soloPresets({
+      from: r.positions.id.through(r.soloPresetPositions.positionId),
+      to: r.soloPresets.id.through(r.soloPresetPositions.presetId),
     }),
   },
   tickets: {
@@ -276,14 +282,53 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
   soloEndorsements: {
-    position: r.one.positions({
-      from: r.soloEndorsements.positionId,
-      to: r.positions.id,
-      optional: false,
+    positions: r.many.positions({
+      from: r.soloEndorsements.id.through(
+        r.soloEndorsementPositions.endorsementId,
+      ),
+      to: r.positions.id.through(r.soloEndorsementPositions.positionId),
+    }),
+    endorsementPositions: r.many.soloEndorsementPositions({
+      from: r.soloEndorsements.id,
+      to: r.soloEndorsementPositions.endorsementId,
     }),
     controller: r.one.users({
       from: r.soloEndorsements.controllerId,
       to: r.users.cid,
+      optional: false,
+    }),
+  },
+  soloEndorsementPositions: {
+    endorsement: r.one.soloEndorsements({
+      from: r.soloEndorsementPositions.endorsementId,
+      to: r.soloEndorsements.id,
+      optional: false,
+    }),
+    position: r.one.positions({
+      from: r.soloEndorsementPositions.positionId,
+      to: r.positions.id,
+      optional: false,
+    }),
+  },
+  soloPresets: {
+    positions: r.many.positions({
+      from: r.soloPresets.id.through(r.soloPresetPositions.presetId),
+      to: r.positions.id.through(r.soloPresetPositions.positionId),
+    }),
+    presetPositions: r.many.soloPresetPositions({
+      from: r.soloPresets.id,
+      to: r.soloPresetPositions.presetId,
+    }),
+  },
+  soloPresetPositions: {
+    preset: r.one.soloPresets({
+      from: r.soloPresetPositions.presetId,
+      to: r.soloPresets.id,
+      optional: false,
+    }),
+    position: r.one.positions({
+      from: r.soloPresetPositions.positionId,
+      to: r.positions.id,
       optional: false,
     }),
   },

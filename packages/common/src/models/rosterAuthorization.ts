@@ -1,6 +1,17 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { roster, soloEndorsements, type RosterPosition } from "@czqm/db/schema";
+import {
+  roster,
+  soloEndorsementPositions,
+  soloEndorsements,
+  type Position,
+  type RosterPosition,
+} from "@czqm/db/schema";
 import type { DB } from "../db";
+import {
+  assertSameLevelPositions,
+  rosterLevelFromCallsign,
+  SOLO_MAX_POSITIONS,
+} from "./rosterLevel";
 
 export async function certifyControllerOnRoster(
   db: DB,
@@ -31,7 +42,7 @@ export async function certifyControllerOnRoster(
 
   const endorsements = await db.query.soloEndorsements.findMany({
     where: { controllerId },
-    with: { position: true },
+    with: { positions: true },
   });
 
   const now = Date.now();
@@ -39,7 +50,9 @@ export async function certifyControllerOnRoster(
     .filter(
       (endorsement) =>
         endorsement.expiresAt.valueOf() > now &&
-        endorsement.position.callsign.toLowerCase().includes(position),
+        endorsement.positions.some(
+          (pos) => rosterLevelFromCallsign(pos.callsign) === position,
+        ),
     )
     .map((endorsement) => endorsement.id);
 
@@ -53,44 +66,89 @@ export async function certifyControllerOnRoster(
 export async function grantSoloEndorsement(
   db: DB,
   controllerId: number,
-  callsign: string,
+  callsigns: string[],
   durationDays: number,
 ): Promise<void> {
-  const positionName = callsign.trim().toUpperCase();
-  if (!positionName) {
-    throw new Error("Solo position is required");
+  const normalized = [
+    ...new Set(
+      callsigns
+        .map((c) => c.trim().toUpperCase())
+        .filter((c) => c.length > 0),
+    ),
+  ];
+
+  if (normalized.length < 1 || normalized.length > SOLO_MAX_POSITIONS) {
+    throw new Error(
+      `Solo authorization requires 1–${SOLO_MAX_POSITIONS} positions`,
+    );
   }
 
-  const position = await db.query.positions.findFirst({
-    where: { callsign: positionName },
-  });
-  if (!position) {
-    throw new Error(`Position not found: ${positionName}`);
+  const positions: Position[] = [];
+  for (const callsign of normalized) {
+    const position = await db.query.positions.findFirst({
+      where: { callsign },
+    });
+    if (!position) {
+      throw new Error(`Position not found: ${callsign}`);
+    }
+    positions.push(position);
   }
+
+  const level = assertSameLevelPositions(positions);
 
   const rosterRows = await db.query.roster.findMany({
     where: { controllerId },
   });
-  if (
-    rosterRows.some(
-      (row) =>
-        positionName.toLowerCase().includes(row.position) && row.status === 2,
-    )
-  ) {
-    throw new Error("User is already certified for this position");
+  if (rosterRows.some((row) => row.position === level && row.status === 2)) {
+    throw new Error("User is already certified for this position level");
+  }
+
+  const activeEndorsements = await db.query.soloEndorsements.findMany({
+    where: { controllerId },
+    with: { positions: true },
+  });
+
+  const now = Date.now();
+  const requestedIds = new Set(positions.map((p) => p.id));
+  const overlapping = activeEndorsements.filter(
+    (endorsement) =>
+      endorsement.expiresAt.valueOf() > now &&
+      endorsement.positions.some((pos) => requestedIds.has(pos.id)),
+  );
+
+  if (overlapping.length > 0) {
+    const overlappingCallsigns = [
+      ...new Set(
+        overlapping.flatMap((e) =>
+          e.positions
+            .filter((pos) => requestedIds.has(pos.id))
+            .map((pos) => pos.callsign),
+        ),
+      ),
+    ];
+    throw new Error(
+      `Controller already has an active solo covering: ${overlappingCallsigns.join(", ")}`,
+    );
   }
 
   const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
-  await db
+  const [inserted] = await db
     .insert(soloEndorsements)
     .values({
       controllerId,
-      positionId: position.id,
       expiresAt,
     })
-    .onConflictDoUpdate({
-      target: [soloEndorsements.controllerId, soloEndorsements.positionId],
-      set: { expiresAt },
-    });
+    .returning({ id: soloEndorsements.id });
+
+  if (!inserted) {
+    throw new Error("Failed to create solo endorsement");
+  }
+
+  await db.insert(soloEndorsementPositions).values(
+    positions.map((position) => ({
+      endorsementId: inserted.id,
+      positionId: position.id,
+    })),
+  );
 }

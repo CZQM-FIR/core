@@ -1,21 +1,26 @@
 import type { DB } from "../db";
-import { Position, User } from "../models";
+import { Position } from "./position";
+import { User } from "./user";
+
 export class SoloEndorsement {
+  id: number;
   cid: number;
-  position: Position;
+  positions: Position[];
   controller: User;
   expiresAt: Date;
   private db: DB;
 
   private constructor(
+    id: number,
     cid: number,
-    position: Position,
+    positions: Position[],
     controller: User,
     expiresAt: Date,
     db: DB,
   ) {
+    this.id = id;
     this.cid = cid;
-    this.position = position;
+    this.positions = positions;
     this.controller = controller;
     this.expiresAt = expiresAt;
     this.db = db;
@@ -24,20 +29,24 @@ export class SoloEndorsement {
   static async fromId(db: DB, searchId: number): Promise<SoloEndorsement> {
     const endorsement = await db.query.soloEndorsements.findFirst({
       where: { id: searchId },
-      with: { position: true },
+      with: { positions: true },
     });
     if (!endorsement) throw new Error("Solo endorsement not found");
-    const { controllerId, expiresAt, position, id } = endorsement;
+    const { controllerId, expiresAt, positions, id } = endorsement;
     const controller = await User.fromCid(db, controllerId);
 
     return new SoloEndorsement(
+      id,
       controllerId,
-      new Position(
-        position.id,
-        position.name,
-        position.callsign,
-        position.frequency,
-        db,
+      positions.map(
+        (position) =>
+          new Position(
+            position.id,
+            position.name,
+            position.callsign,
+            position.frequency,
+            db,
+          ),
       ),
       controller!,
       expiresAt,
@@ -65,20 +74,24 @@ export class SoloEndorsement {
     includeInavtive = false,
   ): Promise<SoloEndorsement[]> {
     const endorsementsData = await db.query.soloEndorsements.findMany({
-      with: { position: true },
+      with: { positions: true },
     });
 
     const endorsements = endorsementsData.map(async (e) => {
       const controller = await User.fromCid(db, e.controllerId);
 
       return new SoloEndorsement(
+        e.id,
         e.controllerId,
-        new Position(
-          e.position.id,
-          e.position.name,
-          e.position.callsign,
-          e.position.frequency,
-          db,
+        e.positions.map(
+          (position) =>
+            new Position(
+              position.id,
+              position.name,
+              position.callsign,
+              position.frequency,
+              db,
+            ),
         ),
         controller!,
         e.expiresAt,
