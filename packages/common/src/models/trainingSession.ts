@@ -56,6 +56,13 @@ type CreatePendingInput = TaskLookup & {
   trainingNote?: string | null;
 };
 
+type CreateBackdatedInput = TaskLookup & {
+  scheduledByCid: number;
+  startsAt: Date;
+  endsAt: Date;
+  trainingNote?: string | null;
+};
+
 type SaveNotesInput = {
   instructorNotes?: string | null;
   positionTrained?: string | null;
@@ -347,6 +354,40 @@ export class TrainingSession {
     return row;
   }
 
+  static async createBackdated(
+    db: DB,
+    input: CreateBackdatedInput,
+  ): Promise<TrainingSessionRow> {
+    const existing = await TrainingSession.fetchActiveForTask(db, input);
+    if (existing) {
+      throw new Error(
+        "An active training session already exists for this task",
+      );
+    }
+
+    const now = new Date();
+    const [row] = await db
+      .insert(trainingSessions)
+      .values({
+        studentCid: input.studentCid,
+        courseId: input.courseId,
+        taskId: input.taskId,
+        scheduledByCid: input.scheduledByCid,
+        startsAt: input.startsAt,
+        endsAt: input.endsAt,
+        status: "completed",
+        isBackdated: true,
+        actualStartedAt: input.startsAt,
+        actualEndedAt: input.endsAt,
+        trainingNote: input.trainingNote ?? null,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+
+    return row;
+  }
+
   static async confirm(
     db: DB,
     sessionId: number,
@@ -457,6 +498,9 @@ export class TrainingSession {
     const row = await TrainingSession.fetchById(db, sessionId);
     if (!row) throw new Error("Training session not found");
     assertScheduler(row, actorCid);
+    if (row.isBackdated) {
+      throw new Error("Backdated training sessions cannot be started");
+    }
     if (row.status !== "confirmed") {
       throw new Error("Only confirmed training sessions can be started");
     }
@@ -483,6 +527,9 @@ export class TrainingSession {
     const row = await TrainingSession.fetchById(db, sessionId);
     if (!row) throw new Error("Training session not found");
     assertScheduler(row, actorCid);
+    if (row.isBackdated) {
+      throw new Error("Backdated training sessions cannot be ended");
+    }
     if (row.status !== "in_progress") {
       throw new Error("Only in-progress training sessions can be ended");
     }
@@ -493,6 +540,40 @@ export class TrainingSession {
       .set({
         status: "completed",
         actualEndedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(trainingSessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  static async completeAsBackdated(
+    db: DB,
+    sessionId: number,
+    actorCid: number,
+    startedAt: Date,
+    endedAt: Date,
+  ): Promise<TrainingSessionRow> {
+    const row = await TrainingSession.fetchById(db, sessionId);
+    if (!row) throw new Error("Training session not found");
+    assertScheduler(row, actorCid);
+    if (row.status !== "pending" && row.status !== "confirmed") {
+      throw new Error(
+        "Only pending or confirmed training sessions can be recorded as past sessions",
+      );
+    }
+
+    const now = new Date();
+    const [updated] = await db
+      .update(trainingSessions)
+      .set({
+        status: "completed",
+        isBackdated: true,
+        startsAt: startedAt,
+        endsAt: endedAt,
+        actualStartedAt: startedAt,
+        actualEndedAt: endedAt,
         updatedAt: now,
       })
       .where(eq(trainingSessions.id, sessionId))
@@ -552,6 +633,9 @@ export class TrainingSession {
     const row = await TrainingSession.fetchById(db, sessionId);
     if (!row) throw new Error("Training session not found");
     assertScheduler(row, actorCid);
+    if (row.isBackdated) {
+      throw new Error("Backdated training sessions cannot be rescheduled");
+    }
     if (row.status !== "pending" && row.status !== "confirmed") {
       throw new Error(
         "Only pending or confirmed training sessions can be rescheduled",

@@ -120,6 +120,9 @@ export const trainingSessions = sqliteTable(
     >(),
     notesSubmittedAt: int("notes_submitted_at", { mode: "timestamp" }),
     vatcanNoteId: int("vatcan_note_id"),
+    isBackdated: int("is_backdated", { mode: "boolean" })
+      .notNull()
+      .default(false),
     createdAt: int("created_at", { mode: "timestamp" })
       .notNull()
       .$defaultFn(() => new Date()),
