@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/CZQM-FIR/core/compare/v1.0.0...v1.0.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @libsql/client to ^0.18.0 ([83451ba](https://github.com/CZQM-FIR/core/commit/83451bab34cdbce8aac2ee5d9d18a8cf8c4d15c5))
+* **wiki:** add missing formatting ([b5c9b4d](https://github.com/CZQM-FIR/core/commit/b5c9b4da6e469b7f2dbc7b9e2b3a69a594c2dfbb))
+
 ## 1.0.0 (2026-09-21)
 
 
