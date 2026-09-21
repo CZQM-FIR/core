@@ -1,8 +1,10 @@
 {
+  "include-component-in-tag": true,
   "packages": {
     "apps/web": {
       "release-type": "node",
       "package-name": "web",
+      "component": "web",
       "extra-files": [
         "packages/common",
         "packages/db"
@@ -11,6 +13,7 @@
     "apps/overseer": {
       "release-type": "node",
       "package-name": "overseer",
+      "component": "overseer",
       "extra-files": [
         "packages/common",
         "packages/db"
@@ -19,6 +22,7 @@
     "apps/vector": {
       "release-type": "node",
       "package-name": "vector",
+      "component": "vector",
       "extra-files": [
         "packages/common",
         "packages/db"
@@ -27,6 +31,7 @@
     "apps/worker": {
       "release-type": "node",
       "package-name": "worker",
+      "component": "worker",
       "extra-files": [
         "packages/common",
         "packages/db"
@@ -34,11 +39,13 @@
     },
     "packages/common": {
       "release-type": "node",
-      "package-name": "common"
+      "package-name": "common",
+      "component": "common"
     },
     "packages/db": {
       "release-type": "node",
-      "package-name": "db"
+      "package-name": "db",
+      "component": "db"
     }
   }
 }
