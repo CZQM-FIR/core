@@ -3,7 +3,6 @@
 	import {
 		BACKDATED_SESSION_MAX_DAYS,
 		fromDatetimeLocalValue,
-		SLOT_MINUTES,
 		toDatetimeLocalValue,
 		validatePastSessionTimeRange
 	} from '$lib/trainingSessionAvailability';
@@ -73,8 +72,7 @@
 
 <form class="flex flex-col gap-3" onsubmit={handleSubmit}>
 	<p class="text-sm opacity-70">
-		End must be now or earlier, start within the last {BACKDATED_SESSION_MAX_DAYS} days, and duration
-		a multiple of {SLOT_MINUTES} minutes.
+		End must be now or earlier, start within the last {BACKDATED_SESSION_MAX_DAYS} days.
 	</p>
 
 	<label class="form-control w-full max-w-xs">
