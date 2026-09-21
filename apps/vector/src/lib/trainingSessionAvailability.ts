@@ -255,11 +255,7 @@ export const BACKDATED_SESSION_MAX_MS = BACKDATED_SESSION_MAX_DAYS * 24 * 60 * 6
  * Validate instructor-entered actual start/end for a backdated session.
  * End must be ≤ now, start ≥ now − 90 days, duration a multiple of 30 minutes.
  */
-export function validatePastSessionTimeRange(
-	startsAt: Date,
-	endsAt: Date,
-	now = new Date()
-): void {
+export function validatePastSessionTimeRange(startsAt: Date, endsAt: Date, now = new Date()): void {
 	if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) {
 		throw new Error('Invalid session start or end time');
 	}
@@ -279,9 +275,7 @@ export function validatePastSessionTimeRange(
 
 	const earliestStart = new Date(now.getTime() - BACKDATED_SESSION_MAX_MS);
 	if (startsAt.getTime() < earliestStart.getTime()) {
-		throw new Error(
-			`Session start must be within the last ${BACKDATED_SESSION_MAX_DAYS} days`
-		);
+		throw new Error(`Session start must be within the last ${BACKDATED_SESSION_MAX_DAYS} days`);
 	}
 }
 
