@@ -13,8 +13,8 @@
 PRAGMA foreign_keys = OFF;
 
 CREATE TABLE IF NOT EXISTS solo_endorsement_positions (
-  endorsement_id INTEGER NOT NULL,
-  position_id INTEGER NOT NULL,
+  endorsement_id INTEGER NOT NULL REFERENCES solo_endorsements (id) ON DELETE CASCADE,
+  position_id INTEGER NOT NULL REFERENCES positions (id) ON DELETE CASCADE,
   PRIMARY KEY (endorsement_id, position_id)
 );
 
