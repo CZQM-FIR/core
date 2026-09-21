@@ -14,4 +14,4 @@ jobs:
 
     steps:
       - name: Trigger Cloudflare deploy webhook
-        run: curl --fail --silent --show-error -X GET "${{ secrets.CLOUDFLARE_WEB_WEBHOOK }}"
+        run: curl --fail --silent --show-error -X POST "${{ secrets.CLOUDFLARE_WEB_WEBHOOK }}"
