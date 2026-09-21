@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/CZQM-FIR/core/compare/web-v1.1.1...web-v1.1.2) (2026-09-21)
+
+
+### Bug Fixes
+
+* add missing no solos disclamer ([29d4768](https://github.com/CZQM-FIR/core/commit/29d4768905306d1d1660743aab1e557623a3d144))
+
 ## [1.1.1](https://github.com/CZQM-FIR/core/compare/web-v1.1.0...web-v1.1.1) (2026-09-21)
 
 ### Bug Fixes
