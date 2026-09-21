@@ -458,8 +458,7 @@
 									{#each ROSTER_POSITIONS as position (position.value)}
 										{@const preset = presetsData.presets.find((p) => p.level === position.value)}
 										{@const count = preset?.positions.length ?? 0}
-										{@const labels =
-											preset?.positions.map((p) => p.callsign).join(', ') || 'empty'}
+										{@const labels = preset?.positions.map((p) => p.callsign).join(', ') || 'empty'}
 										<option value={position.value} disabled={count === 0}>
 											{position.label} ({count} positions: {labels})
 										</option>

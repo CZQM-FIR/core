@@ -138,8 +138,7 @@
 											type="checkbox"
 											class="checkbox checkbox-sm mt-0.5"
 											checked={selected.includes(position.id)}
-											onchange={() =>
-												togglePosition(typedLevel, position.id, data.maxPositions)}
+											onchange={() => togglePosition(typedLevel, position.id, data.maxPositions)}
 										/>
 										<span>
 											<span class="font-medium">{position.callsign}</span>

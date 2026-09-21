@@ -133,7 +133,9 @@
 				required
 				name="positions"
 				rows="3"
-				placeholder={"CXXX_GND\nCXXX_DEL\n(one callsign per line, or comma-separated)"}
+				placeholder="CXXX_GND
+CXXX_DEL
+(one callsign per line, or comma-separated)"
 			></textarea>
 		</fieldset>
 		<fieldset class="fieldset">
