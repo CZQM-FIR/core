@@ -2,10 +2,9 @@
 
 ## [1.1.2](https://github.com/CZQM-FIR/core/compare/vector-v1.1.1...vector-v1.1.2) (2026-09-24)
 
-
 ### Bug Fixes
 
-* update wording of backdated training note ([b08f3cd](https://github.com/CZQM-FIR/core/commit/b08f3cd8e2c2e980fe6f8a5f0b1f5a0d47c5bf14))
+- update wording of backdated training note ([b08f3cd](https://github.com/CZQM-FIR/core/commit/b08f3cd8e2c2e980fe6f8a5f0b1f5a0d47c5bf14))
 
 ## [1.1.1](https://github.com/CZQM-FIR/core/compare/vector-v1.1.0...vector-v1.1.1) (2026-09-21)
 
