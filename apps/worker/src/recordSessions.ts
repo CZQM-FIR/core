@@ -16,7 +16,8 @@ const positionPrefixes = [
   'LFVP',
   'CYSJ',
   'CYDF',
-  'CYYG'
+  'CYYG',
+  'CYQX'
 ];
 
 const VatsimSessions = type({
