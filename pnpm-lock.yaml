@@ -67,8 +67,8 @@ importers:
         specifier: ^2.1.20
         version: 2.2.3
       dotenv:
-        specifier: ^16.5.0
-        version: 16.6.1
+        specifier: ^18.0.0
+        version: 18.0.4
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.0.0
@@ -185,8 +185,8 @@ importers:
         specifier: ^2.1.20
         version: 2.2.3
       dotenv:
-        specifier: ^16.5.0
-        version: 16.6.1
+        specifier: ^18.0.0
+        version: 18.0.4
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.0.0
@@ -297,8 +297,8 @@ importers:
         specifier: ^2.1.20
         version: 2.2.3
       dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
+        specifier: ^18.0.0
+        version: 18.0.4
       marked:
         specifier: ^15.0.12
         version: 15.0.12
@@ -406,8 +406,8 @@ importers:
         specifier: ^2.1.20
         version: 2.2.3
       dotenv:
-        specifier: ^16.5.0
-        version: 16.6.1
+        specifier: ^18.0.0
+        version: 18.0.4
       express:
         specifier: ^5.1.0
         version: 5.2.1
@@ -490,8 +490,8 @@ importers:
         version: 13.0.2
     devDependencies:
       dotenv:
-        specifier: ^16.5.0
-        version: 16.6.1
+        specifier: ^18.0.0
+        version: 18.0.4
       drizzle-kit:
         specifier: 1.0.0-beta.13-f728631
         version: 1.0.0-beta.13-f728631
@@ -2701,6 +2701,11 @@ packages:
   dotenv@17.4.2:
     resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
     engines: {node: '>=12'}
+
+  dotenv@18.0.4:
+    resolution: {integrity: sha512-jGt9uI5BIxpVO15kvy+iEFqNAwxYClKWnkptLjSNPnFLC003Imd0ofr3aEVsbpHdSBdSsbcApNIlz4nbyGMwdA==}
+    engines: {node: '>=12'}
+    hasBin: true
 
   drizzle-kit@1.0.0-beta.13-f728631:
     resolution: {integrity: sha512-Yfjns5vbi3Y5LmQMWPPGjMh2mD20i1qwRHJrWnqD/O1EJgn4kfH0WuzMdXlqMRtocos+e6nJYm3ZJXeU1efHGQ==}
@@ -6055,6 +6060,8 @@ snapshots:
   dotenv@16.6.1: {}
 
   dotenv@17.4.2: {}
+
+  dotenv@18.0.4: {}
 
   drizzle-kit@1.0.0-beta.13-f728631:
     dependencies:
