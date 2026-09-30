@@ -14,7 +14,7 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         with:
           # PAT stored as RELEASE_PLEASE_TOKEN. Do NOT set release-type here —
           # that forces a single-package (".") release and ignores the monorepo
