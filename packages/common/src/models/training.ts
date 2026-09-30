@@ -860,7 +860,9 @@ export type PrerequisiteType =
   | "earliest_enroll_date"
   | "home_controller"
   | "visiting_controller"
-  | "home_or_visiting_controller";
+  | "home_or_visiting_controller"
+  | "controller_activity"
+  | "roster_certification";
 
 export type RatingComparison = "equal" | "minimum" | "maximum";
 
@@ -879,6 +881,55 @@ export function parseRatingComparison(
   return null;
 }
 
+export type ControllerActivityRequirement = "active" | "inactive";
+
+export const CONTROLLER_ACTIVITY_LABELS: Record<
+  ControllerActivityRequirement,
+  string
+> = {
+  active: "Active",
+  inactive: "Inactive",
+};
+
+export function parseControllerActivityRequirement(
+  value: string | null,
+): ControllerActivityRequirement | null {
+  if (value === "active" || value === "inactive") {
+    return value;
+  }
+  return null;
+}
+
+export type RosterCertificationRequirement = "certified" | "not_certified";
+
+export const ROSTER_CERTIFICATION_REQUIREMENT_LABELS: Record<
+  RosterCertificationRequirement,
+  string
+> = {
+  certified: "Certified",
+  not_certified: "Not certified",
+};
+
+export function parseRosterCertificationRequirement(
+  value: string | null,
+): RosterCertificationRequirement | null {
+  if (value === "certified" || value === "not_certified") {
+    return value;
+  }
+  return null;
+}
+
+export type RosterCertificationScope = RosterPosition | "any";
+
+export function parseRosterCertificationScope(
+  value: string | null,
+): RosterCertificationScope | null {
+  if (value === "any" || (value != null && isRosterPosition(value))) {
+    return value;
+  }
+  return null;
+}
+
 export const COURSE_PREREQUISITE_TYPE_LABELS: Record<PrerequisiteType, string> =
   {
     rating: "Rating",
@@ -888,6 +939,8 @@ export const COURSE_PREREQUISITE_TYPE_LABELS: Record<PrerequisiteType, string> =
     home_controller: "Must Be Home Controller",
     visiting_controller: "Must Be Visiting Controller",
     home_or_visiting_controller: "Must Be Home or Visiting Controller",
+    controller_activity: "Controller Activity",
+    roster_certification: "Roster Certification",
   };
 
 export function formatCoursePrerequisiteType(prerequisiteType: string): string {
@@ -1025,6 +1078,36 @@ export function describeCoursePrerequisite(
       return "Must be a visiting controller";
     case "home_or_visiting_controller":
       return "Must be a home or visiting controller";
+    case "controller_activity": {
+      switch (parseControllerActivityRequirement(prerequisite.prerequisiteValue1)) {
+        case "active":
+          return "Controller must be active";
+        case "inactive":
+          return "Controller must be inactive";
+        default:
+          return "Unknown prerequisite";
+      }
+    }
+    case "roster_certification": {
+      const scope = parseRosterCertificationScope(prerequisite.prerequisiteValue1);
+      const requirement = parseRosterCertificationRequirement(
+        prerequisite.prerequisiteValue2,
+      );
+      if (!scope || !requirement) {
+        return "Unknown prerequisite";
+      }
+
+      if (scope === "any") {
+        return requirement === "certified"
+          ? "Has at least one certification"
+          : "Has no certifications";
+      }
+
+      const positionLabel = formatRosterPosition(scope);
+      return requirement === "certified"
+        ? `Certified on ${positionLabel}`
+        : `Not certified on ${positionLabel}`;
+    }
     default:
       return "Unknown prerequisite";
   }
@@ -1082,6 +1165,10 @@ export abstract class CoursePrerequisite {
         return new VisitingControllerCoursePrerequisite(...args);
       case "home_or_visiting_controller":
         return new HomeOrVisitingControllerCoursePrerequisite(...args);
+      case "controller_activity":
+        return new ControllerActivityCoursePrerequisite(...args);
+      case "roster_certification":
+        return new RosterCertificationCoursePrerequisite(...args);
       default:
         throw new Error(`Unknown prerequisite type: ${row.prerequisiteType}`);
     }
@@ -1362,6 +1449,116 @@ export class HomeOrVisitingControllerCoursePrerequisite extends CoursePrerequisi
       return "You are a visiting controller";
     }
     return "You are not a home or visiting controller";
+  }
+}
+
+const CERTIFIED_ROSTER_STATUS = 2;
+
+function isCertifiedOnPosition(
+  user: User,
+  position: RosterPosition,
+): boolean {
+  return (user.roster ?? []).some(
+    (row) => row.position === position && row.status === CERTIFIED_ROSTER_STATUS,
+  );
+}
+
+function hasAnyCertification(user: User): boolean {
+  return (user.roster ?? []).some(
+    (row) => row.status === CERTIFIED_ROSTER_STATUS,
+  );
+}
+
+export class ControllerActivityCoursePrerequisite extends CoursePrerequisite {
+  constructor(
+    db: DB,
+    prerequisiteValue1: string | null,
+    prerequisiteValue2: string | null,
+    courseId: string,
+    prerequisiteId: number,
+  ) {
+    super(
+      db,
+      "controller_activity",
+      prerequisiteValue1,
+      prerequisiteValue2,
+      courseId,
+      prerequisiteId,
+    );
+  }
+
+  isMet(user: User): boolean {
+    const required = parseControllerActivityRequirement(this.prerequisiteValue1);
+    if (!required) {
+      return false;
+    }
+    return user.active === required;
+  }
+
+  getProgress(user: User): string {
+    switch (user.active) {
+      case "active":
+        return "You are active";
+      case "inactive":
+        return "You are inactive";
+      case "loa":
+        return "You are on leave of absence";
+    }
+  }
+}
+
+export class RosterCertificationCoursePrerequisite extends CoursePrerequisite {
+  constructor(
+    db: DB,
+    prerequisiteValue1: string | null,
+    prerequisiteValue2: string | null,
+    courseId: string,
+    prerequisiteId: number,
+  ) {
+    super(
+      db,
+      "roster_certification",
+      prerequisiteValue1,
+      prerequisiteValue2,
+      courseId,
+      prerequisiteId,
+    );
+  }
+
+  isMet(user: User): boolean {
+    const scope = parseRosterCertificationScope(this.prerequisiteValue1);
+    const requirement = parseRosterCertificationRequirement(
+      this.prerequisiteValue2,
+    );
+    if (!scope || !requirement) {
+      return false;
+    }
+
+    const certified =
+      scope === "any"
+        ? hasAnyCertification(user)
+        : isCertifiedOnPosition(user, scope);
+
+    return requirement === "certified" ? certified : !certified;
+  }
+
+  getProgress(user: User): string {
+    const scope = parseRosterCertificationScope(this.prerequisiteValue1);
+
+    if (scope === "any") {
+      return hasAnyCertification(user)
+        ? "You have at least one certification"
+        : "You have no certifications";
+    }
+
+    if (scope && isRosterPosition(scope)) {
+      const positionLabel = formatRosterPosition(scope);
+      return isCertifiedOnPosition(user, scope)
+        ? `You are certified on ${positionLabel}`
+        : `You are not certified on ${positionLabel}`;
+    }
+
+    return "Certification status unknown";
   }
 }
 

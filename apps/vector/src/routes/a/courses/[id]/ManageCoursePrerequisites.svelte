@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { Trash } from '@lucide/svelte';
 	import {
+		CONTROLLER_ACTIVITY_LABELS,
 		COURSE_PREREQUISITE_TYPE_LABELS,
 		RATING_COMPARISON_LABELS,
+		ROSTER_CERTIFICATION_REQUIREMENT_LABELS,
+		ROSTER_POSITION_LABELS,
 		describeCoursePrerequisite,
 		formatCoursePrerequisiteType
 	} from '@czqm/common';
@@ -20,6 +23,11 @@
 	const PREREQUISITE_TYPES = Object.entries(COURSE_PREREQUISITE_TYPE_LABELS).map(
 		([value, label]) => ({ value, label })
 	);
+
+	const ROSTER_POSITIONS = Object.entries(ROSTER_POSITION_LABELS).map(([value, label]) => ({
+		value,
+		label
+	}));
 
 	let { course, courseId }: { course: CourseData; courseId: string } = $props();
 
@@ -204,6 +212,33 @@
 							<fieldset class="fieldset">
 								<legend class="fieldset-legend">Earliest Enroll Date</legend>
 								<input type="date" class="input" name="prerequisiteValue1" required />
+							</fieldset>
+						{:else if selectedPrerequisiteType === 'controller_activity'}
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Activity Status</legend>
+								<select class="select" name="prerequisiteValue1" required>
+									{#each Object.entries(CONTROLLER_ACTIVITY_LABELS) as [value, label] (value)}
+										<option {value}>{label}</option>
+									{/each}
+								</select>
+							</fieldset>
+						{:else if selectedPrerequisiteType === 'roster_certification'}
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Position</legend>
+								<select class="select" name="prerequisiteValue1" required>
+									<option value="any">Any position</option>
+									{#each ROSTER_POSITIONS as position (position.value)}
+										<option value={position.value}>{position.label}</option>
+									{/each}
+								</select>
+							</fieldset>
+							<fieldset class="fieldset">
+								<legend class="fieldset-legend">Requirement</legend>
+								<select class="select" name="prerequisiteValue2" required>
+									{#each Object.entries(ROSTER_CERTIFICATION_REQUIREMENT_LABELS) as [value, label] (value)}
+										<option {value}>{label}</option>
+									{/each}
+								</select>
 							</fieldset>
 						{:else if selectedPrerequisiteType === 'home_controller' || selectedPrerequisiteType === 'visiting_controller' || selectedPrerequisiteType === 'home_or_visiting_controller'}
 							<p class="text-sm opacity-70">

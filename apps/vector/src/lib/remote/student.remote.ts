@@ -61,7 +61,8 @@ export const getStudentCourses = query(async () => {
 
 	const userWithData = await User.fromCid(db, user.cid, {
 		sessions: true,
-		completedPositions: true
+		completedPositions: true,
+		roster: true
 	});
 	if (!userWithData) throw error(403, 'Forbidden');
 
@@ -171,7 +172,8 @@ export const getStudentCourseView = query(CourseId, async (courseId) => {
 	} else {
 		const userWithData = await User.fromCid(db, cid, {
 			sessions: true,
-			completedPositions: true
+			completedPositions: true,
+			roster: true
 		});
 		if (!userWithData) throw error(403, 'Forbidden');
 
@@ -253,7 +255,8 @@ export const joinCourseWaitlist = command(CourseId, async (courseId) => {
 
 	const userWithData = await User.fromCid(db, user.cid, {
 		sessions: true,
-		completedPositions: true
+		completedPositions: true,
+		roster: true
 	});
 	if (!userWithData) throw error(403, 'Forbidden');
 

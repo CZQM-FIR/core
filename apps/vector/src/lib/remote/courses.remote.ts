@@ -8,7 +8,10 @@ import {
 	getSoloPresetByLevel,
 	isRosterPosition,
 	isTrainingSessionType,
+	parseControllerActivityRequirement,
 	parseRatingComparison,
+	parseRosterCertificationRequirement,
+	parseRosterCertificationScope,
 	parseSoloDurationDays,
 	requireTrainingSessionObjectives,
 	type PrerequisiteType,
@@ -26,7 +29,7 @@ const TaskTypeSchema = type(
 );
 
 const PrerequisiteTypeSchema = type(
-	"'rating' | 'controlling_hours' | 'prior_course' | 'earliest_enroll_date' | 'home_controller' | 'visiting_controller' | 'home_or_visiting_controller'"
+	"'rating' | 'controlling_hours' | 'prior_course' | 'earliest_enroll_date' | 'home_controller' | 'visiting_controller' | 'home_or_visiting_controller' | 'controller_activity' | 'roster_certification'"
 );
 
 const FormId = type('string.integer > 0')
@@ -480,6 +483,24 @@ export const createCoursePrerequisite = form(
 			const requiredRatingId = Number(prerequisiteValue1);
 			if (!Number.isFinite(requiredRatingId) || requiredRatingId <= 0) {
 				throw error(400, 'Rating is required and cannot be inactive or suspended');
+			}
+		}
+
+		if (prerequisiteType === 'controller_activity') {
+			if (!parseControllerActivityRequirement(prerequisiteValue1 ?? null)) {
+				throw error(400, 'Controller activity must be active or inactive');
+			}
+		}
+
+		if (prerequisiteType === 'roster_certification') {
+			if (!parseRosterCertificationScope(prerequisiteValue1 ?? null)) {
+				throw error(
+					400,
+					'Roster certification scope must be Ground, Tower, Approach, Centre, or any'
+				);
+			}
+			if (!parseRosterCertificationRequirement(prerequisiteValue2 ?? null)) {
+				throw error(400, 'Roster certification requirement must be certified or not_certified');
 			}
 		}
 

@@ -53,7 +53,8 @@ export const checkWaitlistPrerequisites = query(
 
 		const user = await User.fromCid(db, userId, {
 			sessions: true,
-			completedPositions: true
+			completedPositions: true,
+			roster: true
 		});
 		if (!user) throw error(404, 'User not found');
 
@@ -198,7 +199,8 @@ export const addUserToWaitlist = command(
 		if (course && course.prerequisites.length > 0 && !overridePrerequisites) {
 			const user = await User.fromCid(db, userId, {
 				sessions: true,
-				completedPositions: true
+				completedPositions: true,
+				roster: true
 			});
 			if (!user) throw error(404, 'User not found');
 
