@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/CZQM-FIR/core/compare/common-v1.1.2...common-v1.1.3) (2026-09-30)
+
+
+### Features
+
+* **vector:** add activity and certification prerequisites ([01b534a](https://github.com/CZQM-FIR/core/commit/01b534a5f1c20c6e06e214eae8bf93d34d0db8e5))
+
 ## [1.1.2](https://github.com/CZQM-FIR/core/compare/common-v1.1.1...common-v1.1.2) (2026-09-21)
 
 
