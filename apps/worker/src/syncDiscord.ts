@@ -47,22 +47,17 @@ const managedRoles = [
   ...assistantDiscordRoleNames
 ];
 
-export const syncDiscord = async (db: DB, env: Env) => {
-  const requests: {
-    method: string;
-    endpoint: string;
-    body?: string;
-    headers?: Record<string, string>;
-    query?: Record<string, string>;
-  }[] = [];
+type DiscordRequest = {
+  method: string;
+  endpoint: string;
+  body?: string;
+  headers?: Record<string, string>;
+  query?: Record<string, string>;
+};
 
-  const priorityRequests: {
-    method: string;
-    endpoint: string;
-    body?: string;
-    headers?: Record<string, string>;
-    query?: Record<string, string>;
-  }[] = [];
+export const syncDiscord = async (db: DB, env: Env) => {
+  const requests: DiscordRequest[] = [];
+  const priorityRequests: DiscordRequest[] = [];
 
   const rolesData = await fetch(`https://discord.com/api/guilds/${env.DISCORD_GUILD_ID}/roles`, {
     method: 'GET',
@@ -85,6 +80,10 @@ export const syncDiscord = async (db: DB, env: Env) => {
     console.error('Invalid roles data:', guildRoles.summary);
     return;
   }
+
+  const managedRoleIds = new Set(
+    guildRoles.filter((r) => managedRoles.includes(r.name)).map((r) => r.id)
+  );
 
   const membersData = await fetch(
     `https://discord.com/api/guilds/${env.DISCORD_GUILD_ID}/members?limit=1000`,
@@ -142,32 +141,65 @@ export const syncDiscord = async (db: DB, env: Env) => {
 
   console.log(`Fetched ${integrations.length} integrations from the database.`);
 
+  const queueRoleAdd = (
+    queue: DiscordRequest[],
+    userId: string,
+    roleId: string,
+    reason: string
+  ) => {
+    queue.push({
+      method: 'PUT',
+      endpoint: `/guilds/${env.DISCORD_GUILD_ID}/members/${userId}/roles/${roleId}`,
+      headers: {
+        'X-Audit-Log-Reason': reason
+      }
+    });
+  };
+
+  const queueRoleRemove = (
+    queue: DiscordRequest[],
+    userId: string,
+    roleId: string,
+    reason: string
+  ) => {
+    queue.push({
+      method: 'DELETE',
+      endpoint: `/guilds/${env.DISCORD_GUILD_ID}/members/${userId}/roles/${roleId}`,
+      headers: {
+        'X-Audit-Log-Reason': reason
+      }
+    });
+  };
+
+  const queueNickPatch = (
+    queue: DiscordRequest[],
+    userId: string,
+    nick: string | null,
+    reason: string
+  ) => {
+    queue.push({
+      method: 'PATCH',
+      endpoint: `/guilds/${env.DISCORD_GUILD_ID}/members/${userId}`,
+      body: JSON.stringify({ nick }),
+      headers: {
+        'X-Audit-Log-Reason': reason
+      }
+    });
+  };
+
   for (const member of members) {
     if (!integrations.some((i) => i.integrationUserId === member.user.id)) {
       if (env.NODE_ENV === 'dev')
         console.log(`[DEV] Unlinked member: ${member.user.id} (${member.nick || member.user.id})`);
 
-      requests.push({
-        method: 'PATCH',
-        endpoint: `/guilds/${env.DISCORD_GUILD_ID}/members/${member.user.id}`,
-        body: JSON.stringify({
-          roles: member.roles.filter(
-            (r) => !managedRoles.includes(guildRoles.find((role) => role.id === r)?.name || '')
-          ),
-          nick: null
-        }),
-        headers: {
-          'X-Audit-Log-Reason': 'Unlinked Member'
-        }
-      });
+      const currentManagedIds = member.roles.filter((roleId) => managedRoleIds.has(roleId));
+      for (const roleId of currentManagedIds) {
+        queueRoleRemove(requests, member.user.id, roleId, 'Unlinked Member');
+      }
+      if (member.nick !== null) {
+        queueNickPatch(requests, member.user.id, null, 'Unlinked Member');
+      }
     } else {
-      // const integrationIndex = integrations.findIndex(
-      //   (i) => i.integrationUserId === member.user.id
-      // );
-      // if (integrationIndex >= 30) {
-      //   continue;
-      // }
-
       if (env.NODE_ENV === 'dev')
         console.log(
           `[DEV] Syncing Discord member: ${member.user.id} (${member.nick || member.user.id})`
@@ -185,7 +217,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
         continue;
       }
 
-      const roles: string[] = [];
+      const desiredManagedIds: string[] = [];
 
       // ratings
       const ratingRoleMap: Record<string, string> = {
@@ -206,7 +238,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
       if (roleName) {
         const role = guildRoles.find((r) => r.name === roleName);
         if (role) {
-          roles.push(role.id);
+          desiredManagedIds.push(role.id);
         }
       }
 
@@ -216,18 +248,18 @@ export const syncDiscord = async (db: DB, env: Env) => {
         visitor: 'Visitor'
       };
       for (const flag of user.flags) {
-        const roleName = baseRoleMap[flag.name];
-        if (roleName) {
-          const role = guildRoles.find((r) => r.name === roleName);
+        const mappedName = baseRoleMap[flag.name];
+        if (mappedName) {
+          const role = guildRoles.find((r) => r.name === mappedName);
           if (role) {
-            roles.push(role.id);
+            desiredManagedIds.push(role.id);
           }
         }
       }
 
       const pushRoleByName = (name: string) => {
         const role = guildRoles.find((r) => r.name === name);
-        if (role && !roles.includes(role.id)) roles.push(role.id);
+        if (role && !desiredManagedIds.includes(role.id)) desiredManagedIds.push(role.id);
       };
 
       const hasAssistant = (assistantsByCid.get(user.cid)?.length ?? 0) > 0;
@@ -256,8 +288,8 @@ export const syncDiscord = async (db: DB, env: Env) => {
         const staffRoleName = staffFlagRoleMap[flag.name];
         if (staffRoleName) {
           const role = guildRoles.find((r) => r.name === staffRoleName);
-          if (role && !roles.includes(role.id)) {
-            roles.push(role.id);
+          if (role && !desiredManagedIds.includes(role.id)) {
+            desiredManagedIds.push(role.id);
           }
         }
       }
@@ -274,8 +306,8 @@ export const syncDiscord = async (db: DB, env: Env) => {
       for (const assistantRole of userAssistantRoles) {
         const assistantRoleName = getAssistantDiscordRoleName(assistantRole);
         const role = guildRoles.find((r) => r.name === assistantRoleName);
-        if (role && !roles.includes(role.id)) {
-          roles.push(role.id);
+        if (role && !desiredManagedIds.includes(role.id)) {
+          desiredManagedIds.push(role.id);
         }
       }
 
@@ -283,7 +315,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
       if (user.hasFlag('controller') && user.rating.id >= 1 && user.rating.id <= 4) {
         const role = guildRoles.find((r) => r.name === 'Student');
         if (role) {
-          roles.push(role.id);
+          desiredManagedIds.push(role.id);
         }
       }
 
@@ -291,29 +323,31 @@ export const syncDiscord = async (db: DB, env: Env) => {
       if (!user.hasFlag(['controller', 'visitor'])) {
         const guestRole = guildRoles.find((r) => r.name === 'Guest');
         if (guestRole) {
-          roles.push(guestRole.id);
+          desiredManagedIds.push(guestRole.id);
         }
       }
 
-      const additionalRoles = member.roles.filter(
-        (roleId) =>
-          !roles.some((role) => role === roleId) &&
-          !managedRoles.includes(guildRoles.find((r) => r.id === roleId)?.name || '')
-      );
+      const desiredSet = new Set(desiredManagedIds);
+      const currentManagedIds = member.roles.filter((roleId) => managedRoleIds.has(roleId));
+      const currentSet = new Set(currentManagedIds);
 
-      roles.push(...additionalRoles);
+      const toAdd = desiredManagedIds.filter((id) => !currentSet.has(id));
+      const toRemove = currentManagedIds.filter((id) => !desiredSet.has(id));
+      const nickNeedsUpdate = member.nick !== user.displayName;
 
-      priorityRequests.push({
-        method: 'PATCH',
-        endpoint: `/guilds/${env.DISCORD_GUILD_ID}/members/${member.user.id}`,
-        body: JSON.stringify({
-          roles,
-          nick: user.displayName
-        }),
-        headers: {
-          'X-Audit-Log-Reason': 'Linked Member'
-        }
-      });
+      if (toAdd.length === 0 && toRemove.length === 0 && !nickNeedsUpdate) {
+        continue;
+      }
+
+      for (const roleId of toAdd) {
+        queueRoleAdd(priorityRequests, member.user.id, roleId, 'Linked Member');
+      }
+      for (const roleId of toRemove) {
+        queueRoleRemove(priorityRequests, member.user.id, roleId, 'Linked Member');
+      }
+      if (nickNeedsUpdate) {
+        queueNickPatch(priorityRequests, member.user.id, user.displayName, 'Linked Member');
+      }
 
       // update lastSyncedAt
       await db
@@ -325,7 +359,12 @@ export const syncDiscord = async (db: DB, env: Env) => {
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  for await (const request of [...priorityRequests, ...requests]) {
+  const allRequests = [...priorityRequests, ...requests];
+  console.log(
+    `Queued ${allRequests.length} Discord API requests (${priorityRequests.length} priority, ${requests.length} unlinked).`
+  );
+
+  for await (const request of allRequests) {
     const { method, endpoint, body, headers, query } = request;
     const url = new URL('/api' + endpoint, 'https://discord.com');
     if (query) {
@@ -349,7 +388,7 @@ export const syncDiscord = async (db: DB, env: Env) => {
     } else {
       if (env.NODE_ENV === 'dev')
         console.log(
-          `[DEV] (${[...priorityRequests, ...requests].indexOf(request) + 1}/${[...priorityRequests, ...requests].length}) Discord API request successful: ${response.status} ${response.statusText} for ${url.href}`
+          `[DEV] (${allRequests.indexOf(request) + 1}/${allRequests.length}) Discord API request successful: ${response.status} ${response.statusText} for ${url.href}`
         );
     }
 
