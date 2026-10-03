@@ -16,10 +16,8 @@ export const getMyProfile = query(async () => {
   if (!user) {
     throw redirect(303, '/auth?redirect=/my');
   }
-  return {
-    user,
-    hours: user.hours
-  };
+  // Return a plain object so hour getters survive client transport (toJSON).
+  return { user: user.toJSON() };
 });
 
 const UpdateBioSchema = type({ bio: 'string' });

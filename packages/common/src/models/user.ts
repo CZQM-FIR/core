@@ -1186,10 +1186,18 @@ export class User {
         total: this.hours.total,
         thisQuarter: this.hours.thisQuarter,
         lastQuarter: this.hours.lastQuarter,
+        thisQuarterExternal: this.hours.thisQuarterExternal,
+        lastQuarterExternal: this.hours.lastQuarterExternal,
         thisMonth: this.hours.thisMonth,
         lastMonth: this.hours.lastMonth,
+        thisYear: this.hours.thisYear,
+        lastYear: this.hours.lastYear,
+        allTime: this.hours.allTime,
         thisActivityHours: this.hours.thisActivityHours,
+        lastActivityHours: this.hours.lastActivityHours,
         meetingActivityRequirement: this.hours.meetingActivityRequirement,
+        metActivityRequirementLastQuarter:
+          this.hours.metActivityRequirementLastQuarter,
       },
     };
   }
