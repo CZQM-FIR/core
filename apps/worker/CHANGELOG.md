@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.3](https://github.com/CZQM-FIR/core/compare/worker-v1.0.2...worker-v1.0.3) (2026-10-03)
+
+
+### Bug Fixes
+
+* discord sync no longer wipes non-managed roles ([#275](https://github.com/CZQM-FIR/core/issues/275)) ([01e1544](https://github.com/CZQM-FIR/core/commit/01e154440245234efafb649c0a1857f835fb4a16))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @czqm/common bumped to 1.1.4
+
 ## [1.0.2](https://github.com/CZQM-FIR/core/compare/worker-v1.0.1...worker-v1.0.2) (2026-09-24)
 
 
