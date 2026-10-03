@@ -122,8 +122,7 @@
               <tr>
                 <td
                   onclickcapture={() => activityModal?.showModal()}
-                  class="hover:link flex items-baseline gap-2"
-                  >Activity Hours <Info size="15" /></td
+                  class="hover:link flex items-baseline gap-2">Activity Hours <Info size="15" /></td
                 >
                 <td class={user.hours.meetingActivityRequirement ? 'text-warning' : ''}
                   >{user.hours.thisActivityHours.toFixed(2)}
@@ -133,8 +132,7 @@
               <tr>
                 <td
                   onclickcapture={() => externalModal?.showModal()}
-                  class="hover:link flex items-baseline gap-2"
-                  >External Hours <Info size="15" /></td
+                  class="hover:link flex items-baseline gap-2">External Hours <Info size="15" /></td
                 >
                 <td
                   class={user.flags.some((f) => f.id === 5) &&
@@ -151,10 +149,8 @@
           </table>
         </div>
 
-        <a
-          class="link mt-auto"
-          target="_blank"
-          href={`https://stats.vatsim.net/stats/${user.cid}`}>View All Hours</a
+        <a class="link mt-auto" target="_blank" href={`https://stats.vatsim.net/stats/${user.cid}`}
+          >View All Hours</a
         >
       {:else}
         <p class="py-3">
@@ -173,8 +169,8 @@
         <div class="modal-box">
           <h3 class="text-lg font-bold">Activity Hours</h3>
           <p class="py-4">
-            Activity Hours are the hours spent on CZQM positions that qualify as active time. For
-            S1 - S3 controllers, this is any Ground, Tower, Terminal, or Centre position. For C1+
+            Activity Hours are the hours spent on CZQM positions that qualify as active time. For S1
+            - S3 controllers, this is any Ground, Tower, Terminal, or Centre position. For C1+
             controllers, this is any Terminal or Centre position. Activity Hours are measured per
             calendar quarter. Controllers are required to maintain a minimum of 3 active hours per
             quarter.
@@ -191,10 +187,10 @@
         <div class="modal-box">
           <h3 class="text-lg font-bold">External Hours</h3>
           <p class="py-4">
-            External hours are hours connected to the VATSIM network as a controller in another
-            FIR / ARTCC. For CZQM / QX Home Controllers, this number must be less than your
-            activity hours for the quarter. For CZQM / QX Visiting Controller, this number must be
-            equal to or more than your activity hours for the quarter.
+            External hours are hours connected to the VATSIM network as a controller in another FIR
+            / ARTCC. For CZQM / QX Home Controllers, this number must be less than your activity
+            hours for the quarter. For CZQM / QX Visiting Controller, this number must be equal to
+            or more than your activity hours for the quarter.
           </p>
           <div class="modal-action">
             <form method="dialog">
