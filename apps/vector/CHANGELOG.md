@@ -2,10 +2,9 @@
 
 ## [1.1.4](https://github.com/CZQM-FIR/core/compare/vector-v1.1.3...vector-v1.1.4) (2026-10-03)
 
-
 ### Bug Fixes
 
-* discord sync no longer wipes non-managed roles ([#275](https://github.com/CZQM-FIR/core/issues/275)) ([01e1544](https://github.com/CZQM-FIR/core/commit/01e154440245234efafb649c0a1857f835fb4a16))
+- discord sync no longer wipes non-managed roles ([#275](https://github.com/CZQM-FIR/core/issues/275)) ([01e1544](https://github.com/CZQM-FIR/core/commit/01e154440245234efafb649c0a1857f835fb4a16))
 
 ## [1.1.3](https://github.com/CZQM-FIR/core/compare/vector-v1.1.2...vector-v1.1.3) (2026-09-30)
 
