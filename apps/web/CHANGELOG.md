@@ -2,17 +2,15 @@
 
 ## [1.1.4](https://github.com/CZQM-FIR/core/compare/web-v1.1.3...web-v1.1.4) (2026-10-03)
 
-
 ### Bug Fixes
 
-* **web:** my profile page returning potentially blank ([#274](https://github.com/CZQM-FIR/core/issues/274)) ([d93b628](https://github.com/CZQM-FIR/core/commit/d93b62844cd4990898e0e939a3141ba3dc19b02f))
-
+- **web:** my profile page returning potentially blank ([#274](https://github.com/CZQM-FIR/core/issues/274)) ([d93b628](https://github.com/CZQM-FIR/core/commit/d93b62844cd4990898e0e939a3141ba3dc19b02f))
 
 ### Dependencies
 
-* The following workspace dependencies were updated
-  * dependencies
-    * @czqm/common bumped to 1.1.4
+- The following workspace dependencies were updated
+  - dependencies
+    - @czqm/common bumped to 1.1.4
 
 ## [1.1.3](https://github.com/CZQM-FIR/core/compare/web-v1.1.2...web-v1.1.3) (2026-09-21)
 
