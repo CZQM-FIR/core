@@ -1,8 +1,11 @@
 name: Wiki
 on:
   push:
-    tags:
-      - "wiki-v*.*.*"
+    branches:
+      - main
+    paths:
+      - "apps/wiki/**"
+      - ".github/workflows/wiki.yml"
 permissions:
   contents: read
   pages: write
