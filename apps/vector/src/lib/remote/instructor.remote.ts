@@ -71,6 +71,7 @@ import { getMyTrainingSessions } from './users.remote';
 import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
 import { notifyCourseEnrollmentEmail } from '$lib/courseEnrollmentEmails';
 import { notifyCourseTaskCompletionEmail } from '$lib/courseTaskCompletionEmails';
+import { notifyTrainingNotesSubmittedEmail } from '$lib/trainingNotesEmails';
 import {
 	assertEnrollmentNotPaused,
 	requireActiveUnpausedEnrollment,
@@ -1335,6 +1336,7 @@ export const submitTrainingSessionNotes = command(
 		}
 
 		const vatcanEnv = { VATCAN_API_TOKEN: env.VATCAN_API_TOKEN };
+		const isFirstSubmit = session.vatcanNoteId == null;
 		let vatcanNoteId = session.vatcanNoteId;
 
 		try {
@@ -1373,6 +1375,14 @@ export const submitTrainingSessionNotes = command(
 			await TrainingSession.submitNotes(db, sessionId, actioner.cid, vatcanNoteId);
 		} catch (err) {
 			remoteCommandError(err, 'Failed to lock training notes');
+		}
+
+		if (isFirstSubmit) {
+			try {
+				await notifyTrainingNotesSubmittedEmail(session.courseId, session, course);
+			} catch (err) {
+				console.error('Failed to queue training notes email', err);
+			}
 		}
 
 		if (!taskComplete && allObjectivesAchieved(alignedResults) && task) {

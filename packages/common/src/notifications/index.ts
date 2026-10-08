@@ -6,5 +6,6 @@ export type {
 export { requiredNotifications, defaultOnPreferences } from "./types";
 export * from "./templates";
 export * from "./trainingSession";
+export * from "./trainingNotes";
 export * from "./courseEnrollment";
 export * from "./courseTaskCompletion";
