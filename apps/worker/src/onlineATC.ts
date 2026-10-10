@@ -195,12 +195,12 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
 
       if (!user) continue;
 
-      const discordIntegration = await db.query.integrations.findFirst({
-        where: { cid: controller.cid, type: 0 },
-        columns: {
-          id: true
-        }
-      });
+      // const discordIntegration = await db.query.integrations.findFirst({
+      //   where: { cid: controller.cid, type: 0 },
+      //   columns: {
+      //     id: true
+      //   }
+      // });
 
       const unitType = position.callsign.split('_').pop()?.toLowerCase() || '';
 
@@ -221,9 +221,11 @@ export const handleOnlineSessions = async (db: DB, env: Env) => {
 
       if (user.active !== 'active' || controller.rating === -1) {
         await notifyUnauthorizedSession(session, db, env, 'inactive');
-      } else if (!discordIntegration) {
-        await notifyUnauthorizedSession(session, db, env, 'discord');
-      } else if (controller.rating === 0) {
+      }
+      // else if (!discordIntegration) {
+      //   await notifyUnauthorizedSession(session, db, env, 'discord');
+      // }
+      else if (controller.rating === 0) {
         await notifyUnauthorizedSession(session, db, env, 'suspended');
       } else if (!hasRosterAuthorization && unitType !== 'obs') {
         await notifyUnauthorizedSession(session, db, env, 'roster');
