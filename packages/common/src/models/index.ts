@@ -9,4 +9,5 @@ export * from "./soloPresets";
 export * from "./event";
 export * from "./newsArticle";
 export * from "./userWrite";
+export * from "./testUsers";
 export * from "./dms";
