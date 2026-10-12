@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/CZQM-FIR/core/compare/worker-v1.0.3...worker-v1.0.4) (2026-10-10)
+
+
+### Bug Fixes
+
+* temporarly dissable discord integration requirement to match current policy ([934a358](https://github.com/CZQM-FIR/core/commit/934a358f688c4d846d11a9c0baa76701f1558767))
+
 ## [1.0.3](https://github.com/CZQM-FIR/core/compare/worker-v1.0.2...worker-v1.0.3) (2026-10-03)
 
 
