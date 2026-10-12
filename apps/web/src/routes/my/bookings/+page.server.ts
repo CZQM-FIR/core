@@ -2,21 +2,12 @@ import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import env from '$lib/env';
-import {
-  Booking,
-  BookingPolicyFactory,
-  User,
-  canCancelBooking,
-} from '@czqm/common';
-import {
-  BOOKING_FACILITIES,
-  type BookingFacility,
-  positions,
-} from '@czqm/db/schema';
+import { Booking, BookingPolicyFactory, User, canCancelBooking } from '@czqm/common';
+import { BOOKING_FACILITIES, type BookingFacility, positions } from '@czqm/db/schema';
 import { asc } from 'drizzle-orm';
 
 const bookingEnv = {
-  VATSIM_BOOKINGS_API_TOKEN: env.VATSIM_BOOKINGS_API_TOKEN,
+  VATSIM_BOOKINGS_API_TOKEN: env.VATSIM_BOOKINGS_API_TOKEN
 };
 
 function parseUtcDatetime(value: string): Date | null {
@@ -38,7 +29,7 @@ export const load = (async ({ locals }) => {
     .select({
       callsign: positions.callsign,
       name: positions.name,
-      frequency: positions.frequency,
+      frequency: positions.frequency
     })
     .from(positions)
     .orderBy(asc(positions.callsign));
@@ -77,7 +68,7 @@ export const load = (async ({ locals }) => {
 
   const bookings = rows.map((row) => ({
     ...Booking.toPublicSummary(row),
-    canCancel: actor ? canCancelBooking(actor, row) : false,
+    canCancel: actor ? canCancelBooking(actor, row) : false
   }));
 
   return {
@@ -86,7 +77,7 @@ export const load = (async ({ locals }) => {
     canBook,
     allowedFacilities,
     maxAdvanceMs,
-    actorCid: actor?.cid ?? null,
+    actorCid: actor?.cid ?? null
   };
 }) satisfies PageServerLoad;
 
@@ -129,7 +120,7 @@ export const actions: Actions = {
         callsign,
         startsAt,
         endsAt,
-        facility: facilityRaw,
+        facility: facilityRaw
       });
       return { ok: true, message: 'Booking created' };
     } catch (e) {
@@ -167,5 +158,5 @@ export const actions: Actions = {
       const message = e instanceof Error ? e.message : 'Failed to cancel booking';
       return fail(400, { ok: false, message });
     }
-  },
+  }
 };

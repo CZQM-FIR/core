@@ -1491,12 +1491,7 @@ export const rescheduleTrainingSession = command(
 			);
 		} catch (err) {
 			if (previousBookingTimes) {
-				await restoreLinkedBookingTimesForSession(
-					db,
-					bookingEnv,
-					sessionId,
-					previousBookingTimes
-				);
+				await restoreLinkedBookingTimesForSession(db, bookingEnv, sessionId, previousBookingTimes);
 			}
 			remoteCommandError(err, 'Failed to reschedule training session');
 		}

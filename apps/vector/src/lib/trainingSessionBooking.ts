@@ -1,8 +1,5 @@
 import { Booking, TrainingSession, User, type DB } from '@czqm/common';
-import {
-	BOOKING_FACILITIES,
-	type BookingFacility,
-} from '@czqm/db/schema';
+import { BOOKING_FACILITIES, type BookingFacility } from '@czqm/db/schema';
 
 export type VectorBookingEnv = {
 	VATSIM_BOOKINGS_API_TOKEN: string;
@@ -24,7 +21,7 @@ export function parseBookingFacility(value: string): BookingFacility | null {
 export function bookedCidForTrainingSession(
 	facility: BookingFacility,
 	studentCid: number,
-	schedulerCid: number,
+	schedulerCid: number
 ): number {
 	if (facility === 'live') return studentCid;
 	return schedulerCid;
@@ -42,21 +39,17 @@ export async function createLinkedBookingForSession(
 		facility: BookingFacility;
 		startsAt: Date;
 		endsAt: Date;
-	},
+	}
 ): Promise<void> {
 	await Booking.create(db, env, {
 		actor: input.actor,
-		cid: bookedCidForTrainingSession(
-			input.facility,
-			input.studentCid,
-			input.schedulerCid,
-		),
+		cid: bookedCidForTrainingSession(input.facility, input.studentCid, input.schedulerCid),
 		callsign: input.callsign,
 		startsAt: input.startsAt,
 		endsAt: input.endsAt,
 		facility: input.facility,
 		trainingSessionId: input.sessionId,
-		intent: { linkedTraining: true },
+		intent: { linkedTraining: true }
 	});
 }
 
@@ -72,7 +65,7 @@ export async function updateLinkedBookingTimesForSession(
 	env: VectorBookingEnv,
 	trainingSessionId: number,
 	startsAt: Date,
-	endsAt: Date,
+	endsAt: Date
 ): Promise<LinkedBookingTimes | null> {
 	const booking = await Booking.fetchByTrainingSessionId(db, env, trainingSessionId);
 	if (!booking || booking.row.status !== 'active') return null;
@@ -82,7 +75,7 @@ export async function updateLinkedBookingTimesForSession(
 	await booking.update({
 		actor,
 		startsAt,
-		endsAt,
+		endsAt
 	});
 	return previous;
 }
@@ -109,7 +102,7 @@ export async function restoreLinkedBookingTimesForSession(
 export async function cancelLinkedBookingForSession(
 	db: DB,
 	env: VectorBookingEnv,
-	trainingSessionId: number,
+	trainingSessionId: number
 ): Promise<void> {
 	const booking = await Booking.fetchByTrainingSessionId(db, env, trainingSessionId);
 	if (!booking || booking.row.status !== 'active') return;
@@ -125,13 +118,12 @@ export async function cancelLinkedBookingForSession(
 export async function tryCancelLinkedBookingForSession(
 	db: DB,
 	token: string | undefined,
-	trainingSessionId: number,
+	trainingSessionId: number
 ): Promise<void> {
 	if (!token) {
-		console.error(
-			'Skipping linked booking cancel: VATSIM_BOOKINGS_API_TOKEN is not configured',
-			{ trainingSessionId }
-		);
+		console.error('Skipping linked booking cancel: VATSIM_BOOKINGS_API_TOKEN is not configured', {
+			trainingSessionId
+		});
 		return;
 	}
 	try {
@@ -152,14 +144,14 @@ async function requireBookingCancelActor(db: DB, cid: number): Promise<User> {
 export async function rollbackPendingSessionAfterBookingFailure(
 	db: DB,
 	sessionId: number,
-	schedulerCid: number,
+	schedulerCid: number
 ): Promise<void> {
 	try {
 		await TrainingSession.cancel(db, sessionId, schedulerCid);
 	} catch (cleanupError) {
 		console.error('Failed to roll back training session after booking error', {
 			sessionId,
-			cleanupError,
+			cleanupError
 		});
 	}
 }
