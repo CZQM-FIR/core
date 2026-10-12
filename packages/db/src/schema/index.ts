@@ -23,3 +23,4 @@ export * from "./documentManagementSystem";
 export * from "./assistants";
 export * from "./training";
 export * from "./appSettings";
+export * from "./bookings";

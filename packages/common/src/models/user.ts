@@ -1129,6 +1129,30 @@ export class User {
     }
   }
 
+  /**
+   * Whether the user may control this position: certified at its roster level, or
+   * holding an unexpired solo endorsement for this exact callsign.
+   * Requires `roster` and `soloEndorsements` to have been loaded.
+   */
+  isQualifiedForPosition(callsign: string): boolean {
+    const normalized = callsign.trim().toUpperCase();
+
+    const hasSolo = (this.soloEndorsementsList ?? []).some(
+      (endorsement) =>
+        endorsement.expiresAt.valueOf() > Date.now() &&
+        endorsement.positions.some(
+          (pos) => pos.callsign.trim().toUpperCase() === normalized,
+        ),
+    );
+    if (hasSolo) return true;
+
+    const level = rosterLevelFromCallsign(normalized);
+    if (!level) return false;
+    return (this.roster ?? []).some(
+      (r: RosterStatus) => r.position === level && r.status === 2,
+    );
+  }
+
   get displayName() {
     return formatUserDisplayName(this.preferencesList, {
       cid: this.cid,

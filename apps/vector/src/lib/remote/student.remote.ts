@@ -37,6 +37,7 @@ import {
 	toCoursePauseInfo,
 	type CoursePauseInfo
 } from '$lib/courseEnrollmentPause';
+import { tryCancelLinkedBookingForSession } from '$lib/trainingSessionBooking';
 
 const CourseId = type(/^[0-9a-z]{5}$/);
 
@@ -621,6 +622,8 @@ export const declineTrainingSession = command(
 			throw error(400, err instanceof Error ? err.message : 'Failed to decline training session');
 		}
 
+		await tryCancelLinkedBookingForSession(db, env.VATSIM_BOOKINGS_API_TOKEN, sessionId);
+
 		try {
 			await notifyTrainingSessionEmails('declined', courseId, updated, course);
 		} catch (err) {
@@ -646,6 +649,8 @@ export const cancelTrainingSession = command(
 		} catch (err) {
 			throw error(400, err instanceof Error ? err.message : 'Failed to cancel training session');
 		}
+
+		await tryCancelLinkedBookingForSession(db, env.VATSIM_BOOKINGS_API_TOKEN, sessionId);
 
 		try {
 			await notifyTrainingSessionEmails('cancelled', courseId, updated, course);

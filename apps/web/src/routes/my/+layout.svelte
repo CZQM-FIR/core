@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { LayoutData } from './$types';
-  import { User, Users, LogOut, Blocks, Settings, School } from '@lucide/svelte';
+  import { User, Users, LogOut, Blocks, Settings, School, CalendarDays } from '@lucide/svelte';
   import NavLink from './NavLink.svelte';
   import { PUBLIC_OVERSEER_URL, PUBLIC_VECTOR_URL } from '$env/static/public';
 
@@ -31,6 +31,9 @@
         <ul class="mt-1 ps-2">
           <NavLink name="My Profile" icon={User} href="/my" />
           <!-- <NavLink name="Tickets" icon={Mail} href="/my/tickets" /> -->
+          {#if data.user.flags.some( (f) => ['admin', 'staff', 'controller', 'visitor', 'instructor', 'mentor'].includes(f.name) )}
+            <NavLink name="Bookings" icon={CalendarDays} href="/my/bookings" />
+          {/if}
           <NavLink name="Preferences" icon={Settings} href="/my/preferences" />
           <NavLink name="Integrations" icon={Blocks} href="/my/integrations" />
           {#if data.user.flags.some((f) => ['admin', 'controller', 'visitor'].includes(f.name))}

@@ -60,3 +60,8 @@ Login is VATSIM OAuth. To exercise authenticated pages locally, seed a `users` r
 `auth_sessions` row, then set the browser `session` cookie to the raw token. The session id
 stored in `auth_sessions.id` is the lowercase hex SHA-256 of the token string
 (`printf '%s' "<token>" | sha256sum`), and `expires_at` is a Unix-seconds timestamp.
+
+### Dev test users (VATSIM Auth-Dev)
+- In dev, open `/dev/test-users` on `apps/web` (port 5100) and click **Insert test users** to upsert the Auth-Dev test users (CIDs 10000001, 10000002, 10000004, 10000005, 10000006, 10000007) with preset flags and roster certifications. It is idempotent and returns 404 outside dev. Requires `ratings`/`flags` reference data (`apps/web/seed/seed.sql`).
+- The worker's `vatcanPull` removes `controller`/`visitor` (and staff position) flags from users not on the real VATCAN roster, so run the worker locally with `NODE_ENV=dev` (no cron) or these users will lose their flags.
+
