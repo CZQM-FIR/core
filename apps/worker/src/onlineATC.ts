@@ -7,13 +7,7 @@ import {
   unauthorizedConnectionEmailTemplate,
   unauthorizedConnectionText
 } from '@czqm/common/notifications';
-
-type OnlineController = {
-  cid: number;
-  callsign: string;
-  start: string;
-  rating: number;
-};
+import { fetchVatsimOnlineControllers } from './vatsimData.js';
 
 type Session = {
   cid: number;
@@ -138,25 +132,13 @@ const notifyUnauthorizedSession = async (
 };
 
 export const handleOnlineSessions = async (db: DB, env: Env) => {
-  const onlineControllersData = await fetch('https://data.vatsim.net/v3/vatsim-data.json');
-  const onlineControllersJson = (await onlineControllersData.json()) as {
-    controllers: {
-      cid: number;
-      callsign: string;
-      logon_time: string;
-      rating: number;
-    }[];
-  };
-  const onlineControllers = onlineControllersJson.controllers.map(
-    (c: { cid: number; callsign: string; logon_time: string; rating: number }) => {
-      return {
-        cid: c.cid,
-        callsign: c.callsign,
-        start: c.logon_time,
-        rating: c.rating
-      };
-    }
-  ) as OnlineController[];
+  const onlineControllersRaw = await fetchVatsimOnlineControllers();
+  const onlineControllers = onlineControllersRaw.map((c) => ({
+    cid: c.cid,
+    callsign: c.callsign,
+    start: c.logonTime,
+    rating: c.rating
+  }));
 
   console.log(`Fetched ${onlineControllers.length} online controllers from VATSIM.`);
 

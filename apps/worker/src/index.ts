@@ -2,6 +2,7 @@ import '@czqm/common/arktype-config';
 import { type } from 'arktype';
 import { createDB } from '@czqm/common';
 import { handleOnlineSessions } from './onlineATC.js';
+import { handleBookingForfeits } from './bookingForfeit.js';
 import { handleRecordSessions } from './recordSessions.js';
 import { recurringEvents } from './recurringEvents.js';
 import { syncDiscord } from './syncDiscord.js';
@@ -54,6 +55,11 @@ async function main(): Promise<void> {
 
     app.get('/dev/online', async (req, res) => {
       await handleOnlineSessions(db, env);
+      res.send('OK');
+    });
+
+    app.get('/dev/booking-forfeit', async (req, res) => {
+      await handleBookingForfeits(db, env);
       res.send('OK');
     });
 
@@ -121,6 +127,15 @@ async function main(): Promise<void> {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished Online ATC Handler', new Date());
+      }
+
+      try {
+        console.log('Running Booking Forfeit Handler', new Date());
+        await handleBookingForfeits(db, env);
+      } catch (err) {
+        console.error('Scheduled job failed:', err);
+      } finally {
+        console.log('Finished Booking Forfeit Handler', new Date());
       }
 
       try {

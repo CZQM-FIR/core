@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./arktype-config": "./src/arktype.config.ts",
     "./notifications": "./src/notifications/index.ts",
-    "./models": "./src/models/index.ts"
+    "./models": "./src/models/index.ts",
+    "./bookings": "./src/bookings/index.ts"
   },
   "dependencies": {
     "@czqm/db": "workspace:*",

@@ -59,6 +59,15 @@ import {
 	trainingSessionBlocksBookingSql,
 	type TrainingSessionStatus
 } from '@czqm/common';
+import {
+	createLinkedBookingForSession,
+	parseBookingFacility,
+	restoreLinkedBookingTimesForSession,
+	rollbackPendingSessionAfterBookingFailure,
+	tryCancelLinkedBookingForSession,
+	updateLinkedBookingTimesForSession,
+	vectorBookingEnv
+} from '$lib/trainingSessionBooking';
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
@@ -80,6 +89,38 @@ import {
 
 const CourseId = type(/^[0-9a-z]{5}$/);
 const WaitlistId = type('number.integer >= 0');
+
+function requireVatsimBookingsEnv() {
+	if (!env.VATSIM_BOOKINGS_API_TOKEN) {
+		throw error(500, 'VATSIM Bookings API token is not configured on this server.');
+	}
+	return vectorBookingEnv(env.VATSIM_BOOKINGS_API_TOKEN);
+}
+
+function filterBookablePositionCallsigns(
+	positions: { callsign: string; name: string }[]
+): string[] {
+	// Suggestions skip positions whose name is blank, "UNKN", or the same as the callsign.
+	// Any valid callsign can still be typed in manually.
+	return positions
+		.filter((position) => {
+			const name = position.name.trim().toUpperCase();
+			const callsign = position.callsign.trim().toUpperCase();
+			return name.length > 0 && name !== 'UNKN' && callsign !== 'UNKN' && name !== callsign;
+		})
+		.map((position) => position.callsign);
+}
+
+export const getBookablePositionCallsigns = query(async () => {
+	await authorizeVectorInstructorAccess();
+
+	const positionRows = await db.query.positions.findMany({
+		columns: { callsign: true, name: true },
+		orderBy: (position, { asc }) => [asc(position.callsign)]
+	});
+
+	return filterBookablePositionCallsigns(positionRows);
+});
 
 export const getInstructorCourses = query(async () => {
 	await authorizeVectorInstructorAccess();
@@ -536,13 +577,24 @@ const ScheduleTrainingSessionOptions = type({
 	taskId: 'number.integer >= 0',
 	startsAt: 'string',
 	endsAt: 'string',
+	callsign: 'string',
+	facility: 'string',
 	'trainingNote?': 'string'
 });
 
 export const scheduleTrainingSession = command(
 	ScheduleTrainingSessionOptions,
-	async ({ courseId, studentCid, taskId, startsAt, endsAt, trainingNote }) => {
+	async ({ courseId, studentCid, taskId, startsAt, endsAt, callsign, facility, trainingNote }) => {
 		const actioner = await authorizeVectorInstructorAccess();
+		const bookingEnv = requireVatsimBookingsEnv();
+		const bookingFacility = parseBookingFacility(facility);
+		if (!bookingFacility) {
+			throw error(400, 'Invalid facility');
+		}
+		const bookingCallsign = callsign.trim();
+		if (!bookingCallsign) {
+			throw error(400, 'Callsign is required');
+		}
 
 		const course = await Course.fetchById(courseId, db);
 		if (!course) throw error(404, 'Course not found');
@@ -626,6 +678,25 @@ export const scheduleTrainingSession = command(
 			});
 		} catch (err) {
 			throw error(400, err instanceof Error ? err.message : 'Failed to schedule training session');
+		}
+
+		try {
+			await createLinkedBookingForSession(db, bookingEnv, {
+				actor: actioner,
+				sessionId: session.id,
+				studentCid,
+				schedulerCid: actioner.cid,
+				callsign: bookingCallsign,
+				facility: bookingFacility,
+				startsAt: startsAtDate,
+				endsAt: endsAtDate
+			});
+		} catch (err) {
+			await rollbackPendingSessionAfterBookingFailure(db, session.id, actioner.cid);
+			throw error(
+				400,
+				err instanceof Error ? err.message : 'Failed to create linked position booking'
+			);
 		}
 
 		try {
@@ -797,6 +868,8 @@ export const cancelTrainingSession = command(
 		} catch (err) {
 			throw error(400, err instanceof Error ? err.message : 'Failed to cancel training session');
 		}
+
+		await tryCancelLinkedBookingForSession(db, env.VATSIM_BOOKINGS_API_TOKEN, sessionId);
 
 		try {
 			await notifyTrainingSessionEmails('cancelled', courseId, session, course);
@@ -1388,6 +1461,25 @@ export const rescheduleTrainingSession = command(
 			availabilityRows.map((row) => ({ startsAt: row.startsAt, endsAt: row.endsAt }))
 		);
 
+		// Update the linked booking first so a booking-policy failure cannot leave the
+		// session moved; if the session update then fails, roll the booking back.
+		const bookingEnv = requireVatsimBookingsEnv();
+		let previousBookingTimes: Awaited<ReturnType<typeof updateLinkedBookingTimesForSession>>;
+		try {
+			previousBookingTimes = await updateLinkedBookingTimesForSession(
+				db,
+				bookingEnv,
+				sessionId,
+				startsAtDate,
+				endsAtDate
+			);
+		} catch (err) {
+			throw error(
+				400,
+				err instanceof Error ? err.message : 'Failed to update linked position booking'
+			);
+		}
+
 		let updated;
 		try {
 			updated = await TrainingSession.reschedule(
@@ -1398,6 +1490,14 @@ export const rescheduleTrainingSession = command(
 				endsAtDate
 			);
 		} catch (err) {
+			if (previousBookingTimes) {
+				await restoreLinkedBookingTimesForSession(
+					db,
+					bookingEnv,
+					sessionId,
+					previousBookingTimes
+				);
+			}
 			remoteCommandError(err, 'Failed to reschedule training session');
 		}
 

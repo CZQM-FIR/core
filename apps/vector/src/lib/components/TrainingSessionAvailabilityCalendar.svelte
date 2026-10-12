@@ -10,12 +10,14 @@
 		isSameCalendarDay
 	} from '$lib/trainingSessionAvailability';
 	import {
+		getBookablePositionCallsigns,
 		getInstructorStudentSessionAvailability,
 		getScheduledSessionsInWindow,
 		rescheduleTrainingSession,
 		scheduleTrainingSession,
 		type ScheduledSessionInWindow
 	} from '$lib/remote/instructor.remote';
+	import type { BookingFacility } from '@czqm/db/schema';
 	import {
 		getTrainingSessionAvailability,
 		saveTrainingSessionAvailability
@@ -87,7 +89,16 @@
 	let loadError = $state<string | null>(null);
 	let outsideAvailabilityWarning = $state(false);
 	let scheduledSessions = $state.raw<ScheduledSessionInWindow[]>([]);
+	let bookableCallsigns = $state<string[]>([]);
+	let bookingCallsign = $state('');
+	let bookingFacility = $state<BookingFacility>('live');
 	let confirmDialog = $state<HTMLDialogElement | null>(null);
+
+	const facilityOptions: { value: BookingFacility; label: string }[] = [
+		{ value: 'live', label: 'Live network' },
+		{ value: 'sweatbox', label: 'Sweatbox' },
+		{ value: 'sweatbox2', label: 'Sweatbox 2' }
+	];
 	let dragState = $state<{
 		anchor: { dayIndex: number; slotIndex: number };
 		current: { dayIndex: number; slotIndex: number };
@@ -415,6 +426,15 @@
 		return `${startDateLabel}, ${startTime} – ${endDateLabel}, ${endTime}`;
 	}
 
+	async function loadBookableCallsigns() {
+		if (mode !== 'schedule') return;
+		try {
+			bookableCallsigns = await getBookablePositionCallsigns();
+		} catch {
+			bookableCallsigns = [];
+		}
+	}
+
 	async function loadAvailability() {
 		loading = true;
 		loadError = null;
@@ -427,6 +447,7 @@
 					getInstructorStudentSessionAvailability({ courseId, cid, taskId }),
 					getScheduledSessionsInWindow()
 				]);
+				await loadBookableCallsigns();
 				windowEndsAt = data.windowEndsAt;
 				scheduledSessions = scheduled.map(toOverlaySession);
 
@@ -689,12 +710,19 @@
 				if (cid == null) {
 					throw new Error('Student is required to schedule a session');
 				}
+				const trimmedCallsign = bookingCallsign.trim();
+				if (!trimmedCallsign) {
+					scheduleError = 'Position callsign is required';
+					return;
+				}
 				await scheduleTrainingSession({
 					courseId,
 					studentCid: cid,
 					taskId,
 					startsAt: range.startsAt.toISOString(),
-					endsAt: range.endsAt.toISOString()
+					endsAt: range.endsAt.toISOString(),
+					callsign: trimmedCallsign,
+					facility: bookingFacility
 				});
 			}
 			confirmDialog?.close();
@@ -927,6 +955,41 @@
 			</ul>
 		{/if}
 
+		{#if mode === 'schedule'}
+			<div class="mt-3 space-y-3">
+				<p class="text-sm opacity-80">
+					Link a FIR position booking to this session (required for scheduling).
+				</p>
+				<label class="form-control w-full">
+					<div class="label py-0">
+						<span class="label-text">Facility</span>
+					</div>
+					<select class="select select-bordered select-sm w-full" bind:value={bookingFacility}>
+						{#each facilityOptions as option (option.value)}
+							<option value={option.value}>{option.label}</option>
+						{/each}
+					</select>
+				</label>
+				<label class="form-control w-full">
+					<div class="label py-0">
+						<span class="label-text">Position callsign</span>
+					</div>
+					<input
+						class="input input-bordered input-sm w-full"
+						list="training-session-booking-callsigns"
+						bind:value={bookingCallsign}
+						placeholder="e.g. CZQM_CTR"
+						autocomplete="off"
+					/>
+					<datalist id="training-session-booking-callsigns">
+						{#each bookableCallsigns as callsign (callsign)}
+							<option value={callsign}></option>
+						{/each}
+					</datalist>
+				</label>
+			</div>
+		{/if}
+
 		{#if scheduleError}
 			<p class="text-error mt-2 text-sm">{scheduleError}</p>
 		{/if}
@@ -935,7 +998,12 @@
 			<form method="dialog">
 				<button class="btn" disabled={scheduling}>Cancel</button>
 			</form>
-			<button type="button" class="btn btn-primary" disabled={scheduling} onclick={handleSchedule}>
+			<button
+				type="button"
+				class="btn btn-primary"
+				disabled={scheduling || (mode === 'schedule' && !bookingCallsign.trim())}
+				onclick={handleSchedule}
+			>
 				{#if scheduling}
 					<span class="loading loading-spinner loading-sm"></span>
 					{mode === 'reschedule' ? 'Rescheduling...' : 'Scheduling...'}

@@ -7,6 +7,7 @@ export * from "./rosterLevel";
 export * from "./rosterAuthorization";
 export * from "./soloPresets";
 export * from "./event";
+export * from "./booking";
 export * from "./newsArticle";
 export * from "./userWrite";
 export * from "./testUsers";

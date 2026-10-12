@@ -338,4 +338,26 @@ export const relations = defineRelations(schema, (r) => ({
       optional: false,
     }),
   },
+  bookings: {
+    user: r.one.users({
+      from: r.bookings.cid,
+      to: r.users.cid,
+      optional: false,
+    }),
+    createdBy: r.one.users({
+      from: r.bookings.createdByCid,
+      to: r.users.cid,
+      optional: false,
+    }),
+    trainingSession: r.one.trainingSessions({
+      from: r.bookings.trainingSessionId,
+      to: r.trainingSessions.id,
+    }),
+  },
+  trainingSessions: {
+    booking: r.one.bookings({
+      from: r.trainingSessions.id,
+      to: r.bookings.trainingSessionId,
+    }),
+  },
 }));

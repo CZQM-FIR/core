@@ -16,6 +16,7 @@ export const Env = type({
   DISCORD_GUILD_ID: "string.integer",
   RECORD_SESSIONS_DELAY: "string.integer.parse",
   VATCAN_API_TOKEN: "string",
+  VATSIM_BOOKINGS_API_TOKEN: "string",
   UPTIME_PORT: "string.integer.parse?",
   NODE_ENV: '"dev"|"production"?',
   MOODLE_TOKEN: "string",
