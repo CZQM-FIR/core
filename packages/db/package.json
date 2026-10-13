@@ -16,7 +16,7 @@
   "devDependencies": {
     "dotenv": "^16.5.0",
     "drizzle-kit": "1.0.0-beta.13-f728631",
-    "typescript": "^5.0.0"
+    "typescript": "^7.0.0"
   },
   "dependencies": {
     "nanoid": "^5.0.0",
