@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/CZQM-FIR/core/compare/common-v1.1.4...common-v1.2.0) (2026-10-18)
+
+
+### Features
+
+* add Discord manual task alerts ([#290](https://github.com/CZQM-FIR/core/issues/290)) ([287a127](https://github.com/CZQM-FIR/core/commit/287a127d991d7994129a69b4c36a44b4a731515f))
+* training note email notifications ([#285](https://github.com/CZQM-FIR/core/issues/285)) ([bbdc1e1](https://github.com/CZQM-FIR/core/commit/bbdc1e17c8c92832e8e0e4822f75f6508ea40a1b))
+
+
+### Miscellaneous Chores
+
+* force release ([4259d34](https://github.com/CZQM-FIR/core/commit/4259d34a313a974b411d7f5dd399570ee5683ba5))
+
 ## [1.1.4](https://github.com/CZQM-FIR/core/compare/common-v1.1.3...common-v1.1.4) (2026-10-03)
 
 
