@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.1](https://github.com/CZQM-FIR/core/compare/web-v1.2.0...web-v1.2.1) (2026-10-18)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @czqm/common bumped to 1.2.0
+    * @czqm/db bumped to 1.2.0
+
 ## [1.2.0](https://github.com/CZQM-FIR/core/compare/web-v1.1.4...web-v1.2.0) (2026-10-18)
 
 ### Miscellaneous Chores
