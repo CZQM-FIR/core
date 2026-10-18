@@ -6,6 +6,8 @@ import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
 import { Course, User, userHasVectorInstructorAccess } from '@czqm/common';
 import { authorizeVectorAdminAccess } from './auth';
+import { getCourse } from './courses.remote';
+import { ROSTER_POSITIONS, clearInTraining, markUserInTraining } from '$lib/courseTrainingRoster';
 import { notifyCourseEnrollmentEmailByWaitlist } from '$lib/courseEnrollmentEmails';
 import {
 	getInstructorEnrolledEntries,
@@ -268,6 +270,12 @@ export const enrolUserFromWaitlist = command(
 			enrolledAt: new Date()
 		});
 
+		try {
+			await markUserInTraining(userId, waitlist.trainingPositions ?? []);
+		} catch (err) {
+			console.error('Failed to mark user in training on enrolment', err);
+		}
+
 		await db
 			.delete(waitingUsers)
 			.where(and(eq(waitingUsers.cid, userId), eq(waitingUsers.waitlistId, waitlistId)));
@@ -326,6 +334,28 @@ export const saveWaitlistCohorts = command(
 				enrolledCohort: enrolledCohort || null
 			})
 			.where(eq(waitlists.id, waitlistId));
+
+		return { success: true };
+	}
+);
+
+export const saveWaitlistTrainingPositions = command(
+	type({
+		waitlistId: 'number.integer >= 0',
+		trainingPositions: type("'gnd' | 'twr' | 'app' | 'ctr'").array()
+	}),
+	async ({ waitlistId, trainingPositions }) => {
+		await authorizeVectorAdminAccess();
+
+		const positions = ROSTER_POSITIONS.filter((p) => trainingPositions.includes(p));
+
+		await db
+			.update(waitlists)
+			.set({ trainingPositions: positions.length ? positions : null })
+			.where(eq(waitlists.id, waitlistId));
+
+		const course = await db.query.courses.findFirst({ where: { waitlistId } });
+		if (course) getCourse(course.id).refresh();
 
 		return { success: true };
 	}
@@ -419,6 +449,12 @@ export const returnEnrolledUserToWaitlist = command(
 			.delete(enrolledUsers)
 			.where(and(eq(enrolledUsers.waitlistId, waitlistId), eq(enrolledUsers.cid, userId)));
 
+		try {
+			await clearInTraining(userId, waitlist.trainingPositions ?? [], waitlistId);
+		} catch (err) {
+			console.error('Failed to clear in-training status on return to waitlist', err);
+		}
+
 		await db.insert(waitingUsers).values({
 			cid: userId,
 			waitlistId,
@@ -473,6 +509,12 @@ export const removeUserFromEnrolledCourse = command(
 		await db
 			.delete(enrolledUsers)
 			.where(and(eq(enrolledUsers.waitlistId, waitlistId), eq(enrolledUsers.cid, userId)));
+
+		try {
+			await clearInTraining(userId, enrolledUser.waitlist.trainingPositions ?? [], waitlistId);
+		} catch (err) {
+			console.error('Failed to clear in-training status on removal', err);
+		}
 
 		getEnrolledWaitlistEntries(waitlistId).refresh();
 		getWaitlist(waitlistId).refresh();
