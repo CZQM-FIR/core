@@ -1,6 +1,18 @@
 <script lang="ts">
 	import { getCourse, saveCourse } from '$lib/remote/courses.remote';
-	import { saveWaitlistEstimatedTime, saveWaitlistCohorts } from '$lib/remote/waitlist.remote';
+	import {
+		saveWaitlistEstimatedTime,
+		saveWaitlistCohorts,
+		saveWaitlistTrainingPositions
+	} from '$lib/remote/waitlist.remote';
+	import type { RosterPosition } from '@czqm/db/schema';
+
+	const POSITION_OPTIONS: { value: RosterPosition; label: string }[] = [
+		{ value: 'gnd', label: 'Ground' },
+		{ value: 'twr', label: 'Tower' },
+		{ value: 'app', label: 'Approach' },
+		{ value: 'ctr', label: 'Centre' }
+	];
 
 	type CourseData = Awaited<ReturnType<typeof getCourse>>;
 
@@ -19,8 +31,10 @@
 	let estimatedTime = $state('');
 	let waitlistCohort = $state('');
 	let enrolledCohort = $state('');
+	let trainingPositions = $state<RosterPosition[]>([]);
 
 	$effect(() => {
+		trainingPositions = [...(course.waitlist.trainingPositions ?? [])];
 		name = course.name;
 		description = course.description ?? '';
 		estimatedTime = course.waitlist.waitTime ?? '';
@@ -31,6 +45,19 @@
 	let courseSaved = $state(false);
 	let waitTimeSaved = $state(false);
 	let cohortsSaved = $state(false);
+	let positionsSaved = $state(false);
+
+	async function handleSaveTrainingPositions() {
+		positionsSaved = false;
+		const positions = [...trainingPositions];
+		await saveWaitlistTrainingPositions({ waitlistId, trainingPositions: positions }).updates(
+			getCourse(courseId).withOverride((c) => ({
+				...c,
+				waitlist: { ...c.waitlist, trainingPositions: positions.length ? positions : null }
+			}))
+		);
+		positionsSaved = true;
+	}
 
 	async function handleSaveCourse() {
 		courseSaved = false;
@@ -155,6 +182,40 @@
 				<p class="mt-2 text-xs">
 					Wait list cohort is used when users join the waitlist; enrolled cohort when they are
 					enrolled in the course.
+				</p>
+			</fieldset>
+
+			<fieldset class="fieldset mt-4">
+				<legend class="fieldset-legend">Training Positions</legend>
+				<div class="flex flex-row flex-wrap items-center gap-4">
+					{#each POSITION_OPTIONS as option (option.value)}
+						<label class="label cursor-pointer gap-2">
+							<input
+								type="checkbox"
+								class="checkbox"
+								value={option.value}
+								bind:group={trainingPositions}
+							/>
+							{option.label}
+						</label>
+					{/each}
+					<button
+						class="btn {!saveWaitlistTrainingPositions.pending && positionsSaved
+							? 'btn-success'
+							: 'btn-primary'}"
+						disabled={!!saveWaitlistTrainingPositions.pending}
+						onclickcapture={handleSaveTrainingPositions}
+					>
+						{#if saveWaitlistTrainingPositions.pending}
+							<span class="loading loading-spinner loading-sm"></span>
+						{:else}
+							Save Positions
+						{/if}
+					</button>
+				</div>
+				<p class="mt-2 text-xs">
+					Controllers are marked In Training for these positions when enrolled, and cleared if they
+					are removed or returned to the waitlist while still in training.
 				</p>
 			</fieldset>
 		</div>
