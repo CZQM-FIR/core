@@ -8,3 +8,4 @@ export * from "./assistants";
 export * from "./assistantAccess";
 export * from "./transport";
 export * from "./vatcan";
+export * from "./discordTaskAlerts";

@@ -10,3 +10,4 @@ export * from "./event";
 export * from "./newsArticle";
 export * from "./userWrite";
 export * from "./dms";
+export * from "./courseTaskCompletion";

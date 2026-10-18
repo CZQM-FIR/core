@@ -1,5 +1,6 @@
 import { type InferSelectModel } from "drizzle-orm";
 import { index, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import type { RosterPosition } from "./roster";
 import { users } from "./users";
 
 export const waitlists = sqliteTable("waitlists", {
@@ -8,6 +9,9 @@ export const waitlists = sqliteTable("waitlists", {
   waitTime: text("wait_time"),
   waitlistCohort: text("waitlist_cohort"),
   enrolledCohort: text("enrolled_cohort"),
+  trainingPositions: text("training_positions", {
+    mode: "json",
+  }).$type<RosterPosition[] | null>(),
 });
 
 export type Waitlist = InferSelectModel<typeof waitlists>;
