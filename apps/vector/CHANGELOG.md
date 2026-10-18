@@ -2,25 +2,22 @@
 
 ## [1.2.0](https://github.com/CZQM-FIR/core/compare/vector-v1.1.4...vector-v1.2.0) (2026-10-18)
 
-
 ### Features
 
-* add Discord manual task alerts ([#290](https://github.com/CZQM-FIR/core/issues/290)) ([287a127](https://github.com/CZQM-FIR/core/commit/287a127d991d7994129a69b4c36a44b4a731515f))
-* mark controllers in training on course enrolment ([#291](https://github.com/CZQM-FIR/core/issues/291)) ([9247be3](https://github.com/CZQM-FIR/core/commit/9247be3936cdadc0250c1d0abc749b4992c5e27e))
-* training note email notifications ([#285](https://github.com/CZQM-FIR/core/issues/285)) ([bbdc1e1](https://github.com/CZQM-FIR/core/commit/bbdc1e17c8c92832e8e0e4822f75f6508ea40a1b))
-
+- add Discord manual task alerts ([#290](https://github.com/CZQM-FIR/core/issues/290)) ([287a127](https://github.com/CZQM-FIR/core/commit/287a127d991d7994129a69b4c36a44b4a731515f))
+- mark controllers in training on course enrolment ([#291](https://github.com/CZQM-FIR/core/issues/291)) ([9247be3](https://github.com/CZQM-FIR/core/commit/9247be3936cdadc0250c1d0abc749b4992c5e27e))
+- training note email notifications ([#285](https://github.com/CZQM-FIR/core/issues/285)) ([bbdc1e1](https://github.com/CZQM-FIR/core/commit/bbdc1e17c8c92832e8e0e4822f75f6508ea40a1b))
 
 ### Miscellaneous Chores
 
-* force release ([4259d34](https://github.com/CZQM-FIR/core/commit/4259d34a313a974b411d7f5dd399570ee5683ba5))
-
+- force release ([4259d34](https://github.com/CZQM-FIR/core/commit/4259d34a313a974b411d7f5dd399570ee5683ba5))
 
 ### Dependencies
 
-* The following workspace dependencies were updated
-  * dependencies
-    * @czqm/db bumped to 1.2.0
-    * @czqm/common bumped to 1.2.0
+- The following workspace dependencies were updated
+  - dependencies
+    - @czqm/db bumped to 1.2.0
+    - @czqm/common bumped to 1.2.0
 
 ## [1.1.4](https://github.com/CZQM-FIR/core/compare/vector-v1.1.3...vector-v1.1.4) (2026-10-03)
 
