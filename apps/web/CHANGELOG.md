@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/CZQM-FIR/core/compare/web-v1.1.4...web-v1.2.0) (2026-10-18)
+
+### Miscellaneous Chores
+
+- force release ([4259d34](https://github.com/CZQM-FIR/core/commit/4259d34a313a974b411d7f5dd399570ee5683ba5))
+
+### Dependencies
+
+- The following workspace dependencies were updated
+  - dependencies
+    - @czqm/common bumped to 1.2.0
+    - @czqm/db bumped to 1.2.0
+
 ## [1.1.4](https://github.com/CZQM-FIR/core/compare/web-v1.1.3...web-v1.1.4) (2026-10-03)
 
 ### Bug Fixes
