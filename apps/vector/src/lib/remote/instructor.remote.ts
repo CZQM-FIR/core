@@ -27,16 +27,13 @@ import {
 	canTransferTrainingSession,
 	canUnsubmitTrainingSessionNotes,
 	Course,
+	completeCourseTaskForStudent,
+	deleteTaskAlert,
 	CourseTask,
-	certifyControllerOnRoster,
 	createVatcanTrainingNote,
 	describeCourseTask,
 	formatTrainingSessionType,
-	grantSoloEndorsement,
-	getSoloPresetByLevel,
-	isRosterPosition,
 	notesUnsubmitDeadline,
-	parseSoloDurationDays,
 	TrainingSession,
 	updateVatcanTrainingNote,
 	User,
@@ -71,7 +68,7 @@ import {
 import { getMyTrainingSessions } from './users.remote';
 import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
 import { notifyCourseEnrollmentEmail } from '$lib/courseEnrollmentEmails';
-import { notifyCourseTaskCompletionEmail } from '$lib/courseTaskCompletionEmails';
+import vectorEnv from '$lib/env';
 import { notifyTrainingNotesSubmittedEmail } from '$lib/trainingNotesEmails';
 import {
 	assertEnrollmentNotPaused,
@@ -1596,53 +1593,20 @@ async function applyCourseTaskCompletion(
 	cid: number,
 	actionerCid: number
 ) {
+	let result;
 	try {
-		if (task.taskType === 'certify') {
-			const position = task.taskValue1?.trim() ?? '';
-			if (!isRosterPosition(position)) {
-				throw new Error('This certify task is missing a valid roster position');
-			}
-			await certifyControllerOnRoster(db, cid, position);
-		} else if (task.taskType === 'solo') {
-			const level = task.taskValue1?.trim() ?? '';
-			if (!isRosterPosition(level)) {
-				throw new Error(
-					'This solo task must use a preset level (Ground, Tower, Approach, or Centre). Re-save the task in course admin.'
-				);
-			}
-			const preset = await getSoloPresetByLevel(db, level);
-			if (!preset || preset.positions.length === 0) {
-				throw new Error(
-					`Solo preset for ${level} is empty. Configure positions under Solo Presets first.`
-				);
-			}
-			const durationDays = parseSoloDurationDays(task.taskValue2);
-			await grantSoloEndorsement(
-				db,
-				cid,
-				preset.positions.map((position) => position.callsign),
-				durationDays
-			);
-		}
+		result = await completeCourseTaskForStudent(db, task, cid, actionerCid, {
+			vectorUrl: vectorEnv.PUBLIC_VECTOR_URL
+		});
 	} catch (err) {
 		remoteCommandError(err, 'Failed to update roster or solo endorsement');
 	}
 
-	await task.complete(cid);
-
-	if (task.taskType === 'certify' || task.taskType === 'solo') {
-		try {
-			await notifyCourseTaskCompletionEmail(task.taskType, courseId, cid, actionerCid, task);
-		} catch (err) {
-			console.error('Failed to queue training completion email', err);
-		}
-	}
+	await deleteTaskAlert(db, env.DISCORD_BOT_TOKEN, courseId, task.taskId, cid);
 
 	getInstructorStudentView({ courseId, cid }).refresh();
 
-	return {
-		followUp: task.taskType === 'certify' || task.taskType === 'solo' ? task.taskType : null
-	};
+	return result;
 }
 
 export const completeStudentCourseTask = command(

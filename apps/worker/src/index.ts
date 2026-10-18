@@ -16,6 +16,8 @@ import { cleanupTrainingSessionAvailability } from './cleanupTrainingSessionAvai
 import { syncCourseTaskCompletions } from './syncCourseTaskCompletions.js';
 import { Env } from '@czqm/common';
 import { executeJobs } from './jobs.js';
+import { manualTaskAlertsJob } from './manualTaskAlerts.js';
+import { createDiscordInteractionsHandler } from './discordInteractions.js';
 
 const app = express();
 let lastRun: string | null = null;
@@ -105,6 +107,12 @@ async function main(): Promise<void> {
       res.send('OK');
     });
 
+    app.get('/dev/manual-task-alerts', async (req, res) => {
+      await manualTaskAlertsJob(db, env);
+
+      res.send('OK');
+    });
+
     app.get(`/dev/jobs`, async (req, res) => {
       await executeJobs(db);
 
@@ -139,6 +147,12 @@ async function main(): Promise<void> {
         console.error('Scheduled job failed:', err);
       } finally {
         console.log('Finished Notifications Job', new Date());
+      }
+
+      try {
+        await manualTaskAlertsJob(db, env);
+      } catch (err) {
+        console.error('Manual task alerts job failed:', err);
       }
     });
 
@@ -219,6 +233,12 @@ async function main(): Promise<void> {
       }
     });
   }
+
+  app.post(
+    '/discord/interactions',
+    express.raw({ type: 'application/json' }),
+    createDiscordInteractionsHandler(db, env)
+  );
 
   app.get('/cron-health', (req, res) => {
     res.json({
