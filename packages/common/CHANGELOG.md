@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.2](https://github.com/CZQM-FIR/core/compare/common-v1.2.1...common-v1.2.2) (2026-10-19)
+
+
+### Miscellaneous Chores
+
+* force release ([cdcfdc0](https://github.com/CZQM-FIR/core/commit/cdcfdc0dae06b14bffc9dcdfc8fdcd293045006a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @czqm/db bumped to 1.2.2
+
 ## [1.2.1](https://github.com/CZQM-FIR/core/compare/common-v1.2.0...common-v1.2.1) (2026-10-19)
 
 
