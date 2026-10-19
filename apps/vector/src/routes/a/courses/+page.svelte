@@ -11,7 +11,7 @@
 
 	const notificationsEnabled = $derived(notificationsQuery.current !== false);
 	const notificationsToggleDisabled = $derived(
-		(notificationsQuery.loading && notificationsQuery.current === undefined) ||
+		(!notificationsQuery.ready && !notificationsQuery.error) ||
 			!!setCourseStatusNotificationsEnabled.pending
 	);
 
@@ -143,7 +143,7 @@
 		<div class="mt-5 overflow-x-auto">
 			{#if coursesQuery.error}
 				<p class="text-error">Failed to load courses.</p>
-			{:else if coursesQuery.loading && !coursesQuery.current}
+			{:else if !coursesQuery.ready}
 				<p>Loading courses...</p>
 			{:else}
 				<table class="table">
@@ -158,7 +158,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each coursesQuery.current ?? [] as course, index (course.id)}
+						{#each coursesQuery.current as course, index (course.id)}
 							<tr>
 								<td>{index + 1}</td>
 								<td>{course.name}</td>

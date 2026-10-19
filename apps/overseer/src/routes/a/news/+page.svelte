@@ -2,6 +2,8 @@
 	import { Plus, Search, SquarePen, Trash2 } from '@lucide/svelte';
 	import { deleteNewsArticle, getNewsArticles } from '$lib/remote/news.remote';
 
+	const query = getNewsArticles();
+
 	let search = $state('');
 </script>
 
@@ -20,9 +22,12 @@
 			</a>
 		</div>
 
-		{#await getNewsArticles()}
+		{#if query.error}
+			<p class="text-error mt-4">{query.error.message ?? 'Failed to load articles.'}</p>
+		{:else if !query.ready}
 			<p class="mt-4">Loading articles...</p>
-		{:then articles}
+		{:else}
+			{@const articles = query.current}
 			<table class="table-zebra table w-full">
 				<thead>
 					<tr>
@@ -62,8 +67,6 @@
 					{/each}
 				</tbody>
 			</table>
-		{:catch err}
-			<p class="text-error mt-4">{err.message ?? 'Failed to load articles.'}</p>
-		{/await}
+		{/if}
 	</div>
 </section>

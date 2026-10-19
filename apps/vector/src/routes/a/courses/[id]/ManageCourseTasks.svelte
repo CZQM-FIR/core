@@ -64,6 +64,9 @@
 	let handledCreateResult = $state<unknown>(undefined);
 	let handledUpdateResult = $state<unknown>(undefined);
 
+	const cbtQuery = getVatcanCbtBlocks();
+	const presetsQuery = getSoloPresetsAdmin();
+
 	const addTaskForm = $derived(createCourseTask.for(formKey));
 	const updateTaskForm = $derived(updateCourseTask.for(formKey));
 
@@ -324,13 +327,13 @@
 			<p class="flex-1 text-sm">No tasks defined for this course.</p>
 		{:else if needsCbtCatalogForDisplay}
 			<div class="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-x-hidden overflow-y-auto">
-				{#await getVatcanCbtBlocks()}
-					<p class="text-sm opacity-70">Loading CBT block names...</p>
-				{:then catalog}
-					{@render taskRows(catalog.blocks)}
-				{:catch}
+				{#if cbtQuery.error}
 					{@render taskRows()}
-				{/await}
+				{:else if !cbtQuery.ready}
+					<p class="text-sm opacity-70">Loading CBT block names...</p>
+				{:else}
+					{@render taskRows(cbtQuery.current.blocks)}
+				{/if}
 			</div>
 		{:else}
 			<div class="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-x-hidden overflow-y-auto">
@@ -379,9 +382,16 @@
 					{:else if editingTask.taskType === 'vatcan_cbt'}
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">CBT Block</legend>
-							{#await getVatcanCbtBlocks()}
+							{#if cbtQuery.error}
+								<p class="text-error text-sm">
+									Failed to load CBT blocks{cbtQuery.error.message
+										? `: ${cbtQuery.error.message}`
+										: '.'}
+								</p>
+							{:else if !cbtQuery.ready}
 								<p class="text-sm opacity-70">Loading CBT blocks...</p>
-							{:then catalog}
+							{:else}
+								{@const catalog = cbtQuery.current}
 								{#if catalog.error}
 									<p class="text-error text-sm">{catalog.error}</p>
 								{:else if catalog.blocks.length === 0}
@@ -398,11 +408,7 @@
 										{/each}
 									</select>
 								{/if}
-							{:catch err}
-								<p class="text-error text-sm">
-									Failed to load CBT blocks{err instanceof Error ? `: ${err.message}` : '.'}
-								</p>
-							{/await}
+							{/if}
 						</fieldset>
 					{:else if editingTask.taskType === 'training_session'}
 						<fieldset class="fieldset">
@@ -450,9 +456,16 @@
 					{:else if editingTask.taskType === 'solo'}
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">Solo preset</legend>
-							{#await getSoloPresetsAdmin()}
+							{#if presetsQuery.error}
+								<p class="text-error text-sm">
+									Failed to load presets{presetsQuery.error.message
+										? `: ${presetsQuery.error.message}`
+										: '.'}
+								</p>
+							{:else if !presetsQuery.ready}
 								<p class="text-sm opacity-70">Loading presets...</p>
-							{:then presetsData}
+							{:else}
+								{@const presetsData = presetsQuery.current}
 								<select class="select" name="taskValue1" required bind:value={editTaskValue1}>
 									<option value="" disabled>Select preset level</option>
 									{#each ROSTER_POSITIONS as position (position.value)}
@@ -470,11 +483,7 @@
 										<a href="/a/solo-presets" class="link">Configure presets</a>
 									</p>
 								{/if}
-							{:catch err}
-								<p class="text-error text-sm">
-									Failed to load presets{err instanceof Error ? `: ${err.message}` : '.'}
-								</p>
-							{/await}
+							{/if}
 						</fieldset>
 						<fieldset class="fieldset">
 							<legend class="fieldset-legend">Duration (days)</legend>
@@ -538,9 +547,16 @@
 							{:else if selectedTaskType === 'vatcan_cbt'}
 								<fieldset class="fieldset">
 									<legend class="fieldset-legend">CBT Block</legend>
-									{#await getVatcanCbtBlocks()}
+									{#if cbtQuery.error}
+										<p class="text-error text-sm">
+											Failed to load CBT blocks{cbtQuery.error.message
+												? `: ${cbtQuery.error.message}`
+												: '.'}
+										</p>
+									{:else if !cbtQuery.ready}
 										<p class="text-sm opacity-70">Loading CBT blocks...</p>
-									{:then catalog}
+									{:else}
+										{@const catalog = cbtQuery.current}
 										{#if catalog.error}
 											<p class="text-error text-sm">{catalog.error}</p>
 										{:else if catalog.blocks.length === 0}
@@ -562,11 +578,7 @@
 												{/each}
 											</select>
 										{/if}
-									{:catch err}
-										<p class="text-error text-sm">
-											Failed to load CBT blocks{err instanceof Error ? `: ${err.message}` : '.'}
-										</p>
-									{/await}
+									{/if}
 								</fieldset>
 							{:else if selectedTaskType === 'training_session'}
 								<fieldset class="fieldset">
@@ -608,9 +620,16 @@
 							{:else if selectedTaskType === 'solo'}
 								<fieldset class="fieldset">
 									<legend class="fieldset-legend">Solo preset</legend>
-									{#await getSoloPresetsAdmin()}
+									{#if presetsQuery.error}
+										<p class="text-error text-sm">
+											Failed to load presets{presetsQuery.error.message
+												? `: ${presetsQuery.error.message}`
+												: '.'}
+										</p>
+									{:else if !presetsQuery.ready}
 										<p class="text-sm opacity-70">Loading presets...</p>
-									{:then presetsData}
+									{:else}
+										{@const presetsData = presetsQuery.current}
 										<select class="select" name="taskValue1" required>
 											<option value="" disabled selected>Select preset level</option>
 											{#each ROSTER_POSITIONS as position (position.value)}
@@ -631,11 +650,7 @@
 												<a href="/a/solo-presets" class="link">Configure presets</a>
 											</p>
 										{/if}
-									{:catch err}
-										<p class="text-error text-sm">
-											Failed to load presets{err instanceof Error ? `: ${err.message}` : '.'}
-										</p>
-									{/await}
+									{/if}
 								</fieldset>
 								<fieldset class="fieldset">
 									<legend class="fieldset-legend">Duration (days)</legend>

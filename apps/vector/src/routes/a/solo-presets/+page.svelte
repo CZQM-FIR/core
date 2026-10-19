@@ -62,7 +62,7 @@
 				text: `${ROSTER_POSITION_LABELS[level]} preset saved`,
 				isError: false
 			};
-			initialized = false;
+			// Local selections for this level already match what was saved; keep other levels' unsaved edits.
 			await presetsQuery.refresh();
 		} catch (err) {
 			message = {
@@ -91,13 +91,13 @@
 		<p class="{message.isError ? 'text-error' : 'text-success'} mt-4 text-sm">{message.text}</p>
 	{/if}
 
-	{#if presetsQuery.loading && !presetsQuery.current}
-		<p class="mt-6 text-sm opacity-70">Loading presets...</p>
-	{:else if presetsQuery.error}
+	{#if presetsQuery.error}
 		<p class="text-error mt-6 text-sm">
 			{presetsQuery.error.message ?? 'Failed to load solo presets.'}
 		</p>
-	{:else if presetsQuery.current}
+	{:else if !presetsQuery.ready}
+		<p class="mt-6 text-sm opacity-70">Loading presets...</p>
+	{:else}
 		{@const data = presetsQuery.current}
 		<div class="mt-6 grid gap-6 lg:grid-cols-2">
 			{#each Object.keys(ROSTER_POSITION_LABELS) as level (level)}

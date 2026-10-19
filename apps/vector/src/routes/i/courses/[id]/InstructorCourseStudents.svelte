@@ -6,6 +6,7 @@
 
 	let { course }: { course: CourseData } = $props();
 
+	const enrolledQuery = $derived(getInstructorEnrolledEntries(course.waitlistId));
 	let enrolledSearch = $state('');
 
 	function filterStudents<T extends { user: { name_full: string; cid: number }; cid: number }>(
@@ -26,9 +27,12 @@
 	<div class="card-body flex flex-col">
 		<h2 class="card-title text-lg">Enrolled Students</h2>
 
-		{#await getInstructorEnrolledEntries(course.waitlistId)}
+		{#if enrolledQuery.error}
+			<p class="text-error text-sm">{enrolledQuery.error.message ?? 'Failed to load.'}</p>
+		{:else if !enrolledQuery.ready}
 			<p class="text-sm">Loading enrolled students...</p>
-		{:then enrolledEntries}
+		{:else}
+			{@const enrolledEntries = enrolledQuery.current}
 			{#if enrolledEntries.length > 0}
 				<input
 					type="search"
@@ -62,6 +66,6 @@
 					{/each}
 				</div>
 			{/if}
-		{/await}
+		{/if}
 	</div>
 </div>

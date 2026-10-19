@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getHomepageData } from '$lib/remote/home.remote';
 
-  const homepageData = getHomepageData();
+  const query = getHomepageData();
 </script>
 
 <section id="hero" class="hero min-h-screen">
@@ -24,9 +24,12 @@
         <h1 class="mb-3 text-3xl font-semibold">
           Top Controllers for {new Date().toLocaleString('en-US', { month: 'long' })}
         </h1>
-        {#await homepageData}
+        {#if query.error}
+          <p class="bg-base-100 max-w-120 rounded px-4 py-3">Unable to load controllers.</p>
+        {:else if !query.ready}
           <p class="bg-base-100 max-w-120 rounded px-4 py-3">Loading controllers...</p>
-        {:then data}
+        {:else}
+          {@const data = query.current}
           <ul class="bg-base-100 max-w-120 rounded px-4 py-3">
             {#each data.top5Controllers as controller, i (controller.cid)}
               <li>
@@ -42,15 +45,16 @@
               </li>
             {/each}
           </ul>
-        {:catch}
-          <p class="bg-base-100 max-w-120 rounded px-4 py-3">Unable to load controllers.</p>
-        {/await}
+        {/if}
       </div>
       <div>
         <h1 class="mb-3 text-3xl font-semibold">Upcoming Events</h1>
-        {#await homepageData}
+        {#if query.error}
+          <p class="bg-base-100 max-w-120 rounded px-4 py-3">Unable to load events.</p>
+        {:else if !query.ready}
           <p class="bg-base-100 max-w-120 rounded px-4 py-3">Loading events...</p>
-        {:then data}
+        {:else}
+          {@const data = query.current}
           <ul class="bg-base-100 max-w-120 rounded px-4 py-3">
             {#if data.events.length === 0}
               <p class="w-full text-center">No Upcoming Events</p>
@@ -82,9 +86,7 @@
               </li>
             {/each}
           </ul>
-        {:catch}
-          <p class="bg-base-100 max-w-120 rounded px-4 py-3">Unable to load events.</p>
-        {/await}
+        {/if}
       </div>
     </div>
   </div>

@@ -10,6 +10,7 @@
   import { formatDmsDateUtc } from '$lib/utilities/dms';
   import { ChevronLeft } from '@lucide/svelte';
   let { params }: PageProps = $props();
+  const query = $derived(getDocumentByShort([params.groupSlug, params.documentShort]));
   let acknowledgeError = $state<string | null>(null);
   let isAcknowledging = $state(false);
 
@@ -34,43 +35,51 @@
 
 <section id="join" class="min-h-screen">
   <div class="container mx-auto">
-    {#await getDocumentByShort([params.groupSlug, params.documentShort])}
+    {#if query.error}
+      <h1 class="pt-6 text-2xl">Document Not Found</h1>
+      <p class="text-error">{query.error.message ?? 'Failed to load document.'}</p>
+    {:else if !query.ready}
       <h1 class="pt-6 text-2xl">Loading Document</h1>
       <a href="/docs" class="text-primary hover:link flex flex-row items-center gap-1">
         <ChevronLeft size="15" /> Back to Documents
       </a>
       <div class="divider"></div>
       <span>Loading...</span>
-    {:then document}
+    {:else}
+      {@const document = query.current}
       {#if document}
+        {@const assetQuery = getCurrentAsset(document.id)}
+        {@const nextAssetQuery = getNextAsset(document.id)}
+        {@const acknowledgementQuery = getDocumentAcknowledgement(document.id)}
         <h1 class="pt-6 text-2xl">{document.name}</h1>
         <a href="/docs" class="text-primary hover:link flex flex-row items-center gap-1">
           <ChevronLeft size="15" /> Back to Documents
         </a>
         <div class="divider"></div>
 
-        {#await getCurrentAsset(document.id) then asset}
+        {#if assetQuery.ready}
+          {@const asset = assetQuery.current}
           {#if !asset}
             <div class="alert alert-dash alert-error my-6">
               <span>There is no available version of this document.</span>
             </div>
-          {:else}
-            {#await getNextAsset(document.id) then nextAsset}
-              <p>
-                Effective {formatDmsDateUtc(asset.effectiveDate)}
-                {#if asset.expiryDate != null}
-                  to {formatDmsDateUtc(asset.expiryDate)}
-                {:else if nextAsset}
-                  until {formatDmsDateUtc(nextAsset.effectiveDate)}
-                {:else}
-                  until further notice
-                {/if}
-              </p>
-            {/await}
+          {:else if nextAssetQuery.ready}
+            {@const nextAsset = nextAssetQuery.current}
+            <p>
+              Effective {formatDmsDateUtc(asset.effectiveDate)}
+              {#if asset.expiryDate != null}
+                to {formatDmsDateUtc(asset.expiryDate)}
+              {:else if nextAsset}
+                until {formatDmsDateUtc(nextAsset.effectiveDate)}
+              {:else}
+                until further notice
+              {/if}
+            </p>
           {/if}
-        {/await}
+        {/if}
 
-        {#await getNextAsset(document.id) then nextAsset}
+        {#if nextAssetQuery.ready}
+          {@const nextAsset = nextAssetQuery.current}
           {#if nextAsset}
             <div class="alert alert-info alert-dash mt-5">
               <div>
@@ -87,11 +96,12 @@
               </div>
             </div>
           {/if}
-        {/await}
+        {/if}
 
         <p class="text-base-content/70 mt-2">{document.description}</p>
 
-        {#await getCurrentAsset(document.id) then asset}
+        {#if assetQuery.ready}
+          {@const asset = assetQuery.current}
           {#if asset}
             <a
               href="/docs/{params.groupSlug}/{params.documentShort}/pdf"
@@ -104,7 +114,8 @@
 
           {#if document.required}
             <div class="mt-12">
-              {#await getDocumentAcknowledgement(document.id) then acknowledgement}
+              {#if acknowledgementQuery.ready}
+                {@const acknowledgement = acknowledgementQuery.current}
                 {#if acknowledgement.acknowledgedAt}
                   <div class="alert alert-success alert-soft mt-6">
                     <span>
@@ -144,14 +155,14 @@
                     <span>{acknowledgeError}</span>
                   </div>
                 {/if}
-              {/await}
+              {/if}
             </div>
           {/if}
-        {/await}
+        {/if}
       {:else}
         <h1 class="pt-6 text-2xl">Document Not Found</h1>
         <div class="divider"></div>
       {/if}
-    {/await}
+    {/if}
   </div>
 </section>

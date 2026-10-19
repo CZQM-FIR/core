@@ -1,16 +1,19 @@
 <script lang="ts">
   import { getSoloEndorsements } from '$lib/remote/roster.remote';
 
-  const soloData = getSoloEndorsements();
+  const query = getSoloEndorsements();
 </script>
 
 <section id="roster">
   <div class="container mx-auto mb-12">
     <h1 class="mt-6 text-2xl">Solo Certifications</h1>
     <div class="divider"></div>
-    {#await soloData}
+    {#if query.error}
+      <p class="text-error p-4">{query.error.message ?? 'Failed to load solo endorsements.'}</p>
+    {:else if !query.ready}
       <p class="p-4">Loading...</p>
-    {:then data}
+    {:else}
+      {@const data = query.current}
       <div class="flex flex-row flex-wrap gap-3">
         {#if data.solos.length > 0}
           {#each data.solos as solo (solo.id)}
@@ -38,8 +41,6 @@
           <p class="text-error p-4">No solo endorsements found.</p>
         {/if}
       </div>
-    {:catch err}
-      <p class="text-error p-4">{err?.message ?? 'Failed to load solo endorsements.'}</p>
-    {/await}
+    {/if}
   </div>
 </section>

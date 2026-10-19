@@ -12,6 +12,7 @@ import {
 import { error } from '@sveltejs/kit';
 import { type } from 'arktype';
 import { and, eq } from 'drizzle-orm';
+import { getActivityUsers, getUsers } from './users.remote';
 
 const getAuthorizedActioner = async () => {
 	const event = getRequestEvent();
@@ -316,6 +317,8 @@ export const setUserActiveStatus = command(SetActiveStatusSchema, async ({ cid, 
 	await db.update(users).set({ active: status }).where(eq(users.cid, cid));
 
 	getUserAdminDetails(cid).refresh();
+	getActivityUsers().refresh();
+	getUsers().refresh();
 
 	return {
 		message: `User's active status set to ${status === 1 ? 'active' : status === -1 ? 'on leave' : 'inactive'}`,

@@ -8,6 +8,7 @@
 	let { data }: { data: PageData } = $props();
 
 	const coursesQuery = $derived(data.isVectorStudent ? getStudentCourses() : null);
+	const userQuery = getCurrentUserInfo();
 </script>
 
 {#snippet returnToCzqm()}
@@ -34,12 +35,18 @@
 	</div>
 {:else}
 	<section class="container mx-auto py-5">
-		{#await getCurrentUserInfo()}
+		{#if userQuery.error}
+			<div class="flex items-end justify-between gap-4">
+				<h1 class="text-3xl font-semibold">My Courses</h1>
+				{@render returnToCzqm()}
+			</div>
+		{:else if !userQuery.ready}
 			<div class="flex items-end justify-between gap-4">
 				<p>Loading...</p>
 				{@render returnToCzqm()}
 			</div>
-		{:then user}
+		{:else}
+			{@const user = userQuery.current}
 			<div class="flex items-end justify-between gap-4">
 				<div>
 					<h1 class="text-3xl font-semibold">Hey there, {user.name_first}!</h1>
@@ -53,12 +60,7 @@
 				</div>
 				{@render returnToCzqm()}
 			</div>
-		{:catch}
-			<div class="flex items-end justify-between gap-4">
-				<h1 class="text-3xl font-semibold">My Courses</h1>
-				{@render returnToCzqm()}
-			</div>
-		{/await}
+		{/if}
 
 		<div class="divider"></div>
 
@@ -71,7 +73,7 @@
 			</p>
 		{:else if coursesQuery?.error}
 			<p class="text-error">Failed to load courses.</p>
-		{:else if coursesQuery?.loading && !coursesQuery.current}
+		{:else if coursesQuery && !coursesQuery.ready}
 			<p>Loading courses...</p>
 		{:else}
 			{@const catalog = coursesQuery?.current ?? {

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getEventsSplit } from '$lib/remote/events.remote';
 
-  const eventsData = getEventsSplit();
+  const query = getEventsSplit();
 
   const truncate = (str: string, n: number) => {
     const firstSentence = str.split('. ')[0];
@@ -17,9 +17,12 @@
   <div class="container mx-auto">
     <h1 class="mt-6 text-2xl">Upcoming Events</h1>
     <div class="divider"></div>
-    {#await eventsData}
+    {#if query.error}
+      <p class="w-full text-center">Unable to load events.</p>
+    {:else if !query.ready}
       <p class="w-full text-center">Loading events...</p>
-    {:then data}
+    {:else}
+      {@const data = query.current}
       <div class="flex flex-row flex-wrap gap-5">
         {#if data.upcomingEvents.length === 0}
           <p class="w-full text-center">No Upcoming Events</p>
@@ -116,8 +119,6 @@
           {/each}
         </div>
       {/if}
-    {:catch}
-      <p class="w-full text-center">Unable to load events.</p>
-    {/await}
+    {/if}
   </div>
 </section>

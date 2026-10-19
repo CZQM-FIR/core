@@ -5,13 +5,20 @@
   import { marked } from 'marked';
 
   const eventID = $derived(Number(page.params.eventID));
+
+  const query = $derived(getEvent(eventID));
 </script>
 
-{#await getEvent(eventID)}
+{#if query.error}
+  <section id="event" class="min-h-screen">
+    <div class="container mx-auto py-6">Event not found.</div>
+  </section>
+{:else if !query.ready}
   <section id="event" class="min-h-screen">
     <div class="container mx-auto py-6">Loading event...</div>
   </section>
-{:then event}
+{:else}
+  {@const event = query.current}
   <section id="event" class="min-h-screen">
     <div class="container mx-auto">
       <div class="mt-6 flex flex-row items-center gap-3">
@@ -52,8 +59,4 @@
       </div>
     </div>
   </section>
-{:catch}
-  <section id="event" class="min-h-screen">
-    <div class="container mx-auto py-6">Event not found.</div>
-  </section>
-{/await}
+{/if}

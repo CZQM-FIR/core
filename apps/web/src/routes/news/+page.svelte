@@ -2,6 +2,8 @@
   import { getNewsArticles } from '$lib/remote/news.remote';
   import { User } from '@lucide/svelte';
 
+  const query = getNewsArticles();
+
   const truncate = (str: string, n: number) => {
     const firstSentence = str.split('. ')[0];
     if (firstSentence.length > n) {
@@ -16,9 +18,12 @@
   <div class="container mx-auto">
     <h1 class="pt-6 text-2xl">What's going on in the FIR?</h1>
     <div class="divider"></div>
-    {#await getNewsArticles()}
+    {#if query.error}
+      <p class="w-full text-center">Unable to load articles.</p>
+    {:else if !query.ready}
       <p class="w-full text-center">Loading Articles...</p>
-    {:then news}
+    {:else}
+      {@const news = query.current}
       {#if news.length === 0}
         <p class="w-full text-center">No Articles Found</p>
       {/if}
@@ -62,8 +67,6 @@
           </a>
         {/each}
       </div>
-    {:catch}
-      <p class="w-full text-center">Unable to load articles.</p>
-    {/await}
+    {/if}
   </div>
 </section>

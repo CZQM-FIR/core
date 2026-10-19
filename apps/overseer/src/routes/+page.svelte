@@ -6,11 +6,18 @@
 </script>
 
 <section>
-	{#await sessionData}
+	{#if sessionData.error}
+		<div class="hero bg-base-200 min-h-screen">
+			<div class="hero-content text-center">
+				<p class="text-error">{sessionData.error.message ?? 'Failed to load.'}</p>
+			</div>
+		</div>
+	{:else if !sessionData.ready}
 		<div class="hero bg-base-200 min-h-screen">
 			<div class="hero-content text-center"><p>Loading...</p></div>
 		</div>
-	{:then data}
+	{:else}
+		{@const data = sessionData.current}
 		{#if !data.user}
 			<div class="hero bg-base-200 min-h-screen">
 				<div class="hero-content text-center">
@@ -56,11 +63,5 @@
 				</div>
 			</div>
 		{/if}
-	{:catch err}
-		<div class="hero bg-base-200 min-h-screen">
-			<div class="hero-content text-center">
-				<p class="text-error">{err?.message ?? 'Failed to load.'}</p>
-			</div>
-		</div>
-	{/await}
+	{/if}
 </section>

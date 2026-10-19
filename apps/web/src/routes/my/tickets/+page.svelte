@@ -1,13 +1,16 @@
 <script lang="ts">
   import { getMyTickets } from '$lib/remote/tickets.remote';
 
-  const ticketsData = getMyTickets();
+  const query = getMyTickets();
 </script>
 
 <div class="flex w-full flex-col">
-  {#await ticketsData}
+  {#if query.error}
+    <p class="text-error p-4">{query.error.message ?? 'Failed to load tickets.'}</p>
+  {:else if !query.ready}
     <p class="p-4">Loading...</p>
-  {:then data}
+  {:else}
+    {@const data = query.current}
     {#each data.user?.authoredTickets ?? [] as ticket}
       <a
         href={`/my/tickets/${ticket.createdAt}`}
@@ -29,7 +32,5 @@
         <p class="text-md ms-auto font-light">Messages: {ticket.messages.length}</p>
       </a>
     {/each}
-  {:catch err}
-    <p class="text-error p-4">{err?.message ?? 'Failed to load tickets.'}</p>
-  {/await}
+  {/if}
 </div>

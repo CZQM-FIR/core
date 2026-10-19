@@ -2,6 +2,8 @@
 	import { deleteGroup, editGroup, getGroups } from '$lib/remote/dms.remote';
 	import { SquarePen, Trash } from '@lucide/svelte';
 
+	const query = getGroups();
+
 	let deleteModal: HTMLDialogElement | undefined;
 	let editModal: HTMLDialogElement | undefined;
 	let selectedGroupId = $state<string | null>(null);
@@ -58,9 +60,12 @@
 		</div>
 
 		<div class="mt-5 overflow-x-auto">
-			{#await getGroups()}
+			{#if query.error}
+				<p class="text-error">{query.error.message ?? 'Failed to load groups.'}</p>
+			{:else if !query.ready}
 				<p>Loading groups...</p>
-			{:then groups}
+			{:else}
+				{@const groups = query.current}
 				<table class="table">
 					<!-- head -->
 					<thead>
@@ -94,7 +99,7 @@
 						{/each}
 					</tbody>
 				</table>
-			{/await}
+			{/if}
 		</div>
 	</div>
 

@@ -3,40 +3,29 @@
 
 	let { details }: { details: UserAdminDetails } = $props();
 
-	// Reactively compute the current status from the user's active field
+	// Server value, always follows the (refreshed) details prop
 	let currentStatus = $derived<-1 | 0 | 1>(
 		details.user.active === 'active' ? 1 : details.user.active === 'loa' ? -1 : 0
 	);
 
-	// Local state for UI - matches currentStatus unless we're performing an update
-	let localActive = $state<-1 | 0 | 1 | 2>(0);
-
-	// Sync on mount and when currentStatus changes (unless we're in the middle of an update)
-	let isUpdating = $state(false);
-
-	$effect(() => {
-		if (!isUpdating) {
-			localActive = currentStatus;
-		}
-	});
+	// Only set while an update is in flight (2 = updating, nothing highlighted)
+	let pendingStatus = $state<2 | null>(null);
+	let localActive = $derived<-1 | 0 | 1 | 2>(pendingStatus ?? currentStatus);
 
 	const setStatus = async (status: -1 | 0 | 1) => {
-		if (localActive === status) {
+		if (pendingStatus !== null || localActive === status) {
 			return;
 		}
 
-		const previousStatus = localActive;
-		isUpdating = true;
-		localActive = 2;
+		pendingStatus = 2;
 
 		try {
-			const result = await setUserActiveStatus({ cid: details.user.cid, status });
-			localActive = result.active;
+			// The command refreshes the user details server-side, so `details` updates with the response
+			await setUserActiveStatus({ cid: details.user.cid, status });
 		} catch (err) {
 			console.error('Failed to update user status:', err);
-			localActive = previousStatus;
 		} finally {
-			isUpdating = false;
+			pendingStatus = null;
 		}
 	};
 </script>

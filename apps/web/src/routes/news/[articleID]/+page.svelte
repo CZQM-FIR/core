@@ -6,13 +6,20 @@
   import { User } from '@lucide/svelte';
 
   const articleID = $derived(Number(page.params.articleID));
+
+  const query = $derived(getNewsArticle(articleID));
 </script>
 
-{#await getNewsArticle(articleID)}
+{#if query.error}
+  <section id="event" class="min-h-screen">
+    <div class="container mx-auto py-6">Article not found.</div>
+  </section>
+{:else if !query.ready}
   <section id="event" class="min-h-screen">
     <div class="container mx-auto py-6">Loading article...</div>
   </section>
-{:then article}
+{:else}
+  {@const article = query.current}
   <section id="event" class="min-h-screen">
     <div class="container mx-auto">
       <div class="mt-6 flex flex-row items-center gap-3">
@@ -50,8 +57,4 @@
       </div>
     </div>
   </section>
-{:catch}
-  <section id="event" class="min-h-screen">
-    <div class="container mx-auto py-6">Article not found.</div>
-  </section>
-{/await}
+{/if}

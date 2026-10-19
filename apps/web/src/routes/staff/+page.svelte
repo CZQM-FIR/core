@@ -2,16 +2,19 @@
   import { getStaffPageData } from '$lib/remote/staff.remote';
   import { Mail } from '@lucide/svelte';
 
-  const staffData = getStaffPageData();
+  const query = getStaffPageData();
 </script>
 
 <section id="staf" class="container mx-auto">
   <h1 class="mt-6 text-2xl">FIR Staff</h1>
   <div class="divider"></div>
 
-  {#await staffData}
+  {#if query.error}
+    <p class="text-error p-4">{query.error.message ?? 'Failed to load staff.'}</p>
+  {:else if !query.ready}
     <p class="p-4">Loading...</p>
-  {:then data}
+  {:else}
+    {@const data = query.current}
     <div class="flex flex-col gap-3">
       {#each data.staff as staff}
         <div class="card bg-base-200 shadow-xl">
@@ -73,7 +76,5 @@
         </div>
       {/each}
     </div>
-  {:catch err}
-    <p class="text-error p-4">{err?.message ?? 'Failed to load staff.'}</p>
-  {/await}
+  {/if}
 </section>

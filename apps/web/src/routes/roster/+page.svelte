@@ -3,36 +3,29 @@
   import RosterStatusIndicator from './RosterStatusIndicator.svelte';
   import { CircleCheck, CircleMinus, CircleX } from '@lucide/svelte';
 
-  const rosterPromise = getRosterData();
-  type RosterRow = Awaited<ReturnType<typeof getRosterData>>['rosterData'][number];
-  let rosterData: RosterRow[] = $state([]);
-  let controllers: RosterRow[] = $state([]);
+  const query = getRosterData();
   let search = $state('');
 
-  $effect(() => {
-    rosterPromise.then((d) => {
-      rosterData = d.rosterData;
-    });
-  });
-
-  $effect(() => {
-    controllers = rosterData.filter((controller) => {
+  const controllers = $derived(
+    (query.current?.rosterData ?? []).filter((controller) => {
       return (
         controller.displayName.toLowerCase().includes(search.toLowerCase()) ||
         controller.cid.toString().includes(search) ||
         controller.rating.toLowerCase().includes(search.toLowerCase())
       );
-    });
-  });
+    })
+  );
 </script>
 
 <section id="roster">
   <div class="container mx-auto mb-12">
     <h1 class="mt-6 text-2xl">Roster</h1>
     <div class="divider"></div>
-    {#await rosterPromise}
+    {#if query.error}
+      <p class="text-error p-4">{query.error.message ?? 'Failed to load roster.'}</p>
+    {:else if !query.ready}
       <p class="p-4">Loading...</p>
-    {:then _}
+    {:else}
       <table class="table-zebra table">
         <thead>
           <tr>
@@ -84,8 +77,6 @@
           {/each}
         </tbody>
       </table>
-    {:catch err}
-      <p class="text-error p-4">{err?.message ?? 'Failed to load roster.'}</p>
-    {/await}
+    {/if}
   </div>
 </section>

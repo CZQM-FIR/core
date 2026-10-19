@@ -4,11 +4,15 @@
   import { formatDmsDateUtc } from '$lib/utilities/dms';
   import { ChevronLeft } from '@lucide/svelte';
   let { params }: PageProps = $props();
+  const query = $derived(getDocumentByShort([params.groupSlug, params.documentShort]));
 </script>
 
 <section id="join" class="min-h-screen">
   <div class="container mx-auto">
-    {#await getDocumentByShort([params.groupSlug, params.documentShort])}
+    {#if query.error}
+      <h1 class="pt-6 text-2xl">Document Not Found</h1>
+      <p class="text-error">{query.error.message ?? 'Failed to load document.'}</p>
+    {:else if !query.ready}
       <h1 class="pt-6 text-2xl">Loading Document</h1>
       <a
         href="/docs/{params.groupSlug}/{params.documentShort}"
@@ -18,8 +22,10 @@
       </a>
       <div class="divider"></div>
       <span>Loading...</span>
-    {:then document}
+    {:else}
+      {@const document = query.current}
       {#if document}
+        {@const nextAssetQuery = getNextAsset(document.id)}
         <h1 class="pt-6 text-2xl">{document.name}</h1>
         <a
           href="/docs/{params.groupSlug}/{params.documentShort}"
@@ -29,7 +35,8 @@
         </a>
         <div class="divider"></div>
 
-        {#await getNextAsset(document.id) then nextAsset}
+        {#if nextAssetQuery.ready}
+          {@const nextAsset = nextAssetQuery.current}
           {#if !nextAsset}
             <div class="alert alert-dash alert-warning my-6">
               <span>There is no upcoming version of this document.</span>
@@ -76,11 +83,11 @@
               </div>
             {/if}
           {/if}
-        {/await}
+        {/if}
       {:else}
         <h1 class="pt-6 text-2xl">Document Not Found</h1>
         <div class="divider"></div>
       {/if}
-    {/await}
+    {/if}
   </div>
 </section>

@@ -2,6 +2,8 @@
 	import { CircleCheck, CircleMinus, CircleX, Search } from '@lucide/svelte';
 	import { getActivityUsers } from '$lib/remote/users.remote';
 
+	const usersQuery = getActivityUsers();
+
 	let search = $state('');
 
 	let lastQuarter = $state(false);
@@ -33,9 +35,12 @@
 			</div>
 		</div>
 
-		{#await getActivityUsers()}
+		{#if usersQuery.error}
+			<p class="text-error mt-4">{usersQuery.error.message ?? 'Failed to load users.'}</p>
+		{:else if !usersQuery.ready}
 			<p class="mt-4">Loading users...</p>
-		{:then users}
+		{:else}
+			{@const users = usersQuery.current}
 			<table class="table-zebra table w-full">
 				<thead>
 					<tr>
@@ -95,8 +100,6 @@
 					{/each}
 				</tbody>
 			</table>
-		{:catch err}
-			<p class="text-error mt-4">{err.message ?? 'Failed to load users.'}</p>
-		{/await}
+		{/if}
 	</div>
 </section>

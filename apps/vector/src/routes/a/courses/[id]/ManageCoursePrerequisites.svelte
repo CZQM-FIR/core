@@ -38,6 +38,9 @@
 	let formKey = $state(0);
 	let handledCreateResult = $state<unknown>(undefined);
 
+	const ratingsQuery = getRatings();
+	const coursesQuery = getCourses();
+
 	const addPrerequisiteForm = $derived(createCoursePrerequisite.for(formKey));
 
 	function openAddModal() {
@@ -95,32 +98,36 @@
 
 		{#if (course.prerequisites ?? []).length === 0}
 			<p class="text-sm">No prerequisites defined for this course.</p>
+		{:else if ratingsQuery.error || coursesQuery.error}
+			<p class="text-error text-sm">
+				{(ratingsQuery.error ?? coursesQuery.error)?.message ?? 'Failed to load prerequisites.'}
+			</p>
+		{:else if !ratingsQuery.ready || !coursesQuery.ready}
+			<p class="text-sm">Loading prerequisites...</p>
 		{:else}
-			{#await Promise.all([getRatings(), getCourses()])}
-				<p class="text-sm">Loading prerequisites...</p>
-			{:then [ratings, courses]}
-				<div class="flex flex-col gap-1.5">
-					{#each course.prerequisites as prerequisite (prerequisite.prerequisiteId)}
-						{@const label = describeCoursePrerequisite(prerequisite, { ratings, courses })}
-						<div
-							class="bg-base-100 flex flex-row items-center gap-2 rounded-lg px-2.5 py-1.5 shadow-sm"
+			{@const ratings = ratingsQuery.current}
+			{@const courses = coursesQuery.current}
+			<div class="flex flex-col gap-1.5">
+				{#each course.prerequisites as prerequisite (prerequisite.prerequisiteId)}
+					{@const label = describeCoursePrerequisite(prerequisite, { ratings, courses })}
+					<div
+						class="bg-base-100 flex flex-row items-center gap-2 rounded-lg px-2.5 py-1.5 shadow-sm"
+					>
+						<span class="badge badge-outline badge-sm shrink-0">
+							{formatCoursePrerequisiteType(prerequisite.prerequisiteType)}
+						</span>
+						<p class="min-w-0 flex-1 truncate text-xs">{label}</p>
+						<button
+							class="tooltip shrink-0"
+							data-tip="Delete Prerequisite"
+							type="button"
+							onclick={() => openDeletePrerequisiteModal(prerequisite, label)}
 						>
-							<span class="badge badge-outline badge-sm shrink-0">
-								{formatCoursePrerequisiteType(prerequisite.prerequisiteType)}
-							</span>
-							<p class="min-w-0 flex-1 truncate text-xs">{label}</p>
-							<button
-								class="tooltip shrink-0"
-								data-tip="Delete Prerequisite"
-								type="button"
-								onclick={() => openDeletePrerequisiteModal(prerequisite, label)}
-							>
-								<Trash class="hover:text-error transition-colors" size="14" />
-							</button>
-						</div>
-					{/each}
-				</div>
-			{/await}
+							<Trash class="hover:text-error transition-colors" size="14" />
+						</button>
+					</div>
+				{/each}
+			</div>
 		{/if}
 	</div>
 </div>
@@ -155,17 +162,22 @@
 							</fieldset>
 							<fieldset class="fieldset">
 								<legend class="fieldset-legend">Rating</legend>
-								{#await getRatings()}
+								{#if ratingsQuery.error}
+									<p class="text-error text-sm">
+										{ratingsQuery.error.message ?? 'Failed to load ratings.'}
+									</p>
+								{:else if !ratingsQuery.ready}
 									<select class="select" disabled>
 										<option>Loading ratings...</option>
 									</select>
-								{:then ratings}
+								{:else}
+									{@const ratings = ratingsQuery.current}
 									<select class="select" name="prerequisiteValue1" required>
 										{#each ratings.filter((rating) => rating.id > 0) as rating (rating.id)}
 											<option value={String(rating.id)}>{rating.short} — {rating.long}</option>
 										{/each}
 									</select>
-								{/await}
+								{/if}
 							</fieldset>
 						{:else if selectedPrerequisiteType === 'controlling_hours'}
 							<fieldset class="fieldset">
@@ -181,32 +193,42 @@
 							</fieldset>
 							<fieldset class="fieldset">
 								<legend class="fieldset-legend">At Rating or Above</legend>
-								{#await getRatings()}
+								{#if ratingsQuery.error}
+									<p class="text-error text-sm">
+										{ratingsQuery.error.message ?? 'Failed to load ratings.'}
+									</p>
+								{:else if !ratingsQuery.ready}
 									<select class="select" disabled>
 										<option>Loading ratings...</option>
 									</select>
-								{:then ratings}
+								{:else}
+									{@const ratings = ratingsQuery.current}
 									<select class="select" name="prerequisiteValue2" required>
 										{#each ratings as rating (rating.id)}
 											<option value={String(rating.id)}>{rating.short} — {rating.long}</option>
 										{/each}
 									</select>
-								{/await}
+								{/if}
 							</fieldset>
 						{:else if selectedPrerequisiteType === 'prior_course'}
 							<fieldset class="fieldset">
 								<legend class="fieldset-legend">Prior Course</legend>
-								{#await getCourses()}
+								{#if coursesQuery.error}
+									<p class="text-error text-sm">
+										{coursesQuery.error.message ?? 'Failed to load courses.'}
+									</p>
+								{:else if !coursesQuery.ready}
 									<select class="select" disabled>
 										<option>Loading courses...</option>
 									</select>
-								{:then courses}
+								{:else}
+									{@const courses = coursesQuery.current}
 									<select class="select" name="prerequisiteValue1" required>
 										{#each courses.filter((row) => row.id !== courseId) as priorCourse (priorCourse.id)}
 											<option value={priorCourse.id}>{priorCourse.name}</option>
 										{/each}
 									</select>
-								{/await}
+								{/if}
 							</fieldset>
 						{:else if selectedPrerequisiteType === 'earliest_enroll_date'}
 							<fieldset class="fieldset">
