@@ -33,7 +33,7 @@ export const unauthorizedConnectionEmailTemplate = (
 ) => {
   const subject = "CZQM - Unauthorized Connection";
   const replyto = "administration@czqm.ca";
-  const bcc = ["administration@czqm.ca"];
+  const bcc: string[] = [];
 
   const text = unauthorizedConnectionText(session, user, reason);
   const paragraphs = text.split("\n\n");

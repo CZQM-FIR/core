@@ -2,9 +2,7 @@ import { notifications } from "@czqm/db/schema";
 import type { DB } from "../db";
 
 export type CourseEnrollmentEmailEvent =
-  | "waitlisted"
-  | "enrolled"
-  | "completed";
+  "waitlisted" | "enrolled" | "completed";
 
 type StudentRecipient = {
   cid: number;
@@ -21,7 +19,7 @@ type QueueCourseEnrollmentEmailInput = {
 
 function buildEmailPayload(subject: string, paragraphs: string[]): string {
   const replyto = "administration@czqm.ca";
-  const bcc = ["administration@czqm.ca"];
+  const bcc: string[] = [];
   const body = /*html*/ `
   <html>
     <body>

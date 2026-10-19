@@ -66,7 +66,7 @@ function formatSessionRange(startsAt: Date, endsAt: Date): string {
 
 function buildEmailPayload(subject: string, paragraphs: string[]): string {
   const replyto = "administration@czqm.ca";
-  const bcc = ["administration@czqm.ca"];
+  const bcc: string[] = [];
   const body = /*html*/ `
   <html>
     <body>
