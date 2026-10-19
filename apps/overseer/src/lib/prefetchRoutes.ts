@@ -5,10 +5,7 @@ import { getEvent, getEvents } from '$lib/remote/events.remote';
 import { getNewsArticle, getNewsArticles } from '$lib/remote/news.remote';
 import { getDocumentsByGroup, getGroup, getGroups } from '$lib/remote/dms.remote';
 import { getAssistants } from '$lib/remote/assistants.remote';
-import {
-	getAdminControllerResources,
-	getAdminPilotResources
-} from '$lib/remote/resources.remote';
+import { getAdminControllerResources, getAdminPilotResources } from '$lib/remote/resources.remote';
 
 /** Queries to start fetching when the user hovers a link to the matching route. */
 export const prefetchRoutes: PrefetchRoute[] = [

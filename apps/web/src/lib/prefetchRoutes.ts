@@ -13,22 +13,22 @@ import { getMyTickets } from '$lib/remote/tickets.remote';
 
 /** Queries to start fetching when the user hovers a link to the matching route. */
 export const prefetchRoutes: PrefetchRoute[] = [
-	{ pattern: /^\/?$/, queries: () => [getHomepageData()] },
-	{ pattern: /^\/news\/?$/, queries: () => [getNewsArticles()] },
-	{ pattern: /^\/news\/(\d+)\/?$/, queries: (m) => [getNewsArticle(Number(m[1]))] },
-	{ pattern: /^\/events\/?$/, queries: () => [getEventsSplit()] },
-	{ pattern: /^\/events\/(\d+)\/?$/, queries: (m) => [getEvent(Number(m[1]))] },
-	{ pattern: /^\/docs\/?$/, queries: () => [getActiveGroups()] },
-	{
-		pattern: /^\/docs\/([^/]+)\/([^/]+)\/?$/,
-		queries: (m) => [getDocumentByShort([m[1], m[2]])]
-	},
-	{ pattern: /^\/roster\/?$/, queries: () => [getRosterData()] },
-	{ pattern: /^\/roster\/solo\/?$/, queries: () => [getSoloEndorsements()] },
-	{ pattern: /^\/staff\/?$/, queries: () => [getStaffPageData()] },
-	{ pattern: /^\/controller\/(\d+)\/?$/, queries: (m) => [getControllerProfile(Number(m[1]))] },
-	{ pattern: /^\/my\/?$/, queries: () => [getMyProfile()] },
-	{ pattern: /^\/my\/preferences\/?$/, queries: () => [getMyPreferences()] },
-	{ pattern: /^\/my\/integrations\/?$/, queries: () => [getMyIntegrations()] },
-	{ pattern: /^\/my\/tickets\/?$/, queries: () => [getMyTickets()] }
+  { pattern: /^\/?$/, queries: () => [getHomepageData()] },
+  { pattern: /^\/news\/?$/, queries: () => [getNewsArticles()] },
+  { pattern: /^\/news\/(\d+)\/?$/, queries: (m) => [getNewsArticle(Number(m[1]))] },
+  { pattern: /^\/events\/?$/, queries: () => [getEventsSplit()] },
+  { pattern: /^\/events\/(\d+)\/?$/, queries: (m) => [getEvent(Number(m[1]))] },
+  { pattern: /^\/docs\/?$/, queries: () => [getActiveGroups()] },
+  {
+    pattern: /^\/docs\/([^/]+)\/([^/]+)\/?$/,
+    queries: (m) => [getDocumentByShort([m[1], m[2]])]
+  },
+  { pattern: /^\/roster\/?$/, queries: () => [getRosterData()] },
+  { pattern: /^\/roster\/solo\/?$/, queries: () => [getSoloEndorsements()] },
+  { pattern: /^\/staff\/?$/, queries: () => [getStaffPageData()] },
+  { pattern: /^\/controller\/(\d+)\/?$/, queries: (m) => [getControllerProfile(Number(m[1]))] },
+  { pattern: /^\/my\/?$/, queries: () => [getMyProfile()] },
+  { pattern: /^\/my\/preferences\/?$/, queries: () => [getMyPreferences()] },
+  { pattern: /^\/my\/integrations\/?$/, queries: () => [getMyIntegrations()] },
+  { pattern: /^\/my\/tickets\/?$/, queries: () => [getMyTickets()] }
 ];
