@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/CZQM-FIR/core/compare/common-v1.2.0...common-v1.2.1) (2026-10-19)
+
+
+### Bug Fixes
+
+* remove bcc to administration for training actions ([a6cf74f](https://github.com/CZQM-FIR/core/commit/a6cf74f228807dabcd5c4d1bf4b61f91809af395))
+
 ## [1.2.0](https://github.com/CZQM-FIR/core/compare/common-v1.1.4...common-v1.2.0) (2026-10-18)
 
 
