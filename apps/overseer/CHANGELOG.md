@@ -2,13 +2,12 @@
 
 ## [1.2.1](https://github.com/CZQM-FIR/core/compare/overseer-v1.2.0...overseer-v1.2.1) (2026-10-18)
 
-
 ### Dependencies
 
-* The following workspace dependencies were updated
-  * dependencies
-    * @czqm/db bumped to 1.2.0
-    * @czqm/common bumped to 1.2.0
+- The following workspace dependencies were updated
+  - dependencies
+    - @czqm/db bumped to 1.2.0
+    - @czqm/common bumped to 1.2.0
 
 ## [1.2.0](https://github.com/CZQM-FIR/core/compare/overseer-v1.1.1...overseer-v1.2.0) (2026-10-18)
 
