@@ -2,6 +2,7 @@
   import { enhance, applyAction } from '$app/forms';
   import type { PageProps } from './$types';
   import { getMyProfile } from '$lib/remote/my.remote';
+  import { getControllerProfile } from '$lib/remote/profiles.remote';
   import { Info } from '@lucide/svelte';
   import type { ActionResult } from '@sveltejs/kit';
 
@@ -20,11 +21,16 @@
   let activityModal: HTMLDialogElement | null | undefined = $state();
   let externalModal: HTMLDialogElement | null | undefined = $state();
 
-  function syncBioFromAction(result: ActionResult) {
+  function syncBioFromAction(result: ActionResult, cid: number) {
     if (result.type !== 'success' && result.type !== 'failure') return;
     const data = result.data as FormResult;
     if (data && typeof data.bio === 'string') {
       bio = data.bio;
+    }
+    if (result.type === 'success') {
+      // Keep cached queries that display the bio in sync with the DB
+      void getMyProfile().refresh();
+      void getControllerProfile(cid).refresh();
     }
   }
 </script>
@@ -74,7 +80,7 @@
         use:enhance={() => {
           return async ({ result }) => {
             await applyAction(result);
-            syncBioFromAction(result);
+            syncBioFromAction(result, Number(user.cid));
           };
         }}
       >

@@ -7,16 +7,10 @@
 	} from '$lib/remote/resources.remote';
 	import { SquarePen, Trash2 } from '@lucide/svelte';
 
-	const resourcesPromise = getAdminControllerResources();
-	let resources: Awaited<ReturnType<typeof getAdminControllerResources>>['resources'] = $state([]);
-	$effect(() => {
-		resourcesPromise.then((r) => {
-			resources = r.resources;
-		});
-	});
+	const resourcesQuery = getAdminControllerResources();
+	const resources = $derived(resourcesQuery.current?.resources ?? []);
 
 	let edit: number | null = $state(null);
-	let deleted: number[] = $state([]);
 	type FormResult = {
 		ok?: boolean;
 		status?: number;
@@ -32,7 +26,7 @@
 
 <section>
 	<div class="container mx-auto">
-		{#await resourcesPromise}
+		{#await resourcesQuery}
 			<p class="p-4">Loading...</p>
 		{:then _}
 			<form
@@ -116,7 +110,7 @@
 			</form>
 			<div class="mt-3 flex flex-col gap-3">
 				{#each resources as resource (resource.id)}
-					<div class="card bg-base-300 shadow-xl {deleted.includes(resource.id) ? 'hidden' : ''}">
+					<div class="card bg-base-300 shadow-xl">
 						<div class="card-body">
 							<div class="flex flex-row items-end gap-3">
 								<h2 class="card-title">{resource.name}</h2>
@@ -150,15 +144,7 @@
 									</button>
 									<form {...deleteResource} method="post" class="flex flex-row items-center">
 										<input type="text" name="id" value={resource.id} hidden />
-										<button
-											type="submit"
-											onclickcapture={() => {
-												deleted.push(resource.id);
-												setTimeout(() => {
-													deleted = deleted.filter((id) => id !== resource.id);
-												}, 1000);
-											}}
-										>
+										<button type="submit">
 											<Trash2
 												class="hover:text-error cursor-pointer text-2xl transition"
 												size="15"

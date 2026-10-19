@@ -1,5 +1,6 @@
 <script lang="ts">
   import { enhance, applyAction } from '$app/forms';
+  import { invalidateAll } from '$app/navigation';
   import type { PageProps } from './$types';
   import { getMyPreferences } from '$lib/remote/preferences.remote';
   import Toggle from '$lib/components/Toggle.svelte';
@@ -79,6 +80,10 @@
   const noRefreshEnhance = () => {
     return async ({ result }: { result: Parameters<typeof applyAction>[0] }) => {
       await applyAction(result);
+      if (result.type === 'success') {
+        // Re-run layout load so the navbar display name reflects the saved privacy setting
+        await invalidateAll();
+      }
     };
   };
 </script>

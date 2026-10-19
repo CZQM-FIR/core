@@ -10,7 +10,8 @@
 
   {#await integrationsData}
     <p class="p-4">Loading...</p>
-  {:then data}
+  {:then _}
+    {@const data = integrationsData.current ?? _}
     {#if data.integrations.some((i) => i.type === 0)}
       <p>
         Discord account linked successfuly. Your roles will be automatically updated based on your
@@ -28,6 +29,9 @@
         use:enhance={() => {
           return async ({ result }) => {
             await applyAction(result);
+            if (result.type === 'success') {
+              await getMyIntegrations().refresh();
+            }
           };
         }}
       >
