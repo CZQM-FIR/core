@@ -11,7 +11,8 @@
 
 	const notificationsEnabled = $derived(notificationsQuery.current !== false);
 	const notificationsToggleDisabled = $derived(
-		(!notificationsQuery.ready && !notificationsQuery.error) || !!setCourseStatusNotificationsEnabled.pending
+		(!notificationsQuery.ready && !notificationsQuery.error) ||
+			!!setCourseStatusNotificationsEnabled.pending
 	);
 
 	let createModal: HTMLDialogElement | undefined;

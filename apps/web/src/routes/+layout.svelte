@@ -1,6 +1,8 @@
 <script lang="ts">
   import '../app.css';
-  import type { Snippet } from 'svelte';
+  import { onMount, type Snippet } from 'svelte';
+  import { initLinkPrefetch } from '$lib/prefetch.svelte';
+  import { prefetchRoutes } from '$lib/prefetchRoutes';
   import type { LayoutData } from './$types';
   import {
     Shield,
@@ -20,6 +22,9 @@
   import { PUBLIC_VECTOR_URL } from '$env/static/public';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
+
+  // Start fetching a page's remote queries when the user hovers a link to it
+  onMount(() => initLinkPrefetch(prefetchRoutes));
 </script>
 
 <!-- nav bar -->

@@ -20,9 +20,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const viewQuery = $derived(
-		getInstructorStudentView({ courseId: data.courseId, cid: data.cid })
-	);
+	const viewQuery = $derived(getInstructorStudentView({ courseId: data.courseId, cid: data.cid }));
 	const notesQuery = $derived(getInstructorStudentTrainingNotes({ cid: data.cid }));
 	const notes = $derived(notesQuery.current?.notes ?? []);
 	const legacyNotes = $derived(notesQuery.current?.legacyNotes ?? []);

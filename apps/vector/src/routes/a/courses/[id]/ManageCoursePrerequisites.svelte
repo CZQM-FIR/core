@@ -98,38 +98,36 @@
 
 		{#if (course.prerequisites ?? []).length === 0}
 			<p class="text-sm">No prerequisites defined for this course.</p>
+		{:else if ratingsQuery.error || coursesQuery.error}
+			<p class="text-error text-sm">
+				{(ratingsQuery.error ?? coursesQuery.error)?.message ?? 'Failed to load prerequisites.'}
+			</p>
+		{:else if !ratingsQuery.ready || !coursesQuery.ready}
+			<p class="text-sm">Loading prerequisites...</p>
 		{:else}
-			{#if ratingsQuery.error || coursesQuery.error}
-				<p class="text-error text-sm">
-					{(ratingsQuery.error ?? coursesQuery.error)?.message ?? 'Failed to load prerequisites.'}
-				</p>
-			{:else if !ratingsQuery.ready || !coursesQuery.ready}
-				<p class="text-sm">Loading prerequisites...</p>
-			{:else}
-				{@const ratings = ratingsQuery.current}
-				{@const courses = coursesQuery.current}
-				<div class="flex flex-col gap-1.5">
-					{#each course.prerequisites as prerequisite (prerequisite.prerequisiteId)}
-						{@const label = describeCoursePrerequisite(prerequisite, { ratings, courses })}
-						<div
-							class="bg-base-100 flex flex-row items-center gap-2 rounded-lg px-2.5 py-1.5 shadow-sm"
+			{@const ratings = ratingsQuery.current}
+			{@const courses = coursesQuery.current}
+			<div class="flex flex-col gap-1.5">
+				{#each course.prerequisites as prerequisite (prerequisite.prerequisiteId)}
+					{@const label = describeCoursePrerequisite(prerequisite, { ratings, courses })}
+					<div
+						class="bg-base-100 flex flex-row items-center gap-2 rounded-lg px-2.5 py-1.5 shadow-sm"
+					>
+						<span class="badge badge-outline badge-sm shrink-0">
+							{formatCoursePrerequisiteType(prerequisite.prerequisiteType)}
+						</span>
+						<p class="min-w-0 flex-1 truncate text-xs">{label}</p>
+						<button
+							class="tooltip shrink-0"
+							data-tip="Delete Prerequisite"
+							type="button"
+							onclick={() => openDeletePrerequisiteModal(prerequisite, label)}
 						>
-							<span class="badge badge-outline badge-sm shrink-0">
-								{formatCoursePrerequisiteType(prerequisite.prerequisiteType)}
-							</span>
-							<p class="min-w-0 flex-1 truncate text-xs">{label}</p>
-							<button
-								class="tooltip shrink-0"
-								data-tip="Delete Prerequisite"
-								type="button"
-								onclick={() => openDeletePrerequisiteModal(prerequisite, label)}
-							>
-								<Trash class="hover:text-error transition-colors" size="14" />
-							</button>
-						</div>
-					{/each}
-				</div>
-			{/if}
+							<Trash class="hover:text-error transition-colors" size="14" />
+						</button>
+					</div>
+				{/each}
+			</div>
 		{/if}
 	</div>
 </div>

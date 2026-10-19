@@ -63,20 +63,18 @@
             <div class="alert alert-dash alert-error my-6">
               <span>There is no available version of this document.</span>
             </div>
-          {:else}
-            {#if nextAssetQuery.ready}
-              {@const nextAsset = nextAssetQuery.current}
-              <p>
-                Effective {formatDmsDateUtc(asset.effectiveDate)}
-                {#if asset.expiryDate != null}
-                  to {formatDmsDateUtc(asset.expiryDate)}
-                {:else if nextAsset}
-                  until {formatDmsDateUtc(nextAsset.effectiveDate)}
-                {:else}
-                  until further notice
-                {/if}
-              </p>
-            {/if}
+          {:else if nextAssetQuery.ready}
+            {@const nextAsset = nextAssetQuery.current}
+            <p>
+              Effective {formatDmsDateUtc(asset.effectiveDate)}
+              {#if asset.expiryDate != null}
+                to {formatDmsDateUtc(asset.expiryDate)}
+              {:else if nextAsset}
+                until {formatDmsDateUtc(nextAsset.effectiveDate)}
+              {:else}
+                until further notice
+              {/if}
+            </p>
           {/if}
         {/if}
 

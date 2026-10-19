@@ -26,13 +26,6 @@
 		waitlistId: number;
 	} = $props();
 
-	let name = $state('');
-	let description = $state('');
-	let estimatedTime = $state('');
-	let waitlistCohort = $state('');
-	let enrolledCohort = $state('');
-	let trainingPositions = $state<RosterPosition[]>([]);
-
 	// Server values as primitives: deriveds only notify when the value actually changes, so saving
 	// one section (and the resulting refresh) does not clobber unsaved edits in the other sections.
 	const serverName = $derived(course.name);
@@ -42,24 +35,15 @@
 	const serverEnrolledCohort = $derived(course.waitlist.enrolledCohort ?? '');
 	const serverPositionsKey = $derived((course.waitlist.trainingPositions ?? []).join(','));
 
-	$effect(() => {
-		name = serverName;
-	});
-	$effect(() => {
-		description = serverDescription;
-	});
-	$effect(() => {
-		estimatedTime = serverEstimatedTime;
-	});
-	$effect(() => {
-		waitlistCohort = serverWaitlistCohort;
-	});
-	$effect(() => {
-		enrolledCohort = serverEnrolledCohort;
-	});
-	$effect(() => {
-		trainingPositions = serverPositionsKey ? (serverPositionsKey.split(',') as RosterPosition[]) : [];
-	});
+	// Editable fields: writable deriveds that reset only when their own server value changes
+	let name = $derived(serverName);
+	let description = $derived(serverDescription);
+	let estimatedTime = $derived(serverEstimatedTime);
+	let waitlistCohort = $derived(serverWaitlistCohort);
+	let enrolledCohort = $derived(serverEnrolledCohort);
+	let trainingPositions = $derived<RosterPosition[]>(
+		serverPositionsKey ? (serverPositionsKey.split(',') as RosterPosition[]) : []
+	);
 
 	let courseSaved = $state(false);
 	let waitTimeSaved = $state(false);

@@ -31,7 +31,9 @@
 		<div class="divider"></div>
 
 		{#if assistantsQuery.error}
-			<p class="text-error mt-4">{assistantsQuery.error.message ?? 'Failed to load staff roles.'}</p>
+			<p class="text-error mt-4">
+				{assistantsQuery.error.message ?? 'Failed to load staff roles.'}
+			</p>
 		{:else if !assistantsQuery.ready}
 			<p>Loading staff roles...</p>
 		{:else}
