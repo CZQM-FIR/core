@@ -3,6 +3,6 @@
   "apps/web": "1.2.1",
   "apps/worker": "1.0.4",
   "apps/vector": "1.2.0",
-  "packages/common": "1.2.0",
+  "packages/common": "1.2.1",
   "packages/db": "1.2.0"
 }
