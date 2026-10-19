@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/CZQM-FIR/core/compare/worker-v1.2.0...worker-v1.2.2) (2026-10-19)
+
+
+### Miscellaneous Chores
+
+* force release ([cdcfdc0](https://github.com/CZQM-FIR/core/commit/cdcfdc0dae06b14bffc9dcdfc8fdcd293045006a))
+
 ## [1.2.0](https://github.com/CZQM-FIR/core/compare/worker-v1.0.4...worker-v1.2.0) (2026-10-19)
 
 
