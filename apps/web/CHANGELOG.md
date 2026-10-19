@@ -94,16 +94,6 @@
 
 ### Code Refactoring
 
-- technical debt and switch to remote functions ([#179](https://github.com/CZQM-FIR/core/issues/179)) ([4a0eee4](https://github.com/CZQM-FIR/core/commit/4a0eee4ccb98159459e740812275735ee9f50d82))
-
-### Dependencies
-
-- The following workspace dependencies were updated
-  - dependencies
-    - @czqm/common bumped to 1.2.1
-
-## [1.2.1](https://github.com/CZQM-FIR/core/compare/web-v1.2.0...web-v1.2.1) (2026-10-18)
-
 ### Dependencies
 
 - The following workspace dependencies were updated
