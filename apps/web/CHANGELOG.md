@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.0](https://github.com/CZQM-FIR/core/compare/web-v1.2.1...web-v1.2.0) (2026-10-19)
+## [1.2.1](https://github.com/CZQM-FIR/core/compare/web-v1.2.0...web-v1.2.1) (2026-10-18)
 
 ### Dependencies
 
