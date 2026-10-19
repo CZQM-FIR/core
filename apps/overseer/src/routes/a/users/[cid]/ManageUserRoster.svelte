@@ -1,23 +1,18 @@
 <script lang="ts">
 	import type { RosterPositionStatus } from '@czqm/common';
-	import type { UserAdminDetails } from '$lib/remote/user-admin.remote';
+	import { getUserAdminDetails, type UserAdminDetails } from '$lib/remote/user-admin.remote';
 	import type { RosterPosition } from '@czqm/db/schema';
 
 	let { details }: { details: UserAdminDetails } = $props();
 
-	let localRoster = $state({
-		gnd: 'nothing' as RosterPositionStatus,
-		twr: 'nothing' as RosterPositionStatus,
-		app: 'nothing' as RosterPositionStatus,
-		ctr: 'nothing' as RosterPositionStatus
-	});
-
-	$effect(() => {
-		localRoster.gnd = details.roster?.gnd ?? 'nothing';
-		localRoster.twr = details.roster?.twr ?? 'nothing';
-		localRoster.app = details.roster?.app ?? 'nothing';
-		localRoster.ctr = details.roster?.ctr ?? 'nothing';
-	});
+	// Optimistic overrides while a roster change is in flight; otherwise follow the (refreshed) details prop
+	let overrides = $state<Partial<Record<RosterPosition, RosterPositionStatus>>>({});
+	const localRoster = $derived({
+		gnd: overrides.gnd ?? details.roster?.gnd ?? 'nothing',
+		twr: overrides.twr ?? details.roster?.twr ?? 'nothing',
+		app: overrides.app ?? details.roster?.app ?? 'nothing',
+		ctr: overrides.ctr ?? details.roster?.ctr ?? 'nothing'
+	} as Record<RosterPosition, RosterPositionStatus>);
 
 	const getRosterStatus = (position: RosterPosition): RosterPositionStatus => {
 		return localRoster[position] ?? 'nothing';
@@ -66,28 +61,23 @@
 					? 'certified'
 					: 'training';
 
-		localRoster[position] = nextStatus;
+		overrides[position] = nextStatus;
 
-		const res = await fetch(`/a/users/${details.cid}/roster`, {
-			method: 'PATCH',
-			body: JSON.stringify({
-				position: position,
-				status: rosterStatusToDbStatus(nextStatus)
-			})
-		});
+		try {
+			const res = await fetch(`/a/users/${details.cid}/roster`, {
+				method: 'PATCH',
+				body: JSON.stringify({
+					position: position,
+					status: rosterStatusToDbStatus(nextStatus)
+				})
+			});
 
-		if (res.ok) {
-			const responseData = (await res.json()) as {
-				roster?: UserAdminDetails['roster'];
-			};
-			if (responseData.roster) {
-				localRoster.gnd = responseData.roster.gnd ?? localRoster.gnd;
-				localRoster.twr = responseData.roster.twr ?? localRoster.twr;
-				localRoster.app = responseData.roster.app ?? localRoster.app;
-				localRoster.ctr = responseData.roster.ctr ?? localRoster.ctr;
+			if (res.ok) {
+				// Refresh the shared details query so this and sibling components get fresh props
+				await getUserAdminDetails(Number(details.cid)).refresh();
 			}
-		} else {
-			localRoster[position] = currentStatus;
+		} finally {
+			delete overrides[position];
 		}
 	};
 </script>

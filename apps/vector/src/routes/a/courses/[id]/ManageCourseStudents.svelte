@@ -18,6 +18,10 @@
 
 	let { courseId, waitlistId }: { courseId: string; waitlistId: number } = $props();
 
+	const waitlistQuery = $derived(getWaitlist(waitlistId));
+	const enrolledQuery = $derived(getEnrolledWaitlistEntries(waitlistId));
+	const completedQuery = $derived(getCompletedWaitlistEntries(waitlistId));
+
 	let waitlistSearch = $state('');
 	let enrolledSearch = $state('');
 	let completedSearch = $state('');
@@ -57,14 +61,21 @@
 	}
 </script>
 
-{#await getWaitlist(waitlistId)}
+{#if waitlistQuery.error}
+	<div class="card bg-base-200 shadow-sm">
+		<div class="card-body">
+			<p class="text-error">Error loading students: {waitlistQuery.error.message}</p>
+		</div>
+	</div>
+{:else if !waitlistQuery.ready}
 	<div class="card bg-base-200 shadow-sm">
 		<div class="card-body">
 			<h2 class="card-title text-lg">Students</h2>
 			<p>Loading students...</p>
 		</div>
 	</div>
-{:then waitlist}
+{:else}
+	{@const waitlist = waitlistQuery.current}
 	<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
 		<!-- Waiting column -->
 		<div class="card bg-base-200 h-full shadow-sm">
@@ -208,9 +219,12 @@
 			<div class="card-body flex flex-col">
 				<h2 class="card-title text-lg">Enrolled</h2>
 
-				{#await getEnrolledWaitlistEntries(waitlistId)}
+				{#if enrolledQuery.error}
+					<p class="text-error text-sm">{enrolledQuery.error.message ?? 'Failed to load.'}</p>
+				{:else if !enrolledQuery.ready}
 					<p class="text-sm">Loading enrolled students...</p>
-				{:then enrolledEntries}
+				{:else}
+					{@const enrolledEntries = enrolledQuery.current}
 					{#if enrolledEntries.length > 0}
 						<input
 							type="search"
@@ -334,7 +348,7 @@
 							{/each}
 						</div>
 					{/if}
-				{/await}
+				{/if}
 			</div>
 		</div>
 
@@ -343,9 +357,12 @@
 			<div class="card-body flex flex-col">
 				<h2 class="card-title text-lg">Completed</h2>
 
-				{#await getCompletedWaitlistEntries(waitlistId)}
+				{#if completedQuery.error}
+					<p class="text-error text-sm">{completedQuery.error.message ?? 'Failed to load.'}</p>
+				{:else if !completedQuery.ready}
 					<p class="text-sm">Loading completed students...</p>
-				{:then completedEntries}
+				{:else}
+					{@const completedEntries = completedQuery.current}
 					{#if completedEntries.length > 0}
 						<input
 							type="search"
@@ -388,17 +405,11 @@
 							{/each}
 						</div>
 					{/if}
-				{/await}
+				{/if}
 			</div>
 		</div>
 	</div>
-{:catch error}
-	<div class="card bg-base-200 shadow-sm">
-		<div class="card-body">
-			<p class="text-error">Error loading students: {error.message}</p>
-		</div>
-	</div>
-{/await}
+{/if}
 
 <dialog class="modal" bind:this={deleteCompletionModal}>
 	<div class="modal-box">

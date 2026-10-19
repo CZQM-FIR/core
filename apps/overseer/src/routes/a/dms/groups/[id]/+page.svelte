@@ -11,17 +11,21 @@
 	});
 
 	let id = $state<string>(page.params.id!);
+
+	const groupQuery = $derived(getGroup(id));
+	const documentsQuery = $derived(getDocumentsByGroup(id));
 </script>
 
 <section>
 	<div class="container mx-auto">
-		{#await getGroup(id)}
+		{#if groupQuery.error}
+			<p class="text-error">Error loading group: {groupQuery.error.message}</p>
+		{:else if !groupQuery.ready}
 			<h1 class="pt-6 text-2xl font-semibold">DMS Group: <i>Loading Group</i></h1>
-		{:then group}
+		{:else}
+			{@const group = groupQuery.current}
 			<h1 class="pt-6 text-2xl font-semibold">DMS Group: {group.name} ( /{group.slug} )</h1>
-		{:catch error}
-			<p class="text-error">Error loading group: {error.message}</p>
-		{/await}
+		{/if}
 
 		<a href="/a/dms" class="text-primary hover:link flex flex-row items-center gap-1">
 			<ChevronLeft size="15" /> Back to DMS
@@ -32,10 +36,12 @@
 		<div class="divider"></div>
 
 		<div class="mt-5 overflow-x-auto">
-			{#await getDocumentsByGroup(id)}
+			{#if documentsQuery.error}
+				<p class="text-error">Error loading documents: {documentsQuery.error.message}</p>
+			{:else if !documentsQuery.ready}
 				<p>Loading documents...</p>
-			{:then documents}
-				{@const sortedDocuments = [...documents].sort(
+			{:else}
+				{@const sortedDocuments = [...documentsQuery.current].sort(
 					(a, b) => (a.sort ?? 99) - (b.sort ?? 99) || a.name.localeCompare(b.name)
 				)}
 				<table class="table">
@@ -79,9 +85,7 @@
 						{/if}
 					</tbody>
 				</table>
-			{:catch error}
-				<p class="text-error">Error loading documents: {error.message}</p>
-			{/await}
+			{/if}
 		</div>
 	</div>
 </section>

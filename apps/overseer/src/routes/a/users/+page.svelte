@@ -2,6 +2,8 @@
 	import { CircleCheck, CircleMinus, CircleX, Search, SquarePen } from '@lucide/svelte';
 	import { getUsers } from '$lib/remote/users.remote';
 
+	const query = getUsers();
+
 	let search = $state('');
 </script>
 
@@ -15,9 +17,12 @@
 			<input type="search" class="grow" placeholder="Search" bind:value={search} />
 		</label>
 
-		{#await getUsers()}
+		{#if query.error}
+			<p class="text-error mt-4">{query.error.message ?? 'Failed to load users.'}</p>
+		{:else if !query.ready}
 			<p class="mt-4">Loading users...</p>
-		{:then users}
+		{:else}
+			{@const users = query.current}
 			<table class="table-zebra table w-full">
 				<thead>
 					<tr>
@@ -64,8 +69,6 @@
 					{/each}
 				</tbody>
 			</table>
-		{:catch err}
-			<p class="text-error mt-4">{err.message ?? 'Failed to load users.'}</p>
-		{/await}
+		{/if}
 	</div>
 </section>

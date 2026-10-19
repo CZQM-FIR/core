@@ -3,8 +3,6 @@
 	import { page } from '$app/state';
 	import { createDocument, getDocumentsByGroup, getGroup } from '$lib/remote/dms.remote';
 	import { ChevronLeft } from '@lucide/svelte';
-	import { onMount } from 'svelte';
-
 	$effect(() => {
 		if (page.params.id === undefined) {
 			goto('/a/dms');
@@ -13,17 +11,17 @@
 
 	let id = $state<string>(page.params.id!);
 	let name = $state('');
-	let existingDocumentNames = $state<string[]>([]);
+
+	const groupQuery = $derived(getGroup(id));
+	const documentsQuery = $derived(getDocumentsByGroup(id));
 
 	const normalizeName = (value: string) => value.trim().toLowerCase();
+	const existingDocumentNames = $derived(
+		(documentsQuery.current ?? []).map((document) => normalizeName(document.name))
+	);
 	let hasDuplicateName = $derived(
 		normalizeName(name).length > 0 && existingDocumentNames.includes(normalizeName(name))
 	);
-
-	onMount(async () => {
-		const documents = await getDocumentsByGroup(id);
-		existingDocumentNames = documents.map((document) => normalizeName(document.name));
-	});
 
 	const preventDuplicateNameSubmission = (event: SubmitEvent) => {
 		if (hasDuplicateName) {
@@ -50,13 +48,14 @@
 
 <section>
 	<div class="container mx-auto">
-		{#await getGroup(id)}
+		{#if groupQuery.error}
+			<p class="text-error">Error loading group: {groupQuery.error.message}</p>
+		{:else if !groupQuery.ready}
 			<h1 class="pt-6 text-2xl font-semibold">Create Document: <i>Loading Group</i></h1>
-		{:then group}
+		{:else}
+			{@const group = groupQuery.current}
 			<h1 class="pt-6 text-2xl font-semibold">Create Document: {group.name}</h1>
-		{:catch error}
-			<p class="text-error">Error loading group: {error.message}</p>
-		{/await}
+		{/if}
 
 		<a
 			href={`/a/dms/groups/${id}`}

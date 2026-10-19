@@ -30,10 +30,12 @@
 		<h1 class="pt-6 text-2xl font-semibold">Staff Roles</h1>
 		<div class="divider"></div>
 
-		{#await assistantsQuery}
+		{#if assistantsQuery.error}
+			<p class="text-error mt-4">{assistantsQuery.error.message ?? 'Failed to load staff roles.'}</p>
+		{:else if !assistantsQuery.ready}
 			<p>Loading staff roles...</p>
-		{:then rows}
-			{@const groups = groupByRole(rows)}
+		{:else}
+			{@const groups = groupByRole(assistantsQuery.current)}
 			<div class="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-4">
 				{#each ASSISTANT_ROLES_ORDERED as role (role)}
 					{@const info = ASSISTANT_ROLE_INFO[role]}
@@ -93,8 +95,6 @@
 					</div>
 				{/each}
 			</div>
-		{:catch err}
-			<p class="text-error mt-4">{err.message ?? 'Failed to load staff roles.'}</p>
-		{/await}
+		{/if}
 	</div>
 </section>

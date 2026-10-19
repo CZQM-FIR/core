@@ -20,7 +20,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const viewQuery = $derived.by(() => getStudentCourseView(data.courseId));
+	const viewQuery = $derived(getStudentCourseView(data.courseId));
 
 	let joining = $state(false);
 	let joinError = $state<string | null>(null);
@@ -48,9 +48,12 @@
 </script>
 
 <section class="container mx-auto py-5">
-	{#await viewQuery}
+	{#if viewQuery.error}
+		<p class="text-error">Error loading course: {viewQuery.error.message}</p>
+	{:else if !viewQuery.ready}
 		<p>Loading course...</p>
-	{:then view}
+	{:else}
+		{@const view = viewQuery.current}
 		<a href="/" class="text-primary hover:link flex flex-row items-center gap-1">
 			<ChevronLeft size="15" /> Back to Courses
 		</a>
@@ -243,7 +246,5 @@
 				<CoursePrerequisiteChecklist results={view.prerequisiteResults} />
 			</div>
 		{/if}
-	{:catch err}
-		<p class="text-error">Error loading course: {err.message}</p>
-	{/await}
+	{/if}
 </section>

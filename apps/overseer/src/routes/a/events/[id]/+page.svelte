@@ -4,14 +4,21 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	const query = $derived(getEvent(data.id));
 </script>
 
 <section>
-	{#await getEvent(data.id)}
+	{#if query.error}
+		<div class="container mx-auto">
+			<p class="text-error mt-6">{query.error.message ?? 'Failed to load event.'}</p>
+		</div>
+	{:else if !query.ready}
 		<div class="container mx-auto">
 			<h1 class="pt-6 text-2xl font-semibold">Loading event...</h1>
 		</div>
-	{:then event}
+	{:else}
+		{@const event = query.current}
 		<div class="container mx-auto">
 			<h1 class="pt-6 text-2xl font-semibold">Edit {event.name}</h1>
 			<a href="/a/events" class="text-primary hover:link flex flex-row items-center gap-1">
@@ -80,9 +87,5 @@
 			</form>
 			<p>{updateEvent.result?.message}</p>
 		</div>
-	{:catch err}
-		<div class="container mx-auto">
-			<p class="text-error mt-6">{err.message ?? 'Failed to load event.'}</p>
-		</div>
-	{/await}
+	{/if}
 </section>

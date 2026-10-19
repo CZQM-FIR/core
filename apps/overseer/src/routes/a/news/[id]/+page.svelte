@@ -4,17 +4,24 @@
 	import { ChevronLeft } from '@lucide/svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	const query = $derived(getNewsArticle(data.id));
 </script>
 
 <section>
-	{#await getNewsArticle(data.id)}
+	{#if query.error}
+		<div class="container mx-auto">
+			<p class="text-error mt-6">{query.error.message ?? 'Failed to load article.'}</p>
+		</div>
+	{:else if !query.ready}
 		<div class="container mx-auto">
 			<h1 class="pt-6 text-2xl font-semibold">Loading article...</h1>
 			<a href="/a/news" class="text-primary hover:link flex flex-row items-center gap-1">
 				<ChevronLeft size="15" /> Back to All Articles
 			</a>
 		</div>
-	{:then article}
+	{:else}
+		{@const article = query.current}
 		<div class="container mx-auto">
 			<h1 class="pt-6 text-2xl font-semibold">Edit {article.title}</h1>
 			<a href="/a/news" class="text-primary hover:link flex flex-row items-center gap-1">
@@ -53,9 +60,5 @@
 			</form>
 			<p>{updateNewsArticle.result?.message}</p>
 		</div>
-	{:catch err}
-		<div class="container mx-auto">
-			<p class="text-error mt-6">{err.message ?? 'Failed to load article.'}</p>
-		</div>
-	{/await}
+	{/if}
 </section>

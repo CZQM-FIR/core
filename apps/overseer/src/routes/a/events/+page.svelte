@@ -2,6 +2,8 @@
 	import { Plus, Search, SquarePen, Trash2 } from '@lucide/svelte';
 	import { deleteEvent, getEvents } from '$lib/remote/events.remote';
 
+	const query = getEvents();
+
 	let search = $state('');
 </script>
 
@@ -20,9 +22,12 @@
 			</a>
 		</div>
 
-		{#await getEvents()}
+		{#if query.error}
+			<p class="text-error mt-4">{query.error.message ?? 'Failed to load events.'}</p>
+		{:else if !query.ready}
 			<p class="mt-4">Loading events...</p>
-		{:then events}
+		{:else}
+			{@const events = query.current}
 			<table class="table-zebra table w-full">
 				<thead>
 					<tr>
@@ -66,8 +71,6 @@
 					{/each}
 				</tbody>
 			</table>
-		{:catch err}
-			<p class="text-error mt-4">{err.message ?? 'Failed to load events.'}</p>
-		{/await}
+		{/if}
 	</div>
 </section>

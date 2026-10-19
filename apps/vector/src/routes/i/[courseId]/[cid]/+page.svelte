@@ -20,10 +20,10 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const viewQuery = $derived.by(() =>
+	const viewQuery = $derived(
 		getInstructorStudentView({ courseId: data.courseId, cid: data.cid })
 	);
-	const notesQuery = $derived.by(() => getInstructorStudentTrainingNotes({ cid: data.cid }));
+	const notesQuery = $derived(getInstructorStudentTrainingNotes({ cid: data.cid }));
 	const notes = $derived(notesQuery.current?.notes ?? []);
 	const legacyNotes = $derived(notesQuery.current?.legacyNotes ?? []);
 	const legacyError = $derived(notesQuery.current?.legacyError ?? null);
@@ -103,9 +103,12 @@
 </script>
 
 <section class="container mx-auto py-5">
-	{#await viewQuery}
+	{#if viewQuery.error}
+		<p class="text-error">Error loading student: {viewQuery.error.message}</p>
+	{:else if !viewQuery.ready}
 		<p>Loading student...</p>
-	{:then view}
+	{:else}
+		{@const view = viewQuery.current}
 		<a
 			href={data.fromAvailability ? '/i/availability' : `/i/courses/${view.course.id}`}
 			class="text-primary hover:link flex flex-row items-center gap-1"
@@ -352,7 +355,5 @@
 				</form>
 			</dialog>
 		{/if}
-	{:catch err}
-		<p class="text-error">Error loading student: {err.message}</p>
-	{/await}
+	{/if}
 </section>

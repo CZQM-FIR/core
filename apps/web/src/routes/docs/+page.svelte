@@ -1,5 +1,7 @@
 <script lang="ts">
   import { getActiveGroups } from '$lib/remote/dms.remote';
+
+  const query = getActiveGroups();
 </script>
 
 <section id="join" class="min-h-screen">
@@ -7,9 +9,12 @@
     <h1 class="pt-6 text-2xl">Documents</h1>
     <div class="divider"></div>
 
-    {#await getActiveGroups()}
+    {#if query.error}
+      <span class="text-error">{query.error.message ?? 'Failed to load documents.'}</span>
+    {:else if !query.ready}
       <span>Loading...</span>
-    {:then groups}
+    {:else}
+      {@const groups = query.current}
       {#if groups.length === 0}
         <span>No Documents Found</span>
       {:else}
@@ -43,6 +48,6 @@
           {/each}
         </ul>
       {/if}
-    {/await}
+    {/if}
   </div>
 </section>

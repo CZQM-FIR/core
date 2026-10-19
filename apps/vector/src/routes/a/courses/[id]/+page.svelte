@@ -14,7 +14,13 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const courseQuery = $derived.by(() => getCourse(data.id));
+	const courseQuery = $derived(getCourse(data.id));
+	const enrolledQuery = $derived(
+		courseQuery.current ? getEnrolledWaitlistEntries(courseQuery.current.waitlistId) : null
+	);
+	const completedQuery = $derived(
+		courseQuery.current ? getCompletedWaitlistEntries(courseQuery.current.waitlistId) : null
+	);
 
 	let deleteModal: HTMLDialogElement | undefined;
 	let courseName = $state('');
@@ -32,15 +38,15 @@
 </script>
 
 <section class="container mx-auto py-5">
-	{#if courseQuery.error && !courseQuery.current}
+	{#if courseQuery.error}
 		<p class="text-error">Error loading course: {courseQuery.error.message}</p>
-	{:else if !courseQuery.current && courseQuery.loading}
+	{:else if !courseQuery.ready}
 		<a href="/a/courses" class="text-primary hover:link flex flex-row items-center gap-1">
 			<ChevronLeft size="15" /> Back to Courses
 		</a>
 		<h1 class="text-3xl font-semibold">Course</h1>
 		<p>Loading course...</p>
-	{:else if courseQuery.current}
+	{:else}
 		{@const loadedCourse = courseQuery.current}
 		<a href="/a/courses" class="text-primary hover:link flex flex-row items-center gap-1">
 			<ChevronLeft size="15" /> Back to Courses
@@ -50,16 +56,16 @@
 			<h1 class="text-3xl font-semibold">{loadedCourse.name}</h1>
 			<div class="flex flex-row flex-wrap items-center gap-2">
 				<span class="badge badge-primary">{loadedCourse.waitlist.students.length} waiting</span>
-				{#await getEnrolledWaitlistEntries(loadedCourse.waitlistId)}
+				{#if enrolledQuery?.error || !enrolledQuery?.ready}
 					<span class="badge badge-ghost">...</span>
-				{:then enrolled}
-					<span class="badge badge-secondary">{enrolled.length} enrolled</span>
-				{/await}
-				{#await getCompletedWaitlistEntries(loadedCourse.waitlistId)}
+				{:else}
+					<span class="badge badge-secondary">{enrolledQuery.current.length} enrolled</span>
+				{/if}
+				{#if completedQuery?.error || !completedQuery?.ready}
 					<span class="badge badge-ghost">...</span>
-				{:then completed}
-					<span class="badge badge-accent">{completed.length} completed</span>
-				{/await}
+				{:else}
+					<span class="badge badge-accent">{completedQuery.current.length} completed</span>
+				{/if}
 				<span class="badge badge-neutral">{loadedCourse.tasks.length} tasks</span>
 				<span class="badge badge-neutral"
 					>{(loadedCourse.prerequisites ?? []).length} prerequisites</span

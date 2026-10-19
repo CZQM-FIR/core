@@ -10,6 +10,8 @@
 	import ManageUserActiveStatus from './ManageUserActiveStatus.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	const detailsQuery = $derived(getUserAdminDetails(data.id));
 </script>
 
 <section>
@@ -18,9 +20,11 @@
 			<ChevronLeft size="15" /> Back to Users
 		</a>
 
-		{#await getUserAdminDetails(data.id)}
+		{#await detailsQuery}
 			<p>Loading user data...</p>
-		{:then details}
+		{:then loaded}
+			<!-- `loaded` is a one-time snapshot; `.current` follows server-side refreshes -->
+			{@const details = detailsQuery.current ?? loaded}
 			<div class="flex flex-col flex-wrap gap-5 lg:flex-row">
 				<ManageUserInfo {details} />
 				<ManageUserRoster {details} />

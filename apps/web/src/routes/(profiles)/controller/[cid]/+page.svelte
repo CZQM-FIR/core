@@ -6,15 +6,9 @@
   let { data }: { data: PageData } = $props();
 
   const cid = $derived(data.cid);
-  const profilePromise = $derived.by(() => getControllerProfile(cid));
-  let userData = $state<Awaited<ReturnType<typeof getControllerProfile>>['userData'] | null>(null);
-  $effect(() => {
-    profilePromise.then((p) => {
-      userData = p.userData;
-    });
-  });
+  const query = $derived(getControllerProfile(cid));
 
-  let user = $derived(userData);
+  let user = $derived(query.current?.userData ?? null);
 
   let sessions = $derived(
     user?.sessions
@@ -101,9 +95,13 @@
 </script>
 
 <section>
-  {#await profilePromise}
+  {#if query.error}
+    <div class="container mx-auto py-6">
+      <p class="text-error p-4">{query.error.message ?? 'Controller not found.'}</p>
+    </div>
+  {:else if !query.ready}
     <div class="container mx-auto py-6"><p class="p-4">Loading...</p></div>
-  {:then _}
+  {:else}
     {#if user}
       <div class="container mx-auto py-6">
         <h1 class="flex flex-row items-baseline gap-3">
@@ -221,9 +219,5 @@
         </div>
       </div>
     {/if}
-  {:catch err}
-    <div class="container mx-auto py-6">
-      <p class="text-error p-4">{err?.message ?? 'Controller not found.'}</p>
-    </div>
-  {/await}
+  {/if}
 </section>

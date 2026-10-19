@@ -33,13 +33,32 @@
 	let enrolledCohort = $state('');
 	let trainingPositions = $state<RosterPosition[]>([]);
 
+	// Server values as primitives: deriveds only notify when the value actually changes, so saving
+	// one section (and the resulting refresh) does not clobber unsaved edits in the other sections.
+	const serverName = $derived(course.name);
+	const serverDescription = $derived(course.description ?? '');
+	const serverEstimatedTime = $derived(course.waitlist.waitTime ?? '');
+	const serverWaitlistCohort = $derived(course.waitlist.waitlistCohort ?? '');
+	const serverEnrolledCohort = $derived(course.waitlist.enrolledCohort ?? '');
+	const serverPositionsKey = $derived((course.waitlist.trainingPositions ?? []).join(','));
+
 	$effect(() => {
-		trainingPositions = [...(course.waitlist.trainingPositions ?? [])];
-		name = course.name;
-		description = course.description ?? '';
-		estimatedTime = course.waitlist.waitTime ?? '';
-		waitlistCohort = course.waitlist.waitlistCohort ?? '';
-		enrolledCohort = course.waitlist.enrolledCohort ?? '';
+		name = serverName;
+	});
+	$effect(() => {
+		description = serverDescription;
+	});
+	$effect(() => {
+		estimatedTime = serverEstimatedTime;
+	});
+	$effect(() => {
+		waitlistCohort = serverWaitlistCohort;
+	});
+	$effect(() => {
+		enrolledCohort = serverEnrolledCohort;
+	});
+	$effect(() => {
+		trainingPositions = serverPositionsKey ? (serverPositionsKey.split(',') as RosterPosition[]) : [];
 	});
 
 	let courseSaved = $state(false);

@@ -20,6 +20,9 @@
 		buttonClass?: string;
 	} = $props();
 
+	const controllersQuery = getAllControllers();
+	const enrolledQuery = $derived(getEnrolledWaitlistEntries(waitlistId));
+
 	let overrideModal: HTMLDialogElement | undefined;
 	let prerequisiteFailures = $state<string[]>([]);
 	let selectedUserId = $state('');
@@ -56,23 +59,23 @@
 
 <div class="flex flex-row gap-2">
 	<select class={selectClass} required bind:value={selectedUserId}>
-		{#await getAllControllers()}
+		{#if controllersQuery.error || enrolledQuery.error}
+			<option value="" disabled>Failed to load controllers.</option>
+		{:else if !controllersQuery.ready || !enrolledQuery.ready}
 			<option value="" disabled>Loading Controllers...</option>
-		{:then controllers}
-			{#await getEnrolledWaitlistEntries(waitlistId)}
-				<option value="" disabled>Loading Controllers...</option>
-			{:then enrolledEntries}
-				<option value="" disabled selected={!selectedUserId}>Select a Student</option>
-				{#each controllers
-					.filter((c) => !waitlistedCids.includes(c.cid) && !enrolledEntries.some((e) => e.cid === c.cid))
-					.slice()
-					.sort((a, b) => a.name_first.localeCompare(b.name_first)) as controller (controller.cid)}
-					<option value={String(controller.cid)}>
-						{controller.name_full} ({controller.cid})
-					</option>
-				{/each}
-			{/await}
-		{/await}
+		{:else}
+			{@const controllers = controllersQuery.current}
+			{@const enrolledEntries = enrolledQuery.current}
+			<option value="" disabled selected={!selectedUserId}>Select a Student</option>
+			{#each controllers
+				.filter((c) => !waitlistedCids.includes(c.cid) && !enrolledEntries.some((e) => e.cid === c.cid))
+				.slice()
+				.sort((a, b) => a.name_first.localeCompare(b.name_first)) as controller (controller.cid)}
+				<option value={String(controller.cid)}>
+					{controller.name_full} ({controller.cid})
+				</option>
+			{/each}
+		{/if}
 	</select>
 	<button
 		class={buttonClass}
