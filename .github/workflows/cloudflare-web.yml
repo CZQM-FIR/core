@@ -2,8 +2,14 @@ name: Cloudflare Web Deploy
 
 on:
   push:
-    tags:
-      - "web-v*.*.*"
+    branches:
+      - main
+    paths:
+      - "apps/web/**"
+      - "packages/common/**"
+      - "packages/db/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/cloudflare-web.yml"
   workflow_dispatch: # manual trigger if needed
 
 jobs:

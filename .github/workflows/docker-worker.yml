@@ -2,8 +2,14 @@ name: Worker Docker Image
 
 on:
   push:
-    tags:
-      - "worker-v*.*.*"
+    branches:
+      - main
+    paths:
+      - "apps/worker/**"
+      - "packages/common/**"
+      - "packages/db/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/docker-worker.yml"
   workflow_dispatch: # manual trigger if needed
 
 jobs:
@@ -31,7 +37,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}/worker
           tags: |
             type=raw,value=latest
-            type=ref,event=tag
+            type=sha
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6

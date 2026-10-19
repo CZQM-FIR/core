@@ -2,8 +2,14 @@ name: Overseer Docker Image
 
 on:
   push:
-    tags:
-      - "overseer-v*.*.*"
+    branches:
+      - main
+    paths:
+      - "apps/overseer/**"
+      - "packages/common/**"
+      - "packages/db/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/docker-overseer.yml"
   workflow_dispatch: # manual trigger if needed
 
 jobs:
@@ -31,7 +37,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}/overseer
           tags: |
             type=raw,value=latest
-            type=ref,event=tag
+            type=sha
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
