@@ -2,7 +2,7 @@
   "apps/overseer": "1.2.1",
   "apps/web": "1.2.1",
   "apps/worker": "1.2.0",
-  "apps/vector": "1.2.1",
+  "apps/vector": "1.2.2",
   "packages/common": "1.2.2",
   "packages/db": "1.2.2"
 }
