@@ -135,8 +135,7 @@
 				rows="3"
 				placeholder="CXXX_GND
 CXXX_DEL
-(one callsign per line, or comma-separated)"
-			></textarea>
+(one callsign per line, or comma-separated)"></textarea>
 		</fieldset>
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Duration</legend>
