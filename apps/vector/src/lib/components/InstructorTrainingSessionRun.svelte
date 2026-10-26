@@ -617,8 +617,7 @@
 			oninput={scheduleAutosave}
 			disabled={!session.canSaveNotes}
 			maxlength={INSTRUCTOR_NOTES_MAX_LENGTH}
-			aria-labelledby="training-notes-heading"
-		></textarea>
+			aria-labelledby="training-notes-heading"></textarea>
 
 		{#if session.canSaveNotes}
 			{#if saveStatus === 'saving'}
