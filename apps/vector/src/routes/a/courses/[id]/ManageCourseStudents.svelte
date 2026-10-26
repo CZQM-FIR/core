@@ -127,11 +127,12 @@
 													onclickcapture={() =>
 														moveUserUp({ userId: student.cid, waitlistId }).updates(
 															getWaitlist(waitlistId).withOverride((wl) => {
-																[wl.students[index], wl.students[index - 1]] = [
-																	{ ...wl.students[index - 1], position: index },
-																	{ ...wl.students[index], position: index - 1 }
+																const students = [...wl.students];
+																[students[index], students[index - 1]] = [
+																	{ ...students[index - 1], position: index },
+																	{ ...students[index], position: index - 1 }
 																];
-																return wl;
+																return { ...wl, students };
 															})
 														)}
 													class="btn btn-xs btn-ghost btn-primary"
@@ -144,11 +145,12 @@
 													onclickcapture={() =>
 														moveUserDown({ userId: student.cid, waitlistId }).updates(
 															getWaitlist(waitlistId).withOverride((wl) => {
-																[wl.students[index], wl.students[index + 1]] = [
-																	{ ...wl.students[index + 1], position: index },
-																	{ ...wl.students[index], position: index + 1 }
+																const students = [...wl.students];
+																[students[index], students[index + 1]] = [
+																	{ ...students[index + 1], position: index },
+																	{ ...students[index], position: index + 1 }
 																];
-																return wl;
+																return { ...wl, students };
 															})
 														)}
 													class="btn btn-xs btn-ghost btn-primary"
@@ -163,8 +165,12 @@
 													onclickcapture={() =>
 														removeUserFromWaitlist({ userId: student.cid, waitlistId }).updates(
 															getWaitlist(waitlistId).withOverride((wl) => {
-																wl.students = wl.students.filter((s) => s.cid !== student.cid);
-																return wl;
+																return {
+																	...wl,
+																	students: wl.students
+																		.filter((s) => s.cid !== student.cid)
+																		.map((s, i) => ({ ...s, position: i }))
+																};
 															})
 														)}
 													class="hover:text-error transition-colors"
@@ -176,8 +182,12 @@
 													onclickcapture={() =>
 														enrolUserFromWaitlist({ userId: student.cid, waitlistId }).updates(
 															getWaitlist(waitlistId).withOverride((wl) => {
-																wl.students = wl.students.filter((s) => s.cid !== student.cid);
-																return wl;
+																return {
+																	...wl,
+																	students: wl.students
+																		.filter((s) => s.cid !== student.cid)
+																		.map((s, i) => ({ ...s, position: i }))
+																};
 															}),
 															getEnrolledWaitlistEntries(waitlistId).withOverride((enrolled) => {
 																const nextId =
