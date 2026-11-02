@@ -11,6 +11,10 @@
 	const userQuery = getCurrentUserInfo();
 </script>
 
+<svelte:head>
+	<title>CZQM Vector</title>
+</svelte:head>
+
 {#snippet returnToCzqm()}
 	<a href={env.PUBLIC_WEB_URL} class="btn btn-outline btn-sm shrink-0">Return to CZQM.ca</a>
 {/snippet}

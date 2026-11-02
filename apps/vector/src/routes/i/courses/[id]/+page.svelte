@@ -12,6 +12,10 @@
 	);
 </script>
 
+<svelte:head>
+	<title>{courseQuery.current?.name ?? 'Course'} | CZQM Vector</title>
+</svelte:head>
+
 <section class="container mx-auto py-5">
 	{#if courseQuery.error}
 		<a href="/i/courses" class="text-primary hover:link flex flex-row items-center gap-1">

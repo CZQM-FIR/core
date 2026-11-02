@@ -100,6 +100,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>{viewQuery.current?.student.name_full ?? 'Student'} | CZQM Vector</title>
+</svelte:head>
+
 <section class="container mx-auto py-5">
 	{#if viewQuery.error}
 		<p class="text-error">Error loading student: {viewQuery.error.message}</p>

@@ -9,6 +9,10 @@
 	const legacyError = $derived(notesQuery.current?.legacyError ?? null);
 </script>
 
+<svelte:head>
+	<title>Training Notes | CZQM Vector</title>
+</svelte:head>
+
 <section class="container mx-auto py-5">
 	<h1 class="text-3xl font-semibold">Training Notes</h1>
 	<p class="mt-1 text-sm opacity-70">All of your submitted training notes in one place.</p>

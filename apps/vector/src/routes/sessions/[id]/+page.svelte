@@ -8,6 +8,10 @@
 	const sessionQuery = $derived.by(() => getStudentTrainingSession(data.id));
 </script>
 
+<svelte:head>
+	<title>Training Session | CZQM Vector</title>
+</svelte:head>
+
 <section class="container mx-auto py-5">
 	{#if sessionQuery.error && !sessionQuery.current}
 		<a href="/" class="text-primary hover:link flex flex-row items-center gap-1">
