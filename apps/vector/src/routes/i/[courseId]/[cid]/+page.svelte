@@ -25,6 +25,11 @@
 	const notes = $derived(notesQuery.current?.notes ?? []);
 	const legacyNotes = $derived(notesQuery.current?.legacyNotes ?? []);
 	const legacyError = $derived(notesQuery.current?.legacyError ?? null);
+	const pageTitle = $derived(
+		viewQuery.current
+			? `${viewQuery.current.student.name_full} - ${viewQuery.current.course.name}`
+			: 'Student'
+	);
 
 	let graduating = $state(false);
 	let graduateError = $state<string | null>(null);
@@ -101,7 +106,7 @@
 </script>
 
 <svelte:head>
-	<title>{viewQuery.current?.student.name_full ?? 'Student'} | CZQM Vector</title>
+	<title>{pageTitle} | CZQM Vector</title>
 </svelte:head>
 
 <section class="container mx-auto py-5">
