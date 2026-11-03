@@ -75,6 +75,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Solo Presets | CZQM Vector</title>
+</svelte:head>
+
 <section class="container mx-auto mb-12 px-4">
 	<div class="mt-6 flex flex-wrap items-baseline justify-between gap-3">
 		<div>

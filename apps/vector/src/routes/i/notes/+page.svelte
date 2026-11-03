@@ -26,6 +26,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Training Notes | CZQM Vector</title>
+</svelte:head>
+
 <section class="container mx-auto py-5">
 	<a href="/i" class="text-primary hover:link flex flex-row items-center gap-1">
 		<ChevronLeft size="15" /> Back to Instructor Dashboard

@@ -63,6 +63,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Training Administration | CZQM Vector</title>
+</svelte:head>
+
 <section>
 	<div class="container mx-auto">
 		<h1 class="pt-6 text-2xl font-semibold">Training Administration</h1>

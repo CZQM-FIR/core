@@ -97,6 +97,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Instructor Dashboard | CZQM Vector</title>
+</svelte:head>
+
 <section class="container mx-auto py-8">
 	<h1 class="text-3xl font-semibold">Instructor Dashboard</h1>
 	<p class="mt-2 max-w-2xl text-sm opacity-80">

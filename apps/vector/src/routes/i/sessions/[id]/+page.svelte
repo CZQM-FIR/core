@@ -6,7 +6,16 @@
 
 	let { data }: { data: PageData } = $props();
 	const sessionQuery = $derived.by(() => getInstructorTrainingSession(data.id));
+	const pageTitle = $derived(
+		sessionQuery.current
+			? `${sessionQuery.current.student.name} - ${sessionQuery.current.course.name} Session - ${sessionQuery.current.startsAt.toLocaleDateString('en-GB', { timeZone: 'UTC' })}`
+			: 'Training Session'
+	);
 </script>
+
+<svelte:head>
+	<title>{pageTitle} | CZQM Vector</title>
+</svelte:head>
 
 <section class="container mx-auto py-5">
 	{#if sessionQuery.error && !sessionQuery.current}
