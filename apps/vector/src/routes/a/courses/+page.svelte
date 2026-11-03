@@ -168,13 +168,15 @@
 								<td>{course.name}</td>
 								<td>{course.description}</td>
 								<td>{course.waitlist.students.length}</td>
-								<td class="flex flex-row gap-3">
-									<a href="/a/courses/{course.id}">
-										<SquarePen class="hover:text-primary max-h-4 transition-colors" />
-									</a>
-									<button onclickcapture={() => openDeleteModal(course.id, course.name)}>
-										<Trash class="hover:text-error max-h-4 transition-colors" />
-									</button>
+								<td>
+									<div class="flex flex-row gap-3">
+										<a href="/a/courses/{course.id}">
+											<SquarePen class="hover:text-primary max-h-4 transition-colors" />
+										</a>
+										<button onclickcapture={() => openDeleteModal(course.id, course.name)}>
+											<Trash class="hover:text-error max-h-4 transition-colors" />
+										</button>
+									</div>
 								</td>
 							</tr>
 						{/each}
