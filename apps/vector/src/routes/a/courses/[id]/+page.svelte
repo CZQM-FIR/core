@@ -38,7 +38,7 @@
 </script>
 
 <svelte:head>
-	<title>{courseQuery.current?.name ?? 'Course'} | CZQM Vector</title>
+	<title>{courseQuery.current?.name ?? 'Course'} Management | CZQM Vector</title>
 </svelte:head>
 
 <section class="container mx-auto py-5">
