@@ -45,20 +45,22 @@
 							<td>{user.cid}</td>
 							<td>{user.rating.long}</td>
 							<td>{user.role}</td>
-							<td class="flex justify-start">
-								{#if user.active === 'active'}
-									<div class="tooltip" data-tip="Active">
-										<CircleCheck size="18" class="text-success" />
-									</div>
-								{:else if user.active === 'inactive'}
-									<div class="tooltip" data-tip="Inactive">
-										<CircleX size="18" class="text-error" />
-									</div>
-								{:else if user.active === 'loa'}
-									<div class="tooltip" data-tip="On Leave">
-										<CircleMinus size="18" class="text-warning" />
-									</div>
-								{/if}
+							<td>
+								<div class="flex justify-start">
+									{#if user.active === 'active'}
+										<div class="tooltip" data-tip="Active">
+											<CircleCheck size="18" class="text-success" />
+										</div>
+									{:else if user.active === 'inactive'}
+										<div class="tooltip" data-tip="Inactive">
+											<CircleX size="18" class="text-error" />
+										</div>
+									{:else if user.active === 'loa'}
+										<div class="tooltip" data-tip="On Leave">
+											<CircleMinus size="18" class="text-warning" />
+										</div>
+									{/if}
+								</div>
 							</td>
 							<td>
 								<a href={`/a/users/${user.cid}`}>
