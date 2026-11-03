@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-	<title>Training Notes | CZQM Vector</title>
+	<title>Your Training Notes | CZQM Vector</title>
 </svelte:head>
 
 <section class="container mx-auto py-5">
