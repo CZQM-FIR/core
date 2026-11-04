@@ -84,16 +84,18 @@
 								<td>{name}</td>
 								<td>/{slug}</td>
 								<td>{documents.length}</td>
-								<td class="flex flex-row gap-3">
-									<button onclickcapture={() => openEditModal(id, name, slug, sort)}>
-										<SquarePen class="hover:text-primary ms-2 max-h-4 transition-colors" />
-									</button>
-									<button onclickcapture={() => openDeleteModal(id, name)}>
-										<Trash class="hover:text-error max-h-4 transition-colors" />
-									</button>
-									<a class="btn btn-xs btn-outline btn-secondary" href="/a/dms/groups/{id}"
-										>Manage Documents</a
-									>
+								<td>
+									<div class="flex flex-row gap-3">
+										<button onclickcapture={() => openEditModal(id, name, slug, sort)}>
+											<SquarePen class="hover:text-primary ms-2 max-h-4 transition-colors" />
+										</button>
+										<button onclickcapture={() => openDeleteModal(id, name)}>
+											<Trash class="hover:text-error max-h-4 transition-colors" />
+										</button>
+										<a class="btn btn-xs btn-outline btn-secondary" href="/a/dms/groups/{id}"
+											>Manage Documents</a
+										>
+									</div>
 								</td>
 							</tr>
 						{/each}
