@@ -89,8 +89,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.4(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))
       '@sveltejs/adapter-node':
-        specifier: ^5.3.3
-        version: 5.5.7(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))
+        specifier: ^5.5.8
+        version: 5.5.8(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))
       '@sveltejs/kit':
         specifier: ^2.49.4
         version: 2.70.3(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15))
@@ -207,8 +207,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.4(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))
       '@sveltejs/adapter-node':
-        specifier: ^5.3.3
-        version: 5.5.7(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))
+        specifier: ^5.5.8
+        version: 5.5.8(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))
       '@sveltejs/kit':
         specifier: ^2.49.4
         version: 2.70.3(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15))
@@ -2158,6 +2158,9 @@ packages:
   '@smithy/core@3.34.1':
     resolution: {integrity: sha512-dLcOUxz8YCv1RZUMKq6GbyUf95pLbrqh34bPvpCZ1+CByFF31BEAFewZjsGCnVsZTKdThNENfGyAgk2TJqVwSw==}
     engines: {node: '>=18.0.0'}
+    deprecated: |-
+      Deprecated due to a bug in custom logger data redaction. Upgrade to the latest version. If you used a custom logger with this
+        version, review your logs and rotate any credentials or other secrets. See https://github.com/aws/aws-sdk-js-v3/issues/8393.
 
   '@smithy/credential-provider-imds@4.5.2':
     resolution: {integrity: sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg==}
@@ -2206,8 +2209,8 @@ packages:
     peerDependencies:
       '@sveltejs/kit': ^2.31.0
 
-  '@sveltejs/adapter-node@5.5.7':
-    resolution: {integrity: sha512-uOfc9eVlI3A37RRSaKcgrheBYPrfJwC9VMqDp8x/O6tlKdcLLvHThSWD0KNIbjQ/d+7bwLGx3vx6aowAcRfd2g==}
+  '@sveltejs/adapter-node@5.5.8':
+    resolution: {integrity: sha512-gGY4BekBbQsxLPEWEenB42pl3rEUT/2iY7lVu8U++UZSDKk5ml5fN62YG4M5h9qLwswM4lE4V/8GvZy3J2gxzQ==}
     peerDependencies:
       '@sveltejs/kit': ^2.4.0
 
@@ -5714,7 +5717,7 @@ snapshots:
       '@sveltejs/kit': 2.70.3(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@8.3.5(@types/node@22.20.4)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@8.3.5(@types/node@22.20.4)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
       esbuild: 0.25.12
 
-  '@sveltejs/adapter-node@5.5.7(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))':
+  '@sveltejs/adapter-node@5.5.8(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.57.1(@typescript-eslint/types@8.70.0))(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))(svelte@5.57.1(@typescript-eslint/types@8.70.0))(typescript@5.9.3)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)))':
     dependencies:
       '@rollup/plugin-commonjs': 29.0.3(rollup@4.63.4)
       '@rollup/plugin-json': 6.1.0(rollup@4.63.4)
@@ -5959,7 +5962,7 @@ snapshots:
 
   '@types/mssql@9.1.11':
     dependencies:
-      '@types/node': 26.6.6
+      '@types/node': 22.20.4
       tarn: 3.1.2
       tedious: 20.3.8
     transitivePeerDependencies:
@@ -5976,6 +5979,7 @@ snapshots:
   '@types/node@26.6.6':
     dependencies:
       undici-types: 8.9.0
+    optional: true
 
   '@types/qs@6.15.1': {}
 
@@ -5983,7 +5987,7 @@ snapshots:
 
   '@types/readable-stream@4.0.25':
     dependencies:
-      '@types/node': 26.6.6
+      '@types/node': 22.20.4
 
   '@types/resolve@1.20.2': {}
 
@@ -7699,7 +7703,7 @@ snapshots:
       '@azure/identity': 4.14.1
       '@azure/keyvault-keys': 4.10.2
       '@js-joda/core': 5.7.0
-      '@types/node': 26.6.6
+      '@types/node': 22.20.4
       bl: 6.1.6
       iconv-lite: 0.6.3
       js-md4: 0.3.2
@@ -7714,7 +7718,7 @@ snapshots:
       '@azure/identity': 4.14.1
       '@azure/keyvault-keys': 4.10.2
       '@js-joda/core': 6.3.2
-      '@types/node': 26.6.6
+      '@types/node': 22.20.4
       bl: 6.1.6
       iconv-lite: 0.7.3
       js-md4: 0.3.2
@@ -7781,7 +7785,8 @@ snapshots:
 
   undici-types@6.21.0: {}
 
-  undici-types@8.9.0: {}
+  undici-types@8.9.0:
+    optional: true
 
   undici@5.29.0:
     dependencies:
