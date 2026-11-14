@@ -59,13 +59,15 @@
 									.toString()
 									.padStart(2, '0')}z</td
 							>
-							<td class="flex flex-row items-center justify-end gap-3">
-								<a href={`/a/events/${event.id}`}>
-									<SquarePen class="text-xl" size="15" />
-								</a>
-								<button type="button" onclickcapture={() => deleteEvent(event.id)}>
-									<Trash2 size="15" class="text-error cursor-pointer" />
-								</button>
+							<td>
+								<div class="flex flex-row items-center justify-end gap-3">
+									<a href={`/a/events/${event.id}`}>
+										<SquarePen class="text-xl" size="15" />
+									</a>
+									<button type="button" onclickcapture={() => deleteEvent(event.id)}>
+										<Trash2 size="15" class="text-error cursor-pointer" />
+									</button>
+								</div>
 							</td>
 						</tr>
 					{/each}

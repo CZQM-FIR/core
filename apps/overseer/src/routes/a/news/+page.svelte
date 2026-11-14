@@ -55,13 +55,15 @@
 									.padStart(2, '0')}z</td
 							>
 							<td>{article.author ? article.author.name_full : 'CZQM Staff'}</td>
-							<td class="flex flex-row items-center justify-end gap-3">
-								<a href={`/a/news/${article.id}`}>
-									<SquarePen class="text-xl" size="15" />
-								</a>
-								<button type="button" onclickcapture={() => deleteNewsArticle(article.id)}>
-									<Trash2 size="15" class="text-error cursor-pointer" />
-								</button>
+							<td>
+								<div class="flex flex-row items-center justify-end gap-3">
+									<a href={`/a/news/${article.id}`}>
+										<SquarePen class="text-xl" size="15" />
+									</a>
+									<button type="button" onclickcapture={() => deleteNewsArticle(article.id)}>
+										<Trash2 size="15" class="text-error cursor-pointer" />
+									</button>
+								</div>
 							</td>
 						</tr>
 					{/each}
