@@ -534,6 +534,7 @@ async function toStudentSessionDetail(row: TrainingSessionRow) {
 		actualStartedAt: row.actualStartedAt,
 		actualEndedAt: row.actualEndedAt,
 		trainingNote: row.trainingNote,
+		cancellationReason: row.cancellationReason,
 		notesSubmitted,
 		instructorNotes: notesSubmitted ? row.instructorNotes : null,
 		positionTrained: notesSubmitted ? row.positionTrained : null,

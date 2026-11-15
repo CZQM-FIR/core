@@ -905,6 +905,7 @@ async function toInstructorSessionDetail(row: TrainingSessionRow, actioner: User
 		actualStartedAt: row.actualStartedAt,
 		actualEndedAt: row.actualEndedAt,
 		trainingNote: row.trainingNote,
+		cancellationReason: row.cancellationReason,
 		instructorNotes: row.instructorNotes,
 		positionTrained: row.positionTrained,
 		notesSubmittedAt: row.notesSubmittedAt,

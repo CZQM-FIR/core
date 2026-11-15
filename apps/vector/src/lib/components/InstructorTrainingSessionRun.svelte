@@ -564,6 +564,12 @@
 				<p class="mt-1 text-sm whitespace-pre-wrap">{session.trainingNote}</p>
 			</div>
 		{/if}
+		{#if session.status === 'cancelled' && session.cancellationReason}
+			<div class="bg-base-100 rounded-box mt-1 p-3">
+				<p class="text-xs font-semibold uppercase opacity-60">Reason for cancellation</p>
+				<p class="mt-1 text-sm whitespace-pre-wrap">{session.cancellationReason}</p>
+			</div>
+		{/if}
 	</div>
 </div>
 
