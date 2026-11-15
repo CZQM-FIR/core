@@ -13,6 +13,7 @@ type TrainingSessionEmailContext = {
 	startsAt: Date;
 	endsAt: Date;
 	previousScheduledByCid?: number;
+	cancellationReason?: string | null;
 };
 
 export async function notifyTrainingSessionEmails(
@@ -42,6 +43,7 @@ export async function notifyTrainingSessionEmails(
 		scheduledByCid: session.scheduledByCid,
 		startsAt: session.startsAt,
 		endsAt: session.endsAt,
+		cancellationReason: session.cancellationReason,
 		student: {
 			cid: student.cid,
 			name_full: student.name_full,

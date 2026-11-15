@@ -24,6 +24,7 @@ type QueueTrainingSessionEmailsInput = {
   scheduledByCid: number;
   startsAt: Date;
   endsAt: Date;
+  cancellationReason?: string | null;
   student: Participant;
   scheduler: Participant;
   previousScheduler?: Participant;
@@ -84,6 +85,16 @@ function buildEmailPayload(subject: string, paragraphs: string[]): string {
   return JSON.stringify({ subject, body, replyto, bcc });
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[char]!);
+}
+
 function getStudentCopy(
   event: TrainingSessionEmailEvent,
   input: QueueTrainingSessionEmailsInput,
@@ -136,6 +147,7 @@ function getStudentCopy(
           `Hello ${input.student.name_full} (${input.student.cid}),`,
           `The training session in ${input.courseName} has been cancelled.`,
           `Session time: ${sessionRange}`,
+          ...(input.cancellationReason ? [`Reason: ${escapeHtml(input.cancellationReason)}`] : []),
           `<a href=${sessionUrl}>View your session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
@@ -221,6 +233,7 @@ function getSchedulerCopy(
           `Hello ${input.scheduler.name_full} (${input.scheduler.cid}),`,
           `The training session with ${studentLabel} in ${input.courseName} has been cancelled.`,
           `Session time: ${sessionRange}`,
+          ...(input.cancellationReason ? [`Reason: ${escapeHtml(input.cancellationReason)}`] : []),
           `<a href=${sessionUrl}>View session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",

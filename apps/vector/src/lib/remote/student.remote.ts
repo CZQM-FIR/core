@@ -630,8 +630,13 @@ export const declineTrainingSession = command(
 );
 
 export const cancelTrainingSession = command(
-	TrainingSessionActionOptions,
-	async ({ courseId, taskId, sessionId }) => {
+	type({
+		courseId: CourseId,
+		taskId: 'number.integer >= 0',
+		sessionId: 'number.integer > 0',
+		'reason?': 'string'
+	}),
+	async ({ courseId, taskId, sessionId, reason }) => {
 		const user = await authorizeVectorStudentAccess();
 		const { course } = await assertStudentTrainingSessionAction(
 			courseId,
@@ -642,7 +647,7 @@ export const cancelTrainingSession = command(
 
 		let updated;
 		try {
-			updated = await TrainingSession.cancel(db, sessionId, user.cid);
+			updated = await TrainingSession.cancel(db, sessionId, user.cid, reason);
 		} catch (err) {
 			throw error(400, err instanceof Error ? err.message : 'Failed to cancel training session');
 		}

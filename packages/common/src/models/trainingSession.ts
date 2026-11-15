@@ -448,7 +448,12 @@ export class TrainingSession {
     db: DB,
     sessionId: number,
     actorCid: number,
+    reason?: string,
   ): Promise<TrainingSessionRow> {
+    const cancellationReason = reason?.trim() || null;
+    if (cancellationReason && cancellationReason.length > 2000) {
+      throw new Error("Cancellation reason must be at most 2000 characters");
+    }
     const [row] = await db
       .select()
       .from(trainingSessions)
@@ -483,7 +488,7 @@ export class TrainingSession {
 
     const [updated] = await db
       .update(trainingSessions)
-      .set({ status: "cancelled", updatedAt: new Date() })
+      .set({ status: "cancelled", cancellationReason, updatedAt: new Date() })
       .where(eq(trainingSessions.id, sessionId))
       .returning();
 

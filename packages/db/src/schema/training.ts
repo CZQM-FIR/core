@@ -110,6 +110,7 @@ export const trainingSessions = sqliteTable(
     startsAt: int("starts_at", { mode: "timestamp" }).notNull(),
     endsAt: int("ends_at", { mode: "timestamp" }).notNull(),
     status: text().notNull(),
+    cancellationReason: text("cancellation_reason"),
     trainingNote: text("training_note"),
     actualStartedAt: int("actual_started_at", { mode: "timestamp" }),
     actualEndedAt: int("actual_ended_at", { mode: "timestamp" }),

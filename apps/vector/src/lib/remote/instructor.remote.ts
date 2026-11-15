@@ -743,12 +743,13 @@ const CancelTrainingSessionOptions = type({
 	courseId: CourseId,
 	studentCid: 'number.integer > 0',
 	taskId: 'number.integer >= 0',
-	sessionId: 'number.integer > 0'
+	sessionId: 'number.integer > 0',
+	'reason?': 'string'
 });
 
 export const cancelTrainingSession = command(
 	CancelTrainingSessionOptions,
-	async ({ courseId, studentCid, taskId, sessionId }) => {
+	async ({ courseId, studentCid, taskId, sessionId, reason }) => {
 		const actioner = await authorizeVectorInstructorAccess();
 
 		const course = await Course.fetchById(courseId, db);
@@ -790,14 +791,15 @@ export const cancelTrainingSession = command(
 			throw error(403, 'Only the person who scheduled this session can cancel it');
 		}
 
+		let updated;
 		try {
-			await TrainingSession.cancel(db, sessionId, actioner.cid);
+			updated = await TrainingSession.cancel(db, sessionId, actioner.cid, reason);
 		} catch (err) {
 			throw error(400, err instanceof Error ? err.message : 'Failed to cancel training session');
 		}
 
 		try {
-			await notifyTrainingSessionEmails('cancelled', courseId, session, course);
+			await notifyTrainingSessionEmails('cancelled', courseId, updated, course);
 		} catch (err) {
 			console.error('Failed to queue training session emails', err);
 		}
