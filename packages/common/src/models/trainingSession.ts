@@ -14,6 +14,7 @@ export const TRAINING_SESSION_STATUSES = [
   "cancelled",
   "in_progress",
   "completed",
+  "no_show",
 ] as const;
 
 export type TrainingSessionStatus = (typeof TRAINING_SESSION_STATUSES)[number];
@@ -304,6 +305,26 @@ export class TrainingSession {
       .orderBy(trainingSessions.startsAt);
   }
 
+  /** Find no-show sessions where the user was the student or scheduler. */
+  static async fetchNoShowsForUser(
+    db: DB,
+    cid: number,
+  ): Promise<TrainingSessionRow[]> {
+    return db
+      .select()
+      .from(trainingSessions)
+      .where(
+        and(
+          eq(trainingSessions.status, "no_show"),
+          or(
+            eq(trainingSessions.studentCid, cid),
+            eq(trainingSessions.scheduledByCid, cid),
+          ),
+        ),
+      )
+      .orderBy(trainingSessions.startsAt);
+  }
+
   /** pending, confirmed, and in_progress sessions that overlap a time window. */
   static async fetchScheduledInWindow(
     db: DB,
@@ -444,6 +465,7 @@ export class TrainingSession {
     return updated;
   }
 
+  /** Cancel an eligible session without overwriting a concurrent status or scheduler change. */
   static async cancel(
     db: DB,
     sessionId: number,
@@ -489,12 +511,56 @@ export class TrainingSession {
     const [updated] = await db
       .update(trainingSessions)
       .set({ status: "cancelled", cancellationReason, updatedAt: new Date() })
-      .where(eq(trainingSessions.id, sessionId))
+      .where(
+        and(
+          eq(trainingSessions.id, sessionId),
+          eq(trainingSessions.status, row.status),
+          eq(trainingSessions.scheduledByCid, row.scheduledByCid),
+        ),
+      )
       .returning();
 
+    if (!updated) throw new Error("The session changed; refresh and try again");
     return updated;
   }
 
+  /** Mark a confirmed, unstarted session as a no-show after its scheduled start. */
+  static async markNoShow(
+    db: DB,
+    sessionId: number,
+    actorCid: number,
+  ): Promise<TrainingSessionRow> {
+    const row = await TrainingSession.fetchById(db, sessionId);
+    if (!row) throw new Error("Training session not found");
+    assertScheduler(row, actorCid);
+    const now = new Date();
+    if (row.status !== "confirmed" || row.actualStartedAt != null) {
+      throw new Error(
+        "Only confirmed sessions that have not started can be marked as no-show",
+      );
+    }
+    if (row.startsAt.getTime() >= now.getTime()) {
+      throw new Error("The session start time must have passed");
+    }
+    const [updated] = await db
+      .update(trainingSessions)
+      .set({ status: "no_show", updatedAt: now })
+      .where(
+        and(
+          eq(trainingSessions.id, sessionId),
+          eq(trainingSessions.scheduledByCid, actorCid),
+          eq(trainingSessions.status, "confirmed"),
+          isNull(trainingSessions.actualStartedAt),
+          lt(trainingSessions.startsAt, now),
+          eq(trainingSessions.startsAt, row.startsAt),
+        ),
+      )
+      .returning();
+    if (!updated) throw new Error("The session changed; refresh and try again");
+    return updated;
+  }
+
+  /** Start a confirmed session if it has not changed since it was loaded. */
   static async start(
     db: DB,
     sessionId: number,
@@ -518,9 +584,16 @@ export class TrainingSession {
         actualStartedAt: now,
         updatedAt: now,
       })
-      .where(eq(trainingSessions.id, sessionId))
+      .where(
+        and(
+          eq(trainingSessions.id, sessionId),
+          eq(trainingSessions.status, "confirmed"),
+          eq(trainingSessions.scheduledByCid, actorCid),
+        ),
+      )
       .returning();
 
+    if (!updated) throw new Error("The session changed; refresh and try again");
     return updated;
   }
 
@@ -553,6 +626,7 @@ export class TrainingSession {
     return updated;
   }
 
+  /** Record an eligible session as completed using its actual times. */
   static async completeAsBackdated(
     db: DB,
     sessionId: number,
@@ -581,12 +655,20 @@ export class TrainingSession {
         actualEndedAt: endedAt,
         updatedAt: now,
       })
-      .where(eq(trainingSessions.id, sessionId))
+      .where(
+        and(
+          eq(trainingSessions.id, sessionId),
+          eq(trainingSessions.status, row.status),
+          eq(trainingSessions.scheduledByCid, actorCid),
+        ),
+      )
       .returning();
 
+    if (!updated) throw new Error("The session changed; refresh and try again");
     return updated;
   }
 
+  /** Transfer an eligible session without overwriting a concurrent status change. */
   static async transfer(
     db: DB,
     sessionId: number,
@@ -622,12 +704,20 @@ export class TrainingSession {
         scheduledByCid: toCid,
         updatedAt: now,
       })
-      .where(eq(trainingSessions.id, sessionId))
+      .where(
+        and(
+          eq(trainingSessions.id, sessionId),
+          eq(trainingSessions.status, row.status),
+          eq(trainingSessions.scheduledByCid, row.scheduledByCid),
+        ),
+      )
       .returning();
 
+    if (!updated) throw new Error("The session changed; refresh and try again");
     return updated;
   }
 
+  /** Reschedule an eligible session without overwriting a concurrent status change. */
   static async reschedule(
     db: DB,
     sessionId: number,
@@ -656,9 +746,16 @@ export class TrainingSession {
         status: "pending",
         updatedAt: now,
       })
-      .where(eq(trainingSessions.id, sessionId))
+      .where(
+        and(
+          eq(trainingSessions.id, sessionId),
+          eq(trainingSessions.status, row.status),
+          eq(trainingSessions.scheduledByCid, actorCid),
+        ),
+      )
       .returning();
 
+    if (!updated) throw new Error("The session changed; refresh and try again");
     return updated;
   }
 
@@ -671,8 +768,12 @@ export class TrainingSession {
     const row = await TrainingSession.fetchById(db, sessionId);
     if (!row) throw new Error("Training session not found");
     assertScheduler(row, actorCid);
-    if (row.status === "cancelled" || row.status === "declined") {
-      throw new Error("Cannot edit training notes for a cancelled session");
+    if (
+      row.status === "cancelled" ||
+      row.status === "declined" ||
+      row.status === "no_show"
+    ) {
+      throw new Error("Cannot edit training notes for this session");
     }
     if (row.notesSubmittedAt) {
       throw new Error("Training notes are locked and cannot be edited");

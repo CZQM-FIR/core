@@ -119,6 +119,8 @@
 				return 'In progress';
 			case 'completed':
 				return 'Completed';
+			case 'no_show':
+				return 'No-show';
 		}
 	}
 
@@ -136,6 +138,8 @@
 				return 'badge-info';
 			case 'completed':
 				return 'badge-accent';
+			case 'no_show':
+				return 'badge-ghost';
 		}
 	}
 

@@ -6,10 +6,17 @@
 	const sessionsQuery = getMyTrainingSessions();
 
 	const attending = $derived(
-		(sessionsQuery.current ?? []).filter((item) => item.role === 'student')
+		(sessionsQuery.current ?? []).filter(
+			(item) => item.role === 'student' && item.session.status !== 'no_show'
+		)
 	);
 	const instructing = $derived(
-		(sessionsQuery.current ?? []).filter((item) => item.role === 'instructor')
+		(sessionsQuery.current ?? []).filter(
+			(item) => item.role === 'instructor' && item.session.status !== 'no_show'
+		)
+	);
+	const noShows = $derived(
+		(sessionsQuery.current ?? []).filter((item) => item.session.status === 'no_show')
 	);
 	const hasScheduledStudentSession = $derived(
 		attending.some((item) => item.session.status === 'confirmed')
@@ -67,6 +74,29 @@
 			<h2 class="text-xl font-semibold">Sessions you are instructing</h2>
 			<p class="text-sm opacity-70">Training sessions you have scheduled with students.</p>
 			{@render sessionCards(instructing, 'instructor')}
+		</section>
+	{/if}
+	{#if noShows.length > 0}
+		<section class="mb-8">
+			<h2 class="text-xl font-semibold">No-show sessions</h2>
+			<p class="text-sm opacity-70">Sessions marked as no-show do not block a new booking.</p>
+			<ul class="mt-4 space-y-2">
+				{#each noShows as item (item.session.id)}
+					<li>
+						<a
+							class="link link-primary"
+							href={item.role === 'student'
+								? `/sessions/${item.session.id}`
+								: `/i/sessions/${item.session.id}`}
+						>
+							{item.courseName} · {item.sessionDescription}
+							{#if item.role === 'instructor'}
+								· {item.studentName}{/if}
+							· {item.session.startsAt.toLocaleString()}
+						</a>
+					</li>
+				{/each}
+			</ul>
 		</section>
 	{/if}
 {/if}

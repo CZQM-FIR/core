@@ -844,6 +844,18 @@ async function requireSchedulerSession(sessionId: number, actionerCid: number) {
 	return session;
 }
 
+/** Mark a scheduled, confirmed session as a no-show for its assigned scheduler. */
+export const markTrainingSessionNoShow = command(SessionId, async (sessionId) => {
+	const actioner = await authorizeVectorInstructorAccess();
+	const session = await requireSchedulerSession(sessionId, actioner.cid);
+	try {
+		await TrainingSession.markNoShow(db, sessionId, actioner.cid);
+	} catch (err) {
+		remoteCommandError(err, 'Failed to mark session as no-show');
+	}
+	refreshInstructorSessionQueries(session);
+});
+
 async function actorCanTransferSession(actioner: User, session: TrainingSessionRow) {
 	if (
 		!canTransferTrainingSession(
@@ -929,7 +941,12 @@ async function toInstructorSessionDetail(row: TrainingSessionRow, actioner: User
 		canReschedule: canManage && !isBackdated && (status === 'pending' || status === 'confirmed'),
 		canCompleteAsBackdated:
 			canManage && !isBackdated && (status === 'pending' || status === 'confirmed'),
-		canSaveNotes: canManage && !notesLocked && status !== 'cancelled' && status !== 'declined',
+		canSaveNotes:
+			canManage &&
+			!notesLocked &&
+			status !== 'cancelled' &&
+			status !== 'declined' &&
+			status !== 'no_show',
 		canSubmitNotes: canManage && canSubmitTrainingNotesToVatcan(status) && !notesLocked,
 		student: {
 			cid: student.cid,
