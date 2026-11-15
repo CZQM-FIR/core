@@ -115,6 +115,7 @@ export const getMyTrainingSessions = query(async () => {
 
 		return {
 			session,
+			noShowMarkedAt: row.status === 'no_show' ? row.updatedAt : null,
 			courseId: row.courseId,
 			courseName: course?.name ?? 'Course',
 			taskId: row.taskId,

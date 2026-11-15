@@ -305,17 +305,20 @@ export class TrainingSession {
       .orderBy(trainingSessions.startsAt);
   }
 
-  /** Find no-show sessions where the user was the student or scheduler. */
+  /** Find no-shows marked in the last 48 hours for the student or scheduler. */
   static async fetchNoShowsForUser(
     db: DB,
     cid: number,
+    now = new Date(),
   ): Promise<TrainingSessionRow[]> {
+    const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000);
     return db
       .select()
       .from(trainingSessions)
       .where(
         and(
           eq(trainingSessions.status, "no_show"),
+          gt(trainingSessions.updatedAt, cutoff),
           or(
             eq(trainingSessions.studentCid, cid),
             eq(trainingSessions.scheduledByCid, cid),

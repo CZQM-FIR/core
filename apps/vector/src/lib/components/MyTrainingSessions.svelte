@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createSubscriber } from 'svelte/reactivity';
 	import TrainingSessionPendingCard from '$lib/components/TrainingSessionPendingCard.svelte';
 	import TrainingSessionStudentPrepNote from '$lib/components/TrainingSessionStudentPrepNote.svelte';
 	import { getMyTrainingSessions } from '$lib/remote/users.remote';
@@ -15,9 +16,17 @@
 			(item) => item.role === 'instructor' && item.session.status !== 'no_show'
 		)
 	);
-	const noShows = $derived(
-		(sessionsQuery.current ?? []).filter((item) => item.session.status === 'no_show')
-	);
+	const subscribeToNow = createSubscriber((update) => {
+		const interval = setInterval(update, 1000);
+		return () => clearInterval(interval);
+	});
+	const noShows = $derived.by(() => {
+		const items = (sessionsQuery.current ?? []).filter((item) => item.noShowMarkedAt != null);
+		if (items.length === 0) return [];
+		subscribeToNow();
+		const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+		return items.filter((item) => item.noShowMarkedAt!.getTime() > cutoff);
+	});
 	const hasScheduledStudentSession = $derived(
 		attending.some((item) => item.session.status === 'confirmed')
 	);
@@ -79,7 +88,9 @@
 	{#if noShows.length > 0}
 		<section class="mb-8">
 			<h2 class="text-xl font-semibold">No-show sessions</h2>
-			<p class="text-sm opacity-70">Sessions marked as no-show do not block a new booking.</p>
+			<p class="text-sm opacity-70">
+				No-shows appear here for 48 hours and do not block a new booking.
+			</p>
 			<ul class="mt-4 space-y-2">
 				{#each noShows as item (item.session.id)}
 					<li>

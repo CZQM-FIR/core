@@ -42,7 +42,8 @@ test('no-show eligibility, history, booking, and concurrent start', async () => 
 	await assert.rejects(TrainingSession.markNoShow(db, 2, 1), /confirmed sessions/);
 	await assert.rejects(TrainingSession.markNoShow(db, 3, 1), /start time/);
 	await assert.rejects(TrainingSession.markNoShow(db, 4, 1), /not started/);
-	assert.equal((await TrainingSession.markNoShow(db, 1, 1)).status, 'no_show');
+	const marked = await TrainingSession.markNoShow(db, 1, 1);
+	assert.equal(marked.status, 'no_show');
 	assert.equal(
 		await TrainingSession.fetchActiveForTask(db, { studentCid: 2, courseId: 'test1', taskId: 1 }),
 		null
@@ -56,6 +57,21 @@ test('no-show eligibility, history, booking, and concurrent start', async () => 
 		[1]
 	);
 	assert.deepEqual(await TrainingSession.fetchNoShowsForUser(db, 3), []);
+	const markedAt = marked.updatedAt.getTime();
+	assert.deepEqual(
+		(
+			await TrainingSession.fetchNoShowsForUser(
+				db,
+				2,
+				new Date(markedAt + 48 * 60 * 60 * 1000 - 1000)
+			)
+		).map((row) => row.id),
+		[1]
+	);
+	assert.deepEqual(
+		await TrainingSession.fetchNoShowsForUser(db, 2, new Date(markedAt + 48 * 60 * 60 * 1000)),
+		[]
+	);
 	await assert.rejects(TrainingSession.saveNotes(db, 1, 1, {}), /Cannot edit/);
 
 	// Force the no-show to be written after start has read the confirmed row.
