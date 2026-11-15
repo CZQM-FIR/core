@@ -67,7 +67,11 @@
 		confirmedSession,
 		sessionId,
 		onComplete
-	}: Props & { sessionId?: number; onComplete?: () => void } = $props();
+	}: Props & {
+		sessionId?: number;
+		onComplete?: () => void;
+		confirmedSession?: { startsAt: Date; endsAt: Date };
+	} = $props();
 
 	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 	const slotsPerDay = ((DAY_END_HOUR - DAY_START_HOUR) * 60) / SLOT_MINUTES;
@@ -730,7 +734,12 @@
 	);
 
 	$effect(() => {
-		void (courseId, taskId, mode, cid, sessionId, confirmedSession);
+		void courseId;
+		void taskId;
+		void mode;
+		void cid;
+		void sessionId;
+		void confirmedSession;
 		loadAvailability();
 	});
 </script>

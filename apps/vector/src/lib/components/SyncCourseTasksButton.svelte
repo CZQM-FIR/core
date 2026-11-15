@@ -5,7 +5,7 @@
 		onSync,
 		error = $bindable<string | null>(null)
 	}: {
-		onSync: () => Promise<void>;
+		onSync: () => Promise<unknown>;
 		error?: string | null;
 	} = $props();
 

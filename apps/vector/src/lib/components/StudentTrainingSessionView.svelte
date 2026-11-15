@@ -22,6 +22,7 @@
 	let cancelling = $state(false);
 	let actionError = $state<string | null>(null);
 	let cancelError = $state<string | null>(null);
+	let cancellationReason = $state('');
 	let cancelDialog = $state<HTMLDialogElement | null>(null);
 
 	const subscribeToNow = createSubscriber((update) => {
@@ -178,6 +179,7 @@
 
 	function openCancelDialog() {
 		cancelError = null;
+		cancellationReason = '';
 		cancelDialog?.showModal();
 	}
 
@@ -190,7 +192,8 @@
 			await cancelTrainingSession({
 				courseId: session.course.id,
 				taskId: session.task.taskId,
-				sessionId: session.id
+				sessionId: session.id,
+				reason: cancellationReason
 			});
 			await refreshAfterStudentSessionAction(session.course.id, session.id);
 			cancelDialog?.close();
@@ -311,6 +314,12 @@
 				<p class="mt-1 text-sm whitespace-pre-wrap">{session.trainingNote}</p>
 			</div>
 		{/if}
+		{#if session.status === 'cancelled' && session.cancellationReason}
+			<div class="bg-base-100 rounded-box mt-1 p-3">
+				<p class="text-xs font-semibold uppercase opacity-60">Reason for cancellation</p>
+				<p class="mt-1 text-sm whitespace-pre-wrap">{session.cancellationReason}</p>
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -372,6 +381,21 @@
 		<h3 class="text-lg font-bold">Cancel training session</h3>
 		<p class="py-2 text-sm">Are you sure you want to cancel this training session?</p>
 		<p class="text-sm opacity-80">{formatSessionRange(session.startsAt, session.endsAt)}</p>
+		<div class="form-control mt-4">
+			<label class="label-text" for="student-cancellation-reason"
+				>Reason for cancellation (optional)</label
+			>
+			<p id="student-cancellation-reason-help" class="text-sm opacity-70">
+				This reason will be included in the cancellation email and shown on the session page.
+			</p>
+			<textarea
+				id="student-cancellation-reason"
+				aria-describedby="student-cancellation-reason-help"
+				class="textarea textarea-bordered mt-2 w-full"
+				bind:value={cancellationReason}
+				maxlength="2000"
+				disabled={cancelling}></textarea>
+		</div>
 
 		{#if cancelError}
 			<p class="text-error mt-2 text-sm">{cancelError}</p>

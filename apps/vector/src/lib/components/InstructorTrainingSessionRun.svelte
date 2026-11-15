@@ -49,6 +49,7 @@
 	let submitting = $state(false);
 	let unsubmitting = $state(false);
 	let cancelError = $state<string | null>(null);
+	let cancellationReason = $state('');
 	let transferError = $state<string | null>(null);
 	let submitError = $state<string | null>(null);
 	let unsubmitError = $state<string | null>(null);
@@ -275,6 +276,7 @@
 
 	function openCancelDialog() {
 		cancelError = null;
+		cancellationReason = '';
 		cancelDialog?.showModal();
 	}
 
@@ -288,7 +290,8 @@
 				courseId: session.course.id,
 				studentCid: session.student.cid,
 				taskId: session.task.taskId,
-				sessionId: session.id
+				sessionId: session.id,
+				reason: cancellationReason
 			});
 			cancelDialog?.close();
 		} catch (err) {
@@ -561,6 +564,12 @@
 				<p class="mt-1 text-sm whitespace-pre-wrap">{session.trainingNote}</p>
 			</div>
 		{/if}
+		{#if session.status === 'cancelled' && session.cancellationReason}
+			<div class="bg-base-100 rounded-box mt-1 p-3">
+				<p class="text-xs font-semibold uppercase opacity-60">Reason for cancellation</p>
+				<p class="mt-1 text-sm whitespace-pre-wrap">{session.cancellationReason}</p>
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -645,6 +654,16 @@
 		<p class="mt-2 text-sm opacity-80">
 			A training note will not be submitted to VATCAN for a cancelled session.
 		</p>
+		<label class="form-control mt-4">
+			<span class="label-text">Reason for cancellation (optional)</span>
+			<textarea
+				class="textarea textarea-bordered mt-2 w-full"
+				bind:value={cancellationReason}
+				maxlength="2000"
+				disabled={cancelling}></textarea>
+			<span class="text-sm opacity-70">This reason will be included in the cancellation email.</span
+			>
+		</label>
 
 		{#if cancelError}
 			<p class="text-error mt-2 text-sm">{cancelError}</p>

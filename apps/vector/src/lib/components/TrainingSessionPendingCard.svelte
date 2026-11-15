@@ -40,6 +40,7 @@
 	let cancelling = $state(false);
 	let actionError = $state<string | null>(null);
 	let cancelError = $state<string | null>(null);
+	let cancellationReason = $state('');
 	let cancelDialog = $state<HTMLDialogElement | null>(null);
 
 	const canCancel = $derived(
@@ -190,10 +191,16 @@
 					courseId,
 					studentCid,
 					taskId,
-					sessionId: session.id
+					sessionId: session.id,
+					reason: cancellationReason
 				});
 			} else {
-				await cancelTrainingSessionAsStudent({ courseId, taskId, sessionId: session.id });
+				await cancelTrainingSessionAsStudent({
+					courseId,
+					taskId,
+					sessionId: session.id,
+					reason: cancellationReason
+				});
 				await refreshAfterStudentSessionAction(courseId, session.id);
 			}
 			cancelDialog?.close();
@@ -213,6 +220,7 @@
 
 	function openCancelDialog() {
 		cancelError = null;
+		cancellationReason = '';
 		cancelDialog?.showModal();
 	}
 </script>
@@ -322,6 +330,16 @@
 		<h3 class="text-lg font-bold">Cancel training session</h3>
 		<p class="py-2 text-sm">Are you sure you want to cancel this training session?</p>
 		<p class="text-sm opacity-80">{sessionRangeLabel}</p>
+		<label class="form-control mt-4">
+			<span class="label-text">Reason for cancellation (optional)</span>
+			<textarea
+				class="textarea textarea-bordered mt-2 w-full"
+				bind:value={cancellationReason}
+				maxlength="2000"
+				disabled={cancelling}></textarea>
+			<span class="text-sm opacity-70">This reason will be included in the cancellation email.</span
+			>
+		</label>
 
 		{#if cancelError}
 			<p class="text-error mt-2 text-sm">{cancelError}</p>
