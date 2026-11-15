@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Database schema changes
+- This project uses `drizzle-kit push` to apply schema changes. Do not create separate
+  migration scripts for ordinary schema changes unless explicitly requested.
+
 ## Cursor Cloud specific instructions
 
 This is a pnpm + Turborepo monorepo (`with-svelte`). Standard scripts live in the root
