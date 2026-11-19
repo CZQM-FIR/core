@@ -4,6 +4,7 @@ import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import type { DB } from '@czqm/common';
 import { TrainingSession } from '../../../packages/common/src/models/trainingSession';
+import { queueNoShowEmails } from '../../../packages/common/src/notifications/trainingSession';
 
 test('no-show eligibility, history, booking, and concurrent start', async () => {
 	const client = createClient({ url: ':memory:' });
@@ -16,6 +17,13 @@ test('no-show eligibility, history, booking, and concurrent start', async () => 
 			actual_ended_at INTEGER, instructor_notes TEXT, position_trained TEXT,
 			objective_results TEXT, notes_submitted_at INTEGER, vatcan_note_id INTEGER,
 			is_backdated INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+		)
+	`);
+	await client.execute(`
+		CREATE TABLE notifications (
+			id TEXT PRIMARY KEY, timestamp INTEGER NOT NULL, userId INTEGER NOT NULL,
+			type TEXT NOT NULL, message TEXT NOT NULL, sent INTEGER, buttons TEXT,
+			location TEXT NOT NULL DEFAULT 'email'
 		)
 	`);
 	const db = drizzle({ client }) as unknown as DB;
@@ -37,6 +45,9 @@ test('no-show eligibility, history, booking, and concurrent start', async () => 
 	await insert(3, 'confirmed', now + 600);
 	await insert(4, 'confirmed', now - 600, now - 300);
 	await insert(5, 'confirmed', now - 600);
+	await insert(6, 'confirmed', now - 600);
+	await insert(7, 'confirmed', now - 600);
+	await insert(8, 'confirmed', now - 600);
 
 	await assert.rejects(TrainingSession.markNoShow(db, 1, 2), /scheduled this session/);
 	await assert.rejects(TrainingSession.markNoShow(db, 2, 1), /confirmed sessions/);
@@ -85,6 +96,58 @@ test('no-show eligibility, history, booking, and concurrent start', async () => 
 	try {
 		await assert.rejects(TrainingSession.start(db, 5, 1), /session changed/);
 		assert.equal((await fetch(db, 5))?.status, 'no_show');
+		const input = {
+			sessionId: 6,
+			courseName: '<Course>',
+			startsAt: new Date((now - 600) * 1000),
+			student: { cid: 2, name_full: 'Student', displayName: '<Student>' },
+			scheduler: { cid: 1, name_full: 'Mentor', displayName: 'Mentor' },
+			recipients: [
+				{ cid: 3, email: 'chief@example.com', name_full: 'Chief' },
+				{ cid: 3, email: 'chief@example.com', name_full: 'Chief' },
+				{ cid: 4, email: 'chief2@example.com', name_full: 'Chief 2' }
+			],
+			vectorUrl: 'https://vector.example.com/'
+		};
+		await db.transaction(async (tx) => {
+			await TrainingSession.markNoShow(tx, 6, 1);
+			await queueNoShowEmails(tx, input);
+		});
+		const rows = (await client.execute('SELECT userId, type, location, message FROM notifications'))
+			.rows;
+		assert.equal(rows.length, 2);
+		assert.deepEqual(rows.map((row) => row.userId).sort(), [3, 4]);
+		for (const row of rows) {
+			const payload = JSON.parse(String(row.message));
+			assert.equal(row.type, 'trainingUpdates');
+			assert.equal(row.location, 'email');
+			assert.match(payload.to, /^chief2?@example\.com$/);
+			assert.match(payload.body, /&lt;Student&gt;/);
+			assert.match(payload.body, /&lt;Course&gt;/);
+			assert.match(payload.body, /https:\/\/vector\.example\.com\/i\/sessions\/6/);
+		}
+		await assert.rejects(
+			db.transaction(async (tx) => {
+				await TrainingSession.markNoShow(tx, 7, 1);
+				await queueNoShowEmails(tx, { ...input, recipients: [] });
+			}),
+			/no chief instructor/i
+		);
+		assert.equal((await fetch(db, 7))?.status, 'confirmed');
+		await assert.rejects(TrainingSession.markNoShow(db, 6, 1), /confirmed sessions/);
+		assert.equal((await client.execute('SELECT * FROM notifications')).rows.length, 2);
+		await client.execute(`
+			CREATE TRIGGER reject_notification BEFORE INSERT ON notifications
+			BEGIN SELECT RAISE(ABORT, 'notification queue unavailable'); END
+		`);
+		await assert.rejects(
+			db.transaction(async (tx) => {
+				await TrainingSession.markNoShow(tx, 8, 1);
+				await queueNoShowEmails(tx, input);
+			})
+		);
+		assert.equal((await fetch(db, 8))?.status, 'confirmed');
+		assert.equal((await client.execute('SELECT * FROM notifications')).rows.length, 2);
 	} finally {
 		TrainingSession.fetchById = fetch;
 		client.close();

@@ -253,8 +253,9 @@ export class TrainingSession {
     };
   }
 
+  /** Fetch a training session by ID, returning null when it does not exist. */
   static async fetchById(
-    db: DB,
+    db: Pick<DB, "select">,
     sessionId: number,
   ): Promise<TrainingSessionRow | null> {
     const [row] = await db
@@ -529,7 +530,7 @@ export class TrainingSession {
 
   /** Mark a confirmed, unstarted session as a no-show after its scheduled start. */
   static async markNoShow(
-    db: DB,
+    db: Pick<DB, "select" | "update">,
     sessionId: number,
     actorCid: number,
   ): Promise<TrainingSessionRow> {
