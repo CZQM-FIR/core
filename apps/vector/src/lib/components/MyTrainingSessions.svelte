@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createSubscriber } from 'svelte/reactivity';
 	import TrainingSessionPendingCard from '$lib/components/TrainingSessionPendingCard.svelte';
 	import TrainingSessionStudentPrepNote from '$lib/components/TrainingSessionStudentPrepNote.svelte';
 	import { getMyTrainingSessions } from '$lib/remote/users.remote';
@@ -6,11 +7,26 @@
 	const sessionsQuery = getMyTrainingSessions();
 
 	const attending = $derived(
-		(sessionsQuery.current ?? []).filter((item) => item.role === 'student')
+		(sessionsQuery.current ?? []).filter(
+			(item) => item.role === 'student' && item.session.status !== 'no_show'
+		)
 	);
 	const instructing = $derived(
-		(sessionsQuery.current ?? []).filter((item) => item.role === 'instructor')
+		(sessionsQuery.current ?? []).filter(
+			(item) => item.role === 'instructor' && item.session.status !== 'no_show'
+		)
 	);
+	const subscribeToNow = createSubscriber((update) => {
+		const interval = setInterval(update, 1000);
+		return () => clearInterval(interval);
+	});
+	const noShows = $derived.by(() => {
+		const items = (sessionsQuery.current ?? []).filter((item) => item.noShowMarkedAt != null);
+		if (items.length === 0) return [];
+		subscribeToNow();
+		const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+		return items.filter((item) => item.noShowMarkedAt!.getTime() > cutoff);
+	});
 	const hasScheduledStudentSession = $derived(
 		attending.some((item) => item.session.status === 'confirmed')
 	);
@@ -67,6 +83,31 @@
 			<h2 class="text-xl font-semibold">Sessions you are instructing</h2>
 			<p class="text-sm opacity-70">Training sessions you have scheduled with students.</p>
 			{@render sessionCards(instructing, 'instructor')}
+		</section>
+	{/if}
+	{#if noShows.length > 0}
+		<section class="mb-8">
+			<h2 class="text-xl font-semibold">No-show sessions</h2>
+			<p class="text-sm opacity-70">
+				No-shows appear here for 48 hours and do not block a new booking.
+			</p>
+			<ul class="mt-4 space-y-2">
+				{#each noShows as item (item.session.id)}
+					<li>
+						<a
+							class="link link-primary"
+							href={item.role === 'student'
+								? `/sessions/${item.session.id}`
+								: `/i/sessions/${item.session.id}`}
+						>
+							{item.courseName} · {item.sessionDescription}
+							{#if item.role === 'instructor'}
+								· {item.studentName}{/if}
+							· {item.session.startsAt.toLocaleString()}
+						</a>
+					</li>
+				{/each}
+			</ul>
 		</section>
 	{/if}
 {/if}

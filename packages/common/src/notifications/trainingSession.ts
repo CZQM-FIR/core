@@ -65,7 +65,11 @@ function formatSessionRange(startsAt: Date, endsAt: Date): string {
   return `${startDateLabel}, ${startTime} - ${endDateLabel}, ${endTime}`;
 }
 
-function buildEmailPayload(subject: string, paragraphs: string[]): string {
+function buildEmailPayload(
+  subject: string,
+  paragraphs: string[],
+  to?: string,
+): string {
   const replyto = "administration@czqm.ca";
   const bcc: string[] = [];
   const body = /*html*/ `
@@ -82,17 +86,21 @@ function buildEmailPayload(subject: string, paragraphs: string[]): string {
   </html>
   `;
 
-  return JSON.stringify({ subject, body, replyto, bcc });
+  return JSON.stringify({ subject, body, replyto, bcc, ...(to ? { to } : {}) });
 }
 
 function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  })[char]!);
+  return value.replace(
+    /[&<>"']/g,
+    (char) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[char]!,
+  );
 }
 
 function getStudentCopy(
@@ -147,7 +155,9 @@ function getStudentCopy(
           `Hello ${input.student.name_full} (${input.student.cid}),`,
           `The training session in ${input.courseName} has been cancelled.`,
           `Session time: ${sessionRange}`,
-          ...(input.cancellationReason ? [`Reason: ${escapeHtml(input.cancellationReason)}`] : []),
+          ...(input.cancellationReason
+            ? [`Reason: ${escapeHtml(input.cancellationReason)}`]
+            : []),
           `<a href=${sessionUrl}>View your session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
@@ -233,7 +243,9 @@ function getSchedulerCopy(
           `Hello ${input.scheduler.name_full} (${input.scheduler.cid}),`,
           `The training session with ${studentLabel} in ${input.courseName} has been cancelled.`,
           `Session time: ${sessionRange}`,
-          ...(input.cancellationReason ? [`Reason: ${escapeHtml(input.cancellationReason)}`] : []),
+          ...(input.cancellationReason
+            ? [`Reason: ${escapeHtml(input.cancellationReason)}`]
+            : []),
           `<a href=${sessionUrl}>View session in Vector</a>`,
           "Best regards,",
           "CZQM Training Team",
@@ -339,4 +351,62 @@ export async function queueTrainingSessionEmails(
   }
 
   await db.insert(notifications).values(rows);
+}
+
+export type QueueNoShowEmailsInput = {
+  sessionId: number;
+  courseName: string;
+  startsAt: Date;
+  student: Participant;
+  scheduler: Participant;
+  recipients: { cid: number; email: string; name_full: string }[];
+  vectorUrl: string;
+};
+
+/** Queue a no-show email for each chief instructor, using the existing email worker. */
+export async function queueNoShowEmails(
+  db: Pick<DB, "insert">,
+  input: QueueNoShowEmailsInput,
+): Promise<void> {
+  if (input.recipients.length === 0) {
+    throw new Error(
+      "No chief instructor is available to receive the no-show notification",
+    );
+  }
+  const sessionUrl = `${input.vectorUrl.replace(/\/$/, "")}/i/sessions/${input.sessionId}`;
+  const start = input.startsAt
+    .toISOString()
+    .replace("T", " ")
+    .replace(".000Z", " UTC");
+  const timestamp = new Date();
+  const recipients = [
+    ...new Map(
+      input.recipients.map((recipient) => [recipient.cid, recipient]),
+    ).values(),
+  ];
+  await db.insert(notifications).values(
+    recipients.map((recipient) => {
+      const message = buildEmailPayload(
+        "CZQM - Training session no-show",
+        [
+          `Hello ${escapeHtml(recipient.name_full)},`,
+          `${escapeHtml(input.student.displayName)} (${input.student.cid}) was marked as a no-show for ${escapeHtml(input.courseName)}.`,
+          `Scheduled by: ${escapeHtml(input.scheduler.displayName)} (${input.scheduler.cid})`,
+          `Scheduled start: ${start}`,
+          `<a href="${escapeHtml(sessionUrl)}">View the session in Vector</a>`,
+          "Best regards,",
+          "CZQM Training Team",
+        ],
+        // Direct addressing makes this operational alert independent of optional preferences.
+        recipient.email,
+      );
+      return {
+        timestamp,
+        userId: recipient.cid,
+        type: "trainingUpdates",
+        location: "email" as const,
+        message,
+      };
+    }),
+  );
 }

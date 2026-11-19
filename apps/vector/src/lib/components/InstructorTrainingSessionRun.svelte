@@ -18,6 +18,7 @@
 		endTrainingSession,
 		getInstructorTrainingSession,
 		getTrainingSessionTransferTargets,
+		markTrainingSessionNoShow,
 		saveTrainingSessionNotes,
 		startTrainingSession,
 		submitTrainingSessionNotes,
@@ -44,6 +45,7 @@
 	let actionError = $state<string | null>(null);
 	let starting = $state(false);
 	let ending = $state(false);
+	let markingNoShow = $state(false);
 	let cancelling = $state(false);
 	let transferring = $state(false);
 	let submitting = $state(false);
@@ -56,6 +58,7 @@
 	let rescheduleOpen = $state(false);
 	let selectedTransferCid = $state('');
 	let cancelDialog = $state<HTMLDialogElement | null>(null);
+	let noShowDialog = $state<HTMLDialogElement | null>(null);
 	let transferDialog = $state<HTMLDialogElement | null>(null);
 	let rescheduleDialog = $state<HTMLDialogElement | null>(null);
 	let backdatedDialog = $state<HTMLDialogElement | null>(null);
@@ -76,14 +79,21 @@
 	});
 
 	const actionBusy = $derived(
-		starting || ending || cancelling || transferring || submitting || unsubmitting
+		starting || ending || markingNoShow || cancelling || transferring || submitting || unsubmitting
 	);
+	const canMarkNoShow = $derived.by(() => {
+		if (!session.canManage || session.status !== 'confirmed' || session.actualStartedAt != null)
+			return false;
+		subscribeToNow();
+		return new Date().getTime() > session.startsAt.getTime();
+	});
 	const achievedCount = $derived(objectiveResults.filter((result) => result.achieved).length);
 	const allObjectivesAchieved = $derived(
 		objectiveResults.length > 0 && achievedCount === objectiveResults.length
 	);
 	const objectiveSummary = $derived.by(() => {
 		if (objectiveResults.length === 0) return null;
+		if (session.status === 'no_show') return 'The session was marked as a no-show.';
 		const count = `${achievedCount} of ${objectiveResults.length} objectives achieved`;
 		if (session.notesLocked) {
 			return session.taskComplete
@@ -105,6 +115,7 @@
 					session.canReschedule ||
 					session.canStart ||
 					session.canEnd ||
+					canMarkNoShow ||
 					session.canCompleteAsBackdated ||
 					session.canSubmitNotes ||
 					session.canUnsubmitNotes))
@@ -197,6 +208,8 @@
 				return 'In progress';
 			case 'completed':
 				return 'Completed';
+			case 'no_show':
+				return 'No-show';
 		}
 	}
 
@@ -214,6 +227,8 @@
 				return 'badge-info';
 			case 'completed':
 				return 'badge-accent';
+			case 'no_show':
+				return 'badge-ghost';
 		}
 	}
 
@@ -271,6 +286,21 @@
 			actionError = remoteErrorMessage(err, 'Failed to end training session');
 		} finally {
 			ending = false;
+		}
+	}
+
+	async function handleNoShow() {
+		if (!canMarkNoShow) return;
+		markingNoShow = true;
+		actionError = null;
+		try {
+			await markTrainingSessionNoShow(session.id);
+			noShowDialog?.close();
+		} catch (err) {
+			noShowDialog?.close();
+			actionError = remoteErrorMessage(err, 'Failed to mark session as no-show');
+		} finally {
+			markingNoShow = false;
 		}
 	}
 
@@ -453,6 +483,16 @@
 				{/if}
 			</button>
 		{/if}
+		{#if canMarkNoShow}
+			<button
+				type="button"
+				class="btn btn-outline btn-error"
+				disabled={actionBusy}
+				onclick={() => noShowDialog?.showModal()}
+			>
+				Mark as no-show
+			</button>
+		{/if}
 		{#if session.canSubmitNotes}
 			<button
 				type="button"
@@ -517,8 +557,29 @@
 {/if}
 
 {#if actionError}
-	<p class="text-error mt-3 text-sm">{actionError}</p>
+	<p class="text-error mt-3 text-sm" role="alert">{actionError}</p>
 {/if}
+
+<dialog bind:this={noShowDialog} class="modal">
+	<div class="modal-box">
+		<h2 class="text-lg font-semibold">Mark session as no-show?</h2>
+		<p class="mt-2">
+			This will close the session without completing the training task, allowing a replacement
+			session to be scheduled.
+		</p>
+		<div class="modal-action">
+			<button
+				type="button"
+				class="btn"
+				disabled={markingNoShow}
+				onclick={() => noShowDialog?.close()}>Go back</button
+			>
+			<button type="button" class="btn btn-error" disabled={markingNoShow} onclick={handleNoShow}>
+				{markingNoShow ? 'Marking...' : 'Mark as no-show'}
+			</button>
+		</div>
+	</div>
+</dialog>
 
 <div class="card bg-base-200 mt-6 shadow-sm">
 	<div class="card-body gap-2">
@@ -641,6 +702,10 @@
 		{:else if session.status === 'cancelled'}
 			<p class="text-sm opacity-80">
 				This session was cancelled. Training notes were not submitted to VATCAN.
+			</p>
+		{:else if session.status === 'no_show'}
+			<p class="text-sm opacity-80">
+				This session was marked as a no-show. No training note is required.
 			</p>
 		{/if}
 	</div>

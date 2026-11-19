@@ -62,7 +62,11 @@ export const getCurrentUserInfo = query(async () => {
 
 export const getMyTrainingSessions = query(async () => {
 	const actioner = await authorizeVectorStudentOrInstructorAccess();
-	const rows = await TrainingSession.fetchActiveForUser(db, actioner.cid);
+	const [activeRows, noShows] = await Promise.all([
+		TrainingSession.fetchActiveForUser(db, actioner.cid),
+		TrainingSession.fetchNoShowsForUser(db, actioner.cid)
+	]);
+	const rows = [...activeRows, ...noShows.reverse()];
 	if (rows.length === 0) return [];
 
 	const courseIds = [...new Set(rows.map((row) => row.courseId))];
@@ -111,6 +115,7 @@ export const getMyTrainingSessions = query(async () => {
 
 		return {
 			session,
+			noShowMarkedAt: row.status === 'no_show' ? row.updatedAt : null,
 			courseId: row.courseId,
 			courseName: course?.name ?? 'Course',
 			taskId: row.taskId,

@@ -67,6 +67,7 @@ import {
 } from './auth';
 import { getMyTrainingSessions } from './users.remote';
 import { notifyTrainingSessionEmails } from '$lib/trainingSessionEmails';
+import { queueNoShowEmails } from '@czqm/common/notifications';
 import { notifyCourseEnrollmentEmail } from '$lib/courseEnrollmentEmails';
 import vectorEnv from '$lib/env';
 import { notifyTrainingNotesSubmittedEmail } from '$lib/trainingNotesEmails';
@@ -844,6 +845,50 @@ async function requireSchedulerSession(sessionId: number, actionerCid: number) {
 	return session;
 }
 
+/** Mark an eligible session as a no-show and queue emails to the chief instructor. */
+export const markTrainingSessionNoShow = command(SessionId, async (sessionId) => {
+	const actioner = await authorizeVectorInstructorAccess();
+	const session = await requireSchedulerSession(sessionId, actioner.cid);
+	const [course, student, chiefs] = await Promise.all([
+		Course.fetchById(session.courseId, db),
+		User.fromCid(db, session.studentCid),
+		User.fromFlag(db, 'chief-instructor', USER_FETCH_MINIMAL)
+	]);
+	if (!course || !student) throw error(404, 'Course or student not found');
+	if (chiefs.length === 0) {
+		throw error(400, 'No chief instructor is available to receive the no-show notification');
+	}
+	try {
+		await db.transaction(async (tx) => {
+			const updated = await TrainingSession.markNoShow(tx, sessionId, actioner.cid);
+			await queueNoShowEmails(tx, {
+				sessionId,
+				courseName: course.name,
+				startsAt: updated.startsAt,
+				student: {
+					cid: student.cid,
+					name_full: student.name_full,
+					displayName: student.displayName
+				},
+				scheduler: {
+					cid: actioner.cid,
+					name_full: actioner.name_full,
+					displayName: actioner.displayName
+				},
+				recipients: chiefs.map((chief) => ({
+					cid: chief.cid,
+					email: chief.email,
+					name_full: chief.name_full
+				})),
+				vectorUrl: vectorEnv.PUBLIC_VECTOR_URL
+			});
+		});
+	} catch (err) {
+		remoteCommandError(err, 'Failed to mark session as no-show');
+	}
+	refreshInstructorSessionQueries(session);
+});
+
 async function actorCanTransferSession(actioner: User, session: TrainingSessionRow) {
 	if (
 		!canTransferTrainingSession(
@@ -929,7 +974,12 @@ async function toInstructorSessionDetail(row: TrainingSessionRow, actioner: User
 		canReschedule: canManage && !isBackdated && (status === 'pending' || status === 'confirmed'),
 		canCompleteAsBackdated:
 			canManage && !isBackdated && (status === 'pending' || status === 'confirmed'),
-		canSaveNotes: canManage && !notesLocked && status !== 'cancelled' && status !== 'declined',
+		canSaveNotes:
+			canManage &&
+			!notesLocked &&
+			status !== 'cancelled' &&
+			status !== 'declined' &&
+			status !== 'no_show',
 		canSubmitNotes: canManage && canSubmitTrainingNotesToVatcan(status) && !notesLocked,
 		student: {
 			cid: student.cid,
