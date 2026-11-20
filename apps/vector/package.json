@@ -54,7 +54,7 @@
 		"@aws-sdk/client-s3": "^3.787.0",
 		"@czqm/common": "workspace:*",
 		"@czqm/db": "workspace:*",
-		"@iconify/svelte": "^4.2.0",
+		"@iconify/svelte": "^5.0.0",
 		"@libsql/client": "^0.18.0",
 		"@lucide/svelte": "^0.577.0",
 		"@oslojs/crypto": "^1.0.1",
