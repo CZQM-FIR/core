@@ -45,7 +45,7 @@
 		"svelte-check": "^4.0.0",
 		"tailwindcss": "^4.0.0",
 		"tsx": "^4.23.15",
-		"typescript": "^5.0.0",
+		"typescript": "^7.0.0",
 		"typescript-eslint": "^8.20.0",
 		"vite": "^7.3.7",
 		"wrangler": "^3.114.0"
