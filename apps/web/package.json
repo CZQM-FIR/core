@@ -22,7 +22,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.0.0",
     "@sveltejs/adapter-auto": "^7.0.0",
-    "@sveltejs/adapter-cloudflare": "^7.2.10",
+    "@sveltejs/adapter-cloudflare": "^8.0.0",
     "@sveltejs/adapter-netlify": "^6.0.0",
     "@sveltejs/kit": "^2.49.4",
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
